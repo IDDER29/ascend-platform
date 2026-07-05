@@ -101,6 +101,22 @@ export default function PracticePage() {
               <X size={17} strokeWidth={2.3} />
               Close
             </Link>
+            <div className="flex flex-1 items-center justify-center gap-1.5">
+              {answered.map((a, i) => (
+                <span
+                  key={i}
+                  className={`flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full ${
+                    a.correct ? "bg-[#12B981]" : "bg-[#F87171]"
+                  }`}
+                >
+                  {a.correct ? (
+                    <Check size={10} className="text-white" strokeWidth={3.5} />
+                  ) : (
+                    <X size={10} className="text-white" strokeWidth={3.5} />
+                  )}
+                </span>
+              ))}
+            </div>
             <div className="ml-auto font-mono text-[12.5px] text-ink-faint">session complete</div>
           </header>
           <main className="flex-1 px-5 py-9 sm:px-10">
@@ -172,12 +188,18 @@ export default function PracticePage() {
                   <span className="flex h-11 w-11 flex-none items-center justify-center rounded-[13px] bg-gradient-to-br from-[#F59E0B] to-[#FF6B4A] text-xl">
                     ★
                   </span>
-                  <div className="flex-1">
+                  <div className="min-w-0 flex-1">
                     <div className="text-[14.5px] font-bold">Badge earned — Sharp Shooter</div>
                     <div className="mt-0.5 text-xs text-[#B9B3D0]">
-                      90%+ accuracy on a {total}-question drill.
+                      90%+ accuracy on a {total}-question drill. 3 more drills like this to master it.
                     </div>
                   </div>
+                  <Link
+                    href="/achievements"
+                    className="flex-none whitespace-nowrap rounded-full bg-white/[0.12] px-4 py-2.5 text-[12.5px] font-bold text-white transition-transform hover:-translate-y-0.5"
+                  >
+                    View badge
+                  </Link>
                 </div>
               )}
 

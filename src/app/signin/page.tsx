@@ -73,7 +73,18 @@ export default function SignInPage() {
       }
       title="Pick up right where you left off."
       subtitle="Your streak, XP and progress are waiting. Sign in and keep climbing — one concept at a time."
-      caption="Free forever · Open source · No credit card"
+      caption={
+        <>
+          {["Free forever", "Open source", "No credit card"].map((f) => (
+            <span key={f} className="inline-flex items-center gap-1.5">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#12E39E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              {f}
+            </span>
+          ))}
+        </>
+      }
       decoration={
         <div className="mt-8 max-w-[380px] rounded-[20px] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-sm">
           <div className="mb-4 flex items-center gap-3.5">
@@ -288,6 +299,17 @@ export default function SignInPage() {
       <p className="mt-6 text-center text-[11.5px] leading-relaxed text-ink-faint">
         This creates a real account in this preview&apos;s database (Supabase in production, a local
         SQLite file here) — OAuth is the only part that&apos;s not wired up.
+      </p>
+      <p className="mt-3 text-center text-[11.5px] leading-relaxed text-ink-faint">
+        By continuing you agree to our{" "}
+        <Link href="/terms" className="font-semibold text-ink-secondary underline">
+          Terms
+        </Link>{" "}
+        &amp;{" "}
+        <Link href="/privacy" className="font-semibold text-ink-secondary underline">
+          Privacy Policy
+        </Link>
+        .
       </p>
     </AuthSplitLayout>
   );

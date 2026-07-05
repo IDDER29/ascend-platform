@@ -1,47 +1,79 @@
-import { BADGES } from "./achievements-data";
-
 export interface NotificationItem {
   id: string;
-  title: string;
-  subtitle: string;
-  href: string;
+  section: "Today" | "Earlier";
+  body: string;
+  boldParts: string[];
+  cta?: { label: string; href: string };
+  when: string;
   glyph: string;
   iconBg: string;
   iconFg: string;
-  when: string;
 }
 
-const recentBadges = BADGES.filter((b) => b.status === "earned").slice(-2).reverse();
-
 export const NOTIFICATIONS: NotificationItem[] = [
-  ...recentBadges.map((b, i) => ({
-    id: `badge-${b.id}`,
-    title: `Badge unlocked: ${b.label}`,
-    subtitle: b.description,
-    href: "/achievements",
-    glyph: b.glyph,
-    iconBg: "bg-[#FEF4E1]",
-    iconFg: "text-[#E0900A]",
-    when: i === 0 ? "Today" : "2 days ago",
-  })),
   {
     id: "streak",
-    title: "12-day streak — keep it going",
-    subtitle: "Study today to protect your streak.",
-    href: "/practice",
+    section: "Today",
+    body: "Your 12-day streak is alive! Do one concept today to keep it going.",
+    boldParts: ["12-day streak"],
+    cta: { label: "Resume lesson", href: "/curriculum/level-02-the-c-language/what-a-pointer-really-is" },
+    when: "2h ago",
     glyph: "🔥",
     iconBg: "bg-[#FFF1EC]",
-    iconFg: "text-[#F0562F]",
-    when: "Today",
+    iconFg: "text-[#FF6B4A]",
   },
   {
-    id: "curriculum-nudge",
-    title: "2 concepts left in The C Language",
-    subtitle: "You're close to finishing Level 02.",
-    href: "/curriculum",
-    glyph: "📘",
+    id: "badge",
+    section: "Today",
+    body: "Badge earned: Memory Master — you mastered pointers & the heap.",
+    boldParts: ["Memory Master"],
+    cta: { label: "View badge", href: "/achievements" },
+    when: "5h ago",
+    glyph: "◆",
+    iconBg: "bg-[#FEF4E1]",
+    iconFg: "text-[#E0900A]",
+  },
+  {
+    id: "quiz",
+    section: "Today",
+    body: "Nice — you scored 100% on the Pointers drill. +90 XP.",
+    boldParts: ["100%"],
+    when: "6h ago",
+    glyph: "✓",
+    iconBg: "bg-[#E7F8F0]",
+    iconFg: "text-[#12A472]",
+  },
+  {
+    id: "level-unlocked",
+    section: "Earlier",
+    body: "New level unlocked: Systems & Software — processes, syscalls, and eventually Shellforge.",
+    boldParts: ["Systems & Software"],
+    cta: { label: "Start Level 03", href: "/curriculum/level-03-systems-software/processes-and-the-process-table" },
+    when: "Yesterday",
+    glyph: "🔓",
     iconBg: "bg-[#F1EDFE]",
     iconFg: "text-[#6D46F2]",
-    when: "3 days ago",
+  },
+  {
+    id: "peer-solution",
+    section: "Earlier",
+    body: "marc published a notable solution to Shellforge — see a new approach.",
+    boldParts: ["marc", "Shellforge"],
+    cta: { label: "Read solution", href: "/projects/shellforge/result?outcome=passed" },
+    when: "Yesterday",
+    glyph: "👤",
+    iconBg: "bg-[#EAF1FF]",
+    iconFg: "text-[#2F6BFF]",
+  },
+  {
+    id: "recap",
+    section: "Earlier",
+    body: "Weekly recap: +340 XP, 6 concepts and 2 badges last week.",
+    boldParts: ["+340 XP"],
+    cta: { label: "View recap", href: "/progress" },
+    when: "2 days ago",
+    glyph: "📊",
+    iconBg: "bg-[#F3F1F8]",
+    iconFg: "text-[#6E6A7C]",
   },
 ];

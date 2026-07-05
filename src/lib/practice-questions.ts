@@ -72,4 +72,53 @@ export const POINTERS_DRILL: PracticeQuestion[] = [
     hint: "Each * adds one more level of indirection — two stars means two hops before you reach the int.",
     reviewLabel: "Double pointers, what ** means",
   },
+  {
+    prompt: "What's the risk of dereferencing an uninitialized pointer?",
+    code: ["int *p;", "printf(\"%d\", *p);"],
+    options: [
+      "None — C zero-initializes all pointers automatically",
+      "It reads/writes whatever garbage address p happens to hold — undefined behaviour",
+      "It's a compile error, so it can never run",
+      "It always crashes immediately and safely",
+    ],
+    correct: 1,
+    hint: "A local pointer starts out pointing at whatever bytes were already sitting in that memory — could be anywhere.",
+    reviewLabel: "Dereferencing an uninitialized pointer",
+  },
+  {
+    prompt: "Why does `void swap(int *a, int *b)` work, but `void swap(int a, int b)` doesn't?",
+    options: [
+      "Pointers are just faster to pass than ints",
+      "Passing by pointer lets the function write through to the caller's actual variables",
+      "It doesn't matter — both versions work identically",
+      "swap() is a reserved keyword and needs pointers",
+    ],
+    correct: 1,
+    hint: "C always passes arguments by value — the only way to affect the caller's variables is to pass their addresses.",
+    reviewLabel: "Why swap() needs pointer parameters",
+  },
+  {
+    prompt: "After `int arr[5]; int *p = arr;`, what does `p` point to?",
+    options: [
+      "A copy of the whole array",
+      "The address of arr[0] — arrays decay to a pointer to their first element",
+      "Nothing — this is a type error",
+      "The address of the array's length",
+    ],
+    correct: 1,
+    hint: "In most expressions, an array name \"decays\" into a pointer to its first element.",
+    reviewLabel: "Array-to-pointer decay",
+  },
+  {
+    prompt: "What does `const int *p` mean?",
+    options: [
+      "p itself can't be changed, but *p can",
+      "The int p points to can't be changed through p, but p can be reassigned",
+      "Both p and *p are permanently fixed",
+      "This is invalid syntax",
+    ],
+    correct: 1,
+    hint: "Read it right-to-left from p: p is a pointer to a const int — the data is read-only through this pointer.",
+    reviewLabel: "const int *p vs int *const p",
+  },
 ];

@@ -1,0 +1,57 @@
+---
+title: Binary & number bases
+level: level-00-bits-logic
+slug: binary-and-number-bases
+order: 2
+timeMin: 7
+learningOutcomes:
+- Convert a binary number to its decimal value, and a decimal number to binary, using place value
+- Explain positional notation and why the identical rule works in base ten, base two, or any other base
+- Convert between binary and hexadecimal quickly by grouping bits into sets of four
+- State how many distinct values n bits can represent, and explain why that count is always a power of two
+knowledgeCheck:
+- question: Walk through, in your own words, how you'd convert the decimal number 41 into binary by hand using place values.
+  whereToLearn: Revisit "Counting in binary" — start from the largest power of two that fits (32), then work down through 16, 8, 4, 2, 1, marking a 1 wherever you subtract and a 0 where you don't.
+- question: Why does every group of exactly 4 bits correspond to exactly one hex digit, with nothing left over?
+  whereToLearn: 'Revisit "Hexadecimal: binary''s shorthand" — 4 bits produce exactly 16 possible patterns, which is exactly the size of the hex digit set (0–F).'
+assignment:
+  instruction: Practice converting numbers between binary, decimal, and hex until it's fast and automatic — do at least ten conversions by hand before checking them against a calculator.
+  resourceName: Khan Academy — Binary and Hexadecimal Numbers (Computers unit)
+  resourceType: site
+  resourceUrl: 'https://www.khanacademy.org/computing/computers-and-internet/xcae6f4a7ff015e7d:digital-information/xcae6f4a7ff015e7d:binary-numbers/a/bits-and-binary'
+additionalResources:
+- title: Binary Numbers — Computerphile
+  type: video
+  meta: 10 min
+  url: 'https://www.youtube.com/watch?v=thrx3SBEpL8'
+- title: RapidTables Binary / Hex / Decimal Converter
+  type: doc
+  meta: Reference tool
+  url: 'https://www.rapidtables.com/convert/number/hex-dec-bin-converter.html'
+---
+
+Last lesson gave you a single bit: one yes/no answer, not worth much by itself. But we already hinted at the payoff — line enough bits up side by side and their combinations multiply fast. This lesson turns that stack into something you can actually count with: real numbers, written in base two, plus the shorthand (hexadecimal) engineers use so they don't have to stare at forty digits of 1s and 0s at once.
+
+The reassuring secret is that binary isn't a different kind of math. It's the exact same place-value trick you learned for decimal in grade school — just with fewer digits to work with per column. Once that clicks, converting between bases stops being a memorized ritual and becomes something you can rebuild from scratch any time you need it.
+
+## Place value is the whole trick
+
+Take the decimal number 372. You don't think of it as three random symbols — you automatically read it as `3×100 + 7×10 + 2×1`. Each position is worth ten times the position to its right, because we're counting in base ten. That's <b>positional notation</b>: a digit's value depends on where it sits, not just what symbol it is.
+
+Base ten isn't mathematically special — it's an accident of having ten fingers. The exact same rule works for any base you choose: pick a base `b`, use digits from 0 up to b−1, and each position is worth b times the one before it. Binary is just this rule with b = 2, so the only digits available are 0 and 1.
+
+## Counting in binary
+
+In binary, the place values aren't 100s and 10s — they're powers of two: 8, 4, 2, 1 for a 4-bit number. To read `1011`, add up the place values where there's a 1: 8 + 0 + 2 + 1 = 11. That's the entire algorithm — no lookup table required, just the same column-by-column sum you'd do for a decimal number.
+
+Counting upward in binary rolls over exactly like a decimal odometer, just sooner: 00, 01, 10, 11 exhausts every 2-bit pattern in four steps instead of ten. Once you can watch that rollover happen — 0111 becoming 1000, four columns flipping at once — binary addition stops feeling foreign.
+
+<Visual type='diagram' caption='Every 4-bit pattern, 0 through 15' description='A table with a header row showing the place values 8, 4, 2, 1. Below it, all sixteen 4-bit rows from 0000 to 1111 in order, each with its decimal equivalent (0 through 15) in a column on the right. The row 0111 → 1000 is highlighted to show a full rollover, the binary equivalent of 9 rolling over to 10 in decimal.' />
+
+## Hexadecimal: binary's shorthand
+
+Writing out a 32-bit binary number by hand is unwieldy and easy to miscount. <b>Hexadecimal</b> (base 16) exists purely as a human convenience: since 16 is exactly 2⁴, every possible pattern of 4 bits maps onto exactly one hex digit (0–9, then A–F for 10–15). No remainder, no awkward overlap — it's the cleanest possible shorthand for binary.
+
+To convert, just chop the binary number into groups of four bits, starting from the right, and translate each group independently. You never need to think about the whole number's value at once.
+
+<CodeBlock lang='text' linesJson='["binary:  1010 1111", "group:   [A ] [F ]", "hex   :   A    F   -&gt;  0xAF"]' />

@@ -1,0 +1,59 @@
+---
+title: 'Endianness: how bytes are ordered'
+level: level-01-machine-memory
+slug: endianness
+order: 6
+timeMin: 8
+learningOutcomes:
+- Explain why a multi-byte value's byte order is even a meaningful question
+- Convert a given hex value into its little-endian and big-endian byte layouts by hand
+- State which convention x86/x86-64 uses and which convention network protocols use
+- Recognize endianness as the likely culprit when raw memory or packet bytes look reversed
+knowledgeCheck:
+- question: Given the 4-byte value 0xAABBCCDD stored starting at address 0x100, write out which byte sits at 0x100 on a little-endian machine, and which sits there on a big-endian machine.
+  whereToLearn: Covered in 'Little-endian vs big-endian' — the side-by-side memory-strip diagram.
+- question: Why do network protocols standardize on big-endian ('network byte order') even though most desktop and laptop CPUs are little-endian?
+  whereToLearn: Covered in 'Little-endian vs big-endian' and 'Why you'll actually run into this.'
+assignment:
+  instruction: Read the 'Byte Order' section of Beej's Guide to Network Programming, then convert the value 0xDEADBEEF by hand into both its little-endian and big-endian byte sequences before checking your answer with a debugger or the htons/ntohl man page.
+  resourceName: Beej's Guide to Network Programming — Byte Order
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgnet/html/split/ip-addresses-structs-and-data-munging.html'
+additionalResources:
+- title: man 3 endian (byteorder) — Linux manual page
+  type: doc
+  meta: Man page
+  url: 'https://man7.org/linux/man-pages/man3/endian.3.html'
+- title: On Holy Wars and a Plea for Peace — Danny Cohen, 1980
+  type: pdf
+  meta: Historical paper, IEN 137
+  url: 'https://www.ietf.org/ietf-ftp/rfc/ien/ien137.html'
+---
+
+You now know that a multi-byte value — a 4-byte int, say — doesn't live at one address, it spans several consecutive ones (back in Lesson 3's memory-strip diagram). That raises a question you've been able to avoid until now: given four bytes and four addresses, which byte goes <i>where</i>?
+
+The answer is: it depends on the machine, and both conventions are alive and well in the real world. This is <b>endianness</b> — a small idea that causes outsized confusion the first time you stare at a hex dump or a network packet and the bytes seem to be "backwards."
+
+## One value, several bytes
+
+Take the 4-byte value `0x12345678`. It needs four consecutive addresses to store it — say 0x100, 0x101, 0x102, and 0x103. The value has a most-significant byte (`0x12`) and a least-significant byte (`0x78`) — and nothing about "four addresses in a row" tells you, by itself, which byte belongs at the lowest address.
+
+That's a genuine design decision every CPU architecture has to make, and different architectures have made it differently. It's entirely internal and invisible as long as one machine both writes and reads its own memory — the trouble starts the moment bytes cross a boundary: to a different machine, across a network, or straight into a debugger showing you raw hex.
+
+<Visual type='diagram' caption='Four bytes, four addresses, one open question' description='Four memory slots at addresses 0x100, 0x101, 0x102, 0x103, each shown empty with a question mark. Above them, the value &#39;0x12345678&#39; broken into its four bytes &#39;12 | 34 | 56 | 78&#39; with an arrow pointing down at the four slots and a large question mark asking &#39;which byte goes at 0x100?&#39;' />
+
+## Little-endian vs big-endian
+
+<b>Little-endian</b> stores the least-significant byte at the lowest address — so 0x12345678 is laid out in memory as `78 56 34 12` reading from address 0x100 upward. <b>Big-endian</b> stores the most-significant byte first — `12 34 56 78` — which reads the way you'd naturally write the number on paper.
+
+x86 and x86-64, the family of chips in most laptops and desktops, are little-endian; so is ARM by default (though ARM can actually run either way). Network protocols went the other direction: TCP/IP standardizes on big-endian, which is why it's traditionally called <b>network byte order</b>. Neither convention is "more correct" — they're just two consistent answers to the same design question.
+
+<Visual type='diagram' caption='Same value, two valid byte orders' description='Two side-by-side memory strips for the same value 0x12345678, each labeled with addresses 0x100–0x103 beneath. Little-endian strip: boxes reading [78][56][34][12], labeled &#39;little-endian — least-significant byte first&#39;. Big-endian strip: boxes reading [12][34][56][78], labeled &#39;big-endian — most-significant byte first (network byte order)&#39;.' />
+
+## Why you'll actually run into this
+
+Endianness stops being trivia the moment you look at raw bytes directly: a hex dump of memory, a byte-for-byte view of a network packet, or the contents of a file format. Misjudge the byte order and a value that should read as 1 can appear to read as 16,777,216 — same bytes, wrong assumption about their order.
+
+This is exactly why network programming has dedicated conversion functions — `htons`/`ntohl` and friends — whose entire job is converting between your machine's native byte order and network byte order. You'll meet them for real once you start writing networked C code.
+
+<Visual type='diagram' caption='Same bytes on screen, two possible readings' description='A small hex-dump-style panel: address label &#39;0x100&#39; with byte row &#39;78 56 34 12&#39;, and two interpretation arrows below it — one labeled &#39;read little-endian → 0x12345678 (correct, if this is a little-endian machine)&#39;, the other labeled &#39;read big-endian → 0x78563412 (wrong number, same bytes)&#39;.' />

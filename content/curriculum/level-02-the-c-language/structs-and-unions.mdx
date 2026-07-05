@@ -1,0 +1,67 @@
+---
+title: Structs & unions
+level: level-02-the-c-language
+slug: structs-and-unions
+order: 6
+timeMin: 9
+learningOutcomes:
+- Define a struct and access its members with the . and -> operators
+- Explain why a struct's total size can be larger than the sum of its members, due to padding
+- Describe how a union shares one block of storage among all its members instead of laying them side by side
+- Predict the memory layout and size that a given struct or union declaration will produce
+knowledgeCheck:
+- question: What's the actual difference in memory between a struct and a union that declare the same members?
+  whereToLearn: 'Covered in “Unions: one address, many types” — a union overlaps all its members in one shared block instead of laying them side by side like a struct does.'
+- question: Why can sizeof(struct example) come back bigger than the sum of its members' individual sizes?
+  whereToLearn: 'Covered in “Padding: why sizeof surprises you” — the compiler inserts padding bytes so members land on aligned addresses.'
+assignment:
+  instruction: Read Beej's Guide to C's section on structs and unions in full, then extend the point struct from the lab into a 3D version (add a z field) and predict its new sizeof before you compile and check.
+  resourceName: Beej's Guide to C — Structs (and Unions)
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/structs.html'
+additionalResources:
+- title: cppreference.com — struct and union declarations
+  type: doc
+  meta: Documentation
+  url: 'https://en.cppreference.com/c/language/struct'
+- title: Struct padding and alignment in C, explained
+  type: video
+  meta: 7 min
+  url: 'https://www.youtube.com/watch?v=iDD6qk8Amlw'
+---
+
+A pointer gets you to one address. A `struct` gets you to a whole neighborhood of them &mdash; one name for a bundle of related variables sitting side by side in memory. It's how C models a point, a person, a network packet: anything made of more than one piece of data that belongs together.
+
+A `union` looks almost identical on the page but means something completely different: instead of laying its members side by side, it makes them all share the exact same bytes. One is &ldquo;and,&rdquo; the other is &ldquo;or.&rdquo; Let's build both, and run the code that proves the difference.
+
+## Bundling related data
+
+A `struct` gives a name to a group of variables and lays them out one after another in memory, as a single unit. `struct point { int x; int y; };` defines the shape; `struct point a = { 3, 4 };` actually carves out the memory and fills it in.
+
+The dot operator, `.`, reaches into that block by name: `a.x` and `a.y` are just labels for two neighbouring addresses &mdash; not two unrelated variables that happen to travel together.
+
+<Visual type='memory-diagram' caption='struct point in memory' description='A single contiguous block of memory split into two adjacent labeled cells. The first cell is labeled &#39;x&#39; and holds the value 3 at a base address (e.g. 0x7ffe...20). The second cell is labeled &#39;y&#39;, holds the value 4, and sits at the very next address (0x7ffe...24) with no gap in between. A bracket under both cells is labeled &#39;struct point a&#39; to show that x and y are one unit, not two separate variables.' />
+
+## Reaching in through a pointer
+
+Structs and pointers combine constantly &mdash; you'll pass a `struct point *` into a function instead of copying the whole struct every time it's used. Through a pointer, `(*p).x` would technically work, but C gives you a cleaner shorthand: `p->x` means exactly the same thing.
+
+Everything you already know about dereferencing still applies. `p->x` doesn't just read a's field &mdash; writing to it writes a's actual memory, because p is still just an address.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "", "struct point {", "    int x;", "    int y;", "};", "", "int main(void) {", "    struct point a = { 3, 4 };", "    struct point *p = &amp;a;", "    p-&gt;x = 7;", "    printf(\"x = %d, y = %d\", p-&gt;x, a.y);", "    return 0;", "}"]' runnable expectedOutput='x = 7, y = 4' />
+
+## Padding: why sizeof surprises you
+
+You might expect `sizeof(struct example)` to equal 1 + 4 = 5 for a char followed by an int. On most common 64-bit platforms it comes back 8. The compiler quietly inserts padding bytes so that i starts at an address divisible by 4 &mdash; most CPUs read multi-byte values fastest when they're aligned that way.
+
+This isn't a bug or a waste; it's a deliberate trade of a few bytes of memory for a lot of speed. It does mean you should never assume a struct's size by adding up its members yourself &mdash; always ask `sizeof`.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "", "struct example {", "    char c;", "    int  i;", "};", "", "int main(void) {", "    printf(\"sizeof(struct example) = %zu\", sizeof(struct example));", "    return 0;", "}"]' runnable expectedOutput='sizeof(struct example) = 8' />
+
+## Unions: one address, many types
+
+A `union` is declared exactly like a struct, but every member starts at the same address and shares the same bytes. Write i and you've also just overwritten whatever bit pattern f was holding &mdash; there's only one slot, not two.
+
+That's why `sizeof` a union equals the size of its <i>largest</i> member, not the sum of all of them: the compiler only needs to set aside enough room for whichever member happens to be in use.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "", "struct s_pair { int i; float f; };", "union  u_pair { int i; float f; };", "", "int main(void) {", "    printf(\"struct: %zu bytes, union: %zu bytes\",", "           sizeof(struct s_pair), sizeof(union u_pair));", "    return 0;", "}"]' runnable expectedOutput='struct: 8 bytes, union: 4 bytes' />

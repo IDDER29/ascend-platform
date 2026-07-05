@@ -1,0 +1,57 @@
+---
+title: What is a bit?
+level: level-00-bits-logic
+slug: what-is-a-bit
+order: 1
+timeMin: 4
+learningOutcomes:
+- Define a bit as the smallest possible unit of information — the answer to one yes/no question
+- Explain why real hardware represents that answer as one of two distinguishable physical states, not a continuous range
+- Describe a concrete physical example (a switch, a charge, a voltage) that behaves like a bit
+- Recognize that every kind of data a computer handles is ultimately just a long sequence of bits, given meaning by convention
+knowledgeCheck:
+- question: In your own words, why is "the smallest unit of information" a more precise definition of a bit than "a zero or a one"?
+  whereToLearn: Revisit "The smallest possible answer" — a bit is the yes/no distinction itself; 0 and 1 are just the symbols we use to write that distinction down.
+- question: Why do real computers use two voltage states instead of ten, when ten states would let a single wire carry a whole decimal digit at once?
+  whereToLearn: Revisit "Why two states, not ten (or three)" — the voltage-band diagram explains why reliably distinguishing two states is far cheaper and faster than distinguishing ten.
+assignment:
+  instruction: Read the first three chapters of Charles Petzold's Code — they build the idea of a bit from flashlights, Morse code, and Braille long before a single transistor shows up, which is exactly the bottom-up path Ascend follows.
+  resourceName: 'Code: The Hidden Language of Computer Hardware and Software by Charles Petzold'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Code:_The_Hidden_Language_of_Computer_Hardware_and_Software'
+additionalResources:
+- title: 'Crash Course Computer Science #1: Early Computing'
+  type: video
+  meta: 12 min
+  url: 'https://www.youtube.com/watch?v=O5nskjZ_GoI'
+- title: Bit (unit of information) — Wikipedia
+  type: doc
+  meta: Reference article
+  url: 'https://en.wikipedia.org/wiki/Bit'
+---
+
+Every other place you could learn programming starts you at the top: open an editor, type some syntax, make the screen do something. Ascend starts at the bottom, because the honest answer to "how does a computer work" doesn't begin with a language at all — it begins with a single, physical, almost embarrassingly simple idea. This is lesson one of the whole curriculum, and everything else you'll ever learn here — variables, pointers, files, the internet — is just this one idea, repeated at scale.
+
+By the end of this short lesson you'll be able to say precisely what a <b>bit</b> is, why it exists in exactly two states rather than ten or three, and why "a bit" is the honest floor beneath every number, letter, photo, and sound a computer ever touches.
+
+## The smallest possible answer
+
+A <b>bit</b> (short for <i>binary digit</i>) is the smallest unit of information that can exist: the answer to a single yes/no question. Not "a little bit of an idea" the way we use the word casually — mathematically, a bit is an irreducible one-question, one-answer package. "Is the light on?" Yes or no. That single answer <i>is</i> a bit.
+
+We write the two possible answers as `1` and `0`, but those symbols are just labels. The bit itself is the distinction: on vs. off, present vs. absent, true vs. false. Everything downstream — numbers, letters, this very sentence — is built by stacking millions of these tiny yes/no answers side by side.
+
+<Visual type='diagram' caption='A bit is one yes/no answer' description='A simple light switch shown in two states side by side: left switch flipped down labeled "OFF · 0", right switch flipped up labeled "ON · 1". A single arrow beneath both reads "one question, one answer" to show these are the only two possibilities — nothing in between.' />
+
+## Why two states, not ten (or three)
+
+You might reasonably ask: why not build computers in base ten, so each wire could carry a full decimal digit and do more per wire? Engineers tried exactly that — the 1940s ENIAC used ten-state decimal counters. The problem is physical, not mathematical: reliably telling apart ten different voltage levels on a noisy wire, at high speed, with cheap components, is hard. Reliably telling apart <i>two</i> voltage levels — "clearly high" versus "clearly low", with a wide safety margin in between that's simply forbidden territory — is easy, fast, and cheap.
+
+That safety margin is the whole trick. A transistor doesn't need to measure an exact voltage, only which side of a threshold it's on. Two states gives you a huge margin for electrical noise to be wrong in and still get read correctly. Ten states gives you almost none. That reliability, multiplied across billions of transistors switching billions of times per second, is why every computer you've ever used is binary underneath.
+
+<Visual type='diagram' caption='Two voltage bands, with a forbidden zone between them' description='A vertical voltage axis from 0V to 5V. A band at the top (roughly 3.5V–5V) labeled "HIGH = 1", a band at the bottom (roughly 0V–1.5V) labeled "LOW = 0", and a hatched red band in the middle labeled "forbidden / noise margin — never trust a reading here". A small annotation notes that real circuits only ever check which band a signal falls into, never its exact value.' />
+
+## One bit alone doesn't say much — combined, they say everything
+
+A single bit can only ever distinguish two possibilities, which isn't very useful on its own. But bits placed side by side multiply their possibilities: two bits give four combinations, three bits give eight, and so on. Eight bits together — a `byte` — already give you 256 distinct patterns, enough for every letter in this sentence.
+
+Here's the part that trips people up at first: a pattern of bits has no built-in meaning. The byte `01000001` is only "the letter A" because everyone agreed, by convention, to read it that way. That same pattern could just as easily be the number 65, or a shade of grey in an image. Meaning comes from agreement, not from the bits themselves — and turning bit patterns into numbers we can actually reason about is exactly where the next lesson picks up.

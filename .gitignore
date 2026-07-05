@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local sqlite fallback db (dev/test only -- never the real backend)
+/local.db
+/local.db-*
+

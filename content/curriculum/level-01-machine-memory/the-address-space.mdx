@@ -1,0 +1,59 @@
+---
+title: 'The address space: how memory is laid out'
+level: level-01-machine-memory
+slug: the-address-space
+order: 3
+timeMin: 7
+learningOutcomes:
+- Define what a memory address is and how it relates to a byte-addressable address space
+- List the major regions of a process's address space from lowest to highest address
+- Explain what lives in the code, data, heap, and stack regions
+- Explain why the stack and heap are placed at opposite ends of the address space and grow toward each other
+knowledgeCheck:
+- question: List the major regions of a process's address space from lowest to highest address, and say what lives in each one.
+  whereToLearn: Covered in 'The layout, region by region' — the vertical memory-layout diagram.
+- question: Why do the stack and heap grow toward each other instead of both growing in the same direction?
+  whereToLearn: Covered in 'Why the layout looks like this.'
+assignment:
+  instruction: Read Gustavo Duarte's 'Anatomy of a Program in Memory,' a widely-cited walkthrough of exactly this layout on real Linux processes. Then, on a Linux or WSL machine, run cat /proc/self/maps in a shell and try to match what you see against the regions from this lesson.
+  resourceName: Anatomy of a Program in Memory — Gustavo Duarte
+  resourceType: doc
+  resourceUrl: 'https://manybutfinite.com/post/anatomy-of-a-program-in-memory/'
+additionalResources:
+- title: 'Computer Systems: A Programmer''s Perspective — Ch. 9, Virtual Memory'
+  type: doc
+  meta: Textbook chapter
+  url: 'https://csapp.cs.cmu.edu/'
+- title: 'OSDev Wiki: Memory Map (x86)'
+  type: doc
+  meta: Reference wiki
+  url: 'https://wiki.osdev.org/Memory_Map_(x86)'
+---
+
+You've now watched instructions move values between registers while the ALU works on them. But registers are scarce — a dozen or so slots — and real programs juggle far more data than that. The overflow goes to <b>memory</b>, an enormous array of numbered bytes sitting outside the CPU, and every one of those numbers is an <b>address</b>.
+
+Before you can understand pointers, the stack, or the heap, you need a map. This lesson draws it: what a process's address space actually looks like, region by region, and why it's organized the way it is.
+
+## Addresses you can't see yet
+
+Think of memory as an absurdly long street of houses, each holding exactly one byte, each with a house number — its <b>address</b> — starting at 0 and counting up. An instruction like "store this value" doesn't just store it somewhere vague; the control unit hands the memory system an exact address, and that byte (or several consecutive bytes, for anything bigger than 8 bits) is what gets written.
+
+Here's the twist that matters for everything that follows: your program doesn't see real, physical addresses. The operating system gives every running process its own private, virtual <b>address space</b> — a clean number line from 0 up to some huge maximum, as if the process owned all of memory itself. What we're about to lay out is that private space, not the physical RAM chips underneath it.
+
+<Visual type='diagram' caption='Every byte has a house number' description='A short horizontal strip of memory bytes with address labels underneath: six boxes labeled with addresses 0x1000, 0x1001, 0x1002, 0x1003, 0x1004, 0x1005, each holding one byte value. Highlight boxes 0x1000–0x1003 together with a bracket labeled &#39;one 4-byte int lives here, starting at address 0x1000&#39; to show a single value spanning several addressed bytes.' />
+
+## The layout, region by region
+
+Slice a typical process's address space from low addresses to high, and you'll find the same handful of regions in almost every program you'll ever run: <b>text/code</b> at the bottom (the compiled instructions themselves, read-only), then <b>initialized and uninitialized data</b> (global variables), then the <b>heap</b>, then a large gap of unused address space, and finally the <b>stack</b> up near the top, just below space the kernel reserves for itself.
+
+Two of those regions are special because they change size while the program runs: the <b>heap grows upward</b>, toward higher addresses, as the program asks for more dynamic memory; the <b>stack grows downward</b>, toward lower addresses, as functions call other functions. Everything else is fixed the moment the program is loaded.
+
+<Visual type='diagram' caption='One process&#39;s address space, top to bottom' description='A vertical memory-layout diagram listing regions from top (highest address) to bottom (lowest address): &#39;Kernel space — reserved, off-limits&#39;; &#39;Stack — grows downward (function calls, local variables)&#39;; &#39;(unused gap)&#39;; &#39;Heap — grows upward (malloc&#39;d memory)&#39;; &#39;BSS — uninitialized globals&#39;; &#39;Data — initialized globals&#39;; &#39;Text/Code — the compiled instructions, read-only&#39;. In the gap, two arrows point toward each other — one labeled &#39;stack growth&#39; pointing down, one labeled &#39;heap growth&#39; pointing up.' />
+
+## Why the layout looks like this
+
+Putting the stack and heap at opposite ends with a gap between them is a deliberate trick: nobody knows in advance exactly how large either one will need to be, so giving each of them room to grow into that shared gap lets both expand as needed, without anyone having to guess a fixed size for either one up front.
+
+It also bakes in a natural failure mode: if a program recurses too deeply or allocates too much dynamic memory, the two growing regions can meet in the middle. That collision is exactly what's behind the phrase <b>stack overflow</b> — a term you'll meet for real once you're writing recursive C functions in Level 02.
+
+<Visual type='diagram' caption='What happens if both regions keep growing' description='A simplified three-block vertical strip: &#39;Stack (growing down)&#39; at top with a downward arrow, a shrinking block labeled &#39;free space&#39; in the middle, and &#39;Heap (growing up)&#39; at bottom with an upward arrow. A second frame beside it shows the gap shrunk to zero and the two arrows meeting, labeled &#39;Collision — a real stack overflow.&#39;' />

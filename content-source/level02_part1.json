@@ -1,0 +1,390 @@
+[
+  {
+    "concept": "Memory &amp; the machine",
+    "time_min": 6,
+    "intro": "&lt;p&gt;In Level 01 you learned that memory is really just an enormous strip of numbered boxes — bytes, each with its own address, sitting quietly whether anyone's using them or not. Now it's time to make that idea do real work: every variable you write in C claims some of those boxes, and the type you give it decides exactly how many.&lt;/p&gt;&lt;p&gt;This lesson is the bridge. By the end you'll look at a line like &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int n = 42;&lt;/span&gt; and see past the syntax — four specific bytes at a specific address, holding a specific pattern of bits. That's the ground floor everything else in this level is built on, including the pointer you'll meet two lessons from now.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Describe a running C program's memory as a set of byte-addressed regions — code, globals, stack, and heap",
+      "Predict how many bytes a variable occupies from its type, and confirm it with sizeof",
+      "Explain why consecutively declared variables tend to sit near each other in memory but aren't guaranteed to",
+      "Connect the byte-addressable grid from Level 01 to real C variable declarations"
+    ],
+    "sections": [
+      {
+        "heading": "Bits become bytes become variables",
+        "paragraphs": [
+          "&lt;p&gt;Every value in a C program is bits underneath, and Level 01 already showed you those bits are grouped into 8-bit bytes, each with its own address. C's job is to let you name a chunk of that grid instead of poking at raw addresses by hand. Write &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int n = 42;&lt;/span&gt; and the compiler picks a free address, reserves enough bytes for an &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int&lt;/span&gt;, and stores the bit pattern for 42 there.&lt;/p&gt;",
+          "&lt;p&gt;How many bytes it reserves depends entirely on the type. A &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;char&lt;/span&gt; needs exactly 1 byte because that's how big a byte is defined to be. An &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int&lt;/span&gt; is usually 4 bytes and a &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;double&lt;/span&gt; is usually 8 — &lt;b&gt;usually&lt;/b&gt;, because C guarantees minimums, not exact sizes, which is exactly why you ask the compiler with &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sizeof&lt;/span&gt; instead of assuming.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "memory-diagram",
+          "caption": "Different types, different footprints",
+          "description": "A row of memory addresses from 0x1000 to 0x1010. A box labeled 'char c' occupies address 0x1000 only (1 byte), holding the value 'A'. Next to it, a box labeled 'int n' spans 0x1004 to 0x1007 (4 bytes), holding 42. Next to that, a box labeled 'double d' spans 0x1008 to 0x100F (8 bytes), holding 3.14. Thin unlabeled gaps between the boxes are marked 'padding' to show the compiler doesn't always pack variables edge to edge."
+        }
+      },
+      {
+        "heading": "Ask the machine, don't guess",
+        "paragraphs": [
+          "&lt;p&gt;Rather than memorizing sizes, ask &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sizeof&lt;/span&gt; — a compile-time operator that reports exactly how many bytes a type or variable takes on this machine. Run the lab below and watch the same three variables from the diagram report their real sizes.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "",
+            "int main(void) {",
+            "    char   c = 'A';",
+            "    int    n = 42;",
+            "    double d = 3.14;",
+            "",
+            "    printf(\"sizeof(c) = %zu\\n\", sizeof(c));",
+            "    printf(\"sizeof(n) = %zu\\n\", sizeof(n));",
+            "    printf(\"sizeof(d) = %zu\\n\", sizeof(d));",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "sizeof(c) = 1\nsizeof(n) = 4\nsizeof(d) = 8"
+        }
+      },
+      {
+        "heading": "A program's memory map",
+        "paragraphs": [
+          "&lt;p&gt;Zoom out and every running C program divides its address space into a few regions with different jobs. Compiled instructions and constants sit in one region; global variables that exist for the program's whole life sit in another. Two more regions matter most day to day: the &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;stack&lt;/span&gt;, where local variables and function calls live, and the &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;heap&lt;/span&gt;, where memory you explicitly ask for lives. You'll spend all of the next lesson on that pair.&lt;/p&gt;",
+          "&lt;p&gt;The stack and heap don't just sit side by side — on most systems they start at opposite ends of the available space and grow toward each other. The stack grows downward as functions call other functions; the heap grows upward as you allocate more memory. Neither is infinite, which is exactly why 'stack overflow' and 'out of memory' are both real, distinct failures.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "memory-diagram",
+          "caption": "One process, four regions",
+          "description": "A tall vertical strip representing a program's address space, low addresses at the bottom and high addresses at the top. From bottom to top: 'Code' (compiled instructions, fixed size), 'Globals/static data' (fixed size, set at startup), then a large 'Heap' region with an upward arrow labeled 'grows up as you malloc', then an 'unused' gap, then a 'Stack' region at the very top with a downward arrow labeled 'grows down as functions call functions'."
+        }
+      },
+      {
+        "heading": "Types are the compiler's promise, not the machine's",
+        "paragraphs": [
+          "&lt;p&gt;Here's the twist worth sitting with: the memory itself doesn't know anything about &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int&lt;/span&gt; or &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;double&lt;/span&gt; — it's just bytes. Types are a promise the compiler keeps on your behalf, tracking how many bytes belong to each variable and how to interpret the bits it finds there. That's also why two variables declared back-to-back usually land near each other, but never take that for granted — the compiler is free to reorder or pad things however it likes.&lt;/p&gt;",
+          "&lt;p&gt;Keep that picture — bytes, addresses, and a compiler that remembers what each address means — in your head. It's exactly what you need for the next lesson's tour of the stack and heap, and two lessons from now, for the idea that a pointer is nothing more than a variable that stores one of these addresses.&lt;/p&gt;"
+        ],
+        "visual": null
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "If you declared a char, an int, and a double back to back, could you predict their exact addresses without running anything? Why or why not?",
+        "where_to_learn": "See 'A program's memory map' and the padding note in 'Types are the compiler's promise' — sizes are predictable with sizeof, but exact addresses and gaps are not guaranteed."
+      },
+      {
+        "question": "Which memory region holds a local variable declared inside main(), and which region holds memory returned by malloc?",
+        "where_to_learn": "See 'A program's memory map' — locals live on the stack, and malloc'd memory lives on the heap."
+      }
+    ],
+    "assignment": {
+      "instruction": "Write a short program that declares one variable each of type char, short, int, long, and double, and prints the sizeof each one — then compare your numbers with a classmate or another machine to see what's actually guaranteed versus merely typical.",
+      "resource_name": "Beej's Guide to C — Types",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      {"title": "Memory layout of a C program, visualized", "type": "video", "meta": "8 min"},
+      {"title": "cppreference: sizeof operator", "type": "doc", "meta": "Documentation"}
+    ]
+  },
+  {
+    "concept": "Stack vs heap",
+    "time_min": 7,
+    "intro": "&lt;p&gt;Last lesson split a program's memory into regions and pointed at two of them — the stack and the heap — promising you'd come back. This is that lesson. They're both just memory, but they play by completely different rules: one is managed for you automatically, and the other you manage entirely by hand.&lt;/p&gt;&lt;p&gt;Get this distinction solid now, because it's the difference between a variable that quietly disappears the moment you're done with it, and one that sticks around exactly as long as you tell it to — and mixing the two up is one of the most common ways C programs misbehave.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Describe how the stack grows and shrinks automatically as functions are called and return",
+      "Explain why a local variable's storage disappears the moment its function returns",
+      "Allocate memory on the heap with malloc and release it with free",
+      "Decide, for a given variable, whether the stack or the heap is the appropriate home"
+    ],
+    "sections": [
+      {
+        "heading": "The stack: automatic, ordered, temporary",
+        "paragraphs": [
+          "&lt;p&gt;Every time a function is called, C pushes a new &lt;b&gt;stack frame&lt;/b&gt; to hold that call's local variables, parameters, and return address. When the function returns, its frame is popped off and every one of those local variables is gone — not cleared, not zeroed, just no longer reserved for anything. This happens automatically; you never call anything like 'free' on a local variable.&lt;/p&gt;",
+          "&lt;p&gt;Because frames stack strictly on top of each other and unwind in exactly the reverse order they were pushed, the stack is fast — allocating a local variable is often just moving a single pointer — but rigid. You don't choose how long it lives; the shape of your function calls decides that for you.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "memory-diagram",
+          "caption": "Frames pushed and popped as functions call functions",
+          "description": "A vertical stack of boxes growing downward. Bottom box labeled 'main() frame' containing 'argc, argv'. On top of it, a box labeled 'first() frame' containing local variable 'a = 10', pushed when main calls first(). On top of that, a box labeled 'second() frame' containing local variable 'b = 20', pushed when first() calls second(). An arrow labeled 'second() returns — its frame pops off, b is gone' points at that top box vanishing, leaving first()'s frame exposed on top again."
+        }
+      },
+      {
+        "heading": "The heap: manual, flexible, persistent",
+        "paragraphs": [
+          "&lt;p&gt;The heap is the opposite deal: nothing is reserved for you automatically, and nothing is taken away automatically either. You ask for a block of bytes with &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;malloc&lt;/span&gt;, you get back its address as a pointer, and that block stays reserved — even after the function that allocated it returns — until you explicitly hand it back with &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;free&lt;/span&gt;.&lt;/p&gt;",
+          "&lt;p&gt;That persistence is the whole point of the heap: it's how you build data that needs to outlive a single function call. Run the lab below and notice the value survives long after &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;make_on_heap&lt;/span&gt; has already returned.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "#include &lt;stdlib.h&gt;",
+            "",
+            "int *make_on_heap(int value) {",
+            "    int *p = malloc(sizeof(int));",
+            "    *p = value;",
+            "    return p;",
+            "}",
+            "",
+            "int main(void) {",
+            "    int *result = make_on_heap(99);",
+            "    printf(\"*result = %d\\n\", *result);",
+            "    free(result);",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "*result = 99"
+        }
+      },
+      {
+        "heading": "Why you can never do this in reverse",
+        "paragraphs": [
+          "&lt;p&gt;Try to flip the pattern — return the address of a local, stack-allocated variable from a function — and you get a &lt;b&gt;dangling pointer&lt;/b&gt;: an address that used to be valid but now points at a frame that's already been popped and may be overwritten by the very next call. The compiler will often even warn you about this, because it's such a well-known trap.&lt;/p&gt;",
+          "&lt;p&gt;That's the core rule of this lesson: if something needs to outlive the function that creates it, it cannot live on the stack — it has to live on the heap (or be a global, or be copied out by value). Keep this rule in mind: the pointer lesson right after this one is all about the addresses these two regions hand you, and pointer arithmetic after that leans on knowing exactly which region you're walking through.&lt;/p&gt;"
+        ],
+        "visual": null
+      },
+      {
+        "heading": "Picking the right home",
+        "paragraphs": [
+          "&lt;p&gt;As a rule of thumb: reach for the stack by default — it's automatic, fast, and impossible to leak. Reach for the heap when you don't know a size until runtime, when data needs to survive past the function that created it, or when the data is too large to comfortably fit in a stack frame.&lt;/p&gt;",
+          "&lt;p&gt;You'll get much more hands-on practice with &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;malloc&lt;/span&gt;, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;free&lt;/span&gt;, and the bugs that come from misusing them in the Dynamic Memory lesson later in this level — for now, just hold onto the map: stack for scoped, short-lived data; heap for anything that needs to outlive its birthplace.&lt;/p&gt;"
+        ],
+        "visual": null
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "Why does a pointer to a local variable become useless the moment its function returns?",
+        "where_to_learn": "See 'The stack: automatic, ordered, temporary' — the frame holding that variable is popped off and may be reused by the very next call."
+      },
+      {
+        "question": "In the heap lab, why does *result still print 99 even though make_on_heap already returned?",
+        "where_to_learn": "See 'The heap: manual, flexible, persistent' — the runnable lab shows malloc'd memory outliving the function that allocated it."
+      }
+    ],
+    "assignment": {
+      "instruction": "Modify the heap lab so make_on_heap allocates and returns an array of 5 ints instead of a single one, fill it inside the function, and print all 5 values from main — then read the malloc man page's SYNOPSIS to confirm its return type and required header.",
+      "resource_name": "man 3 malloc",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      {"title": "Stack vs heap, visualized", "type": "video", "meta": "6 min"},
+      {"title": "cppreference: storage duration", "type": "doc", "meta": "Documentation"}
+    ]
+  },
+  {
+    "concept": "Pointer arithmetic",
+    "time_min": 8,
+    "intro": "&lt;p&gt;You already know the one big idea about pointers: a pointer is a variable that holds an address, and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;*p&lt;/span&gt; follows that address to read or write what's there. Pointer arithmetic is what happens when you ask a pointer a very reasonable question — 'what's next?' — and discover the answer depends on more than just the number stored inside it.&lt;/p&gt;&lt;p&gt;The surprising part is that &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p + 1&lt;/span&gt; almost never means 'add one to the address.' It means 'move forward by one whole &lt;i&gt;thing&lt;/i&gt;' — and the size of that thing is exactly the type &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p&lt;/span&gt; points to. Once that clicks, arrays stop being a separate topic and become a direct consequence of everything you already know about pointers.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Explain why p + 1 advances by sizeof(*p) bytes rather than by one byte",
+      "Walk through an array using pointer increments instead of index brackets",
+      "Rewrite arr[i] as its equivalent pointer expression *(arr + i), and vice versa",
+      "Identify pointer arithmetic that produces undefined behavior, such as stepping past the end of an array"
+    ],
+    "sections": [
+      {
+        "heading": "Addresses that know their own step size",
+        "paragraphs": [
+          "&lt;p&gt;When you write &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p + 1&lt;/span&gt; for an &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int *p&lt;/span&gt;, the compiler doesn't add 1 to the raw address — it adds &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sizeof(int)&lt;/span&gt;, typically 4. That's because &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p + 1&lt;/span&gt; means 'the address of the next int,' not 'the next byte.' Change the type &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p&lt;/span&gt; points to, and the same &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;+ 1&lt;/span&gt; jumps a completely different distance.&lt;/p&gt;",
+          "&lt;p&gt;This only makes sense because pointers are typed. An &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int *&lt;/span&gt; and a &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;char *&lt;/span&gt; can hold the exact same numeric address, but arithmetic on them behaves differently — which is exactly the behind-the-scenes bookkeeping that makes arrays work without you ever thinking about byte offsets.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "memory-diagram",
+          "caption": "int *p walking across an array of ints",
+          "description": "Four adjacent memory boxes, each 4 bytes wide: arr[0]=10 at 0x1000, arr[1]=20 at 0x1004, arr[2]=30 at 0x1008, arr[3]=40 at 0x100C. A pointer p starts pointing at arr[0] (0x1000). An arrow labeled 'p + 1' moves it to arr[1] (0x1004) — a jump of 4 bytes, not 1. A second arrow labeled 'p + 2' moves it further to arr[2] (0x1008)."
+        }
+      },
+      {
+        "heading": "Walk the array without brackets",
+        "paragraphs": [
+          "&lt;p&gt;Because &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p + i&lt;/span&gt; already means 'i elements forward,' you can reach any element without ever writing &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;[ ]&lt;/span&gt;. Run the lab below: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p&lt;/span&gt; points at the start of &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;arr&lt;/span&gt;, and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;*(p + 2)&lt;/span&gt; reaches straight into the third element.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "",
+            "int main(void) {",
+            "    int arr[4] = {10, 20, 30, 40};",
+            "    int *p = arr;",
+            "",
+            "    printf(\"*p = %d\\n\", *p);",
+            "    printf(\"*(p + 2) = %d\\n\", *(p + 2));",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "*p = 10\n*(p + 2) = 30"
+        }
+      },
+      {
+        "heading": "Arrays were pointer arithmetic all along",
+        "paragraphs": [
+          "&lt;p&gt;This is why &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;arr[i]&lt;/span&gt; and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;*(arr + i)&lt;/span&gt; are the exact same expression to the compiler — square brackets are defined in terms of pointer arithmetic, not the other way around. The array name &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;arr&lt;/span&gt;, when used in an expression, decays into a pointer to its first element — exactly why &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int *p = arr;&lt;/span&gt; above needed no &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;&amp;&lt;/span&gt;.&lt;/p&gt;",
+          "&lt;p&gt;That decay is subtle and worth remembering: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;arr&lt;/span&gt; and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p&lt;/span&gt; behave almost identically in arithmetic, but &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sizeof(arr)&lt;/span&gt; and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sizeof(p)&lt;/span&gt; give very different answers — one is the whole array's size, the other is just the size of a pointer.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "",
+            "int main(void) {",
+            "    int arr[4] = {10, 20, 30, 40};",
+            "",
+            "    printf(\"arr[2] = %d\\n\", arr[2]);",
+            "    printf(\"*(arr + 2) = %d\\n\", *(arr + 2));",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "arr[2] = 30\n*(arr + 2) = 30"
+        }
+      },
+      {
+        "heading": "Where the arithmetic stops being safe",
+        "paragraphs": [
+          "&lt;p&gt;Pointer arithmetic is only defined within an array (plus one address just past its last element, which you may compute but never dereference). Step one further — &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;*(p + 4)&lt;/span&gt; on our 4-element array — and you've read memory that isn't yours to read; the compiler won't stop you, and the result is undefined behavior, not a friendly crash.&lt;/p&gt;",
+          "&lt;p&gt;The same caution applies to subtracting pointers: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p2 - p1&lt;/span&gt; is only meaningful when both point into the same array. Keep this boundary in mind — the Undefined Behaviour lesson later in this level is entirely about failures exactly like this one.&lt;/p&gt;"
+        ],
+        "visual": null
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "If p is declared as an int *, what actually happens at the byte level when you write p + 1?",
+        "where_to_learn": "See 'Addresses that know their own step size' — the memory diagram shows the jump equals sizeof(int), not one byte."
+      },
+      {
+        "question": "Why do arr[i] and *(arr + i) always produce the same value?",
+        "where_to_learn": "See 'Arrays were pointer arithmetic all along' — square-bracket indexing is defined as pointer arithmetic under the hood, confirmed by the second runnable lab."
+      }
+    ],
+    "assignment": {
+      "instruction": "Take the array-walking lab above and rewrite it to print all four elements using only pointer arithmetic and a for loop that increments a pointer — no [ ] anywhere — then read up on exactly which pointer arithmetic is legal versus undefined.",
+      "resource_name": "Beej's Guide to C — Pointers (§6.5, Pointer Arithmetic)",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      {"title": "Pointer arithmetic, visualized", "type": "video", "meta": "7 min"},
+      {"title": "cppreference: pointer arithmetic", "type": "doc", "meta": "Documentation"}
+    ]
+  },
+  {
+    "concept": "Double pointers",
+    "time_min": 7,
+    "intro": "&lt;p&gt;You now know two things cold: a pointer holds an address, and pointer arithmetic moves through memory one whole element at a time. Here's the twist that ties them together — a pointer variable is itself just a variable, which means it lives at its own address, which means something else can point &lt;i&gt;at it&lt;/i&gt;.&lt;/p&gt;&lt;p&gt;That's all a double pointer is: an &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int **&lt;/span&gt; holds the address of an &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int *&lt;/span&gt;, which holds the address of an &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int&lt;/span&gt;. Two hops instead of one. It sounds like an abstract escalation, but it solves a concrete problem — letting a function change which address &lt;i&gt;you&lt;/i&gt; are holding, not just what's stored at that address.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Explain what an int** stores and trace the two dereferences needed to reach the underlying int",
+      "Distinguish changing a pointer's target value from changing the pointer itself",
+      "Write a function that reassigns the caller's pointer using an int** parameter",
+      "Recognize double-pointer patterns you'll meet later, like char **argv"
+    ],
+    "sections": [
+      {
+        "heading": "One more hop of indirection",
+        "paragraphs": [
+          "&lt;p&gt;Take the familiar setup: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int x = 42; int *p = &amp;x;&lt;/span&gt; — &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p&lt;/span&gt; holds the address of &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;x&lt;/span&gt;. Now add one more line: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int **pp = &amp;p;&lt;/span&gt;. Just like &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;&amp;x&lt;/span&gt; gave you the address of &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;x&lt;/span&gt;, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;&amp;p&lt;/span&gt; gives you the address of &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p&lt;/span&gt; — and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;pp&lt;/span&gt; stores that. Nothing new is happening except that a pointer is a variable too, and every variable has an address.&lt;/p&gt;",
+          "&lt;p&gt;To get back to &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;x&lt;/span&gt; from &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;pp&lt;/span&gt;, you dereference twice: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;*pp&lt;/span&gt; gives you &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p&lt;/span&gt;'s value (which is &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;x&lt;/span&gt;'s address), and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;**pp&lt;/span&gt; follows that address to reach &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;x&lt;/span&gt; itself. Each &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;*&lt;/span&gt; is one hop back down the chain.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "memory-diagram",
+          "caption": "x, p, and pp — three variables, two hops",
+          "description": "Three boxes in a row, each showing a variable and its own address. Box 1: 'int x' at address 0x1000, holding value 42. Box 2: 'int *p' at address 0x2000, holding the value 0x1000 — an arrow from box 2 to box 1 labeled 'points to x'. Box 3: 'int **pp' at address 0x3000, holding the value 0x2000 — an arrow from box 3 to box 2 labeled 'points to p'. Caption underneath: '*pp = p's value = 0x1000; **pp = follow twice = 42'."
+        }
+      },
+      {
+        "heading": "Two dereferences, one assignment",
+        "paragraphs": [
+          "&lt;p&gt;Run the lab below. Assigning through &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;**pp&lt;/span&gt; reaches all the way back to &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;x&lt;/span&gt;, exactly the same way &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;*p = 7&lt;/span&gt; did in the pointer lesson — there's just one extra hop to make first.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "",
+            "int main(void) {",
+            "    int x = 42;",
+            "    int *p = &amp;x;",
+            "    int **pp = &amp;p;",
+            "",
+            "    **pp = 7;",
+            "    printf(\"x = %d\\n\", x);",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "x = 7"
+        }
+      },
+      {
+        "heading": "The real reason to reach for **: changing the pointer itself",
+        "paragraphs": [
+          "&lt;p&gt;So far this just looks like a longer way to change &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;x&lt;/span&gt;. The real payoff shows up when a function needs to change which address &lt;i&gt;the caller's own pointer&lt;/i&gt; holds — not the thing it points to. Passing an &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int *&lt;/span&gt; by value only gives the function a copy of the address; changes to that copy never reach the caller. Passing an &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int **&lt;/span&gt; gives the function the address of the caller's pointer variable, so it can reassign it directly.&lt;/p&gt;",
+          "&lt;p&gt;In the lab below, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;point_to_new_value&lt;/span&gt; allocates a fresh int on the heap and makes the caller's &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p&lt;/span&gt; point at it — &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p&lt;/span&gt; starts as &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;NULL&lt;/span&gt; in &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;main&lt;/span&gt; and ends up pointing at real, heap-allocated memory once the function returns.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "#include &lt;stdlib.h&gt;",
+            "",
+            "void point_to_new_value(int **pp, int value) {",
+            "    int *fresh = malloc(sizeof(int));",
+            "    *fresh = value;",
+            "    *pp = fresh;",
+            "}",
+            "",
+            "int main(void) {",
+            "    int *p = NULL;",
+            "    point_to_new_value(&amp;p, 100);",
+            "    printf(\"*p = %d\\n\", *p);",
+            "    free(p);",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "*p = 100"
+        }
+      },
+      {
+        "heading": "Where you'll see this pattern again",
+        "paragraphs": [
+          "&lt;p&gt;Double pointers show up constantly once you know to look. Every C &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;main&lt;/span&gt; can be written as &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int main(int argc, char **argv)&lt;/span&gt; — &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;argv&lt;/span&gt; is a pointer to the first element of an array of &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;char *&lt;/span&gt; strings, so it's a double pointer by nature. Functions that need to grow or replace an array they don't own take an &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int **&lt;/span&gt; or similar for the same reason &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;point_to_new_value&lt;/span&gt; did above.&lt;/p&gt;",
+          "&lt;p&gt;You won't need triple pointers for anything in this level, and if you ever reach for one, it's usually a sign the design needs rethinking. But &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;int **&lt;/span&gt; is genuinely common, and now you have the two ideas — indirection, and 'a pointer is just a variable' — needed to read it comfortably wherever it turns up, including the structs and dynamic-memory lessons still ahead in this level.&lt;/p&gt;"
+        ],
+        "visual": null
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "In the first lab, what's the difference between what *p = 7 would change versus what **pp = 7 changes?",
+        "where_to_learn": "See 'Two dereferences, one assignment' — **pp reaches x through p, the same target *p alone reaches directly, just with one fewer hop."
+      },
+      {
+        "question": "Why does point_to_new_value need an int** parameter instead of an int* to make main's p point somewhere new?",
+        "where_to_learn": "See 'The real reason to reach for **' — an int* parameter would only receive a copy of the address, so reassigning it wouldn't affect the caller's p."
+      }
+    ],
+    "assignment": {
+      "instruction": "Modify point_to_new_value to fail safely — if malloc returns NULL, leave the caller's pointer unchanged and return an int status instead of void — then read up on why char **argv is the correct type for a C program's argument list.",
+      "resource_name": "Beej's Guide to C — Pointers to Pointers",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      {"title": "Pointers to pointers, visualized", "type": "video", "meta": "8 min"},
+      {"title": "cppreference: pointer declaration", "type": "doc", "meta": "Documentation"}
+    ]
+  }
+]

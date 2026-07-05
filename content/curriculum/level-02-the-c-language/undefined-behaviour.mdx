@@ -1,0 +1,63 @@
+---
+title: Undefined behaviour
+level: level-02-the-c-language
+slug: undefined-behaviour
+order: 8
+timeMin: 8
+learningOutcomes:
+- Define undefined behaviour and explain why it means any outcome is legally permitted, not that the program crashes
+- Recognise a use-after-free bug and explain why a freed pointer is still dangerous even though its address hasn't changed
+- Recognise a buffer overrun and explain why C's arrays don't stop you from indexing past their end
+- Explain why code with undefined behaviour can appear to work correctly during testing and still contain a serious bug
+knowledgeCheck:
+- question: Why doesn't a program printing the ‘right’ answer prove it's free of undefined behaviour?
+  whereToLearn: Covered in “What ‘undefined’ really means” and the buffer overrun lab — undefined behaviour is legally allowed to look correct while still being a bug.
+- question: After free(p), why is dereferencing p still dangerous even though p's value — the address it stores — hasn't changed?
+  whereToLearn: 'Covered in “Dangling pointers: using memory after you''ve freed it” — free releases the memory, not the pointer variable holding its address.'
+assignment:
+  instruction: Read cppreference's page on undefined behavior start to finish, then take the use-after-free lab above, run it several times in a row, and write one sentence explaining why seeing 42 or 99 printed wouldn't mean the bug is fixed.
+  resourceName: cppreference.com — Undefined behavior
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/c/language/behavior'
+additionalResources:
+- title: A Guide to Undefined Behavior in C and C++, Part 1
+  type: doc
+  meta: Documentation
+  url: 'https://blog.regehr.org/archives/213'
+- title: Debugging use-after-free bugs with Valgrind Memcheck
+  type: video
+  meta: 6 min
+  url: 'https://valgrind.org/docs/manual/mc-manual.html'
+---
+
+Every lesson in this level has quietly assumed you play by the rules: you dereference pointers that point somewhere valid, you free memory exactly once, you stay inside the bounds of your arrays. Break one of those rules and C does something almost unique among languages &mdash; it makes <b>no promise whatsoever</b> about what happens next. Not &ldquo;it crashes.&rdquo; Not &ldquo;you get zero.&rdquo; Nothing. That's <b>undefined behaviour</b>, and it's the trapdoor underneath everything you've learned so far.
+
+This isn't a scare tactic &mdash; it's the single most important habit of mind for writing C safely. By the end, you'll recognise the handful of classic ways programs summon undefined behaviour, and why &ldquo;it worked when I ran it&rdquo; is the most dangerous sentence in C.
+
+## What ‘undefined’ really means
+
+In most languages, an illegal operation gives you a defined error: Python raises an exception, Java throws a NullPointerException, and you can catch it. For a specific set of C mistakes, the language standard takes a far stranger stance: it says the behaviour is <b>undefined</b>, meaning literally any outcome &mdash; correct output, a crash, silently wrong numbers, or nothing you can detect at all &mdash; is equally ‘valid’ as far as the specification is concerned.
+
+That's not a gap in the language; it's a deliberate trade for speed. The compiler is allowed to assume you never trigger undefined behaviour, and it optimizes aggressively on that assumption. Keeping that assumption true is entirely on you.
+
+## Dangling pointers: using memory after you've freed it
+
+Concept 7 showed you that `free(p)` hands a block back to the allocator. It does <b>not</b> erase p itself &mdash; p still holds the exact same address it did a moment earlier. Dereference it anyway and you're touching memory the allocator is now free to hand to someone else, or already has.
+
+That's called a <b>use-after-free</b>, and it's one of the most common serious bugs in C's history &mdash; the kind security advisories get written about. Run the lab below more than once, or on a different machine, and don't be surprised if the output isn't stable.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "#include &lt;stdlib.h&gt;", "", "int main(void) {", "    int *p = malloc(sizeof(int));", "    *p = 42;", "    free(p);", "    *p = 99;", "    printf(\"value = %d\", *p);", "    return 0;", "}"]' runnable expectedOutput='segfault (or: garbage value) — undefined behaviour, not guaranteed' />
+
+## Buffer overruns: walking off the end of an array
+
+Concept 4 showed you that indexing is just pointer arithmetic under the hood: `scores[4]` is nothing more than `*(scores + 4)`. That expression compiles and runs whether or not a 5th element actually exists &mdash; C's arrays don't carry their own bounds at runtime to check against.
+
+Write past the end and you're scribbling on whatever memory happens to sit next door &mdash; another variable, saved registers, anything. The program can run to completion and print a perfectly plausible number, and still be wrong. Undefined behaviour doesn't announce itself.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "", "int main(void) {", "    int scores[4] = { 10, 20, 30, 40 };", "    scores[4] = 999;", "    printf(\"scores[4] = %d\", scores[4]);", "    return 0;", "}"]' runnable expectedOutput='scores[4] = 999 (or: crash, or something else entirely) — undefined behaviour, not guaranteed; scores only has 4 valid slots' />
+
+## Tying the level together
+
+Look at everything that got you here: a pointer is just an address (Concept 3), that address lives on the stack or the heap (Concepts 1, 2 and 7), pointer arithmetic can walk you past where you meant to stop (Concept 4), and a double pointer can point at the very variable that stores an address (Concept 5). Undefined behaviour is what happens the moment any one of those is used past its lifetime or its bounds.
+
+The fix is almost always the same low-tech habit: free once, then set the pointer to NULL so a stray dereference fails loudly instead of silently; check every index against the size you actually allocated. You don't outsmart undefined behaviour by being clever &mdash; you avoid it by being disciplined.

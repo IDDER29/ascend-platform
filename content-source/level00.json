@@ -1,0 +1,330 @@
+[
+  {
+    "concept": "What is a bit?",
+    "time_min": 4,
+    "intro": "&lt;p&gt;Every other place you could learn programming starts you at the top: open an editor, type some syntax, make the screen do something. Ascend starts at the bottom, because the honest answer to \"how does a computer work\" doesn't begin with a language at all — it begins with a single, physical, almost embarrassingly simple idea. This is lesson one of the whole curriculum, and everything else you'll ever learn here — variables, pointers, files, the internet — is just this one idea, repeated at scale.&lt;/p&gt;&lt;p&gt;By the end of this short lesson you'll be able to say precisely what a &lt;b&gt;bit&lt;/b&gt; is, why it exists in exactly two states rather than ten or three, and why \"a bit\" is the honest floor beneath every number, letter, photo, and sound a computer ever touches.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Define a bit as the smallest possible unit of information — the answer to one yes/no question",
+      "Explain why real hardware represents that answer as one of two distinguishable physical states, not a continuous range",
+      "Describe a concrete physical example (a switch, a charge, a voltage) that behaves like a bit",
+      "Recognize that every kind of data a computer handles is ultimately just a long sequence of bits, given meaning by convention"
+    ],
+    "sections": [
+      {
+        "heading": "The smallest possible answer",
+        "paragraphs": [
+          "&lt;p&gt;A &lt;b&gt;bit&lt;/b&gt; (short for &lt;i&gt;binary digit&lt;/i&gt;) is the smallest unit of information that can exist: the answer to a single yes/no question. Not \"a little bit of an idea\" the way we use the word casually — mathematically, a bit is an irreducible one-question, one-answer package. \"Is the light on?\" Yes or no. That single answer &lt;i&gt;is&lt;/i&gt; a bit.&lt;/p&gt;",
+          "&lt;p&gt;We write the two possible answers as &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;1&lt;/span&gt; and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;0&lt;/span&gt;, but those symbols are just labels. The bit itself is the distinction: on vs. off, present vs. absent, true vs. false. Everything downstream — numbers, letters, this very sentence — is built by stacking millions of these tiny yes/no answers side by side.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "A bit is one yes/no answer",
+          "description": "A simple light switch shown in two states side by side: left switch flipped down labeled \"OFF · 0\", right switch flipped up labeled \"ON · 1\". A single arrow beneath both reads \"one question, one answer\" to show these are the only two possibilities — nothing in between."
+        }
+      },
+      {
+        "heading": "Why two states, not ten (or three)",
+        "paragraphs": [
+          "&lt;p&gt;You might reasonably ask: why not build computers in base ten, so each wire could carry a full decimal digit and do more per wire? Engineers tried exactly that — the 1940s ENIAC used ten-state decimal counters. The problem is physical, not mathematical: reliably telling apart ten different voltage levels on a noisy wire, at high speed, with cheap components, is hard. Reliably telling apart &lt;i&gt;two&lt;/i&gt; voltage levels — \"clearly high\" versus \"clearly low\", with a wide safety margin in between that's simply forbidden territory — is easy, fast, and cheap.&lt;/p&gt;",
+          "&lt;p&gt;That safety margin is the whole trick. A transistor doesn't need to measure an exact voltage, only which side of a threshold it's on. Two states gives you a huge margin for electrical noise to be wrong in and still get read correctly. Ten states gives you almost none. That reliability, multiplied across billions of transistors switching billions of times per second, is why every computer you've ever used is binary underneath.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Two voltage bands, with a forbidden zone between them",
+          "description": "A vertical voltage axis from 0V to 5V. A band at the top (roughly 3.5V–5V) labeled \"HIGH = 1\", a band at the bottom (roughly 0V–1.5V) labeled \"LOW = 0\", and a hatched red band in the middle labeled \"forbidden / noise margin — never trust a reading here\". A small annotation notes that real circuits only ever check which band a signal falls into, never its exact value."
+        }
+      },
+      {
+        "heading": "One bit alone doesn't say much — combined, they say everything",
+        "paragraphs": [
+          "&lt;p&gt;A single bit can only ever distinguish two possibilities, which isn't very useful on its own. But bits placed side by side multiply their possibilities: two bits give four combinations, three bits give eight, and so on. Eight bits together — a &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;byte&lt;/span&gt; — already give you 256 distinct patterns, enough for every letter in this sentence.&lt;/p&gt;",
+          "&lt;p&gt;Here's the part that trips people up at first: a pattern of bits has no built-in meaning. The byte &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;01000001&lt;/span&gt; is only \"the letter A\" because everyone agreed, by convention, to read it that way. That same pattern could just as easily be the number 65, or a shade of grey in an image. Meaning comes from agreement, not from the bits themselves — and turning bit patterns into numbers we can actually reason about is exactly where the next lesson picks up.&lt;/p&gt;"
+        ],
+        "visual": null
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "In your own words, why is \"the smallest unit of information\" a more precise definition of a bit than \"a zero or a one\"?",
+        "where_to_learn": "Revisit \"The smallest possible answer\" — a bit is the yes/no distinction itself; 0 and 1 are just the symbols we use to write that distinction down."
+      },
+      {
+        "question": "Why do real computers use two voltage states instead of ten, when ten states would let a single wire carry a whole decimal digit at once?",
+        "where_to_learn": "Revisit \"Why two states, not ten (or three)\" — the voltage-band diagram explains why reliably distinguishing two states is far cheaper and faster than distinguishing ten."
+      }
+    ],
+    "assignment": {
+      "instruction": "Read the first three chapters of Charles Petzold's Code — they build the idea of a bit from flashlights, Morse code, and Braille long before a single transistor shows up, which is exactly the bottom-up path Ascend follows.",
+      "resource_name": "Code: The Hidden Language of Computer Hardware and Software by Charles Petzold",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      { "title": "Crash Course Computer Science #1: Early Computing", "type": "video", "meta": "12 min" },
+      { "title": "Bit (unit of information) — Wikipedia", "type": "doc", "meta": "Reference article" }
+    ]
+  },
+  {
+    "concept": "Binary &amp; number bases",
+    "time_min": 7,
+    "intro": "&lt;p&gt;Last lesson gave you a single bit: one yes/no answer, not worth much by itself. But we already hinted at the payoff — line enough bits up side by side and their combinations multiply fast. This lesson turns that stack into something you can actually count with: real numbers, written in base two, plus the shorthand (hexadecimal) engineers use so they don't have to stare at forty digits of 1s and 0s at once.&lt;/p&gt;&lt;p&gt;The reassuring secret is that binary isn't a different kind of math. It's the exact same place-value trick you learned for decimal in grade school — just with fewer digits to work with per column. Once that clicks, converting between bases stops being a memorized ritual and becomes something you can rebuild from scratch any time you need it.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Convert a binary number to its decimal value, and a decimal number to binary, using place value",
+      "Explain positional notation and why the identical rule works in base ten, base two, or any other base",
+      "Convert between binary and hexadecimal quickly by grouping bits into sets of four",
+      "State how many distinct values n bits can represent, and explain why that count is always a power of two"
+    ],
+    "sections": [
+      {
+        "heading": "Place value is the whole trick",
+        "paragraphs": [
+          "&lt;p&gt;Take the decimal number 372. You don't think of it as three random symbols — you automatically read it as &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;3×100 + 7×10 + 2×1&lt;/span&gt;. Each position is worth ten times the position to its right, because we're counting in base ten. That's &lt;b&gt;positional notation&lt;/b&gt;: a digit's value depends on where it sits, not just what symbol it is.&lt;/p&gt;",
+          "&lt;p&gt;Base ten isn't mathematically special — it's an accident of having ten fingers. The exact same rule works for any base you choose: pick a base &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;b&lt;/span&gt;, use digits from 0 up to b−1, and each position is worth b times the one before it. Binary is just this rule with b = 2, so the only digits available are 0 and 1.&lt;/p&gt;"
+        ],
+        "visual": null
+      },
+      {
+        "heading": "Counting in binary",
+        "paragraphs": [
+          "&lt;p&gt;In binary, the place values aren't 100s and 10s — they're powers of two: 8, 4, 2, 1 for a 4-bit number. To read &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;1011&lt;/span&gt;, add up the place values where there's a 1: 8 + 0 + 2 + 1 = 11. That's the entire algorithm — no lookup table required, just the same column-by-column sum you'd do for a decimal number.&lt;/p&gt;",
+          "&lt;p&gt;Counting upward in binary rolls over exactly like a decimal odometer, just sooner: 00, 01, 10, 11 exhausts every 2-bit pattern in four steps instead of ten. Once you can watch that rollover happen — 0111 becoming 1000, four columns flipping at once — binary addition stops feeling foreign.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Every 4-bit pattern, 0 through 15",
+          "description": "A table with a header row showing the place values 8, 4, 2, 1. Below it, all sixteen 4-bit rows from 0000 to 1111 in order, each with its decimal equivalent (0 through 15) in a column on the right. The row 0111 → 1000 is highlighted to show a full rollover, the binary equivalent of 9 rolling over to 10 in decimal."
+        }
+      },
+      {
+        "heading": "Hexadecimal: binary's shorthand",
+        "paragraphs": [
+          "&lt;p&gt;Writing out a 32-bit binary number by hand is unwieldy and easy to miscount. &lt;b&gt;Hexadecimal&lt;/b&gt; (base 16) exists purely as a human convenience: since 16 is exactly 2⁴, every possible pattern of 4 bits maps onto exactly one hex digit (0–9, then A–F for 10–15). No remainder, no awkward overlap — it's the cleanest possible shorthand for binary.&lt;/p&gt;",
+          "&lt;p&gt;To convert, just chop the binary number into groups of four bits, starting from the right, and translate each group independently. You never need to think about the whole number's value at once.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "text",
+          "lines": [
+            "binary:  1010 1111",
+            "group:   [A ] [F ]",
+            "hex   :   A    F   -&gt;  0xAF"
+          ]
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "Walk through, in your own words, how you'd convert the decimal number 41 into binary by hand using place values.",
+        "where_to_learn": "Revisit \"Counting in binary\" — start from the largest power of two that fits (32), then work down through 16, 8, 4, 2, 1, marking a 1 wherever you subtract and a 0 where you don't."
+      },
+      {
+        "question": "Why does every group of exactly 4 bits correspond to exactly one hex digit, with nothing left over?",
+        "where_to_learn": "Revisit \"Hexadecimal: binary's shorthand\" — 4 bits produce exactly 16 possible patterns, which is exactly the size of the hex digit set (0–F)."
+      }
+    ],
+    "assignment": {
+      "instruction": "Practice converting numbers between binary, decimal, and hex until it's fast and automatic — do at least ten conversions by hand before checking them against a calculator.",
+      "resource_name": "Khan Academy — Binary and Hexadecimal Numbers (Computers unit)",
+      "resource_type": "site"
+    },
+    "additional_resources": [
+      { "title": "Binary Numbers — Computerphile", "type": "video", "meta": "10 min" },
+      { "title": "RapidTables Binary / Hex / Decimal Converter", "type": "doc", "meta": "Reference tool" }
+    ]
+  },
+  {
+    "concept": "Boolean logic &amp; truth tables",
+    "time_min": 7,
+    "intro": "&lt;p&gt;You can now read and write numbers in binary. But computers don't just store numbers — they make decisions: compare two values, check a condition, decide which instruction to run next. That requires a formal system for combining true/false values, and it already existed a century before the first computer: &lt;b&gt;Boolean logic&lt;/b&gt;, named for the 19th-century mathematician George Boole, who first showed that logic itself could be manipulated like algebra.&lt;/p&gt;&lt;p&gt;By the end of this lesson you'll know the three core operators — AND, OR, NOT — plus XOR, be able to build any of their truth tables from memory, and see exactly how \"true and false\" is just another name for the \"1 and 0\" bit you met in lesson one. Logic, numbers, and bits are about to turn out to be the same idea wearing different clothes.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Define AND, OR, NOT, and XOR, and reconstruct each one's truth table from memory",
+      "Evaluate a compound boolean expression combining AND, OR, and NOT for any set of inputs",
+      "Explain precisely how XOR differs from OR at the one row where they disagree",
+      "Explain why boolean true/false maps directly onto the bit values 1 and 0 from the first lesson"
+    ],
+    "sections": [
+      {
+        "heading": "True and false are just another pair of states",
+        "paragraphs": [
+          "&lt;p&gt;A boolean value only ever has two possibilities: true or false. Sound familiar? That's exactly the shape of a bit. In real hardware, a \"true\" wire and a \"1\" wire are the same physical thing — a boolean variable is just a bit that we've agreed to talk about using the words true and false instead of 1 and 0.&lt;/p&gt;",
+          "&lt;p&gt;George Boole's insight in 1854 was that you could treat these two values algebraically: instead of adding and multiplying numbers, you combine truth values with logical operators. That algebra — Boolean algebra — turned out, a century later, to be exactly the mathematics needed to describe electronic circuits. Boole had no idea he was designing the theory behind every computer ever built.&lt;/p&gt;"
+        ],
+        "visual": null
+      },
+      {
+        "heading": "AND, OR, and NOT",
+        "paragraphs": [
+          "&lt;p&gt;&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;AND&lt;/span&gt; is a strict gatekeeper: the result is true only when &lt;i&gt;every&lt;/i&gt; input is true. \"It's raining AND it's cold\" is only true on days that are both — one condition failing sinks the whole expression.&lt;/p&gt;",
+          "&lt;p&gt;&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;OR&lt;/span&gt; is more permissive: the result is true if &lt;i&gt;at least one&lt;/i&gt; input is true (including, importantly, when both are). &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;NOT&lt;/span&gt; is the simplest of all — it takes a single input and flips it, true to false or false to true.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "truth-table",
+          "caption": "AND: true only when both inputs are true",
+          "rows": [["A", "B", "OUT"], ["0", "0", "0"], ["0", "1", "0"], ["1", "0", "0"], ["1", "1", "1"]]
+        }
+      },
+      {
+        "heading": "XOR: exactly one, not both",
+        "paragraphs": [
+          "&lt;p&gt;&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;XOR&lt;/span&gt; (\"exclusive or\") looks like OR at first glance, but differs at exactly one row: when both inputs are true, OR says true, XOR says false. XOR is true only when the two inputs &lt;i&gt;differ&lt;/i&gt; — one true and one false, in either order.&lt;/p&gt;",
+          "&lt;p&gt;That single-row difference isn't a technicality — XOR turns out to be exactly the operation you need to add two bits together and to flip individual bits without touching the rest, which is why it reappears constantly once we start building circuits in the next lesson.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "truth-table",
+          "caption": "XOR: true only when the inputs differ",
+          "rows": [["A", "B", "OUT"], ["0", "0", "0"], ["0", "1", "1"], ["1", "0", "1"], ["1", "1", "0"]]
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "In your own words, explain why AND is \"stricter\" than OR — walk through why the input pair (1, 0) evaluates differently under each.",
+        "where_to_learn": "Revisit \"AND, OR, and NOT\" — AND requires every input true, so a single false input forces the whole result false, while OR only needs one true input to succeed."
+      },
+      {
+        "question": "What is the one input pair where XOR and OR disagree, and why does XOR give a different answer there?",
+        "where_to_learn": "Revisit \"XOR: exactly one, not both\" and its truth table — the (1,1) row is true for OR but false for XOR, since XOR requires the inputs to differ."
+      }
+    ],
+    "assignment": {
+      "instruction": "Watch Crash Course Computer Science's episode on Boolean logic, then pause the video and build the truth table for NOT(A AND B) yourself by hand before checking your answer against De Morgan's law.",
+      "resource_name": "Crash Course Computer Science #3: Boolean Logic &amp; Logic Gates",
+      "resource_type": "video"
+    },
+    "additional_resources": [
+      { "title": "Boolean Algebra — Wikipedia", "type": "doc", "meta": "Reference article" },
+      { "title": "George Boole — Wikipedia", "type": "doc", "meta": "Biography &amp; history" }
+    ]
+  },
+  {
+    "concept": "Logic gates, from switches to circuits",
+    "time_min": 8,
+    "intro": "&lt;p&gt;Boolean logic, as you just learned it, lives on paper — it's math. This lesson makes it physical. A &lt;b&gt;logic gate&lt;/b&gt; is a real electronic circuit, built from transistors, that computes AND, OR, or NOT using actual current instead of symbols. It's the same two-state, high-or-low idea from lesson one, wired together to compute something.&lt;/p&gt;&lt;p&gt;By the end you'll be able to explain how switches wired together produce AND/OR behaviour, recognize the standard gate symbols, understand why a single gate type (NAND) is enough to build all the others, and trace how a couple of gates combine to actually add two bits — your first real glimpse of computing hardware doing arithmetic.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Explain how two switches wired in series behave like an AND gate, and wired in parallel like an OR gate",
+      "Identify the standard schematic symbols and truth tables for AND, OR, NOT, and NAND gates",
+      "Explain why NAND is called a \"universal\" gate and what it means to build any circuit from NAND alone",
+      "Trace how an XOR gate and an AND gate combine to form a half-adder that adds two single bits"
+    ],
+    "sections": [
+      {
+        "heading": "Boolean algebra, wired up",
+        "paragraphs": [
+          "&lt;p&gt;Early computers built logic out of electromechanical relays — physical switches flipped by an electromagnet. Modern chips use transistors instead, but the idea is identical: a transistor is an electrically controlled switch, current either flows or it doesn't, exactly the two states from lesson one. A logic gate is simply a small arrangement of these switches wired to compute one boolean operator.&lt;/p&gt;",
+          "&lt;p&gt;Wire two switches in &lt;i&gt;series&lt;/i&gt; (one after another, along the same path) and a bulb at the end only lights when &lt;i&gt;both&lt;/i&gt; switches are closed — that's AND. Wire the same two switches in &lt;i&gt;parallel&lt;/i&gt; (two separate paths to the same bulb) and the bulb lights if &lt;i&gt;either&lt;/i&gt; switch is closed — that's OR. NOT is even simpler: a switch that lets current through when open and blocks it when closed, inverting the input.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Series wiring = AND, parallel wiring = OR",
+          "description": "Two small circuit diagrams side by side. Left: switches A and B wired in series in a single loop with a bulb, labeled \"AND — bulb lights only if A and B are both closed\". Right: switches A and B wired as two parallel branches feeding the same bulb, labeled \"OR — bulb lights if A or B (or both) is closed\"."
+        }
+      },
+      {
+        "heading": "The gate zoo, and the one that builds all the others",
+        "paragraphs": [
+          "&lt;p&gt;Engineering diagrams use standard symbols for each gate: a D-shaped symbol for AND, a curved shield shape for OR, a triangle with a small bubble for NOT. &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;NAND&lt;/span&gt; is just AND followed by NOT — the bubble on an AND symbol — and it flips the AND truth table exactly.&lt;/p&gt;",
+          "&lt;p&gt;Here's the remarkable fact: NAND alone is enough to build AND, OR, NOT, XOR — every boolean function that exists — by wiring NAND gates to each other in the right combinations. That's why it's called a &lt;b&gt;universal gate&lt;/b&gt;, and why real chips are, underneath, mostly the same few gate types stamped out by the billions rather than a different physical component for every operator.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "truth-table",
+          "caption": "NAND: the opposite of AND — false only when both inputs are true",
+          "rows": [["A", "B", "OUT"], ["0", "0", "1"], ["0", "1", "1"], ["1", "0", "1"], ["1", "1", "0"]]
+        }
+      },
+      {
+        "heading": "Gates that add: the half-adder",
+        "paragraphs": [
+          "&lt;p&gt;Put an XOR gate and an AND gate side by side, both fed the same two input bits A and B, and you've built a &lt;b&gt;half-adder&lt;/b&gt;: the XOR output is the &lt;i&gt;sum&lt;/i&gt; bit (0+0=0, 0+1=1, 1+1=0 with a carry), and the AND output is the &lt;i&gt;carry&lt;/i&gt; bit (only true when both inputs are 1, exactly when a carry is needed).&lt;/p&gt;",
+          "&lt;p&gt;This is the seed of every arithmetic operation a computer performs. Chain more of these together with a bit of extra logic for carrying between columns, and you get a circuit that adds numbers of any size — built entirely from the handful of gates you just learned. That circuit, and others like it, are what the next lesson puts to work inside the loop that makes a CPU run.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "A half-adder: two gates, one addition",
+          "description": "Two input wires A and B feeding into two gates: an XOR gate labeled \"Sum\" and an AND gate labeled \"Carry\", both drawn below the inputs. Arrows show A and B branching into both gates. Small labels beside each gate's output show example values for A=1, B=1: Sum=0, Carry=1."
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "In your own words, why does wiring two switches in series produce AND behaviour, while wiring them in parallel produces OR behaviour?",
+        "where_to_learn": "Revisit \"Boolean algebra, wired up\" — series wiring needs every switch closed for one continuous path, while parallel wiring only needs one of several paths closed."
+      },
+      {
+        "question": "What does it concretely mean to say NAND is a \"universal\" gate?",
+        "where_to_learn": "Revisit \"The gate zoo, and the one that builds all the others\" — it means every other gate, including AND, OR, NOT, and XOR, can be constructed purely by wiring NAND gates together."
+      }
+    ],
+    "assignment": {
+      "instruction": "Go to nand2tetris.org and complete Project 1: build the AND, OR, NOT, and XOR gates yourself starting from nothing but NAND — it's the single best hands-on way to make this idea click.",
+      "resource_name": "nand2tetris.org — Project 1: Boolean Logic",
+      "resource_type": "site"
+    },
+    "additional_resources": [
+      { "title": "Ben Eater — Logic gates and building circuits", "type": "video", "meta": "~20 min series" },
+      { "title": "Petzold, Code — Chapters 9–11 (relays &amp; gates)", "type": "doc", "meta": "~40-page read" }
+    ]
+  },
+  {
+    "concept": "The fetch-execute loop",
+    "time_min": 9,
+    "intro": "&lt;p&gt;You now have every ingredient: bits (lesson one), numbers built from them (lesson two), logic to combine them (lesson three), and physical gates that carry out that logic (lesson four). This final lesson of Level 00 assembles all four into the thing that turns a pile of gates into an actual computer: the &lt;b&gt;fetch-decode-execute cycle&lt;/b&gt; — the loop every CPU on earth runs, over and over, to run any program at all.&lt;/p&gt;&lt;p&gt;By the end you'll be able to name the stages of that cycle in order, explain what the program counter and instruction register actually do, trace a real instruction through the whole loop, and understand why \"running a program\" is, physically, nothing more than this loop repeating billions of times a second.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Describe, in order, the stages of the fetch-decode-execute cycle",
+      "Explain the role of the program counter and instruction register in fetching the next instruction",
+      "Trace how a specific example instruction moves through fetch, decode, and execute",
+      "Explain why \"running a program\" is, physically, this same loop repeating billions of times per second"
+    ],
+    "sections": [
+      {
+        "heading": "Instructions are bits too",
+        "paragraphs": [
+          "&lt;p&gt;Here's the twist that ties everything together: instructions — the individual steps of a program — are stored in memory as binary patterns, exactly like the numbers from lesson two. A pattern like &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;00000011&lt;/span&gt; might mean \"add\", decided purely by convention, the same way a byte could mean the letter A or the number 65.&lt;/p&gt;",
+          "&lt;p&gt;The CPU keeps track of where it is with a special register called the &lt;b&gt;program counter (PC)&lt;/b&gt;: it always holds the memory address of the next instruction to run. A second register, the &lt;b&gt;instruction register (IR)&lt;/b&gt;, holds the instruction currently being decoded and executed, once it's been fetched from that address.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Memory, the program counter, and the instruction register",
+          "description": "A vertical strip of memory addresses (0x00, 0x01, 0x02...) each holding a binary instruction pattern. An arrow labeled \"PC\" points at address 0x02, meaning that's the next instruction to fetch. A separate small box labeled \"IR\" sits to the side holding the previous instruction that was already fetched and is being worked on."
+        }
+      },
+      {
+        "heading": "Fetch, decode, execute",
+        "paragraphs": [
+          "&lt;p&gt;The cycle has three core stages, repeated forever. &lt;b&gt;Fetch:&lt;/b&gt; the CPU reads the instruction bits at the address the PC points to, loads them into the IR, then advances the PC to the next address. &lt;b&gt;Decode:&lt;/b&gt; a piece of hardware called the control unit examines the instruction's bits and figures out which operation they mean and which gates and circuits need to switch on to perform it. &lt;b&gt;Execute:&lt;/b&gt; the actual operation happens — for something like \"add\", the ALU (arithmetic logic unit, built from exactly the AND/XOR-style gates of the last lesson) computes the result, which then gets written back to a register or memory.&lt;/p&gt;",
+          "&lt;p&gt;Take a concrete instruction like &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;ADD R1, R2&lt;/span&gt;: fetch pulls its bits into the IR and moves the PC forward; decode recognizes the opcode as \"add\" and identifies R1 and R2 as the operands; execute drives those two register values into the ALU's adder circuit and stores the sum. A clock signal keeps every stage, across every part of the chip, in lockstep.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "The fetch-decode-execute cycle",
+          "description": "A circular arrow diagram with three labeled stages around the loop: \"FETCH — read instruction at PC into IR, advance PC\", \"DECODE — control unit interprets the opcode\", \"EXECUTE — ALU or other circuit performs the operation\", with an arrow looping from EXECUTE back to FETCH to show the cycle repeats endlessly."
+        }
+      },
+      {
+        "heading": "Why this loop is \"a computer\"",
+        "paragraphs": [
+          "&lt;p&gt;A CPU doesn't \"understand\" a program the way a person does — it is simply repeating this same three-stage loop, unimaginably fast (a 3 GHz processor completes roughly three billion cycles every second), always fetching whatever instruction the PC currently points to. Branching, loops, and function calls in a program are, at this level, nothing mystical: they're just instructions that change the PC to something other than \"the next address\", redirecting the loop's next fetch.&lt;/p&gt;",
+          "&lt;p&gt;That closes the whole arc of Level 00: a bit's two voltage states, stacked into binary numbers, combined by boolean rules, implemented as physical gates, assembled into a loop that fetches and executes those gate-built instructions forever. That entire stack, bottom to top, is what a computer &lt;i&gt;is&lt;/i&gt;. Every level from here — assembly, C, operating systems — is just building further on top of this exact loop.&lt;/p&gt;"
+        ],
+        "visual": null
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "In your own words, trace what happens to the program counter and instruction register during a single fetch step.",
+        "where_to_learn": "Revisit \"Fetch, decode, execute\" — the PC's address is read, its instruction bits are copied into the IR, and only then does the PC advance to the next address."
+      },
+      {
+        "question": "Why is it accurate to say a CPU \"doesn't know\" it's running a program — and what does that reveal about what a program actually is?",
+        "where_to_learn": "Revisit \"Why this loop is 'a computer'\" — the CPU is just repeating fetch-decode-execute mechanically; a program is really just a sequence of bit patterns in memory that happens to redirect the PC in useful ways."
+      }
+    ],
+    "assignment": {
+      "instruction": "Watch the instruction-decoding videos from Ben Eater's 8-bit computer series, where he builds a real fetch-execute cycle out of physical logic chips on a breadboard — watching actual electricity carry out this loop makes it unforgettable.",
+      "resource_name": "Ben Eater — Build an 8-bit computer from scratch (YouTube series)",
+      "resource_type": "video"
+    },
+    "additional_resources": [
+      { "title": "Crash Course Computer Science #7: The Central Processing Unit (CPU)", "type": "video", "meta": "11 min" },
+      { "title": "Petzold, Code — Chapters 17–19 (the CPU)", "type": "doc", "meta": "~35-page read" }
+    ]
+  }
+]

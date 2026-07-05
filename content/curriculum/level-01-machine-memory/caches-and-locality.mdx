@@ -1,0 +1,59 @@
+---
+title: Caches & locality
+level: level-01-machine-memory
+slug: caches-and-locality
+order: 5
+timeMin: 7
+learningOutcomes:
+- State the rough order-of-magnitude speed difference between registers, cache, RAM, and disk
+- Define temporal locality and spatial locality in your own words
+- Explain what a cache line is and why a cache fetches more than one byte at a time
+- Predict which of two access patterns will run faster based on locality
+knowledgeCheck:
+- question: In your own words, what's the difference between temporal and spatial locality, and which one does a cache line directly exploit?
+  whereToLearn: 'Covered in ''Locality: why caching even works.'''
+- question: Why would summing every element of an array typically be much faster than summing the same values scattered across a linked list?
+  whereToLearn: Covered in 'Cache-friendly vs cache-hostile code' — compare the two loops.
+assignment:
+  instruction: Read Igor Ostrovsky's 'Gallery of Processor Cache Effects,' and work through Example 1 (looping over an array with different strides) — predict which stride will be slowest before you check the explanation.
+  resourceName: Gallery of Processor Cache Effects — Igor Ostrovsky
+  resourceType: doc
+  resourceUrl: 'http://igoro.com/archive/gallery-of-processor-cache-effects/'
+additionalResources:
+- title: What Every Programmer Should Know About Memory — Ulrich Drepper
+  type: pdf
+  meta: Seminal paper, ~114 pages
+  url: 'https://www.akkadia.org/drepper/cpumemory.pdf'
+- title: 'Computer Systems: A Programmer''s Perspective — Ch. 6, The Memory Hierarchy'
+  type: doc
+  meta: Textbook chapter
+  url: 'https://csapp.cs.cmu.edu/'
+---
+
+By now you've got registers (blazing fast, tiny) and memory (huge, and — as promised — much slower). This lesson finally puts a number on "much slower," and introduces the trick that keeps modern CPUs from spending most of their time waiting around: the <b>cache</b>.
+
+This isn't just trivia for hardware nerds. Once you understand why caches work, you'll be able to look at two pieces of code that do the "same" amount of work and correctly predict which one runs dramatically faster — a skill that starts mattering the moment you write your first C loops in Level 02.
+
+## The speed gap nobody warned you about
+
+A register access takes about one CPU clock cycle. A trip out to main RAM can take a couple of hundred cycles — call it roughly a hundred times slower. If the CPU had to wait on RAM for every single value it needed, it would spend the overwhelming majority of its time doing nothing at all, which is a spectacular waste of a chip you paid for.
+
+The fix is a <b>memory hierarchy</b>: a series of storage layers between the CPU and RAM, each one bigger but slower than the last. <b>L1 cache</b> sits closest to the CPU (tiny, almost register-speed); <b>L2</b> and <b>L3 cache</b> sit further out (bigger, a bit slower); then main <b>RAM</b>; then, way out at the bottom, <b>disk</b> — millions of times slower than a register. Most of the time, the CPU finds what it needs in a cache and never has to make the slow trip at all.
+
+<Visual type='diagram' caption='The memory hierarchy — fast and small at the top' description='A pyramid or stepped-bar diagram of the memory hierarchy, narrow at top (fastest, smallest) widening toward the bottom (slowest, biggest). Levels top to bottom with rough relative latency: &#39;Registers — ~1 cycle&#39;; &#39;L1 cache — ~4 cycles&#39;; &#39;L2 cache — ~12 cycles&#39;; &#39;L3 cache — ~40 cycles&#39;; &#39;RAM — ~200 cycles&#39;; &#39;Disk/SSD — ~100,000+ cycles&#39;. Note beneath: numbers are illustrative orders of magnitude, not exact figures for any one chip.' />
+
+## Locality: why caching even works
+
+Caching only works because real programs aren't random — they exhibit <b>locality</b>. <b>Temporal locality</b> means: if a program used a piece of data once, it's likely to use that exact same piece again soon (think of a loop counter, checked every iteration). <b>Spatial locality</b> means: if a program used one address, it's likely to use a <i>nearby</i> address soon too (think of walking through an array element by element).
+
+Caches exploit spatial locality directly: when the CPU asks for one byte that isn't in cache, the cache doesn't fetch just that byte — it fetches an entire <b>cache line</b>, typically 64 contiguous bytes, betting that you'll want your neighbors soon. Get that bet right consistently, and a program can run almost entirely out of cache, barely touching slow RAM at all.
+
+<Visual type='diagram' caption='One request, one whole cache line' description='A row of memory bytes (about 16 small boxes) representing part of an array, with a highlighted bracket around a contiguous chunk labeled &#39;64-byte cache line&#39; that gets pulled into cache after the CPU asks for just one byte inside it. An arrow labeled &#39;CPU asked for this one byte&#39; points at a single box; the bracket is labeled &#39;whole cache line pulled in — free neighbors.&#39;' />
+
+## Cache-friendly vs cache-hostile code
+
+This is why an array and a linked list, holding the exact same data, can perform completely differently. An array's elements sit back-to-back in memory (the same contiguous layout from the heap/stack discussion two lessons ago) — walking through it in order is a spatial-locality dream, and cache lines keep feeding the CPU exactly what it's about to ask for next.
+
+A linked list's nodes, by contrast, can be scattered anywhere the allocator happened to put them. Following each `next` pointer can jump to a completely different, uncached region of memory — a likely <b>cache miss</b> almost every single step, each one costing the full RAM-speed penalty from the pyramid above.
+
+<CodeBlock lang='c' linesJson='["// cache-friendly: elements are contiguous", "int sum = 0;", "for (int i = 0; i &lt; n; i++) {", "    sum += array[i];   // array[i] and array[i+1] likely share a cache line", "}", "", "// cache-hostile: nodes can be scattered anywhere in the heap", "int sum2 = 0;", "for (Node *n = head; n != NULL; n = n-&gt;next) {", "    sum2 += n-&gt;value;  // each n-&gt;next may jump to an uncached address", "}"]' />

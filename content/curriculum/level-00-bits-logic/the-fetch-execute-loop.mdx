@@ -1,0 +1,57 @@
+---
+title: The fetch-execute loop
+level: level-00-bits-logic
+slug: the-fetch-execute-loop
+order: 5
+timeMin: 9
+learningOutcomes:
+- Describe, in order, the stages of the fetch-decode-execute cycle
+- Explain the role of the program counter and instruction register in fetching the next instruction
+- Trace how a specific example instruction moves through fetch, decode, and execute
+- Explain why "running a program" is, physically, this same loop repeating billions of times per second
+knowledgeCheck:
+- question: In your own words, trace what happens to the program counter and instruction register during a single fetch step.
+  whereToLearn: Revisit "Fetch, decode, execute" — the PC's address is read, its instruction bits are copied into the IR, and only then does the PC advance to the next address.
+- question: Why is it accurate to say a CPU "doesn't know" it's running a program — and what does that reveal about what a program actually is?
+  whereToLearn: Revisit "Why this loop is 'a computer'" — the CPU is just repeating fetch-decode-execute mechanically; a program is really just a sequence of bit patterns in memory that happens to redirect the PC in useful ways.
+assignment:
+  instruction: Watch the instruction-decoding videos from Ben Eater's 8-bit computer series, where he builds a real fetch-execute cycle out of physical logic chips on a breadboard — watching actual electricity carry out this loop makes it unforgettable.
+  resourceName: Ben Eater — Build an 8-bit computer from scratch (YouTube series)
+  resourceType: video
+  resourceUrl: 'https://eater.net/8bit'
+additionalResources:
+- title: 'Crash Course Computer Science #7: The Central Processing Unit (CPU)'
+  type: video
+  meta: 11 min
+  url: 'https://www.youtube.com/watch?v=FZGugFqdr60'
+- title: Petzold, Code — Chapters 17–19 (the CPU)
+  type: doc
+  meta: ~35-page read
+  url: 'https://en.wikipedia.org/wiki/Code:_The_Hidden_Language_of_Computer_Hardware_and_Software'
+---
+
+You now have every ingredient: bits (lesson one), numbers built from them (lesson two), logic to combine them (lesson three), and physical gates that carry out that logic (lesson four). This final lesson of Level 00 assembles all four into the thing that turns a pile of gates into an actual computer: the <b>fetch-decode-execute cycle</b> — the loop every CPU on earth runs, over and over, to run any program at all.
+
+By the end you'll be able to name the stages of that cycle in order, explain what the program counter and instruction register actually do, trace a real instruction through the whole loop, and understand why "running a program" is, physically, nothing more than this loop repeating billions of times a second.
+
+## Instructions are bits too
+
+Here's the twist that ties everything together: instructions — the individual steps of a program — are stored in memory as binary patterns, exactly like the numbers from lesson two. A pattern like `00000011` might mean "add", decided purely by convention, the same way a byte could mean the letter A or the number 65.
+
+The CPU keeps track of where it is with a special register called the <b>program counter (PC)</b>: it always holds the memory address of the next instruction to run. A second register, the <b>instruction register (IR)</b>, holds the instruction currently being decoded and executed, once it's been fetched from that address.
+
+<Visual type='diagram' caption='Memory, the program counter, and the instruction register' description='A vertical strip of memory addresses (0x00, 0x01, 0x02...) each holding a binary instruction pattern. An arrow labeled "PC" points at address 0x02, meaning that&#39;s the next instruction to fetch. A separate small box labeled "IR" sits to the side holding the previous instruction that was already fetched and is being worked on.' />
+
+## Fetch, decode, execute
+
+The cycle has three core stages, repeated forever. <b>Fetch:</b> the CPU reads the instruction bits at the address the PC points to, loads them into the IR, then advances the PC to the next address. <b>Decode:</b> a piece of hardware called the control unit examines the instruction's bits and figures out which operation they mean and which gates and circuits need to switch on to perform it. <b>Execute:</b> the actual operation happens — for something like "add", the ALU (arithmetic logic unit, built from exactly the AND/XOR-style gates of the last lesson) computes the result, which then gets written back to a register or memory.
+
+Take a concrete instruction like `ADD R1, R2`: fetch pulls its bits into the IR and moves the PC forward; decode recognizes the opcode as "add" and identifies R1 and R2 as the operands; execute drives those two register values into the ALU's adder circuit and stores the sum. A clock signal keeps every stage, across every part of the chip, in lockstep.
+
+<Visual type='diagram' caption='The fetch-decode-execute cycle' description='A circular arrow diagram with three labeled stages around the loop: "FETCH — read instruction at PC into IR, advance PC", "DECODE — control unit interprets the opcode", "EXECUTE — ALU or other circuit performs the operation", with an arrow looping from EXECUTE back to FETCH to show the cycle repeats endlessly.' />
+
+## Why this loop is "a computer"
+
+A CPU doesn't "understand" a program the way a person does — it is simply repeating this same three-stage loop, unimaginably fast (a 3 GHz processor completes roughly three billion cycles every second), always fetching whatever instruction the PC currently points to. Branching, loops, and function calls in a program are, at this level, nothing mystical: they're just instructions that change the PC to something other than "the next address", redirecting the loop's next fetch.
+
+That closes the whole arc of Level 00: a bit's two voltage states, stacked into binary numbers, combined by boolean rules, implemented as physical gates, assembled into a loop that fetches and executes those gate-built instructions forever. That entire stack, bottom to top, is what a computer <i>is</i>. Every level from here — assembly, C, operating systems — is just building further on top of this exact loop.

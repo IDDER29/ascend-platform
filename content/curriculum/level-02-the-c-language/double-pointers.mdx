@@ -1,0 +1,62 @@
+---
+title: Double pointers
+level: level-02-the-c-language
+slug: double-pointers
+order: 5
+timeMin: 7
+learningOutcomes:
+- Explain what an int** stores and trace the two dereferences needed to reach the underlying int
+- Distinguish changing a pointer's target value from changing the pointer itself
+- Write a function that reassigns the caller's pointer using an int** parameter
+- Recognize double-pointer patterns you'll meet later, like char **argv
+knowledgeCheck:
+- question: In the first lab, what's the difference between what *p = 7 would change versus what **pp = 7 changes?
+  whereToLearn: See 'Two dereferences, one assignment' — **pp reaches x through p, the same target *p alone reaches directly, just with one fewer hop.
+- question: Why does point_to_new_value need an int** parameter instead of an int* to make main's p point somewhere new?
+  whereToLearn: See 'The real reason to reach for **' — an int* parameter would only receive a copy of the address, so reassigning it wouldn't affect the caller's p.
+assignment:
+  instruction: Modify point_to_new_value to fail safely — if malloc returns NULL, leave the caller's pointer unchanged and return an int status instead of void — then read up on why char **argv is the correct type for a C program's argument list.
+  resourceName: Beej's Guide to C — Pointers to Pointers
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/pointers-iii-pointers-to-pointers-and-more.html'
+additionalResources:
+- title: Pointers to pointers, visualized
+  type: video
+  meta: 8 min
+- title: 'cppreference: pointer declaration'
+  type: doc
+  meta: Documentation
+  url: 'https://en.cppreference.com/c/language/pointer'
+---
+
+You now know two things cold: a pointer holds an address, and pointer arithmetic moves through memory one whole element at a time. Here's the twist that ties them together — a pointer variable is itself just a variable, which means it lives at its own address, which means something else can point <i>at it</i>.
+
+That's all a double pointer is: an `int **` holds the address of an `int *`, which holds the address of an `int`. Two hops instead of one. It sounds like an abstract escalation, but it solves a concrete problem — letting a function change which address <i>you</i> are holding, not just what's stored at that address.
+
+## One more hop of indirection
+
+Take the familiar setup: `int x = 42; int *p = &x;` — `p` holds the address of `x`. Now add one more line: `int **pp = &p;`. Just like `&x` gave you the address of `x`, `&p` gives you the address of `p` — and `pp` stores that. Nothing new is happening except that a pointer is a variable too, and every variable has an address.
+
+To get back to `x` from `pp`, you dereference twice: `*pp` gives you `p`'s value (which is `x`'s address), and `**pp` follows that address to reach `x` itself. Each `*` is one hop back down the chain.
+
+<Visual type='memory-diagram' caption='x, p, and pp — three variables, two hops' description='Three boxes in a row, each showing a variable and its own address. Box 1: &#39;int x&#39; at address 0x1000, holding value 42. Box 2: &#39;int *p&#39; at address 0x2000, holding the value 0x1000 — an arrow from box 2 to box 1 labeled &#39;points to x&#39;. Box 3: &#39;int **pp&#39; at address 0x3000, holding the value 0x2000 — an arrow from box 3 to box 2 labeled &#39;points to p&#39;. Caption underneath: &#39;*pp = p&#39;s value = 0x1000; **pp = follow twice = 42&#39;.' />
+
+## Two dereferences, one assignment
+
+Run the lab below. Assigning through `**pp` reaches all the way back to `x`, exactly the same way `*p = 7` did in the pointer lesson — there's just one extra hop to make first.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "", "int main(void) {", "    int x = 42;", "    int *p = &amp;x;", "    int **pp = &amp;p;", "", "    **pp = 7;", "    printf(\"x = %d\\n\", x);", "    return 0;", "}"]' runnable expectedOutput='x = 7' />
+
+## The real reason to reach for **: changing the pointer itself
+
+So far this just looks like a longer way to change `x`. The real payoff shows up when a function needs to change which address <i>the caller's own pointer</i> holds — not the thing it points to. Passing an `int *` by value only gives the function a copy of the address; changes to that copy never reach the caller. Passing an `int **` gives the function the address of the caller's pointer variable, so it can reassign it directly.
+
+In the lab below, `point_to_new_value` allocates a fresh int on the heap and makes the caller's `p` point at it — `p` starts as `NULL` in `main` and ends up pointing at real, heap-allocated memory once the function returns.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "#include &lt;stdlib.h&gt;", "", "void point_to_new_value(int **pp, int value) {", "    int *fresh = malloc(sizeof(int));", "    *fresh = value;", "    *pp = fresh;", "}", "", "int main(void) {", "    int *p = NULL;", "    point_to_new_value(&amp;p, 100);", "    printf(\"*p = %d\\n\", *p);", "    free(p);", "    return 0;", "}"]' runnable expectedOutput='*p = 100' />
+
+## Where you'll see this pattern again
+
+Double pointers show up constantly once you know to look. Every C `main` can be written as `int main(int argc, char **argv)` — `argv` is a pointer to the first element of an array of `char *` strings, so it's a double pointer by nature. Functions that need to grow or replace an array they don't own take an `int **` or similar for the same reason `point_to_new_value` did above.
+
+You won't need triple pointers for anything in this level, and if you ever reach for one, it's usually a sign the design needs rethinking. But `int **` is genuinely common, and now you have the two ideas — indirection, and 'a pointer is just a variable' — needed to read it comfortably wherever it turns up, including the structs and dynamic-memory lessons still ahead in this level.

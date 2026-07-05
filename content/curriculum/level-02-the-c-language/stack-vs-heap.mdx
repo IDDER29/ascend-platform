@@ -1,0 +1,62 @@
+---
+title: Stack vs heap
+level: level-02-the-c-language
+slug: stack-vs-heap
+order: 2
+timeMin: 7
+learningOutcomes:
+- Describe how the stack grows and shrinks automatically as functions are called and return
+- Explain why a local variable's storage disappears the moment its function returns
+- Allocate memory on the heap with malloc and release it with free
+- Decide, for a given variable, whether the stack or the heap is the appropriate home
+knowledgeCheck:
+- question: Why does a pointer to a local variable become useless the moment its function returns?
+  whereToLearn: 'See ''The stack: automatic, ordered, temporary'' — the frame holding that variable is popped off and may be reused by the very next call.'
+- question: In the heap lab, why does *result still print 99 even though make_on_heap already returned?
+  whereToLearn: 'See ''The heap: manual, flexible, persistent'' — the runnable lab shows malloc''d memory outliving the function that allocated it.'
+assignment:
+  instruction: Modify the heap lab so make_on_heap allocates and returns an array of 5 ints instead of a single one, fill it inside the function, and print all 5 values from main — then read the malloc man page's SYNOPSIS to confirm its return type and required header.
+  resourceName: man 3 malloc
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man3/malloc.3.html'
+additionalResources:
+- title: Stack vs heap, visualized
+  type: video
+  meta: 6 min
+- title: 'cppreference: storage duration'
+  type: doc
+  meta: Documentation
+  url: 'https://en.cppreference.com/c/language/storage_duration'
+---
+
+Last lesson split a program's memory into regions and pointed at two of them — the stack and the heap — promising you'd come back. This is that lesson. They're both just memory, but they play by completely different rules: one is managed for you automatically, and the other you manage entirely by hand.
+
+Get this distinction solid now, because it's the difference between a variable that quietly disappears the moment you're done with it, and one that sticks around exactly as long as you tell it to — and mixing the two up is one of the most common ways C programs misbehave.
+
+## The stack: automatic, ordered, temporary
+
+Every time a function is called, C pushes a new <b>stack frame</b> to hold that call's local variables, parameters, and return address. When the function returns, its frame is popped off and every one of those local variables is gone — not cleared, not zeroed, just no longer reserved for anything. This happens automatically; you never call anything like 'free' on a local variable.
+
+Because frames stack strictly on top of each other and unwind in exactly the reverse order they were pushed, the stack is fast — allocating a local variable is often just moving a single pointer — but rigid. You don't choose how long it lives; the shape of your function calls decides that for you.
+
+<Visual type='memory-diagram' caption='Frames pushed and popped as functions call functions' description='A vertical stack of boxes growing downward. Bottom box labeled &#39;main() frame&#39; containing &#39;argc, argv&#39;. On top of it, a box labeled &#39;first() frame&#39; containing local variable &#39;a = 10&#39;, pushed when main calls first(). On top of that, a box labeled &#39;second() frame&#39; containing local variable &#39;b = 20&#39;, pushed when first() calls second(). An arrow labeled &#39;second() returns — its frame pops off, b is gone&#39; points at that top box vanishing, leaving first()&#39;s frame exposed on top again.' />
+
+## The heap: manual, flexible, persistent
+
+The heap is the opposite deal: nothing is reserved for you automatically, and nothing is taken away automatically either. You ask for a block of bytes with `malloc`, you get back its address as a pointer, and that block stays reserved — even after the function that allocated it returns — until you explicitly hand it back with `free`.
+
+That persistence is the whole point of the heap: it's how you build data that needs to outlive a single function call. Run the lab below and notice the value survives long after `make_on_heap` has already returned.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "#include &lt;stdlib.h&gt;", "", "int *make_on_heap(int value) {", "    int *p = malloc(sizeof(int));", "    *p = value;", "    return p;", "}", "", "int main(void) {", "    int *result = make_on_heap(99);", "    printf(\"*result = %d\\n\", *result);", "    free(result);", "    return 0;", "}"]' runnable expectedOutput='*result = 99' />
+
+## Why you can never do this in reverse
+
+Try to flip the pattern — return the address of a local, stack-allocated variable from a function — and you get a <b>dangling pointer</b>: an address that used to be valid but now points at a frame that's already been popped and may be overwritten by the very next call. The compiler will often even warn you about this, because it's such a well-known trap.
+
+That's the core rule of this lesson: if something needs to outlive the function that creates it, it cannot live on the stack — it has to live on the heap (or be a global, or be copied out by value). Keep this rule in mind: the pointer lesson right after this one is all about the addresses these two regions hand you, and pointer arithmetic after that leans on knowing exactly which region you're walking through.
+
+## Picking the right home
+
+As a rule of thumb: reach for the stack by default — it's automatic, fast, and impossible to leak. Reach for the heap when you don't know a size until runtime, when data needs to survive past the function that created it, or when the data is too large to comfortably fit in a stack frame.
+
+You'll get much more hands-on practice with `malloc`, `free`, and the bugs that come from misusing them in the Dynamic Memory lesson later in this level — for now, just hold onto the map: stack for scoped, short-lived data; heap for anything that needs to outlive its birthplace.

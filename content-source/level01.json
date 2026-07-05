@@ -1,0 +1,438 @@
+[
+  {
+    "concept": "Inside the CPU: registers &amp; the ALU",
+    "time_min": 8,
+    "intro": "&lt;p&gt;In Level 00 you built the &lt;b&gt;fetch-execute loop&lt;/b&gt; up from gates: fetch an instruction, decode it, execute it, repeat — forever, thousands of millions of times a second. That loop is real, but so far it's been an idea. This lesson puts a body on it: the actual pieces of silicon that do the fetching, the deciding, and the arithmetic.&lt;/p&gt;&lt;p&gt;Three characters do almost all the work inside a CPU: a small set of &lt;b&gt;registers&lt;/b&gt; for holding values right now, an &lt;b&gt;ALU&lt;/b&gt; (arithmetic logic unit) for doing math and comparisons on those values, and a &lt;b&gt;control unit&lt;/b&gt; that steers the whole show. Get comfortable with these three, and every instruction you'll ever read — in assembly, in a debugger, in a crash dump — starts making sense.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Name the three core components of a CPU (registers, ALU, control unit) and state what each one does",
+      "Explain why registers are faster than memory, and why there are so few of them",
+      "Describe how the program counter and stack pointer differ from general-purpose registers",
+      "Predict which status flags an ALU operation sets, and why the control unit cares"
+    ],
+    "sections": [
+      {
+        "heading": "From fetch-execute to real hardware",
+        "paragraphs": [
+          "&lt;p&gt;Recall the loop: &lt;b&gt;fetch&lt;/b&gt; the next instruction from memory, &lt;b&gt;decode&lt;/b&gt; what it's asking for, &lt;b&gt;execute&lt;/b&gt; it, and move on. Every step in that loop needs somewhere to put things down while it works — the instruction itself, the numbers it operates on, the result. That \"somewhere\" is a tiny, blazing-fast set of storage slots built directly into the CPU chip: &lt;b&gt;registers&lt;/b&gt;.&lt;/p&gt;",
+          "&lt;p&gt;The &lt;b&gt;control unit&lt;/b&gt; is the part that actually drives the loop — it holds the address of the next instruction, tells the ALU which operation to perform, and tells the register file which slots to read from and write to. Nothing moves inside a CPU without the control unit orchestrating it.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "The core loop, made of parts",
+          "description": "A simple block diagram of a CPU's core parts and how data flows between them. Boxes: Control Unit (center-top, labeled 'reads next instruction, directs everything'), Register File (left, containing small labeled slots like R0, R1, R2, PC, SP), ALU (right, labeled 'does the math/comparisons'), and Memory (bottom, outside the CPU boundary, connected by a bus). Arrows: Control Unit -&gt; Memory (fetch instruction), Memory -&gt; Control Unit (instruction bits), Control Unit -&gt; Register File and ALU (control signals), Register File &lt;-&gt; ALU (operand values in, result value out)."
+        }
+      },
+      {
+        "heading": "Registers: the CPU's scratchpad",
+        "paragraphs": [
+          "&lt;p&gt;A &lt;b&gt;register&lt;/b&gt; is a storage slot that lives inside the CPU itself, not out in main memory. On a typical modern machine there are only a handful of general-purpose ones — think a dozen or so — each holding a single word (commonly 32 or 64 bits). Because they sit right next to the ALU with no bus, no address decoding, and no waiting, reading or writing a register takes a single clock cycle. Reading from memory, as you'll see in Lesson 5, can take a hundred times longer.&lt;/p&gt;",
+          "&lt;p&gt;A few registers have jobs so important they get their own names. The &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;program counter&lt;/span&gt; (PC, sometimes called the instruction pointer) always holds the address of the next instruction to fetch — it's what keeps the loop looping. The &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;stack pointer&lt;/span&gt; (SP) tracks the top of the call stack, which you'll meet properly in Lesson 4. Everything else — the &lt;i&gt;general-purpose&lt;/i&gt; registers — is yours (or the compiler's) to use as scratch space.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "A few registers with names — and jobs",
+          "description": "A small two-column table of register names and roles, generic and not tied to one architecture. Rows: 'PC / instruction pointer' — 'address of the next instruction to fetch'; 'SP' — 'address of the top of the stack'; 'general-purpose registers' — 'scratch values the current instruction is working on'; 'FLAGS' — 'one-bit results from the last ALU operation (zero? negative? carry?)'."
+        }
+      },
+      {
+        "heading": "The ALU: where decisions and math happen",
+        "paragraphs": [
+          "&lt;p&gt;The &lt;b&gt;ALU&lt;/b&gt; takes one or two values from registers, applies an operation — add, subtract, AND, OR, shift, compare — and produces a result, usually written back into a register. This is the same digital logic from Level 00: adders and multiplexers built from gates, just wired up to accept whichever operation the control unit selects for this instruction.&lt;/p&gt;",
+          "&lt;p&gt;Every ALU operation also sets a small set of one-bit &lt;b&gt;flags&lt;/b&gt;: was the result zero? negative? did it overflow the register's width? did a carry fall out the top? Those flags aren't trivia — they're how the CPU makes decisions. A &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;compare&lt;/span&gt; is really just a subtraction whose result is thrown away and whose flags are kept, and next lesson's conditional jumps read those flags to decide where to go next.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "One subtraction, four flags",
+          "description": "Show one ALU operation and its flag output. Left: two inputs 'A = 5' and 'B = 5', operation label 'SUBTRACT'. Middle: ALU box. Right: result 'A − B = 0' plus a small flags panel with four bits: 'ZF (zero) = 1', 'SF (sign) = 0', 'CF (carry) = 0', 'OF (overflow) = 0'. Note beneath: 'ZF=1 is what a later jump-if-equal instruction checks.'"
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "In your own words, what makes a CPU register fundamentally different from a memory location — and why does that difference matter for speed?",
+        "where_to_learn": "Covered in 'Registers: the CPU's scratchpad' — the paragraph contrasting register access time with memory access time."
+      },
+      {
+        "question": "After the ALU computes 5 − 5, which flag gets set to 1, and why would a 'jump if zero' instruction care about it?",
+        "where_to_learn": "Covered in 'The ALU: where decisions and math happen' — the flags diagram walks through exactly this example."
+      }
+    ],
+    "assignment": {
+      "instruction": "Read (or watch the companion lecture for) the Nand2Tetris 'Computer Architecture' project, which builds a working CPU out of nothing but an ALU and a handful of registers — the exact ideas from this lesson, made concrete in actual hardware design. Then sketch, on paper, the three boxes (registers, ALU, control unit) and label which one 'remembers where you are in the program.'",
+      "resource_name": "Nand2Tetris — Project 5: Computer Architecture",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      {"title": "Crash Course Computer Science #7: The Central Processing Unit (CPU)", "type": "video", "meta": "~12 min"},
+      {"title": "x86-64 register reference — Felix Cloutier's x86 instruction guide", "type": "doc", "meta": "Reference"}
+    ]
+  },
+  {
+    "concept": "Assembly, a first look",
+    "time_min": 9,
+    "intro": "&lt;p&gt;Last lesson you met the ALU, the registers, and the control unit that ties them together. Now you get to watch them work, one line at a time. &lt;b&gt;Assembly language&lt;/b&gt; is the closest you can get to reading a CPU's mind in something resembling English: one line of assembly is (almost always) one instruction the control unit will fetch and execute.&lt;/p&gt;&lt;p&gt;You won't write much assembly on Ascend — Level 02 hands you C instead, a language that lets a compiler generate this stuff for you. But reading a little assembly now means that, for the rest of your CS life, \"the compiler\" and \"the debugger\" stop being black boxes. Let's look inside one.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Explain the relationship between machine code, assembly language, and mnemonics",
+      "Read a simple instruction and identify its operation and operands",
+      "Trace how a compare-and-jump pair implements an if/else decision",
+      "Follow a short assembly function line by line and predict its result"
+    ],
+    "sections": [
+      {
+        "heading": "From binary opcodes to mnemonics",
+        "paragraphs": [
+          "&lt;p&gt;Every instruction a CPU executes is, underneath, a pattern of bits — an &lt;b&gt;opcode&lt;/b&gt; that says which operation to do, plus bits naming which registers or values it touches. Nobody sane reads or writes that directly. &lt;b&gt;Assembly language&lt;/b&gt; gives each opcode a short, memorable &lt;b&gt;mnemonic&lt;/b&gt; — &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;mov&lt;/span&gt;, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;add&lt;/span&gt;, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;cmp&lt;/span&gt; — and lets you name registers instead of memorizing bit positions.&lt;/p&gt;",
+          "&lt;p&gt;An &lt;b&gt;assembler&lt;/b&gt; turns mnemonics back into the exact bit patterns the CPU expects; a &lt;b&gt;disassembler&lt;/b&gt; goes the other way, turning a compiled program's bytes back into readable mnemonics. Assembly and machine code describe exactly the same instructions — assembly is just the version a human can read without going insane.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Same instruction, three views",
+          "description": "Show the same instruction in three stacked forms with arrows connecting each to the next. Row 1 (machine code): 'b0 62' labeled 'raw bits the CPU fetches'. Row 2 (assembly mnemonic): 'mov al, 0x62' labeled 'human-readable form'. Row 3 (meaning): 'put the value 0x62 into register al' labeled 'what it actually does'. Note at bottom: 'An assembler translates row 2 into row 1; a disassembler goes the other way.'"
+        }
+      },
+      {
+        "heading": "Anatomy of an instruction",
+        "paragraphs": [
+          "&lt;p&gt;Almost every instruction has the same shape: an &lt;b&gt;operation&lt;/b&gt; followed by one or more &lt;b&gt;operands&lt;/b&gt;. Operands can be a register (&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;eax&lt;/span&gt;), an immediate constant (&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;5&lt;/span&gt;), or a memory address. A handful of mnemonics cover most of what you'll ever read: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;mov&lt;/span&gt; copies a value, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;add&lt;/span&gt;/&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sub&lt;/span&gt; do arithmetic, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;cmp&lt;/span&gt; compares two values by quietly subtracting them and keeping only the flags, and a family of &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;j*&lt;/span&gt; instructions (jump-if) move the program counter somewhere else &lt;i&gt;if&lt;/i&gt; a flag says to.&lt;/p&gt;",
+          "&lt;p&gt;That last family is how loops and if-statements are actually built at the hardware level — there is no if-statement in machine code, only \"compare, then maybe jump.\"&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "asm",
+          "lines": [
+            "mov eax, 10        ; eax = 10",
+            "add eax, 5         ; eax = eax + 5  -&gt; 15",
+            "cmp eax, 20        ; compute eax - 20, keep only the flags",
+            "jl  .below         ; jump to .below only if eax &lt; 20",
+            "; ... falls through here if eax &gt;= 20",
+            ".below:",
+            "; ... lands here if the jump was taken"
+          ]
+        }
+      },
+      {
+        "heading": "Reading a small function",
+        "paragraphs": [
+          "&lt;p&gt;Here's a tiny function that returns the larger of two numbers — the kind of thing you'll write in about one line of C in a few weeks. Read it the way you'd read the fetch-execute loop: one instruction at a time, tracking what's in each register.&lt;/p&gt;",
+          "&lt;p&gt;&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;cmp&lt;/span&gt; sets the flags by comparing the two arguments; &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;jle&lt;/span&gt; reads those flags and skips the next line only when the first argument is less than or equal to the second. No magic — just registers, an ALU comparison, and a conditional jump, exactly as promised in Lesson 1.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "asm",
+          "lines": [
+            "max:",
+            "    mov  eax, edi     ; assume a (edi) is the answer",
+            "    cmp  esi, eax     ; compare b (esi) to eax",
+            "    jle  .done        ; if b &lt;= a, keep eax as-is",
+            "    mov  eax, esi     ; otherwise, the answer is b",
+            ".done:",
+            "    ret               ; return the value now in eax"
+          ]
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "What's the difference between machine code and assembly language, and why can we say they describe 'exactly the same instructions'?",
+        "where_to_learn": "Covered in 'From binary opcodes to mnemonics' — the three-forms diagram of one instruction."
+      },
+      {
+        "question": "In the max() example, what job does cmp actually do, and how does jle 'know' whether to jump?",
+        "where_to_learn": "Covered in 'Reading a small function' — trace the flags back to the ALU discussion in Lesson 1 if you get stuck."
+      }
+    ],
+    "assignment": {
+      "instruction": "Open Compiler Explorer at godbolt.org, paste in a tiny function like int max(int a, int b) { return a &gt; b ? a : b; }, and compare the generated assembly to the max example above — find the cmp and the conditional jump. Then change &gt; to &gt;= and see exactly which mnemonic changes.",
+      "resource_name": "Compiler Explorer (godbolt.org)",
+      "resource_type": "site"
+    },
+    "additional_resources": [
+      {"title": "Guide to x86 Assembly — University of Virginia CS216", "type": "doc", "meta": "Reference guide"},
+      {"title": "Crash Course Computer Science #8: Instructions and Programs", "type": "video", "meta": "~11 min"}
+    ]
+  },
+  {
+    "concept": "The address space: how memory is laid out",
+    "time_min": 7,
+    "intro": "&lt;p&gt;You've now watched instructions move values between registers while the ALU works on them. But registers are scarce — a dozen or so slots — and real programs juggle far more data than that. The overflow goes to &lt;b&gt;memory&lt;/b&gt;, an enormous array of numbered bytes sitting outside the CPU, and every one of those numbers is an &lt;b&gt;address&lt;/b&gt;.&lt;/p&gt;&lt;p&gt;Before you can understand pointers, the stack, or the heap, you need a map. This lesson draws it: what a process's address space actually looks like, region by region, and why it's organized the way it is.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Define what a memory address is and how it relates to a byte-addressable address space",
+      "List the major regions of a process's address space from lowest to highest address",
+      "Explain what lives in the code, data, heap, and stack regions",
+      "Explain why the stack and heap are placed at opposite ends of the address space and grow toward each other"
+    ],
+    "sections": [
+      {
+        "heading": "Addresses you can't see yet",
+        "paragraphs": [
+          "&lt;p&gt;Think of memory as an absurdly long street of houses, each holding exactly one byte, each with a house number — its &lt;b&gt;address&lt;/b&gt; — starting at 0 and counting up. An instruction like \"store this value\" doesn't just store it somewhere vague; the control unit hands the memory system an exact address, and that byte (or several consecutive bytes, for anything bigger than 8 bits) is what gets written.&lt;/p&gt;",
+          "&lt;p&gt;Here's the twist that matters for everything that follows: your program doesn't see real, physical addresses. The operating system gives every running process its own private, virtual &lt;b&gt;address space&lt;/b&gt; — a clean number line from 0 up to some huge maximum, as if the process owned all of memory itself. What we're about to lay out is that private space, not the physical RAM chips underneath it.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Every byte has a house number",
+          "description": "A short horizontal strip of memory bytes with address labels underneath: six boxes labeled with addresses 0x1000, 0x1001, 0x1002, 0x1003, 0x1004, 0x1005, each holding one byte value. Highlight boxes 0x1000–0x1003 together with a bracket labeled 'one 4-byte int lives here, starting at address 0x1000' to show a single value spanning several addressed bytes."
+        }
+      },
+      {
+        "heading": "The layout, region by region",
+        "paragraphs": [
+          "&lt;p&gt;Slice a typical process's address space from low addresses to high, and you'll find the same handful of regions in almost every program you'll ever run: &lt;b&gt;text/code&lt;/b&gt; at the bottom (the compiled instructions themselves, read-only), then &lt;b&gt;initialized and uninitialized data&lt;/b&gt; (global variables), then the &lt;b&gt;heap&lt;/b&gt;, then a large gap of unused address space, and finally the &lt;b&gt;stack&lt;/b&gt; up near the top, just below space the kernel reserves for itself.&lt;/p&gt;",
+          "&lt;p&gt;Two of those regions are special because they change size while the program runs: the &lt;b&gt;heap grows upward&lt;/b&gt;, toward higher addresses, as the program asks for more dynamic memory; the &lt;b&gt;stack grows downward&lt;/b&gt;, toward lower addresses, as functions call other functions. Everything else is fixed the moment the program is loaded.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "One process's address space, top to bottom",
+          "description": "A vertical memory-layout diagram listing regions from top (highest address) to bottom (lowest address): 'Kernel space — reserved, off-limits'; 'Stack — grows downward (function calls, local variables)'; '(unused gap)'; 'Heap — grows upward (malloc'd memory)'; 'BSS — uninitialized globals'; 'Data — initialized globals'; 'Text/Code — the compiled instructions, read-only'. In the gap, two arrows point toward each other — one labeled 'stack growth' pointing down, one labeled 'heap growth' pointing up."
+        }
+      },
+      {
+        "heading": "Why the layout looks like this",
+        "paragraphs": [
+          "&lt;p&gt;Putting the stack and heap at opposite ends with a gap between them is a deliberate trick: nobody knows in advance exactly how large either one will need to be, so giving each of them room to grow into that shared gap lets both expand as needed, without anyone having to guess a fixed size for either one up front.&lt;/p&gt;",
+          "&lt;p&gt;It also bakes in a natural failure mode: if a program recurses too deeply or allocates too much dynamic memory, the two growing regions can meet in the middle. That collision is exactly what's behind the phrase &lt;b&gt;stack overflow&lt;/b&gt; — a term you'll meet for real once you're writing recursive C functions in Level 02.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "What happens if both regions keep growing",
+          "description": "A simplified three-block vertical strip: 'Stack (growing down)' at top with a downward arrow, a shrinking block labeled 'free space' in the middle, and 'Heap (growing up)' at bottom with an upward arrow. A second frame beside it shows the gap shrunk to zero and the two arrows meeting, labeled 'Collision — a real stack overflow.'"
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "List the major regions of a process's address space from lowest to highest address, and say what lives in each one.",
+        "where_to_learn": "Covered in 'The layout, region by region' — the vertical memory-layout diagram."
+      },
+      {
+        "question": "Why do the stack and heap grow toward each other instead of both growing in the same direction?",
+        "where_to_learn": "Covered in 'Why the layout looks like this.'"
+      }
+    ],
+    "assignment": {
+      "instruction": "Read Gustavo Duarte's 'Anatomy of a Program in Memory,' a widely-cited walkthrough of exactly this layout on real Linux processes. Then, on a Linux or WSL machine, run cat /proc/self/maps in a shell and try to match what you see against the regions from this lesson.",
+      "resource_name": "Anatomy of a Program in Memory — Gustavo Duarte",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      {"title": "Computer Systems: A Programmer's Perspective — Ch. 9, Virtual Memory", "type": "doc", "meta": "Textbook chapter"},
+      {"title": "OSDev Wiki: Memory Map (x86)", "type": "doc", "meta": "Reference wiki"}
+    ]
+  },
+  {
+    "concept": "The stack &amp; the heap",
+    "time_min": 8,
+    "intro": "&lt;p&gt;Last lesson gave you the map: stack near the top of the address space growing down, heap lower down growing up. Now you get to watch both of them actually work — because \"where a variable lives\" turns out to be one of the most consequential decisions in a program, and it's a decision you'll make explicitly, in C, starting next level.&lt;/p&gt;&lt;p&gt;The stack and the heap solve the same basic problem — where to put data while a program runs — with two completely different strategies. Understanding both, and when each one is used, is what makes concepts like function calls, recursion, and dynamic memory click instead of feeling arbitrary.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Trace what happens to the stack when one function calls another and later returns",
+      "Explain what a stack frame contains and why it's discarded automatically",
+      "Describe how heap memory differs from stack memory in how it's requested and released",
+      "Choose, for a given scenario, whether stack or heap allocation is the right fit"
+    ],
+    "sections": [
+      {
+        "heading": "The stack: a history of function calls",
+        "paragraphs": [
+          "&lt;p&gt;Every time one function calls another, the CPU pushes a &lt;b&gt;stack frame&lt;/b&gt; onto the stack: the address to return to once the called function finishes, room for that function's local variables, and often a copy of a few registers it plans to reuse. The stack pointer (SP, from Lesson 1) just moves down to carve out that space — pushing is cheap, just a subtraction.&lt;/p&gt;",
+          "&lt;p&gt;When the function returns, its frame is popped — the stack pointer moves back up, the return address is read to know where execution resumes, and every local variable that lived in that frame simply ceases to exist. Nothing is zeroed out or cleaned up; the bytes are just no longer claimed by anyone, which is exactly why using a variable's address after its function has returned is a serious bug you'll learn to avoid in Level 02.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Three calls deep: main → foo → bar",
+          "description": "A vertical stack diagram showing three stacked frames from a call chain main() -&gt; foo() -&gt; bar(), growing downward. Bottom frame (oldest): 'main() — locals: none shown'. Middle frame: 'foo() — return address: back into main; locals: x'. Top frame (most recent): 'bar() — return address: back into foo; locals: y, z'. A stack pointer arrow points at the top of the topmost frame, labeled 'SP — top of stack, moves as frames push/pop.'"
+        }
+      },
+      {
+        "heading": "The heap: memory you ask for by name",
+        "paragraphs": [
+          "&lt;p&gt;The stack is great for data that comes and goes in strict order with function calls — but not everything fits that pattern. Sometimes you don't know how much memory you'll need until the program is running, or you need something to outlive the function that created it. That's what the &lt;b&gt;heap&lt;/b&gt; is for: a region of memory you request from, in a specific amount, at runtime.&lt;/p&gt;",
+          "&lt;p&gt;Unlike the stack, heap memory doesn't come and go automatically. You (or, later, your C code calling &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;malloc&lt;/span&gt;) explicitly ask an allocator for a chunk of a given size, and that chunk stays reserved — even after the function that requested it returns — until it's explicitly given back. There's no automatic order to it either: chunks can be requested and released in any sequence, which is exactly why heap management needs bookkeeping the stack never has to do.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Heap memory: requested and released out of order",
+          "description": "A horizontal heap diagram showing a row of memory chunks of varying widths. Some solid-shaded and labeled 'in use (128 bytes)', others hatched and labeled 'free', in a sequence like: [in use 64B][free 32B][in use 200B][free 16B][in use 96B]. Caption note beneath: 'Unlike the stack, chunks can be freed in any order — leaving gaps behind.'"
+        }
+      },
+      {
+        "heading": "Choosing stack vs heap",
+        "paragraphs": [
+          "&lt;p&gt;The stack wins on speed and simplicity: allocating a local variable is just moving the stack pointer, and cleanup is automatic and instant. Its cost is limited size (typically a few megabytes total) and a strict lifetime — a stack variable is gone the instant its function returns, no exceptions.&lt;/p&gt;",
+          "&lt;p&gt;The heap wins on flexibility: it can be enormous (limited mainly by RAM), and its contents live exactly as long as you want them to. Its cost is that &lt;i&gt;you&lt;/i&gt; become responsible for that lifetime — forget to release a chunk and you've leaked memory; release it too early, or use it after releasing it, and you've triggered undefined behaviour. You'll spend a good chunk of Level 02 learning to manage that trade-off deliberately.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Stack vs heap, side by side",
+          "description": "A two-column comparison table. Column headers: 'Stack' and 'Heap'. Rows: 'Allocation speed' -&gt; 'instant (pointer move)' vs 'slower (allocator bookkeeping)'; 'Size' -&gt; 'small, fixed limit' vs 'large, flexible'; 'Lifetime' -&gt; 'ends automatically at function return' vs 'lasts until explicitly freed'; 'Order' -&gt; 'strict last-in-first-out' vs 'any order'."
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "Walk through, step by step, what happens on the stack when function A calls function B, and what happens when B returns.",
+        "where_to_learn": "Covered in 'The stack: a history of function calls' — the three-frame call-chain diagram."
+      },
+      {
+        "question": "Give one concrete scenario where you'd need heap allocation instead of a plain local variable, and explain why the stack wouldn't work there.",
+        "where_to_learn": "Covered in 'The heap: memory you ask for by name' and 'Choosing stack vs heap.'"
+      }
+    ],
+    "assignment": {
+      "instruction": "Read the 'Memory: It's What's for Dinner' section of Beej's Guide to C Programming, which covers stack and heap allocation directly. Then hand-draw the stack frames for a chain of three function calls of your choosing, labeling each frame's return address and locals, the way the diagram above does.",
+      "resource_name": "Beej's Guide to C Programming — Memory: It's What's for Dinner",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      {"title": "Computer Systems: A Programmer's Perspective — 3.7, Procedures", "type": "doc", "meta": "Textbook section"},
+      {"title": "Computerphile: Stack Based Buffer Overflow", "type": "video", "meta": "~14 min"}
+    ]
+  },
+  {
+    "concept": "Caches &amp; locality",
+    "time_min": 7,
+    "intro": "&lt;p&gt;By now you've got registers (blazing fast, tiny) and memory (huge, and — as promised — much slower). This lesson finally puts a number on \"much slower,\" and introduces the trick that keeps modern CPUs from spending most of their time waiting around: the &lt;b&gt;cache&lt;/b&gt;.&lt;/p&gt;&lt;p&gt;This isn't just trivia for hardware nerds. Once you understand why caches work, you'll be able to look at two pieces of code that do the \"same\" amount of work and correctly predict which one runs dramatically faster — a skill that starts mattering the moment you write your first C loops in Level 02.&lt;/p&gt;",
+    "learning_outcomes": [
+      "State the rough order-of-magnitude speed difference between registers, cache, RAM, and disk",
+      "Define temporal locality and spatial locality in your own words",
+      "Explain what a cache line is and why a cache fetches more than one byte at a time",
+      "Predict which of two access patterns will run faster based on locality"
+    ],
+    "sections": [
+      {
+        "heading": "The speed gap nobody warned you about",
+        "paragraphs": [
+          "&lt;p&gt;A register access takes about one CPU clock cycle. A trip out to main RAM can take a couple of hundred cycles — call it roughly a hundred times slower. If the CPU had to wait on RAM for every single value it needed, it would spend the overwhelming majority of its time doing nothing at all, which is a spectacular waste of a chip you paid for.&lt;/p&gt;",
+          "&lt;p&gt;The fix is a &lt;b&gt;memory hierarchy&lt;/b&gt;: a series of storage layers between the CPU and RAM, each one bigger but slower than the last. &lt;b&gt;L1 cache&lt;/b&gt; sits closest to the CPU (tiny, almost register-speed); &lt;b&gt;L2&lt;/b&gt; and &lt;b&gt;L3 cache&lt;/b&gt; sit further out (bigger, a bit slower); then main &lt;b&gt;RAM&lt;/b&gt;; then, way out at the bottom, &lt;b&gt;disk&lt;/b&gt; — millions of times slower than a register. Most of the time, the CPU finds what it needs in a cache and never has to make the slow trip at all.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "The memory hierarchy — fast and small at the top",
+          "description": "A pyramid or stepped-bar diagram of the memory hierarchy, narrow at top (fastest, smallest) widening toward the bottom (slowest, biggest). Levels top to bottom with rough relative latency: 'Registers — ~1 cycle'; 'L1 cache — ~4 cycles'; 'L2 cache — ~12 cycles'; 'L3 cache — ~40 cycles'; 'RAM — ~200 cycles'; 'Disk/SSD — ~100,000+ cycles'. Note beneath: numbers are illustrative orders of magnitude, not exact figures for any one chip."
+        }
+      },
+      {
+        "heading": "Locality: why caching even works",
+        "paragraphs": [
+          "&lt;p&gt;Caching only works because real programs aren't random — they exhibit &lt;b&gt;locality&lt;/b&gt;. &lt;b&gt;Temporal locality&lt;/b&gt; means: if a program used a piece of data once, it's likely to use that exact same piece again soon (think of a loop counter, checked every iteration). &lt;b&gt;Spatial locality&lt;/b&gt; means: if a program used one address, it's likely to use a &lt;i&gt;nearby&lt;/i&gt; address soon too (think of walking through an array element by element).&lt;/p&gt;",
+          "&lt;p&gt;Caches exploit spatial locality directly: when the CPU asks for one byte that isn't in cache, the cache doesn't fetch just that byte — it fetches an entire &lt;b&gt;cache line&lt;/b&gt;, typically 64 contiguous bytes, betting that you'll want your neighbors soon. Get that bet right consistently, and a program can run almost entirely out of cache, barely touching slow RAM at all.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "One request, one whole cache line",
+          "description": "A row of memory bytes (about 16 small boxes) representing part of an array, with a highlighted bracket around a contiguous chunk labeled '64-byte cache line' that gets pulled into cache after the CPU asks for just one byte inside it. An arrow labeled 'CPU asked for this one byte' points at a single box; the bracket is labeled 'whole cache line pulled in — free neighbors.'"
+        }
+      },
+      {
+        "heading": "Cache-friendly vs cache-hostile code",
+        "paragraphs": [
+          "&lt;p&gt;This is why an array and a linked list, holding the exact same data, can perform completely differently. An array's elements sit back-to-back in memory (the same contiguous layout from the heap/stack discussion two lessons ago) — walking through it in order is a spatial-locality dream, and cache lines keep feeding the CPU exactly what it's about to ask for next.&lt;/p&gt;",
+          "&lt;p&gt;A linked list's nodes, by contrast, can be scattered anywhere the allocator happened to put them. Following each &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;next&lt;/span&gt; pointer can jump to a completely different, uncached region of memory — a likely &lt;b&gt;cache miss&lt;/b&gt; almost every single step, each one costing the full RAM-speed penalty from the pyramid above.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "// cache-friendly: elements are contiguous",
+            "int sum = 0;",
+            "for (int i = 0; i &lt; n; i++) {",
+            "    sum += array[i];   // array[i] and array[i+1] likely share a cache line",
+            "}",
+            "",
+            "// cache-hostile: nodes can be scattered anywhere in the heap",
+            "int sum2 = 0;",
+            "for (Node *n = head; n != NULL; n = n-&gt;next) {",
+            "    sum2 += n-&gt;value;  // each n-&gt;next may jump to an uncached address",
+            "}"
+          ]
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "In your own words, what's the difference between temporal and spatial locality, and which one does a cache line directly exploit?",
+        "where_to_learn": "Covered in 'Locality: why caching even works.'"
+      },
+      {
+        "question": "Why would summing every element of an array typically be much faster than summing the same values scattered across a linked list?",
+        "where_to_learn": "Covered in 'Cache-friendly vs cache-hostile code' — compare the two loops."
+      }
+    ],
+    "assignment": {
+      "instruction": "Read Igor Ostrovsky's 'Gallery of Processor Cache Effects,' and work through Example 1 (looping over an array with different strides) — predict which stride will be slowest before you check the explanation.",
+      "resource_name": "Gallery of Processor Cache Effects — Igor Ostrovsky",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      {"title": "What Every Programmer Should Know About Memory — Ulrich Drepper", "type": "pdf", "meta": "Seminal paper, ~114 pages"},
+      {"title": "Computer Systems: A Programmer's Perspective — Ch. 6, The Memory Hierarchy", "type": "doc", "meta": "Textbook chapter"}
+    ]
+  },
+  {
+    "concept": "Endianness: how bytes are ordered",
+    "time_min": 8,
+    "intro": "&lt;p&gt;You now know that a multi-byte value — a 4-byte int, say — doesn't live at one address, it spans several consecutive ones (back in Lesson 3's memory-strip diagram). That raises a question you've been able to avoid until now: given four bytes and four addresses, which byte goes &lt;i&gt;where&lt;/i&gt;?&lt;/p&gt;&lt;p&gt;The answer is: it depends on the machine, and both conventions are alive and well in the real world. This is &lt;b&gt;endianness&lt;/b&gt; — a small idea that causes outsized confusion the first time you stare at a hex dump or a network packet and the bytes seem to be \"backwards.\"&lt;/p&gt;",
+    "learning_outcomes": [
+      "Explain why a multi-byte value's byte order is even a meaningful question",
+      "Convert a given hex value into its little-endian and big-endian byte layouts by hand",
+      "State which convention x86/x86-64 uses and which convention network protocols use",
+      "Recognize endianness as the likely culprit when raw memory or packet bytes look reversed"
+    ],
+    "sections": [
+      {
+        "heading": "One value, several bytes",
+        "paragraphs": [
+          "&lt;p&gt;Take the 4-byte value &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;0x12345678&lt;/span&gt;. It needs four consecutive addresses to store it — say 0x100, 0x101, 0x102, and 0x103. The value has a most-significant byte (&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;0x12&lt;/span&gt;) and a least-significant byte (&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;0x78&lt;/span&gt;) — and nothing about \"four addresses in a row\" tells you, by itself, which byte belongs at the lowest address.&lt;/p&gt;",
+          "&lt;p&gt;That's a genuine design decision every CPU architecture has to make, and different architectures have made it differently. It's entirely internal and invisible as long as one machine both writes and reads its own memory — the trouble starts the moment bytes cross a boundary: to a different machine, across a network, or straight into a debugger showing you raw hex.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Four bytes, four addresses, one open question",
+          "description": "Four memory slots at addresses 0x100, 0x101, 0x102, 0x103, each shown empty with a question mark. Above them, the value '0x12345678' broken into its four bytes '12 | 34 | 56 | 78' with an arrow pointing down at the four slots and a large question mark asking 'which byte goes at 0x100?'"
+        }
+      },
+      {
+        "heading": "Little-endian vs big-endian",
+        "paragraphs": [
+          "&lt;p&gt;&lt;b&gt;Little-endian&lt;/b&gt; stores the least-significant byte at the lowest address — so 0x12345678 is laid out in memory as &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;78 56 34 12&lt;/span&gt; reading from address 0x100 upward. &lt;b&gt;Big-endian&lt;/b&gt; stores the most-significant byte first — &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;12 34 56 78&lt;/span&gt; — which reads the way you'd naturally write the number on paper.&lt;/p&gt;",
+          "&lt;p&gt;x86 and x86-64, the family of chips in most laptops and desktops, are little-endian; so is ARM by default (though ARM can actually run either way). Network protocols went the other direction: TCP/IP standardizes on big-endian, which is why it's traditionally called &lt;b&gt;network byte order&lt;/b&gt;. Neither convention is \"more correct\" — they're just two consistent answers to the same design question.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Same value, two valid byte orders",
+          "description": "Two side-by-side memory strips for the same value 0x12345678, each labeled with addresses 0x100–0x103 beneath. Little-endian strip: boxes reading [78][56][34][12], labeled 'little-endian — least-significant byte first'. Big-endian strip: boxes reading [12][34][56][78], labeled 'big-endian — most-significant byte first (network byte order)'."
+        }
+      },
+      {
+        "heading": "Why you'll actually run into this",
+        "paragraphs": [
+          "&lt;p&gt;Endianness stops being trivia the moment you look at raw bytes directly: a hex dump of memory, a byte-for-byte view of a network packet, or the contents of a file format. Misjudge the byte order and a value that should read as 1 can appear to read as 16,777,216 — same bytes, wrong assumption about their order.&lt;/p&gt;",
+          "&lt;p&gt;This is exactly why network programming has dedicated conversion functions — &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;htons&lt;/span&gt;/&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;ntohl&lt;/span&gt; and friends — whose entire job is converting between your machine's native byte order and network byte order. You'll meet them for real once you start writing networked C code.&lt;/p&gt;"
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Same bytes on screen, two possible readings",
+          "description": "A small hex-dump-style panel: address label '0x100' with byte row '78 56 34 12', and two interpretation arrows below it — one labeled 'read little-endian → 0x12345678 (correct, if this is a little-endian machine)', the other labeled 'read big-endian → 0x78563412 (wrong number, same bytes)'."
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "Given the 4-byte value 0xAABBCCDD stored starting at address 0x100, write out which byte sits at 0x100 on a little-endian machine, and which sits there on a big-endian machine.",
+        "where_to_learn": "Covered in 'Little-endian vs big-endian' — the side-by-side memory-strip diagram."
+      },
+      {
+        "question": "Why do network protocols standardize on big-endian ('network byte order') even though most desktop and laptop CPUs are little-endian?",
+        "where_to_learn": "Covered in 'Little-endian vs big-endian' and 'Why you'll actually run into this.'"
+      }
+    ],
+    "assignment": {
+      "instruction": "Read the 'Byte Order' section of Beej's Guide to Network Programming, then convert the value 0xDEADBEEF by hand into both its little-endian and big-endian byte sequences before checking your answer with a debugger or the htons/ntohl man page.",
+      "resource_name": "Beej's Guide to Network Programming — Byte Order",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      {"title": "man 3 endian (byteorder) — Linux manual page", "type": "doc", "meta": "Man page"},
+      {"title": "On Holy Wars and a Plea for Peace — Danny Cohen, 1980", "type": "pdf", "meta": "Historical paper, IEN 137"}
+    ]
+  }
+]

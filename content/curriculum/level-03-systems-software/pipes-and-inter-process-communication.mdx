@@ -1,0 +1,58 @@
+---
+title: Pipes & inter-process communication
+level: level-03-systems-software
+slug: pipes-and-inter-process-communication
+order: 3
+timeMin: 12
+learningOutcomes:
+- Explain what pipe() creates and why data can only flow one direction through it
+- Combine fork() and pipe() to send data from one process to another
+- Explain why closing the unused end of a pipe in each process isn't optional
+- Describe how a shell wires two commands together with a single pipe, fd by fd
+knowledgeCheck:
+- question: Why does the child in the pipe example call close(fds[1]) before it ever reads anything?
+  whereToLearn: Covered in "Wiring two processes together" — the inline comment on that line explains the convention.
+- question: If neither process ever closed the write end of the pipe, what would read() on the other end do differently?
+  whereToLearn: Covered in "A pipe is a kernel-managed queue" and reinforced in the next section — it explains why EOF depends on every write-end reference being closed.
+assignment:
+  instruction: Read man 2 pipe, then extend the pipe example so the child sends a reply back to the parent — since a pipe only flows one way, that round trip needs a second, independent pipe.
+  resourceName: man 2 pipe
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man2/pipe.2.html'
+additionalResources:
+- title: Beej's Guide to Unix IPC — Pipes
+  type: doc
+  meta: Documentation
+  url: 'https://beej.us/guide/bgipc/html/'
+- title: Anatomy of a pipe, visualized
+  type: video
+  meta: 8 min
+---
+
+Processes are isolated from each other by design — one process can't just read another's variables. So how does `ls | grep .c` work, where the output of one program becomes the input of another? The kernel builds a small, temporary conduit between them called a <b>pipe</b> — and once you understand it, that `|` character stops being shell syntax and becomes three lines of C you fully understand.
+
+This is the lesson where fork() from last time and syscalls from the lesson before that combine into something genuinely useful: two separate processes, talking to each other, safely, through the kernel.
+
+## A pipe is a kernel-managed queue
+
+`pipe(fds)` asks the kernel for a small in-memory buffer and hands you two file descriptors that point at opposite ends of it: `fds[0]` for reading, `fds[1]` for writing. Whatever bytes you write in one end come out the other, in order, like a queue.
+
+It's <b>unidirectional</b> — you can't write to fds[0] or read from fds[1] — and it's <b>bounded</b>: the kernel buffer holds a fixed amount (commonly 64KB on Linux). Write past that and your process blocks until a reader drains some of it; read from an empty pipe and you block until a writer adds some.
+
+<Visual type='diagram' caption='A pipe is a one-way kernel buffer' description='Process A on the left with an arrow labeled &#39;write(fds[1], ...)&#39; pointing into a box in the middle labeled &#39;kernel pipe buffer (bounded, e.g. 64KB)&#39;. From that buffer, an arrow labeled &#39;read(fds[0], ...)&#39; points right into Process B. Both fds[0] and fds[1] are shown as small tags on each process, indicating which file descriptors they were handed by the single pipe() call, emphasizing that data only flows left to right, never backward.' />
+
+## Wiring two processes together
+
+A pipe is only useful once two <i>different</i> processes hold its ends — and `fork()` is how you get that: create the pipe first, then fork, and the child inherits copies of both fds. Each process then closes the end it doesn't need — the reader closes the write end, the writer closes the read end.
+
+That closing step isn't just tidy; it's what lets `read()` ever return 0 (end-of-file). As long as <i>any</i> process still has the write end open, a reader waiting on an empty pipe will block forever instead of seeing EOF.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "#include &lt;string.h&gt;", "#include &lt;sys/types.h&gt;", "#include &lt;unistd.h&gt;", "", "int main(void) {", "    int fds[2];", "    pipe(fds);              /* fds[0] = read end, fds[1] = write end */", "", "    pid_t pid = fork();", "", "    if (pid == 0) {                  /* child: the reader */", "        close(fds[1]);               /* not writing, close write end */", "        char buf[64] = {0};", "        read(fds[0], buf, sizeof(buf) - 1);", "        printf(\"child received: %s\", buf);", "        close(fds[0]);", "    } else {                         /* parent: the writer */", "        close(fds[0]);               /* not reading, close read end */", "        const char msg[] = \"hi from the parent\\n\";", "        write(fds[1], msg, strlen(msg));", "        close(fds[1]);", "    }", "", "    return 0;", "}"]' runnable expectedOutput='child received: hi from the parent' />
+
+## How your shell will wire ls | grep .c together
+
+A real shell pipeline is just this pattern scaled to two <i>fresh</i> processes running different programs, connected instead of hand-written printf/read code. The shell calls `pipe()` once, forks twice, and in each child redirects a standard stream onto the pipe before calling `execve()` — the redirection trick itself is coming up in a later lesson.
+
+Notice the parent (your shell) never touches the data at all — it just builds the plumbing and gets out of the way. That's exactly the shape you'll write inside Shellforge.
+
+<Visual type='diagram' caption='How your shell will wire ls | grep .c together' description='The shell process in the center forks two children, A (will become ls) and B (will become grep). A single pipe() call happens before both forks, producing an fd pair (read_end, write_end). Child A duplicates the write end onto its own stdout, closes both original pipe fds, and execs ls. Child B duplicates the read end onto its own stdin, closes both original pipe fds, and execs grep. The parent shell closes both pipe fds itself, since it never reads or writes the data, and waits for both children to finish.' />

@@ -91,10 +91,14 @@ export async function signIn(input: { email: string; password: string }): Promis
  * errors are still logged server-side (see client.ts's dbInitError log).
  */
 export async function getCurrentUser(): Promise<PublicUser | null> {
-  if (!db) return null;
   try {
+    // Read the session cookie first, unconditionally -- this is what tells
+    // Next.js the route is request-dynamic. Checking `db` before this would
+    // skip that signal whenever the db happens to be down (e.g. a transient
+    // sqlite lock), letting a route get wrongly cached as static "logged out".
     const userId = await getSessionUserId();
     if (!userId) return null;
+    if (!db) return null;
 
     const user = await db.query.users.findFirst({ where: eq(schema.users.id, userId) });
     if (!user) return null;
@@ -103,7 +107,13 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
 
     return { id: user.id, email: user.email, name: profile.name, username: profile.username };
   } catch (err) {
-    console.error("[auth] getCurrentUser failed, treating request as signed-out:", err);
+    // Next's own static-render probe bails out of cookies() with this
+    // digest during `next build` -- not a real failure, just how Next
+    // detects the route needs dynamic rendering. Don't log it as one.
+    const isNextStaticBailout = (err as { digest?: string } | null)?.digest === "DYNAMIC_SERVER_USAGE";
+    if (!isNextStaticBailout) {
+      console.error("[auth] getCurrentUser failed, treating request as signed-out:", err);
+    }
     return null;
   }
 }

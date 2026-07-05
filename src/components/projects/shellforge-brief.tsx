@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, FileCode2, Play, GitBranch, Info } from "lucide-react";
+import { Check, FileCode2, Play, GitBranch, Info, BookOpen, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 
@@ -33,13 +33,35 @@ const STARTER_FILES = [
 ];
 
 const RESOURCES = [
-  { title: "How fork() really works", meta: "Curated video · 11 min" },
-  { title: "man 2 execve", meta: "Documentation" },
-  { title: "Pipes & dup2 cheatsheet", meta: "1-page PDF" },
+  {
+    title: "fork(2) man page",
+    meta: "Documentation",
+    href: "https://man7.org/linux/man-pages/man2/fork.2.html",
+    icon: BookOpen,
+    bg: "bg-[#FFF1EC]",
+    fg: "text-[#FF6B4A]",
+  },
+  {
+    title: "execve(2) man page",
+    meta: "Documentation",
+    href: "https://man7.org/linux/man-pages/man2/execve.2.html",
+    icon: FileCode2,
+    bg: "bg-xp-bg",
+    fg: "text-brand-violet",
+  },
+  {
+    title: "dup2(2) man page",
+    meta: "Documentation — pipes & redirection",
+    href: "https://man7.org/linux/man-pages/man2/dup2.2.html",
+    icon: FileText,
+    bg: "bg-[#E7F8F0]",
+    fg: "text-[#12A472]",
+  },
 ];
 
 export function ShellforgeBrief() {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [cloneNotice, setCloneNotice] = useState(false);
 
   const requiredDone = REQUIREMENTS.filter((r) => !r.bonus && checked[r.id]).length;
   const requiredTotal = REQUIREMENTS.filter((r) => !r.bonus).length;
@@ -216,9 +238,23 @@ export function ShellforgeBrief() {
             <Play size={16} className="fill-current" />
             Start project
           </Link>
+          <button
+            type="button"
+            onClick={() => setCloneNotice((v) => !v)}
+            className="mb-1 flex items-center justify-center gap-2 rounded-xl border border-card-border px-4 py-3 text-[14px] font-bold text-ink-secondary transition-transform hover:-translate-y-0.5"
+          >
+            <GitBranch size={15} strokeWidth={2.2} />
+            Clone starter repo
+          </button>
+          {cloneNotice && (
+            <div className="mb-1 flex items-start gap-2 rounded-xl border border-card-border-soft bg-[#F3F1FA] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-ink-secondary">
+              <Info size={15} className="mt-0.5 flex-none text-brand-violet" strokeWidth={2.2} />
+              This is a demo preview — there&apos;s no real starter repo to clone.
+            </div>
+          )}
           <div className="flex items-start gap-2 border-t border-[#F0EEF6] pt-4 text-[12.5px] leading-relaxed text-ink-fainter">
             <Info size={15} className="mt-0.5 flex-none text-brand-violet" strokeWidth={2.2} />
-            This is a demo preview — there&apos;s no real repo to clone or grader to run.
+            Submit a Git repo link when done — auto-checked in ~30s.
           </div>
         </Card>
 
@@ -239,12 +275,21 @@ export function ShellforgeBrief() {
           <div className="mb-3.5 font-display text-base font-extrabold">Helpful resources</div>
           <div className="flex flex-col gap-2">
             {RESOURCES.map((r) => (
-              <div key={r.title} className="flex items-center gap-3 rounded-xl border border-[#EEECF6] px-3.5 py-2.5">
+              <a
+                key={r.title}
+                href={r.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-xl border border-[#EEECF6] px-3.5 py-2.5 transition-colors hover:bg-[#FAF9FE]"
+              >
+                <span className={cn("flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[9px]", r.bg, r.fg)}>
+                  <r.icon size={15} strokeWidth={2.2} />
+                </span>
                 <div className="min-w-0">
                   <div className="text-[13.5px] font-bold text-[#2A2540]">{r.title}</div>
                   <div className="text-[11.5px] text-ink-fainter">{r.meta}</div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </Card>

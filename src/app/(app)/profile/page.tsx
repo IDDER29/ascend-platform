@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Share2, Flame, Settings, LogOut } from "lucide-react";
+import { Share2, Flame, Settings, LogOut, Link2 } from "lucide-react";
 import { LabeledSidebar } from "@/components/ui/labeled-sidebar";
 import { AppTopbar } from "@/components/ui/app-topbar";
 import { Card } from "@/components/ui/card";
@@ -34,6 +34,28 @@ const LEVEL_DONE: Record<string, number> = {
 };
 
 const earnedBadges = BADGES.filter((b) => b.status === "earned");
+
+function GitHubGlyph() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+    </svg>
+  );
+}
+
+const PASSED_PROJECTS = [
+  {
+    id: "shellforge",
+    name: "Shellforge",
+    score: "90/100",
+    gradient: "from-[#7B4DFF] to-[#C13AE0]",
+    description: "A working command-line shell — parse input, spawn processes, wire up pipes, handle signals.",
+    tags: ["C", "processes", "pipes"],
+    date: "Jul 4",
+    resultHref: "/projects/shellforge/result?outcome=passed",
+    briefHref: "/projects/shellforge",
+  },
+];
 
 export default function ProfilePage() {
   const [copied, setCopied] = useState(false);
@@ -82,12 +104,22 @@ export default function ProfilePage() {
                     </span>
                   </div>
                   <div className="mt-1 font-mono text-[13px] text-[#B9B3D0]">
-                    @{username} · The Craft tier
+                    @{username} · The Craft tier · joined Jun 2026
                   </div>
                   <p className="mt-3 max-w-[460px] text-[14.5px] leading-relaxed text-[#D3CFE2]">
                     Learning how computers really work, bottom-up. Currently deep in C &amp;
                     systems — chasing that first working shell.
                   </p>
+                  <div className="mt-4 flex flex-wrap gap-2.5">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.06] px-3 py-1.5 text-[12.5px] text-[#D3CFE2]">
+                      <GitHubGlyph />
+                      github.com/{username}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.12] bg-white/[0.06] px-3 py-1.5 text-[12.5px] text-[#D3CFE2]">
+                      <Link2 size={13} strokeWidth={2.2} />
+                      ascend.dev/@{username}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex flex-none gap-2.5">
                   <button
@@ -130,6 +162,7 @@ export default function ProfilePage() {
                 {[
                   { value: "1,440", label: "Total XP" },
                   { value: "19 / 25", label: "Concepts" },
+                  { value: String(PASSED_PROJECTS.length), label: "Projects passed" },
                   {
                     value: (
                       <span className="inline-flex items-center gap-1.5">
@@ -153,7 +186,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex flex-wrap items-start gap-6">
-              <div className="min-w-0 flex-[100_1_500px]">
+              <div className="flex min-w-0 flex-[100_1_500px] flex-col gap-6">
                 <Card hover={false} className="p-6">
                   <div className="mb-4.5 flex items-center justify-between">
                     <div className="font-display text-[17px] font-extrabold">Skills</div>
@@ -184,6 +217,59 @@ export default function ProfilePage() {
                         </div>
                       );
                     })}
+                  </div>
+                </Card>
+
+                <Card hover={false} className="p-6">
+                  <div className="mb-4.5 flex items-center justify-between">
+                    <div className="font-display text-[17px] font-extrabold">Projects passed</div>
+                    <span className="font-mono text-[12.5px] text-ink-faint">{PASSED_PROJECTS.length} shipped</span>
+                  </div>
+                  <div className="flex flex-col gap-3.5">
+                    {PASSED_PROJECTS.map((p) => (
+                      <div key={p.id} className="rounded-2xl border border-[#EEECF6] p-4.5">
+                        <div className="flex items-start gap-3.5">
+                          <div className={cn("flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-gradient-to-br font-mono text-[13px] font-bold text-white", p.gradient)}>
+                            &gt;_
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[15.5px] font-bold text-[#2A2540]">{p.name}</span>
+                              <span className="inline-flex items-center gap-1 rounded-full bg-[#E7F8F0] px-2 py-0.5 font-mono text-[10.5px] font-extrabold text-[#0E9E6E]">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0E9E6E" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M20 6 9 17l-5-5" />
+                                </svg>
+                                {p.score}
+                              </span>
+                            </div>
+                            <p className="my-1.5 text-[13px] leading-relaxed text-ink-secondary">{p.description}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {p.tags.map((t) => (
+                                <span key={t} className="rounded-full bg-xp-bg px-2 py-0.5 font-mono text-[11px] font-semibold text-brand-violet">
+                                  {t}
+                                </span>
+                              ))}
+                              <span className="ml-auto font-mono text-[11.5px] text-ink-fainter">{p.date}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3.5 flex gap-2 border-t border-[#F4F2FA] pt-3.5">
+                          <Link
+                            href={p.resultHref}
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-card-border-soft py-2 text-[12.5px] font-bold text-ink-secondary"
+                          >
+                            <GitHubGlyph />
+                            {p.id}
+                          </Link>
+                          <Link
+                            href={p.briefHref}
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-card-border-soft py-2 text-[12.5px] font-bold text-brand-violet"
+                          >
+                            View brief
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </Card>
               </div>
@@ -239,6 +325,13 @@ export default function ProfilePage() {
                     <span className="text-[12.5px] text-ink-muted">
                       <b className="font-display text-[#2A2540]">31</b> active days
                     </span>
+                    <div className="flex items-center gap-1 text-[11px] text-ink-faint">
+                      Less
+                      {["#F0EEF7", "#DDD0FA", "#B79AF2", "#8B5CE8", "#6A3EF0"].map((c) => (
+                        <span key={c} className="h-3 w-3 rounded-sm" style={{ background: c }} />
+                      ))}
+                      More
+                    </div>
                   </div>
                 </Card>
               </div>

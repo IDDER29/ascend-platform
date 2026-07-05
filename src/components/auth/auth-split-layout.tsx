@@ -11,7 +11,7 @@ export function AuthSplitLayout({
   icon: React.ReactNode;
   title: string;
   subtitle: string;
-  caption?: string;
+  caption?: React.ReactNode;
   decoration?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -40,7 +40,7 @@ export function AuthSplitLayout({
           {decoration}
         </div>
         {caption && (
-          <div className="relative font-mono text-[12.5px] text-[#9990B8]">{caption}</div>
+          <div className="relative flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-[12.5px] text-[#9990B8]">{caption}</div>
         )}
       </div>
 

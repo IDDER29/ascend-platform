@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, LayoutDashboard, Swords, Play, Trophy } from "lucide-react";
+import { Search, LayoutDashboard, Swords, Play, Trophy, User, Terminal, Flame } from "lucide-react";
 
 export interface PaletteLesson {
   title: string;
@@ -19,6 +19,17 @@ interface PaletteAction {
   iconFg: string;
   kbd: string;
 }
+
+interface PaletteProject {
+  title: string;
+  subtitle: string;
+  href: string;
+}
+
+const PROJECTS: PaletteProject[] = [
+  { title: "Shellforge", subtitle: "Level 03 · capstone project", href: "/projects/shellforge" },
+  { title: "Shellforge — your submission", subtitle: "Test results & peer solutions", href: "/projects/shellforge/result?outcome=passed" },
+];
 
 const ACTIONS: PaletteAction[] = [
   {
@@ -61,6 +72,14 @@ const ACTIONS: PaletteAction[] = [
     iconBg: "bg-[#F3F1F8]",
     iconFg: "text-[#6E6A7C]",
     kbd: "G D",
+  },
+  {
+    title: "Go to my profile",
+    href: "/profile",
+    icon: User,
+    iconBg: "bg-[#F3F1F8]",
+    iconFg: "text-[#6E6A7C]",
+    kbd: "G U",
   },
 ];
 
@@ -115,6 +134,11 @@ export function CommandPalette({ lessons }: { lessons: PaletteLesson[] }) {
     return list.slice(0, 6);
   }, [lessons, query]);
 
+  const matchedProjects = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return q ? PROJECTS.filter((p) => p.title.toLowerCase().includes(q)) : PROJECTS;
+  }, [query]);
+
   const matchedActions = useMemo(() => {
     const q = query.trim().toLowerCase();
     return q ? ACTIONS.filter((a) => a.title.toLowerCase().includes(q)) : ACTIONS;
@@ -123,9 +147,10 @@ export function CommandPalette({ lessons }: { lessons: PaletteLesson[] }) {
   const flatResults = useMemo(
     () => [
       ...matchedLessons.map((l) => ({ kind: "lesson" as const, href: l.href })),
+      ...matchedProjects.map((p) => ({ kind: "project" as const, href: p.href })),
       ...matchedActions.map((a) => ({ kind: "action" as const, href: a.href })),
     ],
-    [matchedLessons, matchedActions],
+    [matchedLessons, matchedProjects, matchedActions],
   );
 
   function go(href: string) {
@@ -214,6 +239,39 @@ export function CommandPalette({ lessons }: { lessons: PaletteLesson[] }) {
                 </>
               )}
 
+              {matchedProjects.length > 0 && (
+                <>
+                  <div className="mx-3 my-1.5 h-px bg-[#F2F0F8]" />
+                  <div className="px-4 pb-1 pt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#B0ACBC]">
+                    Projects
+                  </div>
+                  {matchedProjects.map((p, i) => {
+                    const flatIndex = matchedLessons.length + i;
+                    return (
+                      <button
+                        key={p.href}
+                        onClick={() => go(p.href)}
+                        onMouseEnter={() => setActiveIndex(flatIndex)}
+                        className={`mx-1.5 mb-0.5 flex w-[calc(100%-12px)] items-center gap-3 rounded-xl px-3 py-2.5 text-left ${
+                          activeIndex === flatIndex ? "bg-[#F1EDFE]" : ""
+                        }`}
+                      >
+                        <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[10px] bg-[#181428] text-white">
+                          <Terminal size={16} strokeWidth={2.1} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[14.5px] font-bold text-[#2A2540]">{p.title}</div>
+                          <div className="mt-0.5 font-mono text-xs text-[#A29EB4]">{p.subtitle}</div>
+                        </div>
+                        <span className="whitespace-nowrap rounded-full bg-[#F3F1F8] px-2.5 py-1 font-mono text-[10.5px] font-bold text-[#8A8698]">
+                          Project
+                        </span>
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+
               {matchedActions.length > 0 && (
                 <>
                   <div className="mx-3 my-1.5 h-px bg-[#F2F0F8]" />
@@ -221,7 +279,7 @@ export function CommandPalette({ lessons }: { lessons: PaletteLesson[] }) {
                     Actions
                   </div>
                   {matchedActions.map((a, i) => {
-                    const flatIndex = matchedLessons.length + i;
+                    const flatIndex = matchedLessons.length + matchedProjects.length + i;
                     return (
                       <button
                         key={a.href}
@@ -263,6 +321,10 @@ export function CommandPalette({ lessons }: { lessons: PaletteLesson[] }) {
           <span className="inline-flex items-center gap-1.5 text-xs text-[#8A8698]">
             <kbd className="rounded-md border border-[#E4E1EE] bg-[#F7F6FB] px-1.5 py-0.5 font-mono text-[11px] text-[#A29EB4]">esc</kbd>
             close
+          </span>
+          <span className="ml-auto inline-flex items-center gap-1.5 font-mono text-xs font-bold text-streak-text">
+            <Flame size={13} className="fill-current" />
+            12-day streak
           </span>
         </div>
       </div>

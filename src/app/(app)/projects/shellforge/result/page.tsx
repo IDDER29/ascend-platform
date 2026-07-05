@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Check, X, MessageSquare, GitBranch, RefreshCw, BookOpen } from "lucide-react";
+import { Check, X, MessageSquare, GitBranch, RefreshCw, BookOpen, Trophy } from "lucide-react";
 import { LabeledSidebar } from "@/components/ui/labeled-sidebar";
 import { AppTopbar } from "@/components/ui/app-topbar";
 import { Card } from "@/components/ui/card";
+import { PeerSolutions } from "@/components/projects/peer-solutions";
 import { cn } from "@/lib/cn";
 
 interface Check {
@@ -396,11 +397,52 @@ export default async function ShellforgeResultPage({
                       </span>
                     </div>
                     <div className="flex justify-between text-ink-fainter">
+                      <span>Commit</span>
+                      <span className="font-mono text-[#2A2540]">{passed ? "a3f9c1d" : "7c2e0b4"}</span>
+                    </div>
+                    <div className="flex justify-between text-ink-fainter">
+                      <span>Submitted</span>
+                      <span className="text-[#2A2540]">{passed ? "Jul 4, 14:22" : "Jul 4, 15:08"}</span>
+                    </div>
+                    <div className="flex justify-between text-ink-fainter">
                       <span>Attempt</span>
                       <span className="text-[#2A2540]">{passed ? "#2" : "#1"}</span>
                     </div>
                   </div>
+                  {passed && (
+                    <Link
+                      href="/projects/shellforge/submit"
+                      className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-card-border px-4 py-2.5 text-[13.5px] font-bold text-ink-secondary transition-transform hover:-translate-y-0.5"
+                    >
+                      <RefreshCw size={15} strokeWidth={2.2} />
+                      Re-submit
+                    </Link>
+                  )}
                 </Card>
+
+                {passed && (
+                  <Card hover={false} className="p-5">
+                    <div className="mb-1.5 font-display text-base font-extrabold">What&apos;s next</div>
+                    <p className="mb-3.5 text-[13.5px] leading-relaxed text-ink-secondary">
+                      Shellforge was the last project in the curriculum. You&apos;ve finished all four levels.
+                    </p>
+                    <Link
+                      href="/achievements"
+                      className="flex items-center gap-3 rounded-xl border border-[#EEECF6] p-3.5"
+                    >
+                      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-[10px] bg-gradient-to-br from-[#FFE08A] via-[#FF8A4C] to-[#FFD86B] text-white">
+                        <Trophy size={16} strokeWidth={2.2} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[13.5px] font-bold text-[#2A2540]">See your badges</span>
+                        <span className="block text-xs text-ink-fainter">Shell Architect · +800 XP</span>
+                      </span>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C6C1D4" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m9 6 6 6-6 6" />
+                      </svg>
+                    </Link>
+                  </Card>
+                )}
 
                 {!passed && (
                   <Card hover={false} className="relative overflow-hidden bg-gradient-to-br from-[#1B1730] to-[#2C2548] p-[22px] text-white">
@@ -423,6 +465,8 @@ export default async function ShellforgeResultPage({
                 )}
               </div>
             </div>
+
+            {passed && <PeerSolutions />}
           </div>
         </main>
       </div>

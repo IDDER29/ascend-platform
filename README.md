@@ -119,7 +119,11 @@ scripts/convert-lessons.py               One-time converter: content-source/*.js
                                          → content/curriculum/**/*.mdx
 src/app/
   page.tsx                              Homepage
-  curriculum/page.tsx                   Curriculum index (all 4 levels, all 24 lessons)
+  curriculum/page.tsx                   Curriculum index — real app-shell page (sidebar/topbar,
+                                         reads the session), with per-level/per-lesson progress
+                                         state, filter chips, and the same sidebar widgets as Dashboard
+  terms/page.tsx, privacy/page.tsx      Minimal, honest stand-ins so the sign-up form's legal
+                                         links go somewhere real instead of a dead end
   curriculum/[level]/[slug]/page.tsx    Lesson page template (SSG via generateStaticParams)
   (app)/                                Route group: reads the session (see "Backend")
     dashboard/, playground/,

@@ -1,0 +1,65 @@
+---
+title: Dynamic memory
+level: level-02-the-c-language
+slug: dynamic-memory
+order: 7
+timeMin: 11
+learningOutcomes:
+- Explain why heap memory outlives the function that allocated it, unlike a stack variable
+- Use malloc together with sizeof to request a correctly-sized block of heap memory
+- Check a malloc call for failure before using the pointer it returns
+- Trace how an unfreed allocation becomes an unreachable memory leak
+knowledgeCheck:
+- question: Why does heap memory survive after the function that allocated it returns, when a stack variable wouldn't?
+  whereToLearn: Covered in “Stack vs heap, one more time” — stack space is reclaimed automatically on return, but heap space isn't reclaimed until you call free.
+- question: What actually goes wrong when you forget to free a heap allocation before losing your only pointer to it?
+  whereToLearn: Covered in “Every malloc needs a free” — the block becomes unreachable but stays marked in use for the rest of the program's run.
+assignment:
+  instruction: Read man 3 malloc in full this time, not just the synopsis — note what it says about NULL on failure and about calloc's zero-initialization — then rewrite the lab above to use calloc instead of malloc and delete the loop that was only there to initialize the array.
+  resourceName: man 3 malloc
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man3/malloc.3.html'
+additionalResources:
+- title: Beej's Guide to C — malloc, calloc, realloc, and free
+  type: doc
+  meta: Documentation
+  url: 'https://beej.us/guide/bgc/html/split/manual-memory-allocation.html'
+- title: Finding memory leaks with Valgrind's Memcheck
+  type: video
+  meta: 8 min
+  url: 'https://www.youtube.com/watch?v=26jYoKkKM8Y'
+---
+
+Every variable you've written so far lives on the stack &mdash; born when its scope opens, gone the instant it closes. That's fine until you don't know how much memory you'll need until the program is already running: a file of unknown size, a list that grows as the user types. For that, C gives you the <b>heap</b> &mdash; a separate pool of memory you control entirely by hand.
+
+`malloc` asks the heap for a block of bytes and hands you back a pointer to it; `free` gives that block back. Get the pairing right and you have memory that outlives any single function. Get it wrong &mdash; and in the next lesson, on purpose, we will &mdash; and things get ugly.
+
+## Stack vs heap, one more time
+
+Flip back to Concept 2: a local variable lives on the stack, and its space is reclaimed the instant the function that owns it returns &mdash; automatically, with zero work from you. That's fast and safe, but it only works because the compiler knows the size and the lifetime in advance.
+
+The heap makes the opposite trade. You explicitly ask for a block, and it stays reserved &mdash; even after the function that requested it returns &mdash; until you explicitly give it back. Nothing does that for you automatically. That's the entire reason `malloc` and `free` exist.
+
+<Visual type='memory-diagram' caption='Two very different neighborhoods' description='Two side-by-side panels. Left panel labeled STACK: a vertical stack of blocks representing call frames for main() and a function it calls, with an arrow showing the top frame popping off and disappearing the instant that function returns. Right panel labeled HEAP: a loose scattering of blocks of different sizes at different addresses, each tagged with its address and the caption &#39;stays until free()&#39; to emphasize that nothing removes them automatically.' />
+
+## Requesting memory with malloc
+
+`malloc(n)` asks the heap for n bytes and returns a pointer to the first one &mdash; or `NULL` if it couldn't find them. Multiplying by `sizeof`, as in `malloc(5 * sizeof(int))`, keeps the byte count matched to whatever type you actually want: five ints, not five bytes.
+
+That pointer behaves like any other pointer the moment you have it: index it, dereference it, pass it to functions. The only real difference from a stack variable is who's responsible for cleaning it up &mdash; and this time, that's you.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "#include &lt;stdlib.h&gt;", "", "int main(void) {", "    int *nums = malloc(5 * sizeof(int));", "    if (nums == NULL) {", "        return 1;", "    }", "    for (int i = 0; i &lt; 5; i++) {", "        nums[i] = i * i;", "    }", "    printf(\"nums[3] = %d\", nums[3]);", "    free(nums);", "    return 0;", "}"]' runnable expectedOutput='nums[3] = 9' />
+
+## Every malloc needs a free
+
+`malloc` never cleans up after itself. If you lose the only pointer to a block &mdash; by overwriting the variable that held it, or returning from a function without freeing it &mdash; that memory is unreachable but still marked in use for as long as your program runs. That's a <b>memory leak</b>.
+
+The rule of thumb: every successful `malloc` should be matched by exactly one `free`, once you're truly finished with the block. Free it too early, though, and you've set up the exact mistake the next lesson is entirely built around.
+
+<CodeBlock lang='c' linesJson='["void leaky_function(void) {", "    int *buf = malloc(100 * sizeof(int));", "    buf[0] = 42;", "}", "/* buf goes out of scope here. The only copy of that", "   address is gone -- the 400 bytes it pointed to are", "   still marked \"in use\" and unreachable until the", "   program exits. That&#39;s a memory leak. */"]' />
+
+## Why this matters
+
+You now have every ingredient for the final concept in this level: what happens when you use a pointer after freeing what it pointed to, and why the compiler doesn't stop you. Structs, the stack, the heap, and now allocation all collide in undefined behaviour.
+
+Read that opening sentence again once you've finished the next lesson &mdash; it'll land completely differently.

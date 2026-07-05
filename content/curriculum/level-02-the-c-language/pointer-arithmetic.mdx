@@ -1,0 +1,64 @@
+---
+title: Pointer arithmetic
+level: level-02-the-c-language
+slug: pointer-arithmetic
+order: 4
+timeMin: 8
+learningOutcomes:
+- Explain why p + 1 advances by sizeof(*p) bytes rather than by one byte
+- Walk through an array using pointer increments instead of index brackets
+- Rewrite arr[i] as its equivalent pointer expression *(arr + i), and vice versa
+- Identify pointer arithmetic that produces undefined behavior, such as stepping past the end of an array
+knowledgeCheck:
+- question: If p is declared as an int *, what actually happens at the byte level when you write p + 1?
+  whereToLearn: See 'Addresses that know their own step size' — the memory diagram shows the jump equals sizeof(int), not one byte.
+- question: Why do arr[i] and *(arr + i) always produce the same value?
+  whereToLearn: See 'Arrays were pointer arithmetic all along' — square-bracket indexing is defined as pointer arithmetic under the hood, confirmed by the second runnable lab.
+assignment:
+  instruction: Take the array-walking lab above and rewrite it to print all four elements using only pointer arithmetic and a for loop that increments a pointer — no [ ] anywhere — then read up on exactly which pointer arithmetic is legal versus undefined.
+  resourceName: Beej's Guide to C — Pointers (§6.5, Pointer Arithmetic)
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/pointers2.html'
+additionalResources:
+- title: Pointer arithmetic, visualized
+  type: video
+  meta: 7 min
+- title: 'cppreference: pointer arithmetic'
+  type: doc
+  meta: Documentation
+  url: 'https://en.cppreference.com/c/language/operator_arithmetic'
+---
+
+You already know the one big idea about pointers: a pointer is a variable that holds an address, and `*p` follows that address to read or write what's there. Pointer arithmetic is what happens when you ask a pointer a very reasonable question — 'what's next?' — and discover the answer depends on more than just the number stored inside it.
+
+The surprising part is that `p + 1` almost never means 'add one to the address.' It means 'move forward by one whole <i>thing</i>' — and the size of that thing is exactly the type `p` points to. Once that clicks, arrays stop being a separate topic and become a direct consequence of everything you already know about pointers.
+
+## Addresses that know their own step size
+
+When you write `p + 1` for an `int *p`, the compiler doesn't add 1 to the raw address — it adds `sizeof(int)`, typically 4. That's because `p + 1` means 'the address of the next int,' not 'the next byte.' Change the type `p` points to, and the same `+ 1` jumps a completely different distance.
+
+This only makes sense because pointers are typed. An `int *` and a `char *` can hold the exact same numeric address, but arithmetic on them behaves differently — which is exactly the behind-the-scenes bookkeeping that makes arrays work without you ever thinking about byte offsets.
+
+<Visual type='memory-diagram' caption='int *p walking across an array of ints' description='Four adjacent memory boxes, each 4 bytes wide: arr[0]=10 at 0x1000, arr[1]=20 at 0x1004, arr[2]=30 at 0x1008, arr[3]=40 at 0x100C. A pointer p starts pointing at arr[0] (0x1000). An arrow labeled &#39;p + 1&#39; moves it to arr[1] (0x1004) — a jump of 4 bytes, not 1. A second arrow labeled &#39;p + 2&#39; moves it further to arr[2] (0x1008).' />
+
+## Walk the array without brackets
+
+Because `p + i` already means 'i elements forward,' you can reach any element without ever writing `[ ]`. Run the lab below: `p` points at the start of `arr`, and `*(p + 2)` reaches straight into the third element.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "", "int main(void) {", "    int arr[4] = {10, 20, 30, 40};", "    int *p = arr;", "", "    printf(\"*p = %d\\n\", *p);", "    printf(\"*(p + 2) = %d\\n\", *(p + 2));", "    return 0;", "}"]' runnable expectedOutput='*p = 10
+*(p + 2) = 30' />
+
+## Arrays were pointer arithmetic all along
+
+This is why `arr[i]` and `*(arr + i)` are the exact same expression to the compiler — square brackets are defined in terms of pointer arithmetic, not the other way around. The array name `arr`, when used in an expression, decays into a pointer to its first element — exactly why `int *p = arr;` above needed no `&`.
+
+That decay is subtle and worth remembering: `arr` and `p` behave almost identically in arithmetic, but `sizeof(arr)` and `sizeof(p)` give very different answers — one is the whole array's size, the other is just the size of a pointer.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "", "int main(void) {", "    int arr[4] = {10, 20, 30, 40};", "", "    printf(\"arr[2] = %d\\n\", arr[2]);", "    printf(\"*(arr + 2) = %d\\n\", *(arr + 2));", "    return 0;", "}"]' runnable expectedOutput='arr[2] = 30
+*(arr + 2) = 30' />
+
+## Where the arithmetic stops being safe
+
+Pointer arithmetic is only defined within an array (plus one address just past its last element, which you may compute but never dereference). Step one further — `*(p + 4)` on our 4-element array — and you've read memory that isn't yours to read; the compiler won't stop you, and the result is undefined behavior, not a friendly crash.
+
+The same caution applies to subtracting pointers: `p2 - p1` is only meaningful when both point into the same array. Keep this boundary in mind — the Undefined Behaviour lesson later in this level is entirely about failures exactly like this one.

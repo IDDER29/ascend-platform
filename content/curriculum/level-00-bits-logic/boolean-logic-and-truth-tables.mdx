@@ -1,0 +1,57 @@
+---
+title: Boolean logic & truth tables
+level: level-00-bits-logic
+slug: boolean-logic-and-truth-tables
+order: 3
+timeMin: 7
+learningOutcomes:
+- Define AND, OR, NOT, and XOR, and reconstruct each one's truth table from memory
+- Evaluate a compound boolean expression combining AND, OR, and NOT for any set of inputs
+- Explain precisely how XOR differs from OR at the one row where they disagree
+- Explain why boolean true/false maps directly onto the bit values 1 and 0 from the first lesson
+knowledgeCheck:
+- question: In your own words, explain why AND is "stricter" than OR — walk through why the input pair (1, 0) evaluates differently under each.
+  whereToLearn: Revisit "AND, OR, and NOT" — AND requires every input true, so a single false input forces the whole result false, while OR only needs one true input to succeed.
+- question: What is the one input pair where XOR and OR disagree, and why does XOR give a different answer there?
+  whereToLearn: 'Revisit "XOR: exactly one, not both" and its truth table — the (1,1) row is true for OR but false for XOR, since XOR requires the inputs to differ.'
+assignment:
+  instruction: Watch Crash Course Computer Science's episode on Boolean logic, then pause the video and build the truth table for NOT(A AND B) yourself by hand before checking your answer against De Morgan's law.
+  resourceName: 'Crash Course Computer Science #3: Boolean Logic & Logic Gates'
+  resourceType: video
+  resourceUrl: 'https://www.youtube.com/watch?v=gI-qXk7XojA'
+additionalResources:
+- title: Boolean Algebra — Wikipedia
+  type: doc
+  meta: Reference article
+  url: 'https://en.wikipedia.org/wiki/Boolean_algebra'
+- title: George Boole — Wikipedia
+  type: doc
+  meta: Biography & history
+  url: 'https://en.wikipedia.org/wiki/George_Boole'
+---
+
+You can now read and write numbers in binary. But computers don't just store numbers — they make decisions: compare two values, check a condition, decide which instruction to run next. That requires a formal system for combining true/false values, and it already existed a century before the first computer: <b>Boolean logic</b>, named for the 19th-century mathematician George Boole, who first showed that logic itself could be manipulated like algebra.
+
+By the end of this lesson you'll know the three core operators — AND, OR, NOT — plus XOR, be able to build any of their truth tables from memory, and see exactly how "true and false" is just another name for the "1 and 0" bit you met in lesson one. Logic, numbers, and bits are about to turn out to be the same idea wearing different clothes.
+
+## True and false are just another pair of states
+
+A boolean value only ever has two possibilities: true or false. Sound familiar? That's exactly the shape of a bit. In real hardware, a "true" wire and a "1" wire are the same physical thing — a boolean variable is just a bit that we've agreed to talk about using the words true and false instead of 1 and 0.
+
+George Boole's insight in 1854 was that you could treat these two values algebraically: instead of adding and multiplying numbers, you combine truth values with logical operators. That algebra — Boolean algebra — turned out, a century later, to be exactly the mathematics needed to describe electronic circuits. Boole had no idea he was designing the theory behind every computer ever built.
+
+## AND, OR, and NOT
+
+`AND` is a strict gatekeeper: the result is true only when <i>every</i> input is true. "It's raining AND it's cold" is only true on days that are both — one condition failing sinks the whole expression.
+
+`OR` is more permissive: the result is true if <i>at least one</i> input is true (including, importantly, when both are). `NOT` is the simplest of all — it takes a single input and flips it, true to false or false to true.
+
+<TruthTable caption='AND: true only when both inputs are true' rowsJson='[["A", "B", "OUT"], ["0", "0", "0"], ["0", "1", "0"], ["1", "0", "0"], ["1", "1", "1"]]' />
+
+## XOR: exactly one, not both
+
+`XOR` ("exclusive or") looks like OR at first glance, but differs at exactly one row: when both inputs are true, OR says true, XOR says false. XOR is true only when the two inputs <i>differ</i> — one true and one false, in either order.
+
+That single-row difference isn't a technicality — XOR turns out to be exactly the operation you need to add two bits together and to flip individual bits without touching the rest, which is why it reappears constantly once we start building circuits in the next lesson.
+
+<TruthTable caption='XOR: true only when the inputs differ' rowsJson='[["A", "B", "OUT"], ["0", "0", "0"], ["0", "1", "1"], ["1", "0", "1"], ["1", "1", "0"]]' />

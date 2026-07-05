@@ -1,0 +1,59 @@
+---
+title: Logic gates, from switches to circuits
+level: level-00-bits-logic
+slug: logic-gates-from-switches-to-circuits
+order: 4
+timeMin: 8
+learningOutcomes:
+- Explain how two switches wired in series behave like an AND gate, and wired in parallel like an OR gate
+- Identify the standard schematic symbols and truth tables for AND, OR, NOT, and NAND gates
+- Explain why NAND is called a "universal" gate and what it means to build any circuit from NAND alone
+- Trace how an XOR gate and an AND gate combine to form a half-adder that adds two single bits
+knowledgeCheck:
+- question: In your own words, why does wiring two switches in series produce AND behaviour, while wiring them in parallel produces OR behaviour?
+  whereToLearn: Revisit "Boolean algebra, wired up" — series wiring needs every switch closed for one continuous path, while parallel wiring only needs one of several paths closed.
+- question: What does it concretely mean to say NAND is a "universal" gate?
+  whereToLearn: Revisit "The gate zoo, and the one that builds all the others" — it means every other gate, including AND, OR, NOT, and XOR, can be constructed purely by wiring NAND gates together.
+assignment:
+  instruction: 'Go to nand2tetris.org and complete Project 1: build the AND, OR, NOT, and XOR gates yourself starting from nothing but NAND — it''s the single best hands-on way to make this idea click.'
+  resourceName: 'nand2tetris.org — Project 1: Boolean Logic'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project01'
+additionalResources:
+- title: Ben Eater — Logic gates and building circuits
+  type: video
+  meta: ~20 min series
+  url: 'https://www.youtube.com/watch?v=sTu3LwpF6XI'
+- title: Petzold, Code — Chapters 9–11 (relays & gates)
+  type: doc
+  meta: ~40-page read
+  url: 'https://en.wikipedia.org/wiki/Code:_The_Hidden_Language_of_Computer_Hardware_and_Software'
+---
+
+Boolean logic, as you just learned it, lives on paper — it's math. This lesson makes it physical. A <b>logic gate</b> is a real electronic circuit, built from transistors, that computes AND, OR, or NOT using actual current instead of symbols. It's the same two-state, high-or-low idea from lesson one, wired together to compute something.
+
+By the end you'll be able to explain how switches wired together produce AND/OR behaviour, recognize the standard gate symbols, understand why a single gate type (NAND) is enough to build all the others, and trace how a couple of gates combine to actually add two bits — your first real glimpse of computing hardware doing arithmetic.
+
+## Boolean algebra, wired up
+
+Early computers built logic out of electromechanical relays — physical switches flipped by an electromagnet. Modern chips use transistors instead, but the idea is identical: a transistor is an electrically controlled switch, current either flows or it doesn't, exactly the two states from lesson one. A logic gate is simply a small arrangement of these switches wired to compute one boolean operator.
+
+Wire two switches in <i>series</i> (one after another, along the same path) and a bulb at the end only lights when <i>both</i> switches are closed — that's AND. Wire the same two switches in <i>parallel</i> (two separate paths to the same bulb) and the bulb lights if <i>either</i> switch is closed — that's OR. NOT is even simpler: a switch that lets current through when open and blocks it when closed, inverting the input.
+
+<Visual type='diagram' caption='Series wiring = AND, parallel wiring = OR' description='Two small circuit diagrams side by side. Left: switches A and B wired in series in a single loop with a bulb, labeled "AND — bulb lights only if A and B are both closed". Right: switches A and B wired as two parallel branches feeding the same bulb, labeled "OR — bulb lights if A or B (or both) is closed".' />
+
+## The gate zoo, and the one that builds all the others
+
+Engineering diagrams use standard symbols for each gate: a D-shaped symbol for AND, a curved shield shape for OR, a triangle with a small bubble for NOT. `NAND` is just AND followed by NOT — the bubble on an AND symbol — and it flips the AND truth table exactly.
+
+Here's the remarkable fact: NAND alone is enough to build AND, OR, NOT, XOR — every boolean function that exists — by wiring NAND gates to each other in the right combinations. That's why it's called a <b>universal gate</b>, and why real chips are, underneath, mostly the same few gate types stamped out by the billions rather than a different physical component for every operator.
+
+<TruthTable caption='NAND: the opposite of AND — false only when both inputs are true' rowsJson='[["A", "B", "OUT"], ["0", "0", "1"], ["0", "1", "1"], ["1", "0", "1"], ["1", "1", "0"]]' />
+
+## Gates that add: the half-adder
+
+Put an XOR gate and an AND gate side by side, both fed the same two input bits A and B, and you've built a <b>half-adder</b>: the XOR output is the <i>sum</i> bit (0+0=0, 0+1=1, 1+1=0 with a carry), and the AND output is the <i>carry</i> bit (only true when both inputs are 1, exactly when a carry is needed).
+
+This is the seed of every arithmetic operation a computer performs. Chain more of these together with a bit of extra logic for carrying between columns, and you get a circuit that adds numbers of any size — built entirely from the handful of gates you just learned. That circuit, and others like it, are what the next lesson puts to work inside the loop that makes a CPU run.
+
+<Visual type='diagram' caption='A half-adder: two gates, one addition' description='Two input wires A and B feeding into two gates: an XOR gate labeled "Sum" and an AND gate labeled "Carry", both drawn below the inputs. Arrows show A and B branching into both gates. Small labels beside each gate&#39;s output show example values for A=1, B=1: Sum=0, Carry=1.' />

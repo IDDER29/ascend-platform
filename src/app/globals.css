@@ -1,26 +1,186 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Fonts */
+  --font-display: var(--font-bricolage), sans-serif;
+  --font-sans: var(--font-hanken), sans-serif;
+  --font-mono: var(--font-space-mono), monospace;
+
+  /* Brand */
+  --color-brand-violet: #7b4dff;
+  --color-brand-magenta: #c13ae0;
+  --color-brand-orange: #ff6b4a;
+
+  /* Per-level accents */
+  --color-level-00-from: #12b981;
+  --color-level-00-to: #3bc6f0;
+  --color-level-01-from: #7b4dff;
+  --color-level-01-to: #c13ae0;
+  --color-level-02-from: #c13ae0;
+  --color-level-02-to: #ff6b4a;
+  --color-level-03-from: #8a8698;
+  --color-level-03-to: #b7b3c4;
+
+  /* Surfaces & ink */
+  --color-bg: #f1f0f7;
+  --color-ink: #181528;
+  --color-ink-secondary: #5c5773;
+  --color-ink-muted: #8a8698;
+  --color-ink-faint: #a29eb4;
+  --color-ink-fainter: #c6c1d4;
+  --color-card-border: #edebf4;
+  --color-card-border-soft: #e9e5f4;
+  --color-divider: #ece9f5;
+
+  /* Semantic chips */
+  --color-streak-bg: #fff1ec;
+  --color-streak-border: #ffdace;
+  --color-streak-text: #f0562f;
+  --color-xp-bg: #f1edfe;
+  --color-xp-border: #e4dbfb;
+  --color-xp-text: #5a32d6;
+
+  /* Shadows */
+  --shadow-card-rest: 0 6px 20px rgba(28, 18, 64, 0.05);
+  --shadow-card-hover: 0 16px 38px rgba(28, 18, 64, 0.1);
+  --shadow-glow: 0 8px 18px rgba(123, 77, 255, 0.42);
+
+  /* Radii */
+  --radius-card: 18px;
+  --radius-pill: 999px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes grow {
+  from {
+    width: 0;
+  }
+}
+@keyframes pulse-live {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+}
+@keyframes flame {
+  0%,
+  100% {
+    transform: rotate(-6deg) scale(1);
+  }
+  50% {
+    transform: rotate(6deg) scale(1.1);
+  }
+}
+@keyframes blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(16px, -12px) scale(1.09);
+  }
+}
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
   }
 }
 
+.animate-rise {
+  animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-flame {
+  animation: flame 1.7s ease-in-out infinite;
+  transform-origin: bottom;
+}
+.animate-blob {
+  animation: blob 16s ease-in-out infinite;
+}
+.animate-pulse-live {
+  animation: pulse-live 1.6s infinite;
+}
+.animate-grow {
+  animation: grow 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #7b4dff, #c13ae0 58%, #ff6b4a);
+}
+.bg-brand-gradient-wash {
+  background: linear-gradient(90deg, #7b4dff, #c13ae0);
+}
+.bg-radial-wash {
+  background: radial-gradient(120% 80% at 100% 0%, #eeebfa 0%, #f1f0f7 46%);
+}
+
+.bg-level-00 {
+  background: linear-gradient(135deg, #12b981, #3bc6f0);
+}
+.bg-level-01 {
+  background: linear-gradient(135deg, #7b4dff, #c13ae0);
+}
+.bg-level-02 {
+  background: linear-gradient(135deg, #c13ae0, #ff6b4a);
+}
+.bg-level-03 {
+  background: linear-gradient(135deg, #8a8698, #b7b3c4);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+::selection {
+  background: #6d46f2;
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2.5px solid #6d46f2;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #d6d2e6;
+  border-radius: 99px;
+  border: 3px solid #f1f0f7;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c2bcd8;
 }

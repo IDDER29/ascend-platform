@@ -1,0 +1,64 @@
+---
+title: Memory & the machine
+level: level-02-the-c-language
+slug: memory-and-the-machine
+order: 1
+timeMin: 6
+learningOutcomes:
+- Describe a running C program's memory as a set of byte-addressed regions — code, globals, stack, and heap
+- Predict how many bytes a variable occupies from its type, and confirm it with sizeof
+- Explain why consecutively declared variables tend to sit near each other in memory but aren't guaranteed to
+- Connect the byte-addressable grid from Level 01 to real C variable declarations
+knowledgeCheck:
+- question: If you declared a char, an int, and a double back to back, could you predict their exact addresses without running anything? Why or why not?
+  whereToLearn: See 'A program's memory map' and the padding note in 'Types are the compiler's promise' — sizes are predictable with sizeof, but exact addresses and gaps are not guaranteed.
+- question: Which memory region holds a local variable declared inside main(), and which region holds memory returned by malloc?
+  whereToLearn: See 'A program's memory map' — locals live on the stack, and malloc'd memory lives on the heap.
+assignment:
+  instruction: Write a short program that declares one variable each of type char, short, int, long, and double, and prints the sizeof each one — then compare your numbers with a classmate or another machine to see what's actually guaranteed versus merely typical.
+  resourceName: Beej's Guide to C — Types
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/types.html'
+additionalResources:
+- title: Memory layout of a C program, visualized
+  type: video
+  meta: 8 min
+- title: 'cppreference: sizeof operator'
+  type: doc
+  meta: Documentation
+  url: 'https://en.cppreference.com/c/language/sizeof'
+---
+
+In Level 01 you learned that memory is really just an enormous strip of numbered boxes — bytes, each with its own address, sitting quietly whether anyone's using them or not. Now it's time to make that idea do real work: every variable you write in C claims some of those boxes, and the type you give it decides exactly how many.
+
+This lesson is the bridge. By the end you'll look at a line like `int n = 42;` and see past the syntax — four specific bytes at a specific address, holding a specific pattern of bits. That's the ground floor everything else in this level is built on, including the pointer you'll meet two lessons from now.
+
+## Bits become bytes become variables
+
+Every value in a C program is bits underneath, and Level 01 already showed you those bits are grouped into 8-bit bytes, each with its own address. C's job is to let you name a chunk of that grid instead of poking at raw addresses by hand. Write `int n = 42;` and the compiler picks a free address, reserves enough bytes for an `int`, and stores the bit pattern for 42 there.
+
+How many bytes it reserves depends entirely on the type. A `char` needs exactly 1 byte because that's how big a byte is defined to be. An `int` is usually 4 bytes and a `double` is usually 8 — <b>usually</b>, because C guarantees minimums, not exact sizes, which is exactly why you ask the compiler with `sizeof` instead of assuming.
+
+<Visual type='memory-diagram' caption='Different types, different footprints' description='A row of memory addresses from 0x1000 to 0x1010. A box labeled &#39;char c&#39; occupies address 0x1000 only (1 byte), holding the value &#39;A&#39;. Next to it, a box labeled &#39;int n&#39; spans 0x1004 to 0x1007 (4 bytes), holding 42. Next to that, a box labeled &#39;double d&#39; spans 0x1008 to 0x100F (8 bytes), holding 3.14. Thin unlabeled gaps between the boxes are marked &#39;padding&#39; to show the compiler doesn&#39;t always pack variables edge to edge.' />
+
+## Ask the machine, don't guess
+
+Rather than memorizing sizes, ask `sizeof` — a compile-time operator that reports exactly how many bytes a type or variable takes on this machine. Run the lab below and watch the same three variables from the diagram report their real sizes.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "", "int main(void) {", "    char   c = &#39;A&#39;;", "    int    n = 42;", "    double d = 3.14;", "", "    printf(\"sizeof(c) = %zu\\n\", sizeof(c));", "    printf(\"sizeof(n) = %zu\\n\", sizeof(n));", "    printf(\"sizeof(d) = %zu\\n\", sizeof(d));", "    return 0;", "}"]' runnable expectedOutput='sizeof(c) = 1
+sizeof(n) = 4
+sizeof(d) = 8' />
+
+## A program's memory map
+
+Zoom out and every running C program divides its address space into a few regions with different jobs. Compiled instructions and constants sit in one region; global variables that exist for the program's whole life sit in another. Two more regions matter most day to day: the `stack`, where local variables and function calls live, and the `heap`, where memory you explicitly ask for lives. You'll spend all of the next lesson on that pair.
+
+The stack and heap don't just sit side by side — on most systems they start at opposite ends of the available space and grow toward each other. The stack grows downward as functions call other functions; the heap grows upward as you allocate more memory. Neither is infinite, which is exactly why 'stack overflow' and 'out of memory' are both real, distinct failures.
+
+<Visual type='memory-diagram' caption='One process, four regions' description='A tall vertical strip representing a program&#39;s address space, low addresses at the bottom and high addresses at the top. From bottom to top: &#39;Code&#39; (compiled instructions, fixed size), &#39;Globals/static data&#39; (fixed size, set at startup), then a large &#39;Heap&#39; region with an upward arrow labeled &#39;grows up as you malloc&#39;, then an &#39;unused&#39; gap, then a &#39;Stack&#39; region at the very top with a downward arrow labeled &#39;grows down as functions call functions&#39;.' />
+
+## Types are the compiler's promise, not the machine's
+
+Here's the twist worth sitting with: the memory itself doesn't know anything about `int` or `double` — it's just bytes. Types are a promise the compiler keeps on your behalf, tracking how many bytes belong to each variable and how to interpret the bits it finds there. That's also why two variables declared back-to-back usually land near each other, but never take that for granted — the compiler is free to reorder or pad things however it likes.
+
+Keep that picture — bytes, addresses, and a compiler that remembers what each address means — in your head. It's exactly what you need for the next lesson's tour of the stack and heap, and two lessons from now, for the idea that a pointer is nothing more than a variable that stores one of these addresses.

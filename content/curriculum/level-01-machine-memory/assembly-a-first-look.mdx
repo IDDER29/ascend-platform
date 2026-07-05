@@ -1,0 +1,59 @@
+---
+title: Assembly, a first look
+level: level-01-machine-memory
+slug: assembly-a-first-look
+order: 2
+timeMin: 9
+learningOutcomes:
+- Explain the relationship between machine code, assembly language, and mnemonics
+- Read a simple instruction and identify its operation and operands
+- Trace how a compare-and-jump pair implements an if/else decision
+- Follow a short assembly function line by line and predict its result
+knowledgeCheck:
+- question: What's the difference between machine code and assembly language, and why can we say they describe 'exactly the same instructions'?
+  whereToLearn: Covered in 'From binary opcodes to mnemonics' — the three-forms diagram of one instruction.
+- question: In the max() example, what job does cmp actually do, and how does jle 'know' whether to jump?
+  whereToLearn: Covered in 'Reading a small function' — trace the flags back to the ALU discussion in Lesson 1 if you get stuck.
+assignment:
+  instruction: 'Open Compiler Explorer at godbolt.org, paste in a tiny function like int max(int a, int b) { return a > b ? a : b; }, and compare the generated assembly to the max example above — find the cmp and the conditional jump. Then change > to >= and see exactly which mnemonic changes.'
+  resourceName: Compiler Explorer (godbolt.org)
+  resourceType: site
+  resourceUrl: 'https://godbolt.org/'
+additionalResources:
+- title: Guide to x86 Assembly — University of Virginia CS216
+  type: doc
+  meta: Reference guide
+  url: 'https://www.cs.virginia.edu/~evans/cs216/guides/x86.html'
+- title: 'Crash Course Computer Science #8: Instructions and Programs'
+  type: video
+  meta: ~11 min
+  url: 'https://www.youtube.com/watch?v=zltgXvg6r3k'
+---
+
+Last lesson you met the ALU, the registers, and the control unit that ties them together. Now you get to watch them work, one line at a time. <b>Assembly language</b> is the closest you can get to reading a CPU's mind in something resembling English: one line of assembly is (almost always) one instruction the control unit will fetch and execute.
+
+You won't write much assembly on Ascend — Level 02 hands you C instead, a language that lets a compiler generate this stuff for you. But reading a little assembly now means that, for the rest of your CS life, "the compiler" and "the debugger" stop being black boxes. Let's look inside one.
+
+## From binary opcodes to mnemonics
+
+Every instruction a CPU executes is, underneath, a pattern of bits — an <b>opcode</b> that says which operation to do, plus bits naming which registers or values it touches. Nobody sane reads or writes that directly. <b>Assembly language</b> gives each opcode a short, memorable <b>mnemonic</b> — `mov`, `add`, `cmp` — and lets you name registers instead of memorizing bit positions.
+
+An <b>assembler</b> turns mnemonics back into the exact bit patterns the CPU expects; a <b>disassembler</b> goes the other way, turning a compiled program's bytes back into readable mnemonics. Assembly and machine code describe exactly the same instructions — assembly is just the version a human can read without going insane.
+
+<Visual type='diagram' caption='Same instruction, three views' description='Show the same instruction in three stacked forms with arrows connecting each to the next. Row 1 (machine code): &#39;b0 62&#39; labeled &#39;raw bits the CPU fetches&#39;. Row 2 (assembly mnemonic): &#39;mov al, 0x62&#39; labeled &#39;human-readable form&#39;. Row 3 (meaning): &#39;put the value 0x62 into register al&#39; labeled &#39;what it actually does&#39;. Note at bottom: &#39;An assembler translates row 2 into row 1; a disassembler goes the other way.&#39;' />
+
+## Anatomy of an instruction
+
+Almost every instruction has the same shape: an <b>operation</b> followed by one or more <b>operands</b>. Operands can be a register (`eax`), an immediate constant (`5`), or a memory address. A handful of mnemonics cover most of what you'll ever read: `mov` copies a value, `add`/`sub` do arithmetic, `cmp` compares two values by quietly subtracting them and keeping only the flags, and a family of `j*` instructions (jump-if) move the program counter somewhere else <i>if</i> a flag says to.
+
+That last family is how loops and if-statements are actually built at the hardware level — there is no if-statement in machine code, only "compare, then maybe jump."
+
+<CodeBlock lang='asm' linesJson='["mov eax, 10        ; eax = 10", "add eax, 5         ; eax = eax + 5  -&gt; 15", "cmp eax, 20        ; compute eax - 20, keep only the flags", "jl  .below         ; jump to .below only if eax &lt; 20", "; ... falls through here if eax &gt;= 20", ".below:", "; ... lands here if the jump was taken"]' />
+
+## Reading a small function
+
+Here's a tiny function that returns the larger of two numbers — the kind of thing you'll write in about one line of C in a few weeks. Read it the way you'd read the fetch-execute loop: one instruction at a time, tracking what's in each register.
+
+`cmp` sets the flags by comparing the two arguments; `jle` reads those flags and skips the next line only when the first argument is less than or equal to the second. No magic — just registers, an ALU comparison, and a conditional jump, exactly as promised in Lesson 1.
+
+<CodeBlock lang='asm' linesJson='["max:", "    mov  eax, edi     ; assume a (edi) is the answer", "    cmp  esi, eax     ; compare b (esi) to eax", "    jle  .done        ; if b &lt;= a, keep eax as-is", "    mov  eax, esi     ; otherwise, the answer is b", ".done:", "    ret               ; return the value now in eax"]' />

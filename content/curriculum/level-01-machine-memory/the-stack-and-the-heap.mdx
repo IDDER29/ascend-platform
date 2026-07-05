@@ -1,0 +1,59 @@
+---
+title: The stack & the heap
+level: level-01-machine-memory
+slug: the-stack-and-the-heap
+order: 4
+timeMin: 8
+learningOutcomes:
+- Trace what happens to the stack when one function calls another and later returns
+- Explain what a stack frame contains and why it's discarded automatically
+- Describe how heap memory differs from stack memory in how it's requested and released
+- Choose, for a given scenario, whether stack or heap allocation is the right fit
+knowledgeCheck:
+- question: Walk through, step by step, what happens on the stack when function A calls function B, and what happens when B returns.
+  whereToLearn: 'Covered in ''The stack: a history of function calls'' — the three-frame call-chain diagram.'
+- question: Give one concrete scenario where you'd need heap allocation instead of a plain local variable, and explain why the stack wouldn't work there.
+  whereToLearn: 'Covered in ''The heap: memory you ask for by name'' and ''Choosing stack vs heap.'''
+assignment:
+  instruction: 'Read the ''Memory: It''s What''s for Dinner'' section of Beej''s Guide to C Programming, which covers stack and heap allocation directly. Then hand-draw the stack frames for a chain of three function calls of your choosing, labeling each frame''s return address and locals, the way the diagram above does.'
+  resourceName: 'Beej''s Guide to C Programming — Memory: It''s What''s for Dinner'
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/'
+additionalResources:
+- title: 'Computer Systems: A Programmer''s Perspective — 3.7, Procedures'
+  type: doc
+  meta: Textbook section
+  url: 'https://csapp.cs.cmu.edu/'
+- title: 'Computerphile: Stack Based Buffer Overflow'
+  type: video
+  meta: ~14 min
+  url: 'https://www.youtube.com/watch?v=1S0aBV-Waeo'
+---
+
+Last lesson gave you the map: stack near the top of the address space growing down, heap lower down growing up. Now you get to watch both of them actually work — because "where a variable lives" turns out to be one of the most consequential decisions in a program, and it's a decision you'll make explicitly, in C, starting next level.
+
+The stack and the heap solve the same basic problem — where to put data while a program runs — with two completely different strategies. Understanding both, and when each one is used, is what makes concepts like function calls, recursion, and dynamic memory click instead of feeling arbitrary.
+
+## The stack: a history of function calls
+
+Every time one function calls another, the CPU pushes a <b>stack frame</b> onto the stack: the address to return to once the called function finishes, room for that function's local variables, and often a copy of a few registers it plans to reuse. The stack pointer (SP, from Lesson 1) just moves down to carve out that space — pushing is cheap, just a subtraction.
+
+When the function returns, its frame is popped — the stack pointer moves back up, the return address is read to know where execution resumes, and every local variable that lived in that frame simply ceases to exist. Nothing is zeroed out or cleaned up; the bytes are just no longer claimed by anyone, which is exactly why using a variable's address after its function has returned is a serious bug you'll learn to avoid in Level 02.
+
+<Visual type='diagram' caption='Three calls deep: main → foo → bar' description='A vertical stack diagram showing three stacked frames from a call chain main() -&gt; foo() -&gt; bar(), growing downward. Bottom frame (oldest): &#39;main() — locals: none shown&#39;. Middle frame: &#39;foo() — return address: back into main; locals: x&#39;. Top frame (most recent): &#39;bar() — return address: back into foo; locals: y, z&#39;. A stack pointer arrow points at the top of the topmost frame, labeled &#39;SP — top of stack, moves as frames push/pop.&#39;' />
+
+## The heap: memory you ask for by name
+
+The stack is great for data that comes and goes in strict order with function calls — but not everything fits that pattern. Sometimes you don't know how much memory you'll need until the program is running, or you need something to outlive the function that created it. That's what the <b>heap</b> is for: a region of memory you request from, in a specific amount, at runtime.
+
+Unlike the stack, heap memory doesn't come and go automatically. You (or, later, your C code calling `malloc`) explicitly ask an allocator for a chunk of a given size, and that chunk stays reserved — even after the function that requested it returns — until it's explicitly given back. There's no automatic order to it either: chunks can be requested and released in any sequence, which is exactly why heap management needs bookkeeping the stack never has to do.
+
+<Visual type='diagram' caption='Heap memory: requested and released out of order' description='A horizontal heap diagram showing a row of memory chunks of varying widths. Some solid-shaded and labeled &#39;in use (128 bytes)&#39;, others hatched and labeled &#39;free&#39;, in a sequence like: [in use 64B][free 32B][in use 200B][free 16B][in use 96B]. Caption note beneath: &#39;Unlike the stack, chunks can be freed in any order — leaving gaps behind.&#39;' />
+
+## Choosing stack vs heap
+
+The stack wins on speed and simplicity: allocating a local variable is just moving the stack pointer, and cleanup is automatic and instant. Its cost is limited size (typically a few megabytes total) and a strict lifetime — a stack variable is gone the instant its function returns, no exceptions.
+
+The heap wins on flexibility: it can be enormous (limited mainly by RAM), and its contents live exactly as long as you want them to. Its cost is that <i>you</i> become responsible for that lifetime — forget to release a chunk and you've leaked memory; release it too early, or use it after releasing it, and you've triggered undefined behaviour. You'll spend a good chunk of Level 02 learning to manage that trade-off deliberately.
+
+<Visual type='diagram' caption='Stack vs heap, side by side' description='A two-column comparison table. Column headers: &#39;Stack&#39; and &#39;Heap&#39;. Rows: &#39;Allocation speed&#39; -&gt; &#39;instant (pointer move)&#39; vs &#39;slower (allocator bookkeeping)&#39;; &#39;Size&#39; -&gt; &#39;small, fixed limit&#39; vs &#39;large, flexible&#39;; &#39;Lifetime&#39; -&gt; &#39;ends automatically at function return&#39; vs &#39;lasts until explicitly freed&#39;; &#39;Order&#39; -&gt; &#39;strict last-in-first-out&#39; vs &#39;any order&#39;.' />

@@ -1,0 +1,62 @@
+---
+title: "What a pointer really is"
+level: "level-02-the-c-language"
+slug: "what-a-pointer-really-is"
+order: 3
+timeMin: 6
+learningOutcomes:
+  - "Explain what a pointer stores, and how that differs from the value it points to"
+  - "Use & to take an address and * to read or write through one"
+  - "Predict how writing through a pointer changes the original variable"
+  - "Recognise why pointers underpin arrays, strings and dynamic memory"
+knowledgeCheck:
+  - question: "What is actually stored inside a pointer variable?"
+    whereToLearn: "Not the value it points to — the numeric address of where that value lives in memory. Re-read \"Everything lives at an address\" — the memory diagram section."
+  - question: "What do the & and * operators each do?"
+    whereToLearn: "& takes the address of a variable; * follows an address to read or write the value there. Re-read \"Follow the address with *\" — the runnable lab where you change line 3 and watch x."
+  - question: "After *p = 7, why does x change too?"
+    whereToLearn: "Because p holds x's address, so writing through p writes the same memory slot x names — a two-way street. Re-read \"Follow the address with *\" — the \"Key idea\" callout."
+assignment:
+  instruction: "1) Read Beej's Guide to C — Pointers (§6.1–6.4). Stop at \"Passing pointers to functions.\" 2) Skim man 3 malloc — just the SYNOPSIS and the first paragraph; you'll return to it next lesson. 3) In the lab below, change line 2 to `int *p = &x; int **pp = &p;` and predict what `**pp` prints before you run it."
+  resourceName: "Beej's Guide to C — Pointers (§6.1–6.4)"
+  resourceType: "doc"
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/pointers.html'
+additionalResources:
+  - title: "Pointers, visualized"
+    type: "video"
+    meta: "Curated video · 9 min"
+  - title: "C reference: pointers"
+    type: "doc"
+    meta: "Documentation"
+    url: 'https://en.cppreference.com/c/language/pointer'
+  - title: "Pointer cheatsheet"
+    type: "pdf"
+    meta: "1-page PDF"
+    url: 'https://cheatography.com/shakes/cheat-sheets/pointers-in-c/pdf/'
+---
+
+Pointers feel like dark magic until one idea clicks: **a pointer is just a
+variable that holds an address.** That's the entire secret. Let's make it
+real — and you can run the code as you go.
+
+## Everything lives at an address
+
+Every variable your program makes lives *somewhere* in memory, and every
+somewhere has a numeric address — its house number. Writing `int x = 42;`
+picks an address and stores 42 there. The `&` operator hands you that
+address.
+
+<MemoryDiagram />
+
+## Follow the address with *
+
+The `*` operator means "go to that address and use what's there." So `*p`
+**reads** x — and assigning to `*p` **writes** x. Don't take our word for
+it:
+
+<CodeLab />
+
+<KeyIdea>
+  Dereferencing is a two-way street. Through `p` you can both read x and
+  change it — because `p` literally knows where x lives.
+</KeyIdea>

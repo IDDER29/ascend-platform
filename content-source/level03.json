@@ -1,0 +1,490 @@
+[
+  {
+    "concept": "Processes &amp; the process table",
+    "time_min": 10,
+    "intro": "&lt;p&gt;Every program you run — your editor, your browser, that C binary you just compiled — is a &lt;b&gt;process&lt;/b&gt; to the operating system: a live, running instance with its own memory, its own open files, and one all-important number, its &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;PID&lt;/span&gt;. The kernel doesn't run your code as a favor — it tracks every single process in a table and decides, thousands of times a second, whose turn it is to use the CPU.&lt;/p&gt;&lt;p&gt;This lesson is where \"the shell\" stops being magic. Type &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;ls&lt;/span&gt; at a prompt and, behind the scenes, a brand-new row appears in that process table, runs for a few milliseconds, and vanishes. By the end you'll know exactly how that row gets created, what's inside it, and what happens if nobody cleans up after it.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Describe what a process table entry actually stores about a running program (PID, PPID, state, open files)",
+      "Explain how fork() produces two nearly-identical processes and how their return values tell you which is which",
+      "Predict what happens to a child's exit status if its parent never calls wait() on it",
+      "Trace a process through its lifecycle states, including how a reaped exit differs from an unreaped one"
+    ],
+    "sections": [
+      {
+        "heading": "What lives in a process table entry",
+        "paragraphs": [
+          "The kernel keeps a table with one row per running process — think of it as the OS's own spreadsheet of everything alive on the machine right now. Each row holds a &lt;b&gt;PID&lt;/b&gt; (its ID), a &lt;b&gt;PPID&lt;/b&gt; (its parent's ID), a &lt;b&gt;state&lt;/b&gt; (running, sleeping, stopped, or zombie), and pointers to the process's memory and its table of open files.",
+          "You never edit this table directly — you only ever cause the kernel to add or update rows in it, by calling functions like &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;fork()&lt;/span&gt;, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;exit()&lt;/span&gt;, and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;wait()&lt;/span&gt;. Every process except the very first has a parent, which is why the table naturally forms a tree with PID 1 (&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;init&lt;/span&gt; or &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;systemd&lt;/span&gt;) at the root."
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "One row in the kernel's process table",
+          "description": "A table with one row per running process and columns for: PID (unique process ID), PPID (the parent's PID), state (running / sleeping / stopped / zombie), a pointer to the process's memory (code, stack, heap), and a pointer to its open file descriptor table. Arrows connect a parent process's row to two child rows via matching PPID values, illustrating the process tree."
+        }
+      },
+      {
+        "heading": "Cloning yourself: fork()",
+        "paragraphs": [
+          "&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;fork()&lt;/span&gt; is the one syscall that returns &lt;i&gt;twice&lt;/i&gt;. It clones the calling process — same code, same variables, same open files — into a brand-new process table entry, and then both the original (parent) and the clone (child) continue running from the exact same line, right after the call.",
+          "The only thing that tells them apart is the return value: the parent gets back the child's PID (a positive number), the child gets back &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;0&lt;/span&gt;, and a failed fork returns a negative number to whoever called it (there's only one \"whoever\" then, since the child never got created). That single &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;if (pid == 0)&lt;/span&gt; check is how every fork-based program branches into \"parent work\" and \"child work.\""
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "#include &lt;sys/types.h&gt;",
+            "#include &lt;unistd.h&gt;",
+            "",
+            "int main(void) {",
+            "    printf(\"before fork, pid=%d\\n\", getpid());",
+            "",
+            "    pid_t pid = fork();",
+            "",
+            "    if (pid &lt; 0) {",
+            "        perror(\"fork\");",
+            "        return 1;",
+            "    } else if (pid == 0) {",
+            "        printf(\"child:  pid=%d parent=%d\\n\", getpid(), getppid());",
+            "    } else {",
+            "        printf(\"parent: pid=%d child=%d\\n\", getpid(), pid);",
+            "    }",
+            "",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "before fork, pid=4021\nparent: pid=4021 child=4022\nchild:  pid=4022 parent=4021"
+        }
+      },
+      {
+        "heading": "Reaping children: wait() and zombies",
+        "paragraphs": [
+          "When a child calls &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;exit()&lt;/span&gt;, it doesn't vanish immediately — its process table entry sticks around as a &lt;b&gt;zombie&lt;/b&gt;, just long enough to hold its exit status for the parent to collect. If the parent never asks, that zombie entry lingers until the parent itself exits or explicitly reaps it.",
+          "&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;waitpid()&lt;/span&gt; is how a parent collects that status and frees the entry. This matters enormously for the shell you're about to build: every command you run is a child, and your shell must reap it or your terminal will slowly accumulate zombies every time you run a command."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "#include &lt;stdlib.h&gt;",
+            "#include &lt;sys/types.h&gt;",
+            "#include &lt;sys/wait.h&gt;",
+            "#include &lt;unistd.h&gt;",
+            "",
+            "int main(void) {",
+            "    pid_t pid = fork();",
+            "",
+            "    if (pid == 0) {",
+            "        printf(\"child running, exiting with code 7\\n\");",
+            "        exit(7);",
+            "    }",
+            "",
+            "    int status;",
+            "    waitpid(pid, &amp;status, 0);",
+            "",
+            "    if (WIFEXITED(status)) {",
+            "        printf(\"child exited with status %d\\n\", WEXITSTATUS(status));",
+            "    }",
+            "",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "child running, exiting with code 7\nchild exited with status 7"
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "In the fork() example, what does the parent's copy of pid hold compared to the child's copy — and how does the code use that difference?",
+        "where_to_learn": "Covered in \"Cloning yourself: fork()\" — look at the if / else if / else branching on pid right after the fork() call."
+      },
+      {
+        "question": "What is a zombie process, and which line in the wait() example exists specifically to prevent one from lingering?",
+        "where_to_learn": "Covered in \"Reaping children: wait() and zombies\" — the waitpid() call is the line doing the reaping."
+      }
+    ],
+    "assignment": {
+      "instruction": "Compile the fork() example above, then before running it, predict how many total lines of output a version that calls fork() twice in a row (back-to-back) would print. Run it to check yourself, then read man 2 fork for the exact rules on what's copied and what's shared.",
+      "resource_name": "man 2 fork",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      { "title": "Process states in Linux, explained", "type": "video", "meta": "7 min" },
+      { "title": "man 2 wait", "type": "doc", "meta": "Documentation" }
+    ]
+  },
+  {
+    "concept": "System calls: the real API",
+    "time_min": 12,
+    "intro": "&lt;p&gt;Your program can't just reach into the kernel and read a disk block, or write to the network, or spawn a process — the kernel guards all of that. Every single thing your program does that touches the outside world eventually goes through one narrow, well-defined gate: the &lt;b&gt;system call&lt;/b&gt;. Even &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;printf()&lt;/span&gt; — which feels like plain C — is a thin wrapper that, sooner or later, calls &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;write()&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;Understanding this gate is what turns \"C programming\" into \"systems programming.\" It's also exactly what you'll be doing constantly inside your shell: every &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;fork()&lt;/span&gt;, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;execve()&lt;/span&gt;, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;pipe()&lt;/span&gt; and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;dup2()&lt;/span&gt; you're about to learn is a system call.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Explain why a program can't jump straight into kernel code and must trap through a syscall instead",
+      "Distinguish a library function like printf() from the actual system call (write()) it eventually triggers",
+      "Read a syscall's return value and errno together to detect and diagnose a failure",
+      "Use (or predict the output of) strace to see the real sequence of syscalls a program makes"
+    ],
+    "sections": [
+      {
+        "heading": "User mode vs. kernel mode",
+        "paragraphs": [
+          "The CPU itself enforces a split between &lt;b&gt;user mode&lt;/b&gt;, where your program's instructions run with restricted privileges, and &lt;b&gt;kernel mode&lt;/b&gt;, where the OS runs with full access to hardware and memory. Your program physically cannot execute a \"read this disk sector\" instruction in user mode — the hardware would refuse it.",
+          "A system call is the one controlled doorway between the two: your code executes a special trap instruction, the CPU switches to kernel mode, the kernel does the privileged work on your behalf, and control returns to user mode with a result. This is why syscalls are slower than ordinary function calls — you're paying for two mode switches, not just a jump."
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Crossing from user mode into kernel mode",
+          "description": "Two stacked lanes labeled 'user mode' (top) and 'kernel mode' (bottom), separated by a dashed boundary. In the user-mode lane, application code calls printf(), which internally calls write(). At the boundary, a labeled arrow shows the 'trap / syscall instruction' crossing down into kernel mode, carrying a syscall number and arguments in registers. In the kernel-mode lane, the kernel's write handler runs and touches the real file or terminal; an arrow labeled 'return value + errno' crosses back up into user mode."
+        }
+      },
+      {
+        "heading": "Anatomy of a syscall: write()",
+        "paragraphs": [
+          "&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;write(fd, buf, count)&lt;/span&gt; is about as raw as I/O gets: write &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;count&lt;/span&gt; bytes from &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;buf&lt;/span&gt; to whatever &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;fd&lt;/span&gt; refers to. It returns the number of bytes actually written, or &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;-1&lt;/span&gt; on failure — and on failure, it never tells you &lt;i&gt;why&lt;/i&gt; directly. That's what the global &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;errno&lt;/span&gt; is for.",
+          "This return-value-plus-errno pattern is universal across almost every POSIX syscall, so getting comfortable with it here pays off for the rest of this level — fork(), pipe(), and dup2() all fail the same way."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "#include &lt;string.h&gt;",
+            "#include &lt;errno.h&gt;",
+            "#include &lt;unistd.h&gt;",
+            "",
+            "int main(void) {",
+            "    const char msg[] = \"hello via write()\\n\";",
+            "",
+            "    ssize_t n = write(1, msg, sizeof(msg) - 1);",
+            "    printf(\"write() returned %zd\\n\", n);",
+            "",
+            "    ssize_t bad = write(99, msg, sizeof(msg) - 1);",
+            "    if (bad &lt; 0) {",
+            "        printf(\"write(99, ...) failed: %s\\n\", strerror(errno));",
+            "    }",
+            "",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "hello via write()\nwrite() returned 18\nwrite(99, ...) failed: Bad file descriptor"
+        }
+      },
+      {
+        "heading": "The wrapper is a convenience, not the truth",
+        "paragraphs": [
+          "Libc functions like &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;printf()&lt;/span&gt;, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;malloc()&lt;/span&gt;, and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;fopen()&lt;/span&gt; are conveniences built on top of a much smaller set of raw syscalls — &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;write()&lt;/span&gt;, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;brk()&lt;/span&gt;/&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;mmap()&lt;/span&gt;, and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;openat()&lt;/span&gt;, respectively. The tool &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;strace&lt;/span&gt; lets you watch this curtain get pulled back — run any program under it and you'll see the literal syscalls it made, in order, with their real arguments and return values."
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Same event, three altitudes",
+          "description": "Three stacked boxes connected by a vertical line, all describing the same real-world event of printing text. Top box: the C source line printf(\"hi\\n\"); middle box: the actual system call it boils down to, write(1, \"hi\\n\", 3); bottom box: the raw strace trace line captured by running the program under strace, write(1, \"hi\\n\", 3) = 3, showing the syscall name, its arguments, and its return value exactly as the kernel reported them."
+        }
+      },
+      {
+        "heading": "Syscalls aren't free",
+        "paragraphs": [
+          "Every mode switch costs real time — saving registers, changing privilege level, and switching back. That's precisely why &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;printf()&lt;/span&gt; doesn't call &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;write()&lt;/span&gt; once per character: it buffers output in user-space memory and only calls &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;write()&lt;/span&gt; once the buffer fills up (or hits a newline, on a terminal).",
+          "Keep this in your back pocket — it explains a subtle bug you'll hit in the shell project: mixing buffered stdio with raw file descriptor tricks like &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;dup2()&lt;/span&gt; can print things in the \"wrong\" order if you forget to flush."
+        ],
+        "visual": null
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "Why can't write() just be a normal function call straight into the kernel's code — what has to happen at the boundary?",
+        "where_to_learn": "Covered in \"User mode vs. kernel mode\" — the diagram walks through the trap instruction crossing into the kernel."
+      },
+      {
+        "question": "In the write() example, how do you know the second write() call failed, and where does the human-readable reason come from?",
+        "where_to_learn": "Covered in \"Anatomy of a syscall: write()\" — look at the errno / strerror() lines right after the bad write() call."
+      }
+    ],
+    "assignment": {
+      "instruction": "Compile the write() example, then run it under `strace -o out.txt ./a.out` and open out.txt — find the write() and exit_group() lines and match each one to the C line that produced it.",
+      "resource_name": "man 2 syscalls",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      { "title": "strace in 10 minutes", "type": "video", "meta": "10 min" },
+      { "title": "Advanced Programming in the UNIX Environment, Ch. 1", "type": "pdf", "meta": "22-page excerpt" }
+    ]
+  },
+  {
+    "concept": "Pipes &amp; inter-process communication",
+    "time_min": 12,
+    "intro": "&lt;p&gt;Processes are isolated from each other by design — one process can't just read another's variables. So how does &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;ls | grep .c&lt;/span&gt; work, where the output of one program becomes the input of another? The kernel builds a small, temporary conduit between them called a &lt;b&gt;pipe&lt;/b&gt; — and once you understand it, that &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;|&lt;/span&gt; character stops being shell syntax and becomes three lines of C you fully understand.&lt;/p&gt;&lt;p&gt;This is the lesson where fork() from last time and syscalls from the lesson before that combine into something genuinely useful: two separate processes, talking to each other, safely, through the kernel.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Explain what pipe() creates and why data can only flow one direction through it",
+      "Combine fork() and pipe() to send data from one process to another",
+      "Explain why closing the unused end of a pipe in each process isn't optional",
+      "Describe how a shell wires two commands together with a single pipe, fd by fd"
+    ],
+    "sections": [
+      {
+        "heading": "A pipe is a kernel-managed queue",
+        "paragraphs": [
+          "&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;pipe(fds)&lt;/span&gt; asks the kernel for a small in-memory buffer and hands you two file descriptors that point at opposite ends of it: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;fds[0]&lt;/span&gt; for reading, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;fds[1]&lt;/span&gt; for writing. Whatever bytes you write in one end come out the other, in order, like a queue.",
+          "It's &lt;b&gt;unidirectional&lt;/b&gt; — you can't write to fds[0] or read from fds[1] — and it's &lt;b&gt;bounded&lt;/b&gt;: the kernel buffer holds a fixed amount (commonly 64KB on Linux). Write past that and your process blocks until a reader drains some of it; read from an empty pipe and you block until a writer adds some."
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "A pipe is a one-way kernel buffer",
+          "description": "Process A on the left with an arrow labeled 'write(fds[1], ...)' pointing into a box in the middle labeled 'kernel pipe buffer (bounded, e.g. 64KB)'. From that buffer, an arrow labeled 'read(fds[0], ...)' points right into Process B. Both fds[0] and fds[1] are shown as small tags on each process, indicating which file descriptors they were handed by the single pipe() call, emphasizing that data only flows left to right, never backward."
+        }
+      },
+      {
+        "heading": "Wiring two processes together",
+        "paragraphs": [
+          "A pipe is only useful once two &lt;i&gt;different&lt;/i&gt; processes hold its ends — and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;fork()&lt;/span&gt; is how you get that: create the pipe first, then fork, and the child inherits copies of both fds. Each process then closes the end it doesn't need — the reader closes the write end, the writer closes the read end.",
+          "That closing step isn't just tidy; it's what lets &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;read()&lt;/span&gt; ever return 0 (end-of-file). As long as &lt;i&gt;any&lt;/i&gt; process still has the write end open, a reader waiting on an empty pipe will block forever instead of seeing EOF."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "#include &lt;string.h&gt;",
+            "#include &lt;sys/types.h&gt;",
+            "#include &lt;unistd.h&gt;",
+            "",
+            "int main(void) {",
+            "    int fds[2];",
+            "    pipe(fds);              /* fds[0] = read end, fds[1] = write end */",
+            "",
+            "    pid_t pid = fork();",
+            "",
+            "    if (pid == 0) {                  /* child: the reader */",
+            "        close(fds[1]);               /* not writing, close write end */",
+            "        char buf[64] = {0};",
+            "        read(fds[0], buf, sizeof(buf) - 1);",
+            "        printf(\"child received: %s\", buf);",
+            "        close(fds[0]);",
+            "    } else {                         /* parent: the writer */",
+            "        close(fds[0]);               /* not reading, close read end */",
+            "        const char msg[] = \"hi from the parent\\n\";",
+            "        write(fds[1], msg, strlen(msg));",
+            "        close(fds[1]);",
+            "    }",
+            "",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "child received: hi from the parent"
+        }
+      },
+      {
+        "heading": "How your shell will wire ls | grep .c together",
+        "paragraphs": [
+          "A real shell pipeline is just this pattern scaled to two &lt;i&gt;fresh&lt;/i&gt; processes running different programs, connected instead of hand-written printf/read code. The shell calls &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;pipe()&lt;/span&gt; once, forks twice, and in each child redirects a standard stream onto the pipe before calling &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;execve()&lt;/span&gt; — the redirection trick itself is coming up in a later lesson.",
+          "Notice the parent (your shell) never touches the data at all — it just builds the plumbing and gets out of the way. That's exactly the shape you'll write inside Shellforge."
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "How your shell will wire ls | grep .c together",
+          "description": "The shell process in the center forks two children, A (will become ls) and B (will become grep). A single pipe() call happens before both forks, producing an fd pair (read_end, write_end). Child A duplicates the write end onto its own stdout, closes both original pipe fds, and execs ls. Child B duplicates the read end onto its own stdin, closes both original pipe fds, and execs grep. The parent shell closes both pipe fds itself, since it never reads or writes the data, and waits for both children to finish."
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "Why does the child in the pipe example call close(fds[1]) before it ever reads anything?",
+        "where_to_learn": "Covered in \"Wiring two processes together\" — the inline comment on that line explains the convention."
+      },
+      {
+        "question": "If neither process ever closed the write end of the pipe, what would read() on the other end do differently?",
+        "where_to_learn": "Covered in \"A pipe is a kernel-managed queue\" and reinforced in the next section — it explains why EOF depends on every write-end reference being closed."
+      }
+    ],
+    "assignment": {
+      "instruction": "Read man 2 pipe, then extend the pipe example so the child sends a reply back to the parent — since a pipe only flows one way, that round trip needs a second, independent pipe.",
+      "resource_name": "man 2 pipe",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      { "title": "Beej's Guide to Unix IPC — Pipes", "type": "doc", "meta": "Documentation" },
+      { "title": "Anatomy of a pipe, visualized", "type": "video", "meta": "8 min" }
+    ]
+  },
+  {
+    "concept": "Signals: how programs get interrupted",
+    "time_min": 11,
+    "intro": "&lt;p&gt;Press Ctrl-C while a program runs and something interrupts it &lt;i&gt;immediately&lt;/i&gt;, mid-instruction, with no cooperation required from the program itself. That's a &lt;b&gt;signal&lt;/b&gt; — a tiny, asynchronous notification the kernel delivers to a process, completely independent of whatever that process happens to be doing at the time.&lt;/p&gt;&lt;p&gt;Signals are how the outside world reaches into a running process without a syscall being called &lt;i&gt;by&lt;/i&gt; that process. Your shell needs this badly: when someone presses Ctrl-C, it has to interrupt the command it's running &lt;i&gt;without dying itself&lt;/i&gt; — and that only works if you understand exactly how signals are delivered and caught.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Explain what a signal is and how it differs from a syscall (kernel-to-process vs. process-to-kernel)",
+      "Install a signal handler with sigaction() and safely flag work for the main program to do outside of it",
+      "Name which signals can never be caught, blocked, or ignored, and explain why",
+      "Explain why a shell must catch SIGINT itself so Ctrl-C interrupts the running command, not the shell"
+    ],
+    "sections": [
+      {
+        "heading": "What a signal actually is",
+        "paragraphs": [
+          "A signal is just a small integer (like &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;SIGINT&lt;/span&gt; = 2, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;SIGKILL&lt;/span&gt; = 9, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;SIGTERM&lt;/span&gt; = 15) that the kernel delivers to a process — triggered by a keypress (Ctrl-C), another process calling &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;kill()&lt;/span&gt;, or the kernel itself noticing something (like a segfault, which raises &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;SIGSEGV&lt;/span&gt;).",
+          "Every signal has a &lt;b&gt;default disposition&lt;/b&gt; — usually terminate, sometimes ignore, sometimes stop the process — but a process can override most of them by installing its own &lt;b&gt;handler&lt;/b&gt;, a function that runs instead of the default when that signal arrives."
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "A signal arriving mid-execution",
+          "description": "A single process shown as a horizontal timeline of executing instructions. Partway along, a bolt icon labeled 'SIGINT delivered by the kernel (e.g. Ctrl-C at the terminal, or kill -SIGINT pid)' interrupts the timeline. Below it, a branch shows execution jumping to the registered handler function, running it to completion, then resuming the original instruction stream exactly where it left off — illustrating that a signal handler runs asynchronously, squeezed in between normal instructions."
+        }
+      },
+      {
+        "heading": "Installing a handler",
+        "paragraphs": [
+          "&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sigaction()&lt;/span&gt; registers a function to run when a given signal arrives, replacing that signal's default behavior. Because a handler can interrupt your program at &lt;i&gt;any&lt;/i&gt; instruction, the rules for what's safe to do inside it are strict — the safest pattern is to do almost nothing: just set a flag and let your normal code react to it.",
+          "That's why the example below uses &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;volatile sig_atomic_t&lt;/span&gt; instead of calling &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;printf()&lt;/span&gt; directly inside the handler — printf isn't guaranteed safe to call from a signal handler, since it might interrupt an in-progress printf call from the main program."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "#include &lt;signal.h&gt;",
+            "#include &lt;unistd.h&gt;",
+            "",
+            "volatile sig_atomic_t got_sigint = 0;",
+            "",
+            "void handle_sigint(int sig) {",
+            "    (void)sig;",
+            "    got_sigint = 1;",
+            "}",
+            "",
+            "int main(void) {",
+            "    struct sigaction sa = {0};",
+            "    sa.sa_handler = handle_sigint;",
+            "    sigemptyset(&amp;sa.sa_mask);",
+            "    sigaction(SIGINT, &amp;sa, NULL);",
+            "",
+            "    printf(\"running - send SIGINT (Ctrl-C) to me\\n\");",
+            "",
+            "    while (!got_sigint) {",
+            "        pause();",
+            "    }",
+            "",
+            "    printf(\"caught SIGINT, shutting down cleanly\\n\");",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "running - send SIGINT (Ctrl-C) to me\ncaught SIGINT, shutting down cleanly"
+        }
+      },
+      {
+        "heading": "Some signals can't be caught",
+        "paragraphs": [
+          "&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;SIGKILL&lt;/span&gt; (9) and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;SIGSTOP&lt;/span&gt; (19) can never be caught, blocked, or ignored — the kernel handles them itself, guaranteeing there's always a way to force-kill or force-pause any process, even a buggy one that ignores everything else. That's why &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;kill -9&lt;/span&gt; always works.",
+          "For your shell project, the signal you'll actually care about most is &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;SIGINT&lt;/span&gt;: your shell process needs its own handler so that Ctrl-C doesn't kill the shell itself, while the child process running the current command is left to receive SIGINT normally (or gets it forwarded) and stop. Get this wrong and every Ctrl-C during a long-running command kills your entire terminal session instead of just the command."
+        ],
+        "visual": null
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "Why does handle_sigint() just set got_sigint = 1 instead of doing the real shutdown work directly inside the handler?",
+        "where_to_learn": "Covered in \"Installing a handler\" — the paragraph right after the code explains why handlers should do as little as possible."
+      },
+      {
+        "question": "Why can't a process register a handler for SIGKILL the way it can for SIGINT?",
+        "where_to_learn": "Covered in \"Some signals can't be caught\" — it explains which signals bypass handlers entirely and why the kernel forces that."
+      }
+    ],
+    "assignment": {
+      "instruction": "Read man 7 signal for the full disposition table, then extend the sigaction example to also catch SIGTERM with its own handler that prints which signal number it received.",
+      "resource_name": "man 7 signal",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      { "title": "kill -l and signal numbers explained", "type": "doc", "meta": "Documentation" },
+      { "title": "Signals: the async event system of Unix", "type": "video", "meta": "9 min" }
+    ]
+  },
+  {
+    "concept": "File descriptors &amp; redirection",
+    "time_min": 10,
+    "intro": "&lt;p&gt;Everything your program reads from or writes to — the terminal, a file, a pipe, a network socket — is represented by the exact same kind of handle: a small integer called a &lt;b&gt;file descriptor&lt;/b&gt;. By convention, every process is born with three already open: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;0&lt;/span&gt; (stdin), &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;1&lt;/span&gt; (stdout), and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;2&lt;/span&gt; (stderr).&lt;/p&gt;&lt;p&gt;This lesson has one job: show you that redirection isn't shell magic, it's three ordinary syscalls — &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;open()&lt;/span&gt;, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;dup2()&lt;/span&gt;, and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;close()&lt;/span&gt;. This is exactly what your shell will do with &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;&gt;&lt;/span&gt; and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;&lt;&lt;/span&gt; — once this clicks, you're ready to build Shellforge.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Explain what a file descriptor is and why 0, 1, and 2 are reserved by convention",
+      "Use dup2() to make one file descriptor point at whatever another one points at",
+      "Predict, before running it, where a program's output will land after a dup2() redirection",
+      "Connect the open → dup2 → close pattern directly to how a shell implements &gt;, &lt; and |"
+    ],
+    "sections": [
+      {
+        "heading": "Everything is a file descriptor",
+        "paragraphs": [
+          "Each process keeps its own small table mapping integers to open files — fd 0, 1, and 2 point at the controlling terminal by default, and every &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;open()&lt;/span&gt; call hands back the next free number. Reading from stdin, writing to a log file, and sending bytes down a pipe are all, from your code's perspective, just &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;read(fd, ...)&lt;/span&gt; and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;write(fd, ...)&lt;/span&gt; on some integer.",
+          "This table survives &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;fork()&lt;/span&gt; (the child gets its own copy, same numbers pointing at the same open files) and, crucially, it survives &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;exec()&lt;/span&gt; too — which is the whole trick behind redirection."
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "Every process starts with the same three file descriptors",
+          "description": "A small table for one process showing fd 0 labeled stdin, fd 1 labeled stdout, and fd 2 labeled stderr, each with an arrow pointing to the same 'controlling terminal' box, since by default all three are connected to the terminal that launched the process. A dotted arrow shows that after fork(), a child process gets its own copy of this fd table with the same numbers pointing at the same underlying open files."
+        }
+      },
+      {
+        "heading": "Redirecting with dup2()",
+        "paragraphs": [
+          "&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;dup2(newfd, oldfd)&lt;/span&gt; makes &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;oldfd&lt;/span&gt; point at whatever &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;newfd&lt;/span&gt; currently points at — silently closing whatever oldfd used to point at first. Call &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;dup2(fd, STDOUT_FILENO)&lt;/span&gt; and every future write to fd 1, from &lt;i&gt;anywhere&lt;/i&gt; in the program including libraries you didn't write, ends up wherever fd pointed.",
+          "The pattern below — open a file, dup2 it onto a standard fd, close the now-redundant extra descriptor — is the entire redirection trick. Run it and nothing prints to your terminal at all; it all lands in &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;output.txt&lt;/span&gt; instead."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;fcntl.h&gt;",
+            "#include &lt;stdio.h&gt;",
+            "#include &lt;unistd.h&gt;",
+            "",
+            "int main(void) {",
+            "    int fd = open(\"output.txt\", O_WRONLY | O_CREAT | O_TRUNC, 0644);",
+            "",
+            "    dup2(fd, STDOUT_FILENO);   /* fd 1 now points where fd points */",
+            "    close(fd);                 /* don't need the extra fd anymore */",
+            "",
+            "    printf(\"this line goes to the file, not the terminal\\n\");",
+            "",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "(nothing prints to the terminal — output.txt now contains: \"this line goes to the file, not the terminal\")"
+        }
+      },
+      {
+        "heading": "This is exactly what &gt; and &lt; do",
+        "paragraphs": [
+          "When your shell parses &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;ls &gt; out.txt&lt;/span&gt;, it forks a child, and in that child — &lt;i&gt;before&lt;/i&gt; calling &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;execve()&lt;/span&gt; — it does exactly the open/dup2/close sequence above. Because the fd table survives exec, ls itself never knows anything was redirected; it just calls &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;printf()&lt;/span&gt; like always, and the bytes end up in the file. &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;&lt;&lt;/span&gt; is the identical trick in reverse, opening a file read-only and dup2'ing it onto fd 0.",
+          "Put this together with the pipe lesson and you have the whole shell: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;|&lt;/span&gt; is two children dup2'ing pipe ends onto their stdin/stdout instead of files. You now have every piece — fork, wait, syscalls, pipes, signals, and this — needed to build Shellforge. Go build it."
+        ],
+        "visual": {
+          "type": "diagram",
+          "caption": "This is exactly what ls &gt; out.txt will do inside your shell",
+          "description": "A sequence diagram for the child process only: (1) open(\"out.txt\", O_WRONLY|O_CREAT|O_TRUNC) returns a new fd, say 3. (2) dup2(3, STDOUT_FILENO) makes fd 1 point at the same open file description as fd 3, so anything written to fd 1 now lands in out.txt. (3) close(3) drops the now-redundant extra descriptor. (4) execve(\"/bin/ls\", ...) replaces the child's program image entirely, but its file descriptor table — including the just-redirected fd 1 — survives the exec, so ls's ordinary printf-to-stdout calls silently end up in the file. The parent shell's own stdout is untouched throughout."
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "After dup2(fd, STDOUT_FILENO) in the example, why does the code still call close(fd) right afterward — isn't fd needed anymore?",
+        "where_to_learn": "Covered in \"Redirecting with dup2()\" — the inline comment on the close(fd) line explains it."
+      },
+      {
+        "question": "When your shell parses ls &gt; out.txt, which process should call dup2() — the shell itself, or the forked child about to run ls?",
+        "where_to_learn": "Covered in \"This is exactly what &gt; and &lt; do\" — the diagram shows precisely where dup2() happens relative to fork and exec."
+      }
+    ],
+    "assignment": {
+      "instruction": "Read man 2 dup2 and man 2 open, then extend the redirection example to also send stderr (fd 2) to the same file — the exact open → dup2 → close pattern you'll write inside Shellforge for every &gt; and &lt; token.",
+      "resource_name": "man 2 dup2",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      { "title": "File descriptors, explained visually", "type": "video", "meta": "8 min" },
+      { "title": "man 2 open", "type": "doc", "meta": "Documentation" }
+    ]
+  }
+]

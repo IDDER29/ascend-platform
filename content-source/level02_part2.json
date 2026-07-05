@@ -1,0 +1,327 @@
+[
+  {
+    "concept": "Structs &amp; unions",
+    "time_min": 9,
+    "intro": "&lt;p&gt;A pointer gets you to one address. A &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;struct&lt;/span&gt; gets you to a whole neighborhood of them &amp;mdash; one name for a bundle of related variables sitting side by side in memory. It's how C models a point, a person, a network packet: anything made of more than one piece of data that belongs together.&lt;/p&gt;&lt;p&gt;A &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;union&lt;/span&gt; looks almost identical on the page but means something completely different: instead of laying its members side by side, it makes them all share the exact same bytes. One is &amp;ldquo;and,&amp;rdquo; the other is &amp;ldquo;or.&amp;rdquo; Let's build both, and run the code that proves the difference.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Define a struct and access its members with the . and -&gt; operators",
+      "Explain why a struct's total size can be larger than the sum of its members, due to padding",
+      "Describe how a union shares one block of storage among all its members instead of laying them side by side",
+      "Predict the memory layout and size that a given struct or union declaration will produce"
+    ],
+    "sections": [
+      {
+        "heading": "Bundling related data",
+        "paragraphs": [
+          "A &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;struct&lt;/span&gt; gives a name to a group of variables and lays them out one after another in memory, as a single unit. &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;struct point { int x; int y; };&lt;/span&gt; defines the shape; &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;struct point a = { 3, 4 };&lt;/span&gt; actually carves out the memory and fills it in.",
+          "The dot operator, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;.&lt;/span&gt;, reaches into that block by name: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;a.x&lt;/span&gt; and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;a.y&lt;/span&gt; are just labels for two neighbouring addresses &amp;mdash; not two unrelated variables that happen to travel together."
+        ],
+        "visual": {
+          "type": "memory-diagram",
+          "caption": "struct point in memory",
+          "description": "A single contiguous block of memory split into two adjacent labeled cells. The first cell is labeled 'x' and holds the value 3 at a base address (e.g. 0x7ffe...20). The second cell is labeled 'y', holds the value 4, and sits at the very next address (0x7ffe...24) with no gap in between. A bracket under both cells is labeled 'struct point a' to show that x and y are one unit, not two separate variables."
+        }
+      },
+      {
+        "heading": "Reaching in through a pointer",
+        "paragraphs": [
+          "Structs and pointers combine constantly &amp;mdash; you'll pass a &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;struct point *&lt;/span&gt; into a function instead of copying the whole struct every time it's used. Through a pointer, &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;(*p).x&lt;/span&gt; would technically work, but C gives you a cleaner shorthand: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p-&gt;x&lt;/span&gt; means exactly the same thing.",
+          "Everything you already know about dereferencing still applies. &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;p-&gt;x&lt;/span&gt; doesn't just read a's field &amp;mdash; writing to it writes a's actual memory, because p is still just an address."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "",
+            "struct point {",
+            "    int x;",
+            "    int y;",
+            "};",
+            "",
+            "int main(void) {",
+            "    struct point a = { 3, 4 };",
+            "    struct point *p = &amp;a;",
+            "    p-&gt;x = 7;",
+            "    printf(\"x = %d, y = %d\", p-&gt;x, a.y);",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "x = 7, y = 4"
+        }
+      },
+      {
+        "heading": "Padding: why sizeof surprises you",
+        "paragraphs": [
+          "You might expect &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sizeof(struct example)&lt;/span&gt; to equal 1 + 4 = 5 for a char followed by an int. On most common 64-bit platforms it comes back 8. The compiler quietly inserts padding bytes so that i starts at an address divisible by 4 &amp;mdash; most CPUs read multi-byte values fastest when they're aligned that way.",
+          "This isn't a bug or a waste; it's a deliberate trade of a few bytes of memory for a lot of speed. It does mean you should never assume a struct's size by adding up its members yourself &amp;mdash; always ask &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sizeof&lt;/span&gt;."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "",
+            "struct example {",
+            "    char c;",
+            "    int  i;",
+            "};",
+            "",
+            "int main(void) {",
+            "    printf(\"sizeof(struct example) = %zu\", sizeof(struct example));",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "sizeof(struct example) = 8"
+        }
+      },
+      {
+        "heading": "Unions: one address, many types",
+        "paragraphs": [
+          "A &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;union&lt;/span&gt; is declared exactly like a struct, but every member starts at the same address and shares the same bytes. Write i and you've also just overwritten whatever bit pattern f was holding &amp;mdash; there's only one slot, not two.",
+          "That's why &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sizeof&lt;/span&gt; a union equals the size of its &lt;i&gt;largest&lt;/i&gt; member, not the sum of all of them: the compiler only needs to set aside enough room for whichever member happens to be in use."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "",
+            "struct s_pair { int i; float f; };",
+            "union  u_pair { int i; float f; };",
+            "",
+            "int main(void) {",
+            "    printf(\"struct: %zu bytes, union: %zu bytes\",",
+            "           sizeof(struct s_pair), sizeof(union u_pair));",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "struct: 8 bytes, union: 4 bytes"
+        }
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "What's the actual difference in memory between a struct and a union that declare the same members?",
+        "where_to_learn": "Covered in “Unions: one address, many types” — a union overlaps all its members in one shared block instead of laying them side by side like a struct does."
+      },
+      {
+        "question": "Why can sizeof(struct example) come back bigger than the sum of its members' individual sizes?",
+        "where_to_learn": "Covered in “Padding: why sizeof surprises you” — the compiler inserts padding bytes so members land on aligned addresses."
+      }
+    ],
+    "assignment": {
+      "instruction": "Read Beej's Guide to C's section on structs and unions in full, then extend the point struct from the lab into a 3D version (add a z field) and predict its new sizeof before you compile and check.",
+      "resource_name": "Beej's Guide to C — Structs (and Unions)",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      { "title": "cppreference.com — struct and union declarations", "type": "doc", "meta": "Documentation" },
+      { "title": "Struct padding and alignment in C, explained", "type": "video", "meta": "7 min" }
+    ]
+  },
+  {
+    "concept": "Dynamic memory",
+    "time_min": 11,
+    "intro": "&lt;p&gt;Every variable you've written so far lives on the stack &amp;mdash; born when its scope opens, gone the instant it closes. That's fine until you don't know how much memory you'll need until the program is already running: a file of unknown size, a list that grows as the user types. For that, C gives you the &lt;b&gt;heap&lt;/b&gt; &amp;mdash; a separate pool of memory you control entirely by hand.&lt;/p&gt;&lt;p&gt;&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;malloc&lt;/span&gt; asks the heap for a block of bytes and hands you back a pointer to it; &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;free&lt;/span&gt; gives that block back. Get the pairing right and you have memory that outlives any single function. Get it wrong &amp;mdash; and in the next lesson, on purpose, we will &amp;mdash; and things get ugly.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Explain why heap memory outlives the function that allocated it, unlike a stack variable",
+      "Use malloc together with sizeof to request a correctly-sized block of heap memory",
+      "Check a malloc call for failure before using the pointer it returns",
+      "Trace how an unfreed allocation becomes an unreachable memory leak"
+    ],
+    "sections": [
+      {
+        "heading": "Stack vs heap, one more time",
+        "paragraphs": [
+          "Flip back to Concept 2: a local variable lives on the stack, and its space is reclaimed the instant the function that owns it returns &amp;mdash; automatically, with zero work from you. That's fast and safe, but it only works because the compiler knows the size and the lifetime in advance.",
+          "The heap makes the opposite trade. You explicitly ask for a block, and it stays reserved &amp;mdash; even after the function that requested it returns &amp;mdash; until you explicitly give it back. Nothing does that for you automatically. That's the entire reason &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;malloc&lt;/span&gt; and &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;free&lt;/span&gt; exist."
+        ],
+        "visual": {
+          "type": "memory-diagram",
+          "caption": "Two very different neighborhoods",
+          "description": "Two side-by-side panels. Left panel labeled STACK: a vertical stack of blocks representing call frames for main() and a function it calls, with an arrow showing the top frame popping off and disappearing the instant that function returns. Right panel labeled HEAP: a loose scattering of blocks of different sizes at different addresses, each tagged with its address and the caption 'stays until free()' to emphasize that nothing removes them automatically."
+        }
+      },
+      {
+        "heading": "Requesting memory with malloc",
+        "paragraphs": [
+          "&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;malloc(n)&lt;/span&gt; asks the heap for n bytes and returns a pointer to the first one &amp;mdash; or &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;NULL&lt;/span&gt; if it couldn't find them. Multiplying by &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;sizeof&lt;/span&gt;, as in &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;malloc(5 * sizeof(int))&lt;/span&gt;, keeps the byte count matched to whatever type you actually want: five ints, not five bytes.",
+          "That pointer behaves like any other pointer the moment you have it: index it, dereference it, pass it to functions. The only real difference from a stack variable is who's responsible for cleaning it up &amp;mdash; and this time, that's you."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "#include &lt;stdlib.h&gt;",
+            "",
+            "int main(void) {",
+            "    int *nums = malloc(5 * sizeof(int));",
+            "    if (nums == NULL) {",
+            "        return 1;",
+            "    }",
+            "    for (int i = 0; i &lt; 5; i++) {",
+            "        nums[i] = i * i;",
+            "    }",
+            "    printf(\"nums[3] = %d\", nums[3]);",
+            "    free(nums);",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "nums[3] = 9"
+        }
+      },
+      {
+        "heading": "Every malloc needs a free",
+        "paragraphs": [
+          "&lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;malloc&lt;/span&gt; never cleans up after itself. If you lose the only pointer to a block &amp;mdash; by overwriting the variable that held it, or returning from a function without freeing it &amp;mdash; that memory is unreachable but still marked in use for as long as your program runs. That's a &lt;b&gt;memory leak&lt;/b&gt;.",
+          "The rule of thumb: every successful &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;malloc&lt;/span&gt; should be matched by exactly one &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;free&lt;/span&gt;, once you're truly finished with the block. Free it too early, though, and you've set up the exact mistake the next lesson is entirely built around."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "void leaky_function(void) {",
+            "    int *buf = malloc(100 * sizeof(int));",
+            "    buf[0] = 42;",
+            "}",
+            "/* buf goes out of scope here. The only copy of that",
+            "   address is gone -- the 400 bytes it pointed to are",
+            "   still marked \"in use\" and unreachable until the",
+            "   program exits. That's a memory leak. */"
+          ],
+          "runnable": false
+        }
+      },
+      {
+        "heading": "Why this matters",
+        "paragraphs": [
+          "You now have every ingredient for the final concept in this level: what happens when you use a pointer after freeing what it pointed to, and why the compiler doesn't stop you. Structs, the stack, the heap, and now allocation all collide in undefined behaviour.",
+          "Read that opening sentence again once you've finished the next lesson &amp;mdash; it'll land completely differently."
+        ],
+        "visual": null
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "Why does heap memory survive after the function that allocated it returns, when a stack variable wouldn't?",
+        "where_to_learn": "Covered in “Stack vs heap, one more time” — stack space is reclaimed automatically on return, but heap space isn't reclaimed until you call free."
+      },
+      {
+        "question": "What actually goes wrong when you forget to free a heap allocation before losing your only pointer to it?",
+        "where_to_learn": "Covered in “Every malloc needs a free” — the block becomes unreachable but stays marked in use for the rest of the program's run."
+      }
+    ],
+    "assignment": {
+      "instruction": "Read man 3 malloc in full this time, not just the synopsis — note what it says about NULL on failure and about calloc's zero-initialization — then rewrite the lab above to use calloc instead of malloc and delete the loop that was only there to initialize the array.",
+      "resource_name": "man 3 malloc",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      { "title": "Beej's Guide to C — malloc, calloc, realloc, and free", "type": "doc", "meta": "Documentation" },
+      { "title": "Finding memory leaks with Valgrind's Memcheck", "type": "video", "meta": "8 min" }
+    ]
+  },
+  {
+    "concept": "Undefined behaviour",
+    "time_min": 8,
+    "intro": "&lt;p&gt;Every lesson in this level has quietly assumed you play by the rules: you dereference pointers that point somewhere valid, you free memory exactly once, you stay inside the bounds of your arrays. Break one of those rules and C does something almost unique among languages &amp;mdash; it makes &lt;b&gt;no promise whatsoever&lt;/b&gt; about what happens next. Not &amp;ldquo;it crashes.&amp;rdquo; Not &amp;ldquo;you get zero.&amp;rdquo; Nothing. That's &lt;b&gt;undefined behaviour&lt;/b&gt;, and it's the trapdoor underneath everything you've learned so far.&lt;/p&gt;&lt;p&gt;This isn't a scare tactic &amp;mdash; it's the single most important habit of mind for writing C safely. By the end, you'll recognise the handful of classic ways programs summon undefined behaviour, and why &amp;ldquo;it worked when I ran it&amp;rdquo; is the most dangerous sentence in C.&lt;/p&gt;",
+    "learning_outcomes": [
+      "Define undefined behaviour and explain why it means any outcome is legally permitted, not that the program crashes",
+      "Recognise a use-after-free bug and explain why a freed pointer is still dangerous even though its address hasn't changed",
+      "Recognise a buffer overrun and explain why C's arrays don't stop you from indexing past their end",
+      "Explain why code with undefined behaviour can appear to work correctly during testing and still contain a serious bug"
+    ],
+    "sections": [
+      {
+        "heading": "What ‘undefined’ really means",
+        "paragraphs": [
+          "In most languages, an illegal operation gives you a defined error: Python raises an exception, Java throws a NullPointerException, and you can catch it. For a specific set of C mistakes, the language standard takes a far stranger stance: it says the behaviour is &lt;b&gt;undefined&lt;/b&gt;, meaning literally any outcome &amp;mdash; correct output, a crash, silently wrong numbers, or nothing you can detect at all &amp;mdash; is equally ‘valid’ as far as the specification is concerned.",
+          "That's not a gap in the language; it's a deliberate trade for speed. The compiler is allowed to assume you never trigger undefined behaviour, and it optimizes aggressively on that assumption. Keeping that assumption true is entirely on you."
+        ],
+        "visual": null
+      },
+      {
+        "heading": "Dangling pointers: using memory after you've freed it",
+        "paragraphs": [
+          "Concept 7 showed you that &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;free(p)&lt;/span&gt; hands a block back to the allocator. It does &lt;b&gt;not&lt;/b&gt; erase p itself &amp;mdash; p still holds the exact same address it did a moment earlier. Dereference it anyway and you're touching memory the allocator is now free to hand to someone else, or already has.",
+          "That's called a &lt;b&gt;use-after-free&lt;/b&gt;, and it's one of the most common serious bugs in C's history &amp;mdash; the kind security advisories get written about. Run the lab below more than once, or on a different machine, and don't be surprised if the output isn't stable."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "#include &lt;stdlib.h&gt;",
+            "",
+            "int main(void) {",
+            "    int *p = malloc(sizeof(int));",
+            "    *p = 42;",
+            "    free(p);",
+            "    *p = 99;",
+            "    printf(\"value = %d\", *p);",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "segfault (or: garbage value) — undefined behaviour, not guaranteed"
+        }
+      },
+      {
+        "heading": "Buffer overruns: walking off the end of an array",
+        "paragraphs": [
+          "Concept 4 showed you that indexing is just pointer arithmetic under the hood: &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;scores[4]&lt;/span&gt; is nothing more than &lt;span style=\"font-family:'Space Mono',monospace;background:#F3F1FA;padding:1px 6px;border-radius:5px;font-size:14px;color:#41395E\"&gt;*(scores + 4)&lt;/span&gt;. That expression compiles and runs whether or not a 5th element actually exists &amp;mdash; C's arrays don't carry their own bounds at runtime to check against.",
+          "Write past the end and you're scribbling on whatever memory happens to sit next door &amp;mdash; another variable, saved registers, anything. The program can run to completion and print a perfectly plausible number, and still be wrong. Undefined behaviour doesn't announce itself."
+        ],
+        "visual": {
+          "type": "code",
+          "lang": "c",
+          "lines": [
+            "#include &lt;stdio.h&gt;",
+            "",
+            "int main(void) {",
+            "    int scores[4] = { 10, 20, 30, 40 };",
+            "    scores[4] = 999;",
+            "    printf(\"scores[4] = %d\", scores[4]);",
+            "    return 0;",
+            "}"
+          ],
+          "runnable": true,
+          "expected_output": "scores[4] = 999 (or: crash, or something else entirely) — undefined behaviour, not guaranteed; scores only has 4 valid slots"
+        }
+      },
+      {
+        "heading": "Tying the level together",
+        "paragraphs": [
+          "Look at everything that got you here: a pointer is just an address (Concept 3), that address lives on the stack or the heap (Concepts 1, 2 and 7), pointer arithmetic can walk you past where you meant to stop (Concept 4), and a double pointer can point at the very variable that stores an address (Concept 5). Undefined behaviour is what happens the moment any one of those is used past its lifetime or its bounds.",
+          "The fix is almost always the same low-tech habit: free once, then set the pointer to NULL so a stray dereference fails loudly instead of silently; check every index against the size you actually allocated. You don't outsmart undefined behaviour by being clever &amp;mdash; you avoid it by being disciplined."
+        ],
+        "visual": null
+      }
+    ],
+    "knowledge_check": [
+      {
+        "question": "Why doesn't a program printing the ‘right’ answer prove it's free of undefined behaviour?",
+        "where_to_learn": "Covered in “What ‘undefined’ really means” and the buffer overrun lab — undefined behaviour is legally allowed to look correct while still being a bug."
+      },
+      {
+        "question": "After free(p), why is dereferencing p still dangerous even though p's value — the address it stores — hasn't changed?",
+        "where_to_learn": "Covered in “Dangling pointers: using memory after you've freed it” — free releases the memory, not the pointer variable holding its address."
+      }
+    ],
+    "assignment": {
+      "instruction": "Read cppreference's page on undefined behavior start to finish, then take the use-after-free lab above, run it several times in a row, and write one sentence explaining why seeing 42 or 99 printed wouldn't mean the bug is fixed.",
+      "resource_name": "cppreference.com — Undefined behavior",
+      "resource_type": "doc"
+    },
+    "additional_resources": [
+      { "title": "A Guide to Undefined Behavior in C and C++, Part 1", "type": "doc", "meta": "Documentation" },
+      { "title": "Debugging use-after-free bugs with Valgrind Memcheck", "type": "video", "meta": "6 min" }
+    ]
+  }
+]

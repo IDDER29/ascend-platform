@@ -1,0 +1,65 @@
+---
+title: 'System calls: the real API'
+level: level-03-systems-software
+slug: system-calls
+order: 2
+timeMin: 12
+learningOutcomes:
+- Explain why a program can't jump straight into kernel code and must trap through a syscall instead
+- Distinguish a library function like printf() from the actual system call (write()) it eventually triggers
+- Read a syscall's return value and errno together to detect and diagnose a failure
+- Use (or predict the output of) strace to see the real sequence of syscalls a program makes
+knowledgeCheck:
+- question: Why can't write() just be a normal function call straight into the kernel's code — what has to happen at the boundary?
+  whereToLearn: Covered in "User mode vs. kernel mode" — the diagram walks through the trap instruction crossing into the kernel.
+- question: In the write() example, how do you know the second write() call failed, and where does the human-readable reason come from?
+  whereToLearn: 'Covered in "Anatomy of a syscall: write()" — look at the errno / strerror() lines right after the bad write() call.'
+assignment:
+  instruction: Compile the write() example, then run it under `strace -o out.txt ./a.out` and open out.txt — find the write() and exit_group() lines and match each one to the C line that produced it.
+  resourceName: man 2 syscalls
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man2/syscalls.2.html'
+additionalResources:
+- title: strace in 10 minutes
+  type: video
+  meta: 10 min
+  url: 'https://www.youtube.com/watch?v=EG0ihttnEJI'
+- title: Advanced Programming in the UNIX Environment, Ch. 1
+  type: pdf
+  meta: 22-page excerpt
+  url: 'http://www.apuebook.com/about3e.html'
+---
+
+Your program can't just reach into the kernel and read a disk block, or write to the network, or spawn a process — the kernel guards all of that. Every single thing your program does that touches the outside world eventually goes through one narrow, well-defined gate: the <b>system call</b>. Even `printf()` — which feels like plain C — is a thin wrapper that, sooner or later, calls `write()`.
+
+Understanding this gate is what turns "C programming" into "systems programming." It's also exactly what you'll be doing constantly inside your shell: every `fork()`, `execve()`, `pipe()` and `dup2()` you're about to learn is a system call.
+
+## User mode vs. kernel mode
+
+The CPU itself enforces a split between <b>user mode</b>, where your program's instructions run with restricted privileges, and <b>kernel mode</b>, where the OS runs with full access to hardware and memory. Your program physically cannot execute a "read this disk sector" instruction in user mode — the hardware would refuse it.
+
+A system call is the one controlled doorway between the two: your code executes a special trap instruction, the CPU switches to kernel mode, the kernel does the privileged work on your behalf, and control returns to user mode with a result. This is why syscalls are slower than ordinary function calls — you're paying for two mode switches, not just a jump.
+
+<Visual type='diagram' caption='Crossing from user mode into kernel mode' description='Two stacked lanes labeled &#39;user mode&#39; (top) and &#39;kernel mode&#39; (bottom), separated by a dashed boundary. In the user-mode lane, application code calls printf(), which internally calls write(). At the boundary, a labeled arrow shows the &#39;trap / syscall instruction&#39; crossing down into kernel mode, carrying a syscall number and arguments in registers. In the kernel-mode lane, the kernel&#39;s write handler runs and touches the real file or terminal; an arrow labeled &#39;return value + errno&#39; crosses back up into user mode.' />
+
+## Anatomy of a syscall: write()
+
+`write(fd, buf, count)` is about as raw as I/O gets: write `count` bytes from `buf` to whatever `fd` refers to. It returns the number of bytes actually written, or `-1` on failure — and on failure, it never tells you <i>why</i> directly. That's what the global `errno` is for.
+
+This return-value-plus-errno pattern is universal across almost every POSIX syscall, so getting comfortable with it here pays off for the rest of this level — fork(), pipe(), and dup2() all fail the same way.
+
+<CodeBlock lang='c' linesJson='["#include &lt;stdio.h&gt;", "#include &lt;string.h&gt;", "#include &lt;errno.h&gt;", "#include &lt;unistd.h&gt;", "", "int main(void) {", "    const char msg[] = \"hello via write()\\n\";", "", "    ssize_t n = write(1, msg, sizeof(msg) - 1);", "    printf(\"write() returned %zd\\n\", n);", "", "    ssize_t bad = write(99, msg, sizeof(msg) - 1);", "    if (bad &lt; 0) {", "        printf(\"write(99, ...) failed: %s\\n\", strerror(errno));", "    }", "", "    return 0;", "}"]' runnable expectedOutput='hello via write()
+write() returned 18
+write(99, ...) failed: Bad file descriptor' />
+
+## The wrapper is a convenience, not the truth
+
+Libc functions like `printf()`, `malloc()`, and `fopen()` are conveniences built on top of a much smaller set of raw syscalls — `write()`, `brk()`/`mmap()`, and `openat()`, respectively. The tool `strace` lets you watch this curtain get pulled back — run any program under it and you'll see the literal syscalls it made, in order, with their real arguments and return values.
+
+<Visual type='diagram' caption='Same event, three altitudes' description='Three stacked boxes connected by a vertical line, all describing the same real-world event of printing text. Top box: the C source line printf("hi\n"); middle box: the actual system call it boils down to, write(1, "hi\n", 3); bottom box: the raw strace trace line captured by running the program under strace, write(1, "hi\n", 3) = 3, showing the syscall name, its arguments, and its return value exactly as the kernel reported them.' />
+
+## Syscalls aren't free
+
+Every mode switch costs real time — saving registers, changing privilege level, and switching back. That's precisely why `printf()` doesn't call `write()` once per character: it buffers output in user-space memory and only calls `write()` once the buffer fills up (or hits a newline, on a terminal).
+
+Keep this in your back pocket — it explains a subtle bug you'll hit in the shell project: mixing buffered stdio with raw file descriptor tricks like `dup2()` can print things in the "wrong" order if you forget to flush.

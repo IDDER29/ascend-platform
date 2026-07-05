@@ -1,0 +1,59 @@
+---
+title: 'Inside the CPU: registers & the ALU'
+level: level-01-machine-memory
+slug: inside-the-cpu
+order: 1
+timeMin: 8
+learningOutcomes:
+- Name the three core components of a CPU (registers, ALU, control unit) and state what each one does
+- Explain why registers are faster than memory, and why there are so few of them
+- Describe how the program counter and stack pointer differ from general-purpose registers
+- Predict which status flags an ALU operation sets, and why the control unit cares
+knowledgeCheck:
+- question: In your own words, what makes a CPU register fundamentally different from a memory location — and why does that difference matter for speed?
+  whereToLearn: 'Covered in ''Registers: the CPU''s scratchpad'' — the paragraph contrasting register access time with memory access time.'
+- question: After the ALU computes 5 − 5, which flag gets set to 1, and why would a 'jump if zero' instruction care about it?
+  whereToLearn: 'Covered in ''The ALU: where decisions and math happen'' — the flags diagram walks through exactly this example.'
+assignment:
+  instruction: Read (or watch the companion lecture for) the Nand2Tetris 'Computer Architecture' project, which builds a working CPU out of nothing but an ALU and a handful of registers — the exact ideas from this lesson, made concrete in actual hardware design. Then sketch, on paper, the three boxes (registers, ALU, control unit) and label which one 'remembers where you are in the program.'
+  resourceName: 'Nand2Tetris — Project 5: Computer Architecture'
+  resourceType: doc
+  resourceUrl: 'https://www.nand2tetris.org/project05'
+additionalResources:
+- title: 'Crash Course Computer Science #7: The Central Processing Unit (CPU)'
+  type: video
+  meta: ~12 min
+  url: 'https://www.youtube.com/watch?v=FZGugFqdr60'
+- title: x86-64 register reference — Felix Cloutier's x86 instruction guide
+  type: doc
+  meta: Reference
+  url: 'https://www.felixcloutier.com/x86/'
+---
+
+In Level 00 you built the <b>fetch-execute loop</b> up from gates: fetch an instruction, decode it, execute it, repeat — forever, thousands of millions of times a second. That loop is real, but so far it's been an idea. This lesson puts a body on it: the actual pieces of silicon that do the fetching, the deciding, and the arithmetic.
+
+Three characters do almost all the work inside a CPU: a small set of <b>registers</b> for holding values right now, an <b>ALU</b> (arithmetic logic unit) for doing math and comparisons on those values, and a <b>control unit</b> that steers the whole show. Get comfortable with these three, and every instruction you'll ever read — in assembly, in a debugger, in a crash dump — starts making sense.
+
+## From fetch-execute to real hardware
+
+Recall the loop: <b>fetch</b> the next instruction from memory, <b>decode</b> what it's asking for, <b>execute</b> it, and move on. Every step in that loop needs somewhere to put things down while it works — the instruction itself, the numbers it operates on, the result. That "somewhere" is a tiny, blazing-fast set of storage slots built directly into the CPU chip: <b>registers</b>.
+
+The <b>control unit</b> is the part that actually drives the loop — it holds the address of the next instruction, tells the ALU which operation to perform, and tells the register file which slots to read from and write to. Nothing moves inside a CPU without the control unit orchestrating it.
+
+<Visual type='diagram' caption='The core loop, made of parts' description='A simple block diagram of a CPU&#39;s core parts and how data flows between them. Boxes: Control Unit (center-top, labeled &#39;reads next instruction, directs everything&#39;), Register File (left, containing small labeled slots like R0, R1, R2, PC, SP), ALU (right, labeled &#39;does the math/comparisons&#39;), and Memory (bottom, outside the CPU boundary, connected by a bus). Arrows: Control Unit -&gt; Memory (fetch instruction), Memory -&gt; Control Unit (instruction bits), Control Unit -&gt; Register File and ALU (control signals), Register File &lt;-&gt; ALU (operand values in, result value out).' />
+
+## Registers: the CPU's scratchpad
+
+A <b>register</b> is a storage slot that lives inside the CPU itself, not out in main memory. On a typical modern machine there are only a handful of general-purpose ones — think a dozen or so — each holding a single word (commonly 32 or 64 bits). Because they sit right next to the ALU with no bus, no address decoding, and no waiting, reading or writing a register takes a single clock cycle. Reading from memory, as you'll see in Lesson 5, can take a hundred times longer.
+
+A few registers have jobs so important they get their own names. The `program counter` (PC, sometimes called the instruction pointer) always holds the address of the next instruction to fetch — it's what keeps the loop looping. The `stack pointer` (SP) tracks the top of the call stack, which you'll meet properly in Lesson 4. Everything else — the <i>general-purpose</i> registers — is yours (or the compiler's) to use as scratch space.
+
+<Visual type='diagram' caption='A few registers with names — and jobs' description='A small two-column table of register names and roles, generic and not tied to one architecture. Rows: &#39;PC / instruction pointer&#39; — &#39;address of the next instruction to fetch&#39;; &#39;SP&#39; — &#39;address of the top of the stack&#39;; &#39;general-purpose registers&#39; — &#39;scratch values the current instruction is working on&#39;; &#39;FLAGS&#39; — &#39;one-bit results from the last ALU operation (zero? negative? carry?)&#39;.' />
+
+## The ALU: where decisions and math happen
+
+The <b>ALU</b> takes one or two values from registers, applies an operation — add, subtract, AND, OR, shift, compare — and produces a result, usually written back into a register. This is the same digital logic from Level 00: adders and multiplexers built from gates, just wired up to accept whichever operation the control unit selects for this instruction.
+
+Every ALU operation also sets a small set of one-bit <b>flags</b>: was the result zero? negative? did it overflow the register's width? did a carry fall out the top? Those flags aren't trivia — they're how the CPU makes decisions. A `compare` is really just a subtraction whose result is thrown away and whose flags are kept, and next lesson's conditional jumps read those flags to decide where to go next.
+
+<Visual type='diagram' caption='One subtraction, four flags' description='Show one ALU operation and its flag output. Left: two inputs &#39;A = 5&#39; and &#39;B = 5&#39;, operation label &#39;SUBTRACT&#39;. Middle: ALU box. Right: result &#39;A − B = 0&#39; plus a small flags panel with four bits: &#39;ZF (zero) = 1&#39;, &#39;SF (sign) = 0&#39;, &#39;CF (carry) = 0&#39;, &#39;OF (overflow) = 0&#39;. Note beneath: &#39;ZF=1 is what a later jump-if-equal instruction checks.&#39;' />

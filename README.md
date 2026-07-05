@@ -278,6 +278,22 @@ for those, `ƒ` only for the signed-in screens).
 optional), `SQLITE_PATH` (optional override), `AUTH_SECRET` (required for
 any real deployment).
 
+**⚠️ Deploying to Vercel/Netlify/Lambda without `DATABASE_URL`?** The local
+SQLite fallback needs a writable filesystem, and serverless platforms only
+give you that at `/tmp` (everything else, including `process.cwd()`, is
+read-only) — `client.ts` detects this (`VERCEL`/`AWS_LAMBDA_FUNCTION_NAME`/
+`NETLIFY` env vars) and points the fallback at `/tmp/local.db` automatically,
+but `/tmp` is wiped between cold starts on most of these platforms, so
+accounts won't actually persist request-to-request. The fallback is for
+local dev/tests, not a real deployed backend — **set `DATABASE_URL` to a
+real Postgres/Supabase instance for any deployment that needs accounts to
+actually stick.** Either way, a database that's unreachable (bad
+`DATABASE_URL`, or no writable path) never crashes a page: `client.ts`
+catches the init failure, logs it server-side, and every consumer
+(`getCurrentUser()`, `signUp`/`signIn`) degrades to "signed out" /a real
+"try again" error instead of a raw exception — see `src/app/error.tsx` for
+what a user sees if something does throw all the way up.
+
 ## What's deferred and why
 
 A database now exists (see "Backend" above), but real progress-tracking

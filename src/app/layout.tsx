@@ -50,7 +50,7 @@ export default function RootLayout({
       lang="en"
       className={`${bricolage.variable} ${hanken.variable} ${spaceMono.variable} h-full overflow-x-hidden antialiased`}
     >
-      <body className="min-h-full flex flex-col overflow-x-hidden bg-bg text-ink font-sans">
+      <body className="min-h-full flex flex-col bg-bg text-ink font-sans">
         {children}
         <CommandPalette lessons={paletteLessons} />
       </body>

@@ -9,11 +9,27 @@ learningOutcomes:
 - Explain why real hardware represents that answer as one of two distinguishable physical states, not a continuous range
 - Describe a concrete physical example (a switch, a charge, a voltage) that behaves like a bit
 - Recognize that every kind of data a computer handles is ultimately just a long sequence of bits, given meaning by convention
+primer:
+- title: Bit (unit of information) — Wikipedia
+  type: doc
+  meta: Skim · 5 min · the formal definition before we build intuition for it.
+  essential: true
+  url: 'https://en.wikipedia.org/wiki/Bit'
+- title: 'Crash Course Computer Science #1: Early Computing'
+  type: video
+  meta: Watch · 12 min · how mechanical switches became the first computers.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=O5nskjZ_GoI'
 knowledgeCheck:
 - question: In your own words, why is "the smallest unit of information" a more precise definition of a bit than "a zero or a one"?
-  whereToLearn: Revisit "The smallest possible answer" — a bit is the yes/no distinction itself; 0 and 1 are just the symbols we use to write that distinction down.
+  answer: A bit is the yes/no distinction itself, not the symbols used to write it down. "0" and "1" are just labels we agreed to use for the two possible answers — the actual bit is the underlying on/off, present/absent distinction, which is why the same bit can be written as a voltage, a switch position, or a symbol and still be the same piece of information.
+  jumpToId: the-smallest-possible-answer
+  jumpToLabel: The smallest possible answer
 - question: Why do real computers use two voltage states instead of ten, when ten states would let a single wire carry a whole decimal digit at once?
-  whereToLearn: Revisit "Why two states, not ten (or three)" — the voltage-band diagram explains why reliably distinguishing two states is far cheaper and faster than distinguishing ten.
+  answer: Reliably telling apart two voltage levels — clearly high versus clearly low, with a wide forbidden margin between them — is cheap, fast, and tolerant of electrical noise. Reliably telling apart ten distinct voltage levels on the same noisy wire is far harder, so two-state (binary) hardware wins even though it needs more wires to represent the same information.
+  jumpToId: why-two-states-not-ten-or-three
+  jumpToLabel: Why two states, not ten (or three)
+  jumpToDetail: the voltage-band diagram
 assignment:
   instruction: Read the first three chapters of Charles Petzold's Code — they build the idea of a bit from flashlights, Morse code, and Braille long before a single transistor shows up, which is exactly the bottom-up path Ascend follows.
   resourceName: 'Code: The Hidden Language of Computer Hardware and Software by Charles Petzold'
@@ -28,6 +44,7 @@ additionalResources:
   type: doc
   meta: Reference article
   url: 'https://en.wikipedia.org/wiki/Bit'
+whyThisMatters: "Every abstraction you'll ever learn in this curriculum — integers, characters, pointers, files — is a story we tell about a long run of bits, and none of it is magic once you accept that the story is just convention layered on top of on/off. Knowing that a bit is nothing but a yes/no answer, and that computers pick two states purely because two states are cheap and reliable to build, is what lets you later look at a segfault or a bit-flipped flag and think in terms of physical reality instead of superstition."
 ---
 
 Every other place you could learn programming starts you at the top: open an editor, type some syntax, make the screen do something. Ascend starts at the bottom, because the honest answer to "how does a computer work" doesn't begin with a language at all — it begins with a single, physical, almost embarrassingly simple idea. This is lesson one of the whole curriculum, and everything else you'll ever learn here — variables, pointers, files, the internet — is just this one idea, repeated at scale.

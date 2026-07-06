@@ -5,8 +5,8 @@ import rehypeSlug from "rehype-slug";
 import GithubSlugger from "github-slugger";
 
 import Link from "next/link";
-import { getLesson, getAllLessonParams, getLessonNavigation } from "@/lib/content/lessons";
-import { LEVELS } from "@/lib/content/schema";
+import { getLesson, getAllLessons, getAllLessonParams, getLessonNavigation } from "@/lib/content/lessons";
+import { LEVELS, levelIds } from "@/lib/content/schema";
 import { mdxComponents } from "@/lib/mdx-components";
 
 import { AppSidebar } from "@/components/ui/sidebar";
@@ -14,10 +14,14 @@ import { KnowledgeCheck } from "@/components/ui/knowledge-check";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { LessonHeader } from "@/components/lesson/lesson-header";
 import { LearningOutcomes } from "@/components/lesson/learning-outcomes";
+import { PrimerBox } from "@/components/lesson/primer-box";
+import { LessonListPanel } from "@/components/lesson/lesson-list-panel";
 import { OnThisPageRail, type RailItem } from "@/components/lesson/on-this-page-rail";
 import { AssignmentCard } from "@/components/lesson/assignment-card";
 import { AdditionalResources } from "@/components/lesson/additional-resources";
+import { AddNoteButton } from "@/components/lesson/add-note-button";
 import { LessonFooter } from "@/components/lesson/lesson-footer";
+import { LessonFeedback } from "@/components/lesson/lesson-feedback";
 
 export async function generateStaticParams() {
   return getAllLessonParams();
@@ -56,10 +60,20 @@ export default async function LessonPage({
       : next
     : null;
   const railItems: RailItem[] = [
+    ...(meta.primer.length > 0 ? [{ id: "study-these-first", label: "Study these first" }] : []),
     ...extractHeadings(body),
     { id: "knowledge-check", label: "Knowledge check" },
     { id: "assignment", label: "Assignment" },
+    { id: "why-this-matters", label: "Why this matters" },
   ];
+
+  const lessonsInLevel = getAllLessons()
+    .filter((l) => l.meta.level === meta.level)
+    .map((l) => ({ slug: l.meta.slug, title: l.meta.title, order: l.meta.order }))
+    .sort((a, b) => a.order - b.order);
+  const levelIndex = levelIds.indexOf(meta.level);
+  const nextLevelId = levelIds[levelIndex + 1];
+  const nextLevelName = nextLevelId ? LEVELS[nextLevelId].name : null;
 
   return (
     <div className="flex min-h-screen bg-white text-ink">
@@ -123,6 +137,13 @@ export default async function LessonPage({
         </header>
 
         <main className="flex flex-1 items-start">
+          <LessonListPanel
+            level={meta.level}
+            currentOrder={meta.order}
+            lessons={lessonsInLevel}
+            nextLevelName={nextLevelName}
+          />
+
           <div className="flex min-w-0 flex-1 flex-wrap items-start">
             <div className="flex min-w-0 flex-1 justify-center px-4 py-8 sm:px-8 md:px-11 md:py-[50px]">
               <article className="w-full min-w-0 max-w-[724px]">
@@ -132,6 +153,8 @@ export default async function LessonPage({
                 </h1>
 
                 <LearningOutcomes title={meta.title} outcomes={meta.learningOutcomes} />
+
+                <PrimerBox items={meta.primer} />
 
                 <div className="mt-2">
                   <MDXRemote
@@ -160,6 +183,20 @@ export default async function LessonPage({
                 </p>
                 <KnowledgeCheck items={meta.knowledgeCheck} />
 
+                <div className="mt-4 flex items-center gap-3 rounded-2xl border-[1.5px] border-[#C7E9D8] bg-[#F3FBF7] px-[18px] py-3.5">
+                  <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] bg-[#12B981] text-white">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  </span>
+                  <span className="flex-1 text-[14.5px] font-semibold text-[#0E7D57]">
+                    Comfortable with all three? You&apos;ve got {meta.title.toLowerCase()} down.
+                  </span>
+                  <span className="whitespace-nowrap rounded-full bg-[#E9F9F2] px-2.5 py-1 font-mono text-[12.5px] font-bold text-[#0E9E6E]">
+                    +30 XP
+                  </span>
+                </div>
+
                 <h2
                   id="assignment"
                   className="mb-3 mt-10 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight"
@@ -173,7 +210,18 @@ export default async function LessonPage({
                 </p>
                 <AssignmentCard assignment={meta.assignment} />
 
+                <h2
+                  id="why-this-matters"
+                  className="mb-3 mt-9 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight"
+                >
+                  Why this matters
+                </h2>
+                <p className="text-[16.5px] leading-[1.75] text-[#413D50]">
+                  {meta.whyThisMatters}
+                </p>
+
                 <LessonFooter title={meta.title} next={nextNav} />
+                <LessonFeedback />
               </article>
             </div>
 
@@ -189,6 +237,9 @@ export default async function LessonPage({
                 Optional — go deeper if you want
               </div>
               <AdditionalResources resources={meta.additionalResources} />
+              <div className="mt-3">
+                <AddNoteButton />
+              </div>
             </aside>
           </div>
         </main>

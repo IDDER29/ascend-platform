@@ -32,7 +32,20 @@ export function KnowledgeCheck({ items }: { items: KnowledgeCheckItem[] }) {
           </summary>
           <div className="px-5 pb-[18px] pl-16">
             <div className="rounded-xl border border-[#EEECF6] bg-[#FBFAFE] px-4 py-3.5 text-sm leading-relaxed text-ink-secondary">
-              {item.whereToLearn}
+              <div className="mb-3">{item.answer}</div>
+              <a
+                href={`#${item.jumpToId}`}
+                className="inline-flex items-center gap-2 text-[13px] font-bold text-brand-violet"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+                Re-read &ldquo;{item.jumpToLabel}&rdquo;
+                {item.jumpToDetail && (
+                  <span className="font-medium text-ink-fainter"> · {item.jumpToDetail}</span>
+                )}
+              </a>
             </div>
           </div>
         </details>

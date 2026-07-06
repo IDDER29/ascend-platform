@@ -12,9 +12,21 @@ export type LevelId = z.infer<typeof LevelIdSchema>;
 
 export const KnowledgeCheckItemSchema = z.object({
   question: z.string(),
-  whereToLearn: z.string(),
+  answer: z.string(),
+  jumpToId: z.string(),
+  jumpToLabel: z.string(),
+  jumpToDetail: z.string().optional(),
 });
 export type KnowledgeCheckItem = z.infer<typeof KnowledgeCheckItemSchema>;
+
+export const PrimerItemSchema = z.object({
+  title: z.string(),
+  type: z.enum(["doc", "video"]),
+  meta: z.string(),
+  essential: z.boolean(),
+  url: z.string().url().optional(),
+});
+export type PrimerItem = z.infer<typeof PrimerItemSchema>;
 
 export const AssignmentSchema = z.object({
   instruction: z.string(),
@@ -28,6 +40,7 @@ export const AdditionalResourceSchema = z.object({
   title: z.string(),
   type: z.enum(["video", "doc", "pdf"]),
   meta: z.string(),
+  duration: z.string().optional(),
   url: z.string().url().optional(),
 });
 export type AdditionalResource = z.infer<typeof AdditionalResourceSchema>;
@@ -39,8 +52,10 @@ export const LessonFrontmatterSchema = z.object({
   order: z.number().int().positive(),
   timeMin: z.number().int().positive(),
   learningOutcomes: z.array(z.string()).min(1),
+  primer: z.array(PrimerItemSchema).default([]),
   knowledgeCheck: z.array(KnowledgeCheckItemSchema).min(1),
   assignment: AssignmentSchema,
+  whyThisMatters: z.string(),
   additionalResources: z.array(AdditionalResourceSchema),
 });
 export type LessonFrontmatter = z.infer<typeof LessonFrontmatterSchema>;

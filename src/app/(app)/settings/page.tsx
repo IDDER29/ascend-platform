@@ -33,7 +33,7 @@ function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; labe
       aria-label={label}
       className={cn(
         "flex h-[26px] w-[44px] flex-none items-center rounded-full p-[3px] transition-colors",
-        on ? "justify-end bg-gradient-to-r from-[#7B4DFF] to-[#C13AE0]" : "justify-start bg-[#DCD7E8]",
+        on ? "justify-end bg-gradient-to-r from-[#7B4DFF] to-[#C13AE0] hover:brightness-110" : "justify-start bg-[#DCD7E8] hover:bg-[#CFC9E0]",
       )}
     >
       <span className="h-5 w-5 rounded-full bg-white shadow-[0_2px_5px_rgba(0,0,0,0.2)]" />
@@ -110,10 +110,10 @@ export default function SettingsPage() {
                       <div className="mb-0.5 text-sm font-bold">Profile photo</div>
                       <div className="mb-2.5 text-xs text-ink-muted">PNG or JPG, up to 2MB.</div>
                       <div className="flex gap-2">
-                        <button className="rounded-lg bg-[#181528] px-4 py-2 text-[13px] font-bold text-white">
+                        <button className="rounded-lg bg-[#181528] px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-[#2A2540]">
                           Upload
                         </button>
-                        <button className="rounded-lg border border-[#E9E5F4] px-4 py-2 text-[13px] font-bold text-ink-secondary">
+                        <button className="rounded-lg border border-[#E9E5F4] px-4 py-2 text-[13px] font-bold text-ink-secondary transition-colors hover:border-[#D8D2EC] hover:bg-[#FAF9FE]">
                           Remove
                         </button>
                       </div>
@@ -279,7 +279,7 @@ export default function SettingsPage() {
                           key={c}
                           onClick={() => setAccent(c)}
                           style={{ background: c, boxShadow: accent === c ? `0 0 0 2px #fff, 0 0 0 4px ${c}` : undefined }}
-                          className="h-[34px] w-[34px] rounded-[10px]"
+                          className="h-[34px] w-[34px] rounded-[10px] cursor-pointer transition-transform hover:scale-110"
                         />
                       ))}
                     </div>
@@ -303,7 +303,7 @@ export default function SettingsPage() {
                     </div>
                     <button
                       onClick={() => setConfirmAction("reset")}
-                      className="whitespace-nowrap rounded-lg border border-[#F0C4C0] px-4 py-2 text-[13px] font-bold text-[#C22D24]"
+                      className="whitespace-nowrap rounded-lg border border-[#F0C4C0] px-4 py-2 text-[13px] font-bold text-[#C22D24] transition-colors hover:bg-[#FFF7F5]"
                     >
                       Reset
                     </button>
@@ -315,7 +315,7 @@ export default function SettingsPage() {
                     </div>
                     <button
                       onClick={() => setConfirmAction("delete")}
-                      className="whitespace-nowrap rounded-lg bg-[#D5342B] px-4 py-2 text-[13px] font-bold text-white shadow-[0_8px_18px_rgba(213,52,43,0.3)]"
+                      className="whitespace-nowrap rounded-lg bg-[#D5342B] px-4 py-2 text-[13px] font-bold text-white shadow-[0_8px_18px_rgba(213,52,43,0.3)] transition-colors hover:bg-[#C22D24]"
                     >
                       Delete
                     </button>
@@ -326,7 +326,7 @@ export default function SettingsPage() {
                       {confirmAction === "reset" ? "reset" : "delete"} here. In a real deployment, this would{" "}
                       {confirmAction === "reset" ? "wipe your XP, streaks and completed concepts" : "permanently delete your account"}
                       .
-                      <button onClick={() => setConfirmAction(null)} className="ml-2 font-bold text-[#C22D24] underline">
+                      <button onClick={() => setConfirmAction(null)} className="ml-2 font-bold text-[#C22D24] underline hover:text-[#8A3A32]">
                         Dismiss
                       </button>
                     </div>

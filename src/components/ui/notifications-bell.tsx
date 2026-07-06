@@ -52,7 +52,7 @@ export function NotificationsBell() {
         aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
         aria-haspopup="true"
         aria-expanded={open}
-        className="relative flex h-[39px] w-[39px] flex-none items-center justify-center rounded-xl border border-card-border-soft bg-[#F3F1FA] text-ink-secondary"
+        className="relative flex h-[39px] w-[39px] flex-none items-center justify-center rounded-xl border border-card-border-soft bg-[#F3F1FA] text-ink-secondary transition-colors hover:border-[#D8D2EC] hover:bg-[#EDEAF6]"
       >
         <Bell size={17} strokeWidth={2.1} />
         {unreadCount > 0 && (
@@ -71,7 +71,7 @@ export function NotificationsBell() {
                 </span>
               )}
             </div>
-            <button onClick={markAllRead} className="text-[12.5px] font-bold text-brand-violet">
+            <button onClick={markAllRead} className="text-[12.5px] font-bold text-brand-violet hover:text-[#5A32D6]">
               Mark all read
             </button>
           </div>
@@ -109,7 +109,7 @@ export function NotificationsBell() {
                                 e.stopPropagation();
                                 setOpen(false);
                               }}
-                              className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#E9E5F4] bg-[#F3F1FA] px-3 py-1.5 text-[12px] font-bold text-[#5A32D6]"
+                              className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#E9E5F4] bg-[#F3F1FA] px-3 py-1.5 text-[12px] font-bold text-[#5A32D6] transition-colors hover:border-[#D8D2EC] hover:bg-[#EDEAF6]"
                             >
                               {n.cta.label}
                             </Link>

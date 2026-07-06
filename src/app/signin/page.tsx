@@ -120,7 +120,7 @@ export default function SignInPage() {
             }}
             className={cn(
               "rounded-[9px] px-5 py-2.5 text-sm font-bold transition-colors",
-              mode === m ? "bg-white text-[#5A32D6] shadow-[0_2px_6px_rgba(24,21,40,0.08)]" : "text-ink-muted",
+              mode === m ? "bg-white text-[#5A32D6] shadow-[0_2px_6px_rgba(24,21,40,0.08)]" : "text-ink-muted hover:text-ink-secondary",
             )}
           >
             {m === "signin" ? "Sign in" : "Create account"}
@@ -220,7 +220,7 @@ export default function SignInPage() {
               type="button"
               onClick={() => setShowPassword((s) => !s)}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-faint transition-colors hover:text-ink-secondary"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -251,8 +251,8 @@ export default function SignInPage() {
             type="button"
             onClick={() => setKeepSignedIn((k) => !k)}
             className={cn(
-              "flex h-5 w-5 flex-none items-center justify-center rounded-[6px]",
-              keepSignedIn ? "bg-gradient-to-br from-[#7B4DFF] to-[#C13AE0]" : "border-2 border-[#DCD7E8]",
+              "flex h-5 w-5 flex-none items-center justify-center rounded-[6px] transition-colors",
+              keepSignedIn ? "bg-gradient-to-br from-[#7B4DFF] to-[#C13AE0] hover:brightness-110" : "border-2 border-[#DCD7E8] hover:border-[#C9C2DC]",
             )}
           >
             {keepSignedIn && (
@@ -284,14 +284,14 @@ export default function SignInPage() {
         {mode === "signin" ? (
           <>
             New to Ascend?{" "}
-            <button onClick={() => setMode("signup")} className="font-bold text-brand-violet">
+            <button onClick={() => setMode("signup")} className="font-bold text-brand-violet hover:text-[#5A32D6]">
               Create a free account
             </button>
           </>
         ) : (
           <>
             Already have an account?{" "}
-            <button onClick={() => setMode("signin")} className="font-bold text-brand-violet">
+            <button onClick={() => setMode("signin")} className="font-bold text-brand-violet hover:text-[#5A32D6]">
               Sign in
             </button>
           </>

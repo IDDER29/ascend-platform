@@ -130,7 +130,7 @@ export function AppSidebar({ defaultCollapsed = false }: { defaultCollapsed?: bo
         <Link
           href="/"
           className={cn(
-            "mb-[26px] flex items-center gap-2.5",
+            "mb-[26px] flex items-center gap-2.5 opacity-100 transition-opacity hover:opacity-80",
             collapsed ? "justify-center px-0 pt-1" : "px-2 pt-1",
           )}
         >
@@ -180,14 +180,14 @@ export function AppSidebar({ defaultCollapsed = false }: { defaultCollapsed?: bo
               href="/profile"
               title={`${displayName} — Level 8`}
               aria-label={`View profile — ${displayName}, Level 8`}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-gradient font-display font-extrabold text-white"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-gradient font-display font-extrabold text-white transition-transform hover:scale-105"
             >
               {initial}
             </Link>
           ) : (
             <Link
               href="/profile"
-              className="relative block overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B1730] to-[#2C2548] p-[15px] text-white"
+              className="relative block overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B1730] to-[#2C2548] p-[15px] text-white transition-transform hover:-translate-y-0.5"
             >
               <div className="pointer-events-none absolute -right-6 -top-[34px] h-[120px] w-[120px] rounded-full bg-[radial-gradient(circle,rgba(123,77,255,0.55),transparent_68%)] blur-[6px]" />
               <div className="relative flex items-center gap-2.5">

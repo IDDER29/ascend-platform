@@ -119,7 +119,7 @@ export function ShellforgeBrief() {
                 type="button"
                 onClick={() => setChecked((c) => ({ ...c, [req.id]: !c[req.id] }))}
                 className={cn(
-                  "flex w-full items-start gap-3.5 px-4 py-3.5 text-left",
+                  "flex w-full items-start gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-[#FAF9FE]",
                   i > 0 && "border-t border-[#F4F2FA]",
                   req.bonus && "bg-[#FBFAFE]",
                 )}

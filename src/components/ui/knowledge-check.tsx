@@ -8,7 +8,7 @@ export function KnowledgeCheck({ items }: { items: KnowledgeCheckItem[] }) {
           key={i}
           className="group rounded-2xl border-[1.5px] border-[#E9E5F4] bg-white transition-[border-color,box-shadow] duration-150 open:border-[#C9B8F5] open:shadow-[0_10px_26px_rgba(123,77,255,0.1)]"
         >
-          <summary className="flex cursor-pointer list-none items-center gap-3.5 px-5 py-4 [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center gap-3.5 rounded-t-2xl px-5 py-4 transition-colors hover:bg-[#FBFAFE] [&::-webkit-details-marker]:hidden">
             <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] bg-xp-bg font-mono text-[13px] font-bold text-brand-violet">
               {String(i + 1).padStart(2, "0")}
             </span>
@@ -35,7 +35,7 @@ export function KnowledgeCheck({ items }: { items: KnowledgeCheckItem[] }) {
               <div className="mb-3">{item.answer}</div>
               <a
                 href={`#${item.jumpToId}`}
-                className="inline-flex items-center gap-2 text-[13px] font-bold text-brand-violet"
+                className="inline-flex items-center gap-2 text-[13px] font-bold text-brand-violet hover:text-[#5A32D6]"
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />

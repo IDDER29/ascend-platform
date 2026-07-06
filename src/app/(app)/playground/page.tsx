@@ -158,10 +158,10 @@ export default function PlaygroundPage() {
                         key={name}
                         onClick={() => setActiveFile(name)}
                         className={cn(
-                          "relative top-px flex flex-none items-center gap-2 rounded-t-[10px] border px-4 py-2.5 text-[13px] font-bold",
+                          "relative top-px flex flex-none items-center gap-2 rounded-t-[10px] border px-4 py-2.5 text-[13px] font-bold transition-colors",
                           name === activeFile
                             ? "border-[#EEECF6] border-b-white bg-white text-[#2A2540]"
-                            : "border-transparent text-ink-muted",
+                            : "border-transparent text-ink-muted hover:text-ink-secondary",
                         )}
                       >
                         <span className={cn("flex h-4 w-4 items-center justify-center rounded-[5px] font-mono text-[9px] font-bold", FILE_META[name].badgeColor)}>

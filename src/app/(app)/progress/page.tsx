@@ -69,7 +69,7 @@ export default function ProgressPage() {
                       "rounded-[9px] px-4 py-2 text-[13px] font-bold transition-colors",
                       range === r
                         ? "bg-white text-[#2A2540] shadow-[0_4px_10px_rgba(28,18,64,0.08)]"
-                        : "text-[#7A7590]",
+                        : "text-[#7A7590] hover:text-[#2A2540]",
                     )}
                   >
                     {r}
@@ -193,7 +193,7 @@ export default function ProgressPage() {
                   </div>
                   <Link
                     href="/curriculum"
-                    className="mt-3 flex items-center justify-center gap-1 border-t border-[#F2F0F8] pt-3 text-[12.5px] font-bold text-brand-violet"
+                    className="mt-3 flex items-center justify-center gap-1 border-t border-[#F2F0F8] pt-3 text-[12.5px] font-bold text-brand-violet hover:text-[#5A32D6]"
                   >
                     View full curriculum <ChevronRight size={13} />
                   </Link>

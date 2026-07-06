@@ -75,7 +75,7 @@ export default function ResetRequestPage() {
           <button
             onClick={() => setCooldown(RESEND_COOLDOWN)}
             disabled={cooldown > 0}
-            className={cn("inline-flex items-center gap-1 font-bold", cooldown > 0 ? "text-ink-fainter" : "text-brand-violet")}
+            className={cn("inline-flex items-center gap-1 font-bold", cooldown > 0 ? "text-ink-fainter" : "text-brand-violet hover:text-[#5A32D6]")}
           >
             <RefreshCw size={12} />
             Resend

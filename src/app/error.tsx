@@ -16,7 +16,7 @@ export default function Error({
       <div className="pointer-events-none absolute -bottom-[14%] -left-[6%] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle,rgba(123,77,255,0.16),transparent_66%)] blur-[14px]" />
 
       <div className="relative w-full max-w-[560px]">
-        <Link href="/" className="mb-10 inline-flex items-center gap-2.5">
+        <Link href="/" className="mb-10 inline-flex items-center gap-2.5 opacity-100 transition-opacity hover:opacity-80">
           <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-brand-gradient shadow-glow">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="m6 15 6-6 6 6" />
@@ -71,7 +71,7 @@ export default function Error({
         <div className="inline-flex items-center gap-2 rounded-xl border border-[#EDEBF4] bg-white px-4 py-2.5 text-sm font-semibold text-[#413D50]">
           <MessageSquare size={15} className="text-brand-violet" strokeWidth={2.1} />
           Keeps happening?{" "}
-          <Link href="/community" className="text-brand-violet underline">
+          <Link href="/community" className="text-brand-violet underline hover:text-[#5A32D6]">
             Ask the community
           </Link>
         </div>

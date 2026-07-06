@@ -49,7 +49,7 @@ export default function ResetExpiredPage() {
         <RotateCcw size={16} />
         Send a fresh link
       </button>
-      <Link href="/signin" className="flex items-center justify-center gap-1.5 text-[13.5px] font-semibold text-ink-muted">
+      <Link href="/signin" className="flex items-center justify-center gap-1.5 text-[13.5px] font-semibold text-ink-muted transition-colors hover:text-ink-secondary">
         <ChevronLeft size={16} />
         Back to sign in
       </Link>

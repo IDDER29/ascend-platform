@@ -75,7 +75,7 @@ export default function OnboardingPage() {
           </div>
           <span className="font-display text-[21px] font-extrabold tracking-tight">Ascend</span>
         </div>
-        <Link href="/dashboard" className="text-sm font-semibold text-ink-muted">
+        <Link href="/dashboard" className="text-sm font-semibold text-ink-muted transition-colors hover:text-ink-secondary">
           Skip for now
         </Link>
       </header>

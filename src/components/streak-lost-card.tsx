@@ -56,7 +56,7 @@ export function StreakLostCard({
 
         <button
           onClick={() => setFreezeOn((f) => !f)}
-          className="mb-3.5 flex w-full items-center gap-3.5 rounded-2xl border border-[#C6A6FF]/30 bg-[#7B4DFF]/[0.14] p-4 text-left"
+          className="mb-3.5 flex w-full items-center gap-3.5 rounded-2xl border border-[#C6A6FF]/30 bg-[#7B4DFF]/[0.14] p-4 text-left transition-colors hover:bg-[#7B4DFF]/[0.22]"
         >
           <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-white/[0.08]">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8FD6FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -92,7 +92,7 @@ export function StreakLostCard({
           <div className="flex items-center justify-center gap-2 font-mono text-[12.5px] text-[#9990B8]">
             Next up: {nextTitle} · {nextTime} min
           </div>
-          <Link href="/dashboard" className="py-3 text-sm font-semibold text-[#B8B2CC]">
+          <Link href="/dashboard" className="py-3 text-sm font-semibold text-[#B8B2CC] transition-colors hover:text-white">
             Maybe later
           </Link>
         </div>

@@ -164,7 +164,7 @@ export default function CommunityPage() {
                   onClick={() => setSort(m)}
                   className={cn(
                     "rounded-lg px-3.5 py-1.5 text-[12.5px] font-bold capitalize transition-colors",
-                    sort === m ? "bg-white text-[#2A2540] shadow-[0_3px_8px_rgba(28,18,64,0.08)]" : "text-[#7A7590]",
+                    sort === m ? "bg-white text-[#2A2540] shadow-[0_3px_8px_rgba(28,18,64,0.08)]" : "text-[#7A7590] hover:text-[#2A2540]",
                   )}
                 >
                   {m}
@@ -252,7 +252,7 @@ export default function CommunityPage() {
               Be kind, no spoilers outside &quot;Show your project,&quot; and always search before you ask.
             </div>
           </div>
-          <button onClick={() => setGuidelinesOpen((g) => !g)} className="text-[13.5px] font-bold text-brand-violet">
+          <button onClick={() => setGuidelinesOpen((g) => !g)} className="text-[13.5px] font-bold text-brand-violet hover:text-[#5A32D6]">
             {guidelinesOpen ? "Hide" : "Read the guidelines"} →
           </button>
           {guidelinesOpen && (

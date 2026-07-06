@@ -56,7 +56,7 @@ export function CurriculumLevelsPanel({
             onClick={() => setFilter("all")}
             className={cn(
               "inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-[13.5px] font-bold transition-colors",
-              filter === "all" ? "bg-ink text-white" : "border border-card-border-soft bg-white text-ink-secondary",
+              filter === "all" ? "bg-ink text-white" : "border border-card-border-soft bg-white text-ink-secondary hover:border-[#D8D2EC] hover:bg-[#FAF9FE]",
             )}
           >
             All
@@ -70,7 +70,7 @@ export function CurriculumLevelsPanel({
               onClick={() => setFilter(l.id)}
               className={cn(
                 "inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-[13.5px] font-semibold transition-colors",
-                filter === l.id ? "bg-ink text-white" : "border border-card-border-soft bg-white text-ink-secondary",
+                filter === l.id ? "bg-ink text-white" : "border border-card-border-soft bg-white text-ink-secondary hover:border-[#D8D2EC] hover:bg-[#FAF9FE]",
               )}
             >
               <span className={cn("h-2 w-2 rounded-full", FILTER_DOT[l.id])} />
@@ -104,8 +104,8 @@ export function CurriculumLevelsPanel({
                 disabled={isLocked}
                 onClick={() => setExpanded((e) => ({ ...e, [level.id]: !e[level.id] }))}
                 className={cn(
-                  "flex w-full items-center gap-4 px-5.5 py-5 text-left",
-                  isLocked && "cursor-default opacity-[0.68]",
+                  "flex w-full items-center gap-4 px-5.5 py-5 text-left transition-colors",
+                  isLocked ? "cursor-default opacity-[0.68]" : "hover:bg-[#FBFAFE]",
                 )}
               >
                 <div
@@ -226,7 +226,7 @@ export function CurriculumLevelsPanel({
                         {isLessonCurrent ? (
                           <Link
                             href={`/curriculum/${lesson.level}/${lesson.slug}`}
-                            className="flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-[#C13AE0] to-[#FF6B4A] px-4.5 py-2.5 text-[12.5px] font-bold text-white shadow-[0_8px_18px_rgba(193,58,224,0.27)]"
+                            className="flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-[#C13AE0] to-[#FF6B4A] px-4.5 py-2.5 text-[12.5px] font-bold text-white shadow-[0_8px_18px_rgba(193,58,224,0.27)] transition-transform hover:-translate-y-0.5"
                           >
                             Continue
                             <Play size={11} className="fill-current" />
@@ -234,14 +234,14 @@ export function CurriculumLevelsPanel({
                         ) : isNextUp ? (
                           <Link
                             href={`/curriculum/${lesson.level}/${lesson.slug}`}
-                            className="flex-none whitespace-nowrap rounded-full border-[1.5px] border-[#C13AE0] px-4 py-2 text-[12.5px] font-bold text-[#C13AE0]"
+                            className="flex-none whitespace-nowrap rounded-full border-[1.5px] border-[#C13AE0] px-4 py-2 text-[12.5px] font-bold text-[#C13AE0] transition-colors hover:bg-[#FBEBFA]"
                           >
                             Start
                           </Link>
                         ) : isDone ? (
                           <Link
                             href={`/curriculum/${lesson.level}/${lesson.slug}`}
-                            className="flex-none whitespace-nowrap rounded-full border border-card-border-soft px-4 py-2 text-[12.5px] font-semibold text-ink-secondary"
+                            className="flex-none whitespace-nowrap rounded-full border border-card-border-soft px-4 py-2 text-[12.5px] font-semibold text-ink-secondary transition-colors hover:border-[#D8D2EC] hover:bg-[#FAF9FE]"
                           >
                             Review
                           </Link>
@@ -262,7 +262,7 @@ export function CurriculumLevelsPanel({
                     </b>{" "}
                     · {level.done} concepts mastered
                   </span>
-                  <Link href={`/curriculum/${level.id}/${lessons[0]?.slug}`} className="text-[12.5px] font-bold text-brand-violet">
+                  <Link href={`/curriculum/${level.id}/${lessons[0]?.slug}`} className="text-[12.5px] font-bold text-brand-violet hover:text-[#5A32D6]">
                     Review level →
                   </Link>
                 </div>

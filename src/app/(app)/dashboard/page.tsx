@@ -228,7 +228,7 @@ export default function DashboardPage() {
                       </div>
                       <Link
                         href="/curriculum"
-                        className="flex items-center gap-1 text-[12.5px] font-bold text-brand-violet"
+                        className="flex items-center gap-1 text-[12.5px] font-bold text-brand-violet hover:text-[#5A32D6]"
                       >
                         View path <ChevronRight size={13} />
                       </Link>
@@ -399,7 +399,7 @@ export default function DashboardPage() {
                   <div className="p-6">
                     <div className="mb-4 flex items-center justify-between">
                       <div className="font-display text-[17px] font-extrabold">Achievements</div>
-                      <Link href="/achievements" className="flex items-center gap-1 text-[12.5px] font-bold text-brand-violet">
+                      <Link href="/achievements" className="flex items-center gap-1 text-[12.5px] font-bold text-brand-violet hover:text-[#5A32D6]">
                         View all <ChevronRight size={13} />
                       </Link>
                     </div>

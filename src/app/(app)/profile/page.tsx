@@ -152,7 +152,7 @@ export default function ProfilePage() {
               {!user && (
                 <div className="relative mt-4 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 text-[12.5px] text-[#B9B3D0]">
                   You&apos;re viewing the demo profile.{" "}
-                  <Link href="/signin" className="font-bold text-white underline">
+                  <Link href="/signin" className="font-bold text-white underline hover:text-[#E4DEF3]">
                     Sign in
                   </Link>{" "}
                   to see your own.
@@ -256,14 +256,14 @@ export default function ProfilePage() {
                         <div className="mt-3.5 flex gap-2 border-t border-[#F4F2FA] pt-3.5">
                           <Link
                             href={p.resultHref}
-                            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-card-border-soft py-2 text-[12.5px] font-bold text-ink-secondary"
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-card-border-soft py-2 text-[12.5px] font-bold text-ink-secondary transition-colors hover:border-[#D8D2EC] hover:bg-[#FAF9FE]"
                           >
                             <GitHubGlyph />
                             {p.id}
                           </Link>
                           <Link
                             href={p.briefHref}
-                            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-card-border-soft py-2 text-[12.5px] font-bold text-brand-violet"
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-card-border-soft py-2 text-[12.5px] font-bold text-brand-violet transition-colors hover:border-[#D8D2EC] hover:bg-[#FAF9FE]"
                           >
                             View brief
                           </Link>
@@ -278,7 +278,7 @@ export default function ProfilePage() {
                 <Card hover={false} className="p-6">
                   <div className="mb-4.5 flex items-center justify-between">
                     <div className="font-display text-[17px] font-extrabold">Badges</div>
-                    <Link href="/achievements" className="text-xs font-bold text-brand-violet">
+                    <Link href="/achievements" className="text-xs font-bold text-brand-violet hover:text-[#5A32D6]">
                       All {earnedBadges.length} →
                     </Link>
                   </div>

@@ -200,7 +200,7 @@ export default async function CurriculumPage() {
                         <Link
                           key={lesson.meta.slug}
                           href={`/curriculum/${lesson.meta.level}/${lesson.meta.slug}`}
-                          className={`-mx-1.5 flex items-center gap-3 rounded-xl px-2.5 py-2.5 ${i === 0 ? "bg-[#FBF3FE]" : "hover:bg-[#FAF9FE]"}`}
+                          className={`-mx-1.5 flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition-colors ${i === 0 ? "bg-[#FBF3FE] hover:bg-[#F6E9FC]" : "hover:bg-[#FAF9FE]"}`}
                         >
                           <span
                             className={`flex h-8 w-8 flex-none items-center justify-center rounded-[10px] text-xs font-bold ${
@@ -227,7 +227,7 @@ export default async function CurriculumPage() {
                   <Card hover={false} className="p-6">
                     <div className="mb-4.5 flex items-center justify-between">
                       <div className="font-display text-[17px] font-extrabold">Recent badges</div>
-                      <Link href="/achievements" className="flex items-center gap-1 text-xs font-bold text-brand-violet">
+                      <Link href="/achievements" className="flex items-center gap-1 text-xs font-bold text-brand-violet hover:text-[#5A32D6]">
                         See all <ChevronRight size={12} />
                       </Link>
                     </div>

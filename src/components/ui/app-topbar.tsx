@@ -13,7 +13,7 @@ export function AppTopbar() {
     <header className="sticky top-0 z-30 flex h-[72px] items-center gap-2.5 border-b border-divider bg-white/85 px-4 backdrop-blur-[14px] backdrop-saturate-[1.4] sm:gap-4 sm:px-8">
       <button
         onClick={() => window.dispatchEvent(new CustomEvent("ascend:open-palette"))}
-        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-card-border-soft bg-[#F3F1FA] px-3.5 py-2.5 text-left text-ink-faint sm:max-w-[460px]"
+        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-card-border-soft bg-[#F3F1FA] px-3.5 py-2.5 text-left text-ink-faint transition-colors hover:border-[#D8D2EC] hover:bg-[#EDEAF6] sm:max-w-[460px]"
       >
         <Search size={16} strokeWidth={2.2} />
         <span className="min-w-0 flex-1 truncate text-sm">Search concepts, projects, badges…</span>
@@ -35,7 +35,7 @@ export function AppTopbar() {
           href="/profile"
           title="View profile"
           aria-label="View profile"
-          className="flex h-[39px] w-[39px] flex-none items-center justify-center rounded-xl bg-brand-gradient font-display font-extrabold text-white shadow-glow"
+          className="flex h-[39px] w-[39px] flex-none items-center justify-center rounded-xl bg-brand-gradient font-display font-extrabold text-white shadow-glow transition-transform hover:scale-105"
         >
           {initial}
         </Link>

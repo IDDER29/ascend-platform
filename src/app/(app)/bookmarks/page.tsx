@@ -106,7 +106,7 @@ export default function BookmarksPage() {
                       "rounded-[9px] px-3.5 py-2 text-[13px] font-bold transition-colors",
                       tab === t.key
                         ? "bg-white text-[#2A2540] shadow-[0_4px_10px_rgba(28,18,64,0.08)]"
-                        : "text-[#7A7590]",
+                        : "text-[#7A7590] hover:text-[#2A2540]",
                     )}
                   >
                     {t.label === "All" ? `All · ${counts.all}` : `${t.label} · ${counts[t.key]}`}

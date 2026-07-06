@@ -176,11 +176,11 @@ export function CommandPalette({ lessons }: { lessons: PaletteLesson[] }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-start justify-center bg-[#181528]/45 px-6 pt-16 backdrop-blur-sm sm:pt-24"
+      className="fixed inset-0 z-[60] flex cursor-pointer items-start justify-center bg-[#181528]/45 px-6 pt-16 backdrop-blur-sm sm:pt-24"
       onClick={close}
     >
       <div
-        className="w-full max-w-[600px] overflow-hidden rounded-[20px] border border-[#E4DEF3] bg-white shadow-[0_40px_90px_rgba(24,16,50,0.4)]"
+        className="w-full max-w-[600px] cursor-auto overflow-hidden rounded-[20px] border border-[#E4DEF3] bg-white shadow-[0_40px_90px_rgba(24,16,50,0.4)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 border-b border-[#F0EEF6] px-5 py-4">
@@ -218,7 +218,7 @@ export function CommandPalette({ lessons }: { lessons: PaletteLesson[] }) {
                       key={l.href}
                       onClick={() => go(l.href)}
                       onMouseEnter={() => setActiveIndex(i)}
-                      className={`mx-1.5 mb-0.5 flex w-[calc(100%-12px)] items-center gap-3 rounded-xl px-3 py-2.5 text-left ${
+                      className={`mx-1.5 mb-0.5 flex w-[calc(100%-12px)] items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[#F1EDFE] ${
                         activeIndex === i ? "bg-[#F1EDFE]" : ""
                       }`}
                     >
@@ -252,7 +252,7 @@ export function CommandPalette({ lessons }: { lessons: PaletteLesson[] }) {
                         key={p.href}
                         onClick={() => go(p.href)}
                         onMouseEnter={() => setActiveIndex(flatIndex)}
-                        className={`mx-1.5 mb-0.5 flex w-[calc(100%-12px)] items-center gap-3 rounded-xl px-3 py-2.5 text-left ${
+                        className={`mx-1.5 mb-0.5 flex w-[calc(100%-12px)] items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[#F1EDFE] ${
                           activeIndex === flatIndex ? "bg-[#F1EDFE]" : ""
                         }`}
                       >
@@ -285,7 +285,7 @@ export function CommandPalette({ lessons }: { lessons: PaletteLesson[] }) {
                         key={a.href}
                         onClick={() => go(a.href)}
                         onMouseEnter={() => setActiveIndex(flatIndex)}
-                        className={`mx-1.5 mb-0.5 flex w-[calc(100%-12px)] items-center gap-3 rounded-xl px-3 py-2.5 text-left ${
+                        className={`mx-1.5 mb-0.5 flex w-[calc(100%-12px)] items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-[#F1EDFE] ${
                           activeIndex === flatIndex ? "bg-[#F1EDFE]" : ""
                         }`}
                       >

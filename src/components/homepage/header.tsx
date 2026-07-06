@@ -14,7 +14,7 @@ export function SiteHeader() {
   return (
     <nav className="sticky top-0 z-40 border-b border-black/[0.06] bg-white/80 backdrop-blur-[14px] backdrop-saturate-[1.4]">
       <div className="mx-auto flex h-[74px] w-full max-w-[1200px] items-center gap-3 px-6 sm:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5 opacity-100 transition-opacity hover:opacity-80">
           <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-brand-gradient shadow-glow">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="m6 15 6-6 6 6" />

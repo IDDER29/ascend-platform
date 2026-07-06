@@ -428,7 +428,7 @@ export default async function ShellforgeResultPage({
                     </p>
                     <Link
                       href="/achievements"
-                      className="flex items-center gap-3 rounded-xl border border-[#EEECF6] p-3.5"
+                      className="flex items-center gap-3 rounded-xl border border-[#EEECF6] p-3.5 transition-colors hover:border-[#D8D2EC] hover:bg-[#FAF9FE]"
                     >
                       <span className="flex h-9 w-9 flex-none items-center justify-center rounded-[10px] bg-gradient-to-br from-[#FFE08A] via-[#FF8A4C] to-[#FFD86B] text-white">
                         <Trophy size={16} strokeWidth={2.2} />
@@ -455,7 +455,7 @@ export default async function ShellforgeResultPage({
                       </p>
                       <Link
                         href="/community"
-                        className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-[13px] font-bold text-white"
+                        className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-[13px] font-bold text-white transition-colors hover:bg-white/20"
                       >
                         <MessageSquare size={15} strokeWidth={2.2} />
                         Ask the community

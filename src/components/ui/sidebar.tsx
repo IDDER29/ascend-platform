@@ -17,8 +17,10 @@ export function IconSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[78px] flex-none border-r border-divider bg-white md:flex">
-      <div className="sticky top-0 flex h-screen w-full flex-col items-center gap-1.5 py-5">
+    <>
+      {/* layout spacer: reserves the row width the fixed aside occupies */}
+      <div className="hidden w-[78px] flex-none md:block" aria-hidden="true" />
+      <aside className="fixed inset-y-0 left-0 z-20 hidden h-screen w-[78px] flex-col items-center gap-1.5 border-r border-divider bg-white py-5 md:flex">
       <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient shadow-glow">
         <svg
           width="19"
@@ -48,7 +50,7 @@ export function IconSidebar() {
       <div className="mt-auto flex h-10 w-10 items-center justify-center rounded-full bg-brand-gradient font-display font-extrabold text-white">
         A
       </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

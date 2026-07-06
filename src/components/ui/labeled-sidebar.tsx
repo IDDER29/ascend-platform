@@ -80,8 +80,10 @@ export function LabeledSidebar() {
   const displayName = user?.name || "Amine";
   const initial = displayName.charAt(0).toUpperCase();
   return (
-    <aside className="hidden w-[260px] flex-none flex-col border-r border-divider bg-white md:flex">
-      <div className="sticky top-0 flex h-screen flex-col p-4">
+    <>
+      {/* layout spacer: reserves the row width the fixed aside occupies */}
+      <div className="hidden w-[260px] flex-none md:block" aria-hidden="true" />
+      <aside className="fixed inset-y-0 left-0 z-20 hidden h-screen w-[260px] flex-col border-r border-divider bg-white p-4 md:flex">
       <Link href="/" className="mb-[26px] flex items-center gap-2.5 px-2 pt-1">
         <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-brand-gradient shadow-glow">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -134,7 +136,7 @@ export function LabeledSidebar() {
           </div>
         </Link>
       </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

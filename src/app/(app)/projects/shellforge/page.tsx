@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LabeledSidebar } from "@/components/ui/labeled-sidebar";
+import { AppSidebar } from "@/components/ui/sidebar";
 import { AppTopbar } from "@/components/ui/app-topbar";
 import { ShellforgeBrief } from "@/components/projects/shellforge-brief";
 
@@ -11,7 +11,7 @@ export const metadata = {
 export default function ShellforgeBriefPage() {
   return (
     <div className="flex min-h-screen bg-radial-wash text-ink">
-      <LabeledSidebar />
+      <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopbar />
         <main className="flex-1 px-5 py-8 sm:px-10">

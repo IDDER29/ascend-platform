@@ -9,7 +9,7 @@ import { getLesson, getAllLessonParams, getLessonNavigation } from "@/lib/conten
 import { LEVELS } from "@/lib/content/schema";
 import { mdxComponents } from "@/lib/mdx-components";
 
-import { IconSidebar } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/ui/sidebar";
 import { KnowledgeCheck } from "@/components/ui/knowledge-check";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { LessonHeader } from "@/components/lesson/lesson-header";
@@ -63,7 +63,7 @@ export default async function LessonPage({
 
   return (
     <div className="flex min-h-screen bg-white text-ink">
-      <IconSidebar />
+      <AppSidebar defaultCollapsed />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-[70px] items-center gap-3 border-b border-divider bg-white/85 px-4 backdrop-blur-[14px] backdrop-saturate-[1.4] sm:gap-4 sm:px-7">

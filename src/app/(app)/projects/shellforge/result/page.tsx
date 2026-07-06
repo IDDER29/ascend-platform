@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Check, X, MessageSquare, GitBranch, RefreshCw, BookOpen, Trophy } from "lucide-react";
-import { LabeledSidebar } from "@/components/ui/labeled-sidebar";
+import { AppSidebar } from "@/components/ui/sidebar";
 import { AppTopbar } from "@/components/ui/app-topbar";
 import { Card } from "@/components/ui/card";
 import { PeerSolutions } from "@/components/projects/peer-solutions";
@@ -138,7 +138,7 @@ export default async function ShellforgeResultPage({
 
   return (
     <div className="flex min-h-screen bg-radial-wash text-ink">
-      <LabeledSidebar />
+      <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopbar />
         <main className="flex-1 px-5 py-8 sm:px-10">

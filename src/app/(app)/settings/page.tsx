@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { User, Target, Bell, Palette, ShieldAlert, Check } from "lucide-react";
-import { LabeledSidebar } from "@/components/ui/labeled-sidebar";
+import { AppSidebar } from "@/components/ui/sidebar";
 import { AppTopbar } from "@/components/ui/app-topbar";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
@@ -63,7 +63,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex min-h-screen bg-radial-wash text-ink">
-      <LabeledSidebar />
+      <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopbar />
         <main className="flex-1 px-5 py-8 sm:px-10">

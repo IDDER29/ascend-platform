@@ -33,6 +33,8 @@ export function AppTopbar() {
         <NotificationsBell />
         <Link
           href="/profile"
+          title="View profile"
+          aria-label="View profile"
           className="flex h-[39px] w-[39px] flex-none items-center justify-center rounded-xl bg-brand-gradient font-display font-extrabold text-white shadow-glow"
         >
           {initial}

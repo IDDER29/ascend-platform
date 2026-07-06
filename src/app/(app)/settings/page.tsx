@@ -24,10 +24,13 @@ const PACES = [
 const THEMES = ["Light", "Dark", "System"] as const;
 const ACCENTS = ["#6D46F2", "#C13AE0", "#FF6B4A", "#12B981", "#2F6BFF"];
 
-function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
+function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {
   return (
     <button
       onClick={onClick}
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
       className={cn(
         "flex h-[26px] w-[44px] flex-none items-center rounded-full p-[3px] transition-colors",
         on ? "justify-end bg-gradient-to-r from-[#7B4DFF] to-[#C13AE0]" : "justify-start bg-[#DCD7E8]",
@@ -219,7 +222,11 @@ export default function SettingsPage() {
                         <div className="text-[14.5px] font-semibold text-[#2A2540]">{n.label}</div>
                         <div className="mt-0.5 text-[12.5px] leading-relaxed text-ink-muted">{n.desc}</div>
                       </div>
-                      <Toggle on={notifs[n.key]} onClick={() => setNotifs((prev) => ({ ...prev, [n.key]: !prev[n.key] }))} />
+                      <Toggle
+                        on={notifs[n.key]}
+                        onClick={() => setNotifs((prev) => ({ ...prev, [n.key]: !prev[n.key] }))}
+                        label={n.label}
+                      />
                     </div>
                   ))}
                 </Card>

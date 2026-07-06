@@ -179,6 +179,7 @@ export function AppSidebar({ defaultCollapsed = false }: { defaultCollapsed?: bo
             <Link
               href="/profile"
               title={`${displayName} — Level 8`}
+              aria-label={`View profile — ${displayName}, Level 8`}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-gradient font-display font-extrabold text-white"
             >
               {initial}

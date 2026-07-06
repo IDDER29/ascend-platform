@@ -49,6 +49,9 @@ export function NotificationsBell() {
     <div ref={rootRef} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
+        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
+        aria-haspopup="true"
+        aria-expanded={open}
         className="relative flex h-[39px] w-[39px] flex-none items-center justify-center rounded-xl border border-card-border-soft bg-[#F3F1FA] text-ink-secondary"
       >
         <Bell size={17} strokeWidth={2.1} />

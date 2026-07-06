@@ -9,16 +9,32 @@ learningOutcomes:
 - Read a simple instruction and identify its operation and operands
 - Trace how a compare-and-jump pair implements an if/else decision
 - Follow a short assembly function line by line and predict its result
+primer:
+  - title: "Inside the CPU: registers & the ALU"
+    type: "doc"
+    meta: "Read · 8 min · the registers and flags this lesson's assembly instructions actually operate on."
+    essential: true
+  - title: "Crash Course Computer Science #8: Instructions and Programs"
+    type: "video"
+    meta: "Watch · ~11 min · mnemonics and instruction anatomy in context."
+    essential: false
 knowledgeCheck:
-- question: What's the difference between machine code and assembly language, and why can we say they describe 'exactly the same instructions'?
-  whereToLearn: Covered in 'From binary opcodes to mnemonics' — the three-forms diagram of one instruction.
-- question: In the max() example, what job does cmp actually do, and how does jle 'know' whether to jump?
-  whereToLearn: Covered in 'Reading a small function' — trace the flags back to the ALU discussion in Lesson 1 if you get stuck.
+  - question: "What's the difference between machine code and assembly language, and why can we say they describe 'exactly the same instructions'?"
+    answer: "Machine code is the raw bit pattern — the opcode plus operand bits — that the CPU actually fetches. Assembly language gives each opcode a short, human-readable mnemonic like mov or cmp instead. An assembler translates one into the other and a disassembler goes the other way, so they're two representations of the identical instruction, not two different instructions."
+    jumpToId: "from-binary-opcodes-to-mnemonics"
+    jumpToLabel: "From binary opcodes to mnemonics"
+    jumpToDetail: "the three-forms diagram"
+  - question: "In the max() example, what job does cmp actually do, and how does jle 'know' whether to jump?"
+    answer: "cmp subtracts its two operands and keeps only the resulting flags — it never stores the subtraction result anywhere. jle then reads those flags to check whether the first operand was less than or equal to the second, and only jumps to .done if that condition holds; otherwise execution falls through to the next line."
+    jumpToId: "reading-a-small-function"
+    jumpToLabel: "Reading a small function"
+    jumpToDetail: "the cmp/jle trace through max()"
 assignment:
   instruction: 'Open Compiler Explorer at godbolt.org, paste in a tiny function like int max(int a, int b) { return a > b ? a : b; }, and compare the generated assembly to the max example above — find the cmp and the conditional jump. Then change > to >= and see exactly which mnemonic changes.'
   resourceName: Compiler Explorer (godbolt.org)
   resourceType: site
   resourceUrl: 'https://godbolt.org/'
+whyThisMatters: "Reading assembly, even occasionally, turns a compiler and a debugger from black boxes into tools you can actually reason about — the moment you can spot a cmp/jle pair and recognize it as an if-statement in disguise, stepping through a stack trace or a disassembly stops being guesswork and starts being something you know how to read."
 additionalResources:
 - title: Guide to x86 Assembly — University of Virginia CS216
   type: doc

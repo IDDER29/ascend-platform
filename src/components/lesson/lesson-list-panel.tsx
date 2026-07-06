@@ -64,7 +64,12 @@ export function LessonListPanel({
               </span>
             )}
             {state === "locked" && (
-              <span className="h-[22px] w-[22px] flex-none rounded-full border-2 border-[#D8D3E6]" />
+              <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full border border-[#E7E4F0] bg-[#F1EFF6]">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#C6C1D4" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="4" y="11" width="16" height="10" rx="2" />
+                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                </svg>
+              </span>
             )}
             <span
               className={

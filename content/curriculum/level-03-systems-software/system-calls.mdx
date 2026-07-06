@@ -9,16 +9,33 @@ learningOutcomes:
 - Distinguish a library function like printf() from the actual system call (write()) it eventually triggers
 - Read a syscall's return value and errno together to detect and diagnose a failure
 - Use (or predict the output of) strace to see the real sequence of syscalls a program makes
+primer:
+- title: "Processes & the process table, recapped"
+  type: "doc"
+  meta: "Read · 2 min · what a running process actually is before it starts making syscalls."
+  essential: true
+- title: "man 3 errno"
+  type: "doc"
+  meta: "Skim · the DESCRIPTION section on how errno gets set."
+  essential: false
+  url: "https://man7.org/linux/man-pages/man3/errno.3.html"
 knowledgeCheck:
-- question: Why can't write() just be a normal function call straight into the kernel's code — what has to happen at the boundary?
-  whereToLearn: Covered in "User mode vs. kernel mode" — the diagram walks through the trap instruction crossing into the kernel.
-- question: In the write() example, how do you know the second write() call failed, and where does the human-readable reason come from?
-  whereToLearn: 'Covered in "Anatomy of a syscall: write()" — look at the errno / strerror() lines right after the bad write() call.'
+- question: "Why can't write() just be a normal function call straight into the kernel's code — what has to happen at the boundary?"
+  answer: "The CPU itself enforces a hardware split between user mode, where your program's instructions run with restricted privileges, and kernel mode, where the OS has full access to hardware and memory — user code physically cannot execute a privileged instruction directly. Crossing that boundary requires a special trap/syscall instruction that switches the CPU into kernel mode, lets the kernel do the privileged work, and then returns control and a result back to user mode."
+  jumpToId: "user-mode-vs-kernel-mode"
+  jumpToLabel: "User mode vs. kernel mode"
+  jumpToDetail: "the trap instruction crossing the boundary"
+- question: "In the write() example, how do you know the second write() call failed, and where does the human-readable reason come from?"
+  answer: "The second write() call returns -1, the universal POSIX signal that a syscall failed, but the return value itself never says why. The reason is stashed in the global errno variable that the syscall sets on failure, and strerror(errno) is what turns that numeric code into the human-readable message (\"Bad file descriptor\") the example prints."
+  jumpToId: "anatomy-of-a-syscall-write"
+  jumpToLabel: "Anatomy of a syscall: write()"
+  jumpToDetail: "the errno / strerror() lines after the bad write() call"
 assignment:
   instruction: Compile the write() example, then run it under `strace -o out.txt ./a.out` and open out.txt — find the write() and exit_group() lines and match each one to the C line that produced it.
   resourceName: man 2 syscalls
   resourceType: doc
   resourceUrl: 'https://man7.org/linux/man-pages/man2/syscalls.2.html'
+whyThisMatters: "Every capability the rest of this level teaches — forking, waiting, piping, redirecting, catching signals — is, underneath, just another system call crossing this same user/kernel boundary. Once you see write() as the trap instruction it really is, a tool like strace stops being a debugging trick and becomes a direct window into exactly what your program asked the kernel to do, in order."
 additionalResources:
 - title: strace in 10 minutes
   type: video

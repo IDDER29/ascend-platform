@@ -9,16 +9,32 @@ learningOutcomes:
 - Explain what a stack frame contains and why it's discarded automatically
 - Describe how heap memory differs from stack memory in how it's requested and released
 - Choose, for a given scenario, whether stack or heap allocation is the right fit
+primer:
+  - title: "The address space: how memory is laid out"
+    type: "doc"
+    meta: "Read · 7 min · the stack-at-top, heap-below-the-gap map this lesson brings to life."
+    essential: true
+  - title: "Computerphile: Stack Based Buffer Overflow"
+    type: "video"
+    meta: "Watch · ~14 min · seeing stack frames matter in practice."
+    essential: false
 knowledgeCheck:
-- question: Walk through, step by step, what happens on the stack when function A calls function B, and what happens when B returns.
-  whereToLearn: 'Covered in ''The stack: a history of function calls'' — the three-frame call-chain diagram.'
-- question: Give one concrete scenario where you'd need heap allocation instead of a plain local variable, and explain why the stack wouldn't work there.
-  whereToLearn: 'Covered in ''The heap: memory you ask for by name'' and ''Choosing stack vs heap.'''
+  - question: "Walk through, step by step, what happens on the stack when function A calls function B, and what happens when B returns."
+    answer: "When A calls B, the CPU pushes a new stack frame for B by moving the stack pointer down — the frame holds the return address back into A, room for B's locals, and often a few saved registers. When B returns, that frame is popped: the stack pointer moves back up, the saved return address tells execution where to resume in A, and B's locals simply stop being claimed by anyone."
+    jumpToId: "the-stack-a-history-of-function-calls"
+    jumpToLabel: "The stack: a history of function calls"
+    jumpToDetail: "the three-frame call-chain diagram"
+  - question: "Give one concrete scenario where you'd need heap allocation instead of a plain local variable, and explain why the stack wouldn't work there."
+    answer: "One example: building a data structure whose size isn't known until the program is running, or that needs to outlive the function that created it. A stack (local) variable is destroyed the instant its function returns, so anything that must survive past that point — or whose size depends on runtime input — has to be requested from the heap instead."
+    jumpToId: "the-heap-memory-you-ask-for-by-name"
+    jumpToLabel: "The heap: memory you ask for by name"
+    jumpToDetail: "compare against 'Choosing stack vs heap' below"
 assignment:
   instruction: 'Read the ''Memory: It''s What''s for Dinner'' section of Beej''s Guide to C Programming, which covers stack and heap allocation directly. Then hand-draw the stack frames for a chain of three function calls of your choosing, labeling each frame''s return address and locals, the way the diagram above does.'
   resourceName: 'Beej''s Guide to C Programming — Memory: It''s What''s for Dinner'
   resourceType: doc
   resourceUrl: 'https://beej.us/guide/bgc/'
+whyThisMatters: "This is the decision you'll make explicitly, every time you declare a variable in C: stack if it's short-lived and local, heap if it needs to outlive the function or its size isn't known yet. Get it wrong and you'll meet two of C's classic bugs firsthand — a dangling pointer to a stack frame that's already gone, or a heap allocation nobody ever freed."
 additionalResources:
 - title: 'Computer Systems: A Programmer''s Perspective — 3.7, Procedures'
   type: doc

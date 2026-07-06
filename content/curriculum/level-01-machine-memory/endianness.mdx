@@ -9,16 +9,32 @@ learningOutcomes:
 - Convert a given hex value into its little-endian and big-endian byte layouts by hand
 - State which convention x86/x86-64 uses and which convention network protocols use
 - Recognize endianness as the likely culprit when raw memory or packet bytes look reversed
+primer:
+  - title: "The address space: how memory is laid out"
+    type: "doc"
+    meta: "Read · 7 min · why a multi-byte value spans several addresses in the first place."
+    essential: true
+  - title: "Hex and binary number representation"
+    type: "doc"
+    meta: "Refresh · reading a multi-byte hex value one byte at a time."
+    essential: false
 knowledgeCheck:
-- question: Given the 4-byte value 0xAABBCCDD stored starting at address 0x100, write out which byte sits at 0x100 on a little-endian machine, and which sits there on a big-endian machine.
-  whereToLearn: Covered in 'Little-endian vs big-endian' — the side-by-side memory-strip diagram.
-- question: Why do network protocols standardize on big-endian ('network byte order') even though most desktop and laptop CPUs are little-endian?
-  whereToLearn: Covered in 'Little-endian vs big-endian' and 'Why you'll actually run into this.'
+  - question: "Given the 4-byte value 0xAABBCCDD stored starting at address 0x100, write out which byte sits at 0x100 on a little-endian machine, and which sits there on a big-endian machine."
+    answer: "On a little-endian machine, the least-significant byte comes first, so 0xDD sits at address 0x100 (followed by CC, BB, AA at 0x101–0x103). On a big-endian machine, the most-significant byte comes first, so 0xAA sits at address 0x100 (followed by BB, CC, DD)."
+    jumpToId: "little-endian-vs-big-endian"
+    jumpToLabel: "Little-endian vs big-endian"
+    jumpToDetail: "the side-by-side memory-strip diagram"
+  - question: "Why do network protocols standardize on big-endian ('network byte order') even though most desktop and laptop CPUs are little-endian?"
+    answer: "Neither byte order is more 'correct' than the other, but two machines exchanging raw bytes need to agree on one convention or they'll misinterpret each other's values. TCP/IP fixed that ambiguity by standardizing on big-endian for anything sent over the wire, regardless of which order the sending or receiving CPU uses internally."
+    jumpToId: "why-youll-actually-run-into-this"
+    jumpToLabel: "Why you'll actually run into this"
+    jumpToDetail: "the htons/ntohl mention"
 assignment:
   instruction: Read the 'Byte Order' section of Beej's Guide to Network Programming, then convert the value 0xDEADBEEF by hand into both its little-endian and big-endian byte sequences before checking your answer with a debugger or the htons/ntohl man page.
   resourceName: Beej's Guide to Network Programming — Byte Order
   resourceType: doc
   resourceUrl: 'https://beej.us/guide/bgnet/html/split/ip-addresses-structs-and-data-munging.html'
+whyThisMatters: "Endianness is invisible until it isn't — the instant you hex-dump raw memory, parse a binary file format, or send bytes over a socket, guessing the wrong byte order turns a correct value into garbage. Knowing which convention your machine uses, and that network protocols insist on a different one, is what makes htons/ntohl calls make sense instead of feeling like arbitrary incantations."
 additionalResources:
 - title: man 3 endian (byteorder) — Linux manual page
   type: doc

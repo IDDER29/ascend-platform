@@ -9,16 +9,31 @@ learningOutcomes:
 - Define temporal locality and spatial locality in your own words
 - Explain what a cache line is and why a cache fetches more than one byte at a time
 - Predict which of two access patterns will run faster based on locality
+primer:
+  - title: "The stack & the heap"
+    type: "doc"
+    meta: "Read · 8 min · the contiguous array layout this lesson's cache examples build on."
+    essential: true
+  - title: "Memory hierarchy, visualized"
+    type: "video"
+    meta: "Watch · ~5 min · registers, cache, RAM, and disk on one scale."
+    essential: false
 knowledgeCheck:
-- question: In your own words, what's the difference between temporal and spatial locality, and which one does a cache line directly exploit?
-  whereToLearn: 'Covered in ''Locality: why caching even works.'''
-- question: Why would summing every element of an array typically be much faster than summing the same values scattered across a linked list?
-  whereToLearn: Covered in 'Cache-friendly vs cache-hostile code' — compare the two loops.
+  - question: "In your own words, what's the difference between temporal and spatial locality, and which one does a cache line directly exploit?"
+    answer: "Temporal locality means a program is likely to reuse the exact same piece of data again soon, like a loop counter checked every iteration. Spatial locality means it's likely to use a nearby address soon after using one address, like walking through an array. A cache line directly exploits spatial locality, since fetching one byte pulls in a whole contiguous 64-byte chunk around it."
+    jumpToId: "locality-why-caching-even-works"
+    jumpToLabel: "Locality: why caching even works"
+  - question: "Why would summing every element of an array typically be much faster than summing the same values scattered across a linked list?"
+    answer: "An array's elements sit back-to-back in memory, so pulling in one cache line brings several subsequent elements along with it — a spatial-locality dream. A linked list's nodes can be scattered anywhere the allocator put them, so following each next pointer is likely to jump to an uncached region and pay the full RAM-latency penalty almost every step."
+    jumpToId: "cache-friendly-vs-cache-hostile-code"
+    jumpToLabel: "Cache-friendly vs cache-hostile code"
+    jumpToDetail: "the array vs linked-list loop comparison"
 assignment:
   instruction: Read Igor Ostrovsky's 'Gallery of Processor Cache Effects,' and work through Example 1 (looping over an array with different strides) — predict which stride will be slowest before you check the explanation.
   resourceName: Gallery of Processor Cache Effects — Igor Ostrovsky
   resourceType: doc
   resourceUrl: 'http://igoro.com/archive/gallery-of-processor-cache-effects/'
+whyThisMatters: "This is the difference between code that 'does the same work' on paper and code that runs dramatically faster in practice — once you can predict whether a loop is cache-friendly or cache-hostile, you'll choose arrays over linked lists, loop in the right order, and understand why locality-awareness pays off long before any other optimization does."
 additionalResources:
 - title: What Every Programmer Should Know About Memory — Ulrich Drepper
   type: pdf

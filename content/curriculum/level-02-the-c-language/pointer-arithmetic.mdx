@@ -9,16 +9,32 @@ learningOutcomes:
 - Walk through an array using pointer increments instead of index brackets
 - Rewrite arr[i] as its equivalent pointer expression *(arr + i), and vice versa
 - Identify pointer arithmetic that produces undefined behavior, such as stepping past the end of an array
+primer:
+  - title: "What a pointer really is"
+    type: "doc"
+    meta: "& and * are assumed knowledge going into this lesson"
+    essential: true
+  - title: "Arrays in C"
+    type: "doc"
+    meta: "A refresher on array declarations before array-pointer decay"
+    essential: false
 knowledgeCheck:
-- question: If p is declared as an int *, what actually happens at the byte level when you write p + 1?
-  whereToLearn: See 'Addresses that know their own step size' — the memory diagram shows the jump equals sizeof(int), not one byte.
-- question: Why do arr[i] and *(arr + i) always produce the same value?
-  whereToLearn: See 'Arrays were pointer arithmetic all along' — square-bracket indexing is defined as pointer arithmetic under the hood, confirmed by the second runnable lab.
+  - question: "If p is declared as an int *, what actually happens at the byte level when you write p + 1?"
+    answer: "The compiler doesn't add 1 to the raw address — it adds sizeof(int), typically 4 bytes, because p + 1 means 'the address of the next int,' not 'the next byte.' Change the type p points to and the same + 1 jumps a completely different number of bytes."
+    jumpToId: "addresses-that-know-their-own-step-size"
+    jumpToLabel: "Addresses that know their own step size"
+    jumpToDetail: "the memory diagram section"
+  - question: "Why do arr[i] and *(arr + i) always produce the same value?"
+    answer: "Square-bracket indexing is defined in terms of pointer arithmetic, not the other way around — arr[i] is literally shorthand for *(arr + i). The array name decays into a pointer to its first element, so both expressions compute the exact same address."
+    jumpToId: "arrays-were-pointer-arithmetic-all-along"
+    jumpToLabel: "Arrays were pointer arithmetic all along"
+    jumpToDetail: "the second runnable lab comparing both forms"
 assignment:
   instruction: Take the array-walking lab above and rewrite it to print all four elements using only pointer arithmetic and a for loop that increments a pointer — no [ ] anywhere — then read up on exactly which pointer arithmetic is legal versus undefined.
   resourceName: Beej's Guide to C — Pointers (§6.5, Pointer Arithmetic)
   resourceType: doc
   resourceUrl: 'https://beej.us/guide/bgc/html/split/pointers2.html'
+whyThisMatters: "Pointer arithmetic is the mechanism underneath array indexing, string iteration, and every 'walk this buffer' loop you'll write in C — once you know p + 1 means 'next element,' not 'next byte,' loops that used to feel like magic become something you can predict exactly. It's also where C's safety net disappears: knowing precisely where the arithmetic is legal is what keeps you from stepping into undefined behaviour without noticing."
 additionalResources:
 - title: Pointer arithmetic, visualized
   type: video

@@ -9,16 +9,31 @@ learningOutcomes:
 - Predict how many bytes a variable occupies from its type, and confirm it with sizeof
 - Explain why consecutively declared variables tend to sit near each other in memory but aren't guaranteed to
 - Connect the byte-addressable grid from Level 01 to real C variable declarations
+primer:
+  - title: "The address space"
+    type: "doc"
+    meta: "Level 01 · every byte in memory has a numeric address"
+    essential: true
+  - title: "sizeof, revisited"
+    type: "doc"
+    meta: "A quick reminder of what sizeof actually reports"
+    essential: false
 knowledgeCheck:
-- question: If you declared a char, an int, and a double back to back, could you predict their exact addresses without running anything? Why or why not?
-  whereToLearn: See 'A program's memory map' and the padding note in 'Types are the compiler's promise' — sizes are predictable with sizeof, but exact addresses and gaps are not guaranteed.
-- question: Which memory region holds a local variable declared inside main(), and which region holds memory returned by malloc?
-  whereToLearn: See 'A program's memory map' — locals live on the stack, and malloc'd memory lives on the heap.
+  - question: "If you declared a char, an int, and a double back to back, could you predict their exact addresses without running anything? Why or why not?"
+    answer: "You can predict the sizes with certainty — sizeof tells you exactly how many bytes each type occupies on this machine. But you can't predict the exact addresses or gaps between them: the compiler is free to insert padding for alignment and isn't obligated to place variables back-to-back with no gap, so only the size is guaranteed, not the layout."
+    jumpToId: "types-are-the-compilers-promise-not-the-machines"
+    jumpToLabel: "Types are the compiler's promise, not the machine's"
+    jumpToDetail: "the back-to-back layout note"
+  - question: "Which memory region holds a local variable declared inside main(), and which region holds memory returned by malloc?"
+    answer: "A local variable declared inside main() lives on the stack, since stack space is what's used automatically for local variables and function calls. Memory returned by malloc lives on the heap, the region set aside for memory you explicitly request at runtime."
+    jumpToId: "a-programs-memory-map"
+    jumpToLabel: "A program's memory map"
 assignment:
   instruction: Write a short program that declares one variable each of type char, short, int, long, and double, and prints the sizeof each one — then compare your numbers with a classmate or another machine to see what's actually guaranteed versus merely typical.
   resourceName: Beej's Guide to C — Types
   resourceType: doc
   resourceUrl: 'https://beej.us/guide/bgc/html/split/types.html'
+whyThisMatters: "Every bug you'll debug in C — a wrong sizeof, a struct that's bigger than expected, a pointer that reads garbage — traces back to this one idea: variables are just named regions of the same flat byte grid the whole machine shares. Once you can look at `int n = 42;` and see four real bytes at a real address instead of just syntax, the stack, the heap, and pointers all stop being separate topics and become different ways of talking about the same underlying memory."
 additionalResources:
 - title: Memory layout of a C program, visualized
   type: video

@@ -9,16 +9,31 @@ learningOutcomes:
 - Use malloc together with sizeof to request a correctly-sized block of heap memory
 - Check a malloc call for failure before using the pointer it returns
 - Trace how an unfreed allocation becomes an unreachable memory leak
+primer:
+  - title: "Stack vs heap"
+    type: "doc"
+    meta: "Previous lesson · this lesson goes deep on the heap side"
+    essential: true
+  - title: "calloc vs malloc"
+    type: "doc"
+    meta: "A quick preview of the difference this lesson's assignment asks about"
+    essential: false
 knowledgeCheck:
-- question: Why does heap memory survive after the function that allocated it returns, when a stack variable wouldn't?
-  whereToLearn: Covered in “Stack vs heap, one more time” — stack space is reclaimed automatically on return, but heap space isn't reclaimed until you call free.
-- question: What actually goes wrong when you forget to free a heap allocation before losing your only pointer to it?
-  whereToLearn: Covered in “Every malloc needs a free” — the block becomes unreachable but stays marked in use for the rest of the program's run.
+  - question: "Why does heap memory survive after the function that allocated it returns, when a stack variable wouldn't?"
+    answer: "Stack space is tied to a function's frame and gets reclaimed automatically the instant that function returns — nothing you do can stop that. Heap space works completely differently: it stays reserved until you explicitly call free on it, so a function can allocate memory, return, and the allocation is still valid because nothing automatic ever took it back."
+    jumpToId: "stack-vs-heap-one-more-time"
+    jumpToLabel: "Stack vs heap, one more time"
+  - question: "What actually goes wrong when you forget to free a heap allocation before losing your only pointer to it?"
+    answer: "The block itself doesn't disappear or get reused automatically — it stays marked 'in use' by the allocator for as long as the program runs, even though nothing in your program can reach it anymore since the only pointer to it is gone. That unreachable-but-reserved memory is a memory leak, and it just grows for the rest of the program's run."
+    jumpToId: "every-malloc-needs-a-free"
+    jumpToLabel: "Every malloc needs a free"
+    jumpToDetail: "the leaky_function example"
 assignment:
   instruction: Read man 3 malloc in full this time, not just the synopsis — note what it says about NULL on failure and about calloc's zero-initialization — then rewrite the lab above to use calloc instead of malloc and delete the loop that was only there to initialize the array.
   resourceName: man 3 malloc
   resourceType: doc
   resourceUrl: 'https://man7.org/linux/man-pages/man3/malloc.3.html'
+whyThisMatters: "malloc and free are how C programs handle data whose size or lifetime isn't known until runtime — a file you haven't read yet, a list that grows with user input — and getting the pairing right is the difference between a program that scales and one that slowly leaks memory until it's killed. This is also the exact discipline the next lesson depends on: every classic undefined-behaviour bug, from use-after-free to double-free, starts with breaking the one-malloc-one-free rule you just learned."
 additionalResources:
 - title: Beej's Guide to C — malloc, calloc, realloc, and free
   type: doc

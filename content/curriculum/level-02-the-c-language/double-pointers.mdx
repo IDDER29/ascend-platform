@@ -9,16 +9,32 @@ learningOutcomes:
 - Distinguish changing a pointer's target value from changing the pointer itself
 - Write a function that reassigns the caller's pointer using an int** parameter
 - Recognize double-pointer patterns you'll meet later, like char **argv
+primer:
+  - title: "What a pointer really is"
+    type: "doc"
+    meta: "This lesson just adds one more hop of the same idea"
+    essential: true
+  - title: "Pointer arithmetic"
+    type: "doc"
+    meta: "Previous lesson · not required, but the same mental model helps"
+    essential: false
 knowledgeCheck:
-- question: In the first lab, what's the difference between what *p = 7 would change versus what **pp = 7 changes?
-  whereToLearn: See 'Two dereferences, one assignment' — **pp reaches x through p, the same target *p alone reaches directly, just with one fewer hop.
-- question: Why does point_to_new_value need an int** parameter instead of an int* to make main's p point somewhere new?
-  whereToLearn: See 'The real reason to reach for **' — an int* parameter would only receive a copy of the address, so reassigning it wouldn't affect the caller's p.
+  - question: "In the first lab, what's the difference between what *p = 7 would change versus what **pp = 7 changes?"
+    answer: "Both ultimately change the same variable, x — *p = 7 reaches x directly through one dereference, while **pp = 7 reaches that same x through one extra hop: the first * follows pp to get p's value, then the second * follows that to x. Same destination, one extra step along the way."
+    jumpToId: "two-dereferences-one-assignment"
+    jumpToLabel: "Two dereferences, one assignment"
+    jumpToDetail: "the runnable lab"
+  - question: "Why does point_to_new_value need an int** parameter instead of an int* to make main's p point somewhere new?"
+    answer: "Passing an int* only gives the function a copy of the address stored in p — reassigning that copy inside the function never touches main's actual p variable. Passing an int** gives the function the address of p itself, so it can write a brand-new address into p directly, which is the only way to make the caller's own pointer point somewhere new."
+    jumpToId: "the-real-reason-to-reach-for--changing-the-pointer-itself"
+    jumpToLabel: "The real reason to reach for **: changing the pointer itself"
+    jumpToDetail: "the point_to_new_value lab"
 assignment:
   instruction: Modify point_to_new_value to fail safely — if malloc returns NULL, leave the caller's pointer unchanged and return an int status instead of void — then read up on why char **argv is the correct type for a C program's argument list.
   resourceName: Beej's Guide to C — Pointers to Pointers
   resourceType: doc
   resourceUrl: 'https://beej.us/guide/bgc/html/split/pointers-iii-pointers-to-pointers-and-more.html'
+whyThisMatters: "Double pointers look intimidating on the page, but they solve one very ordinary problem: letting a function hand a new address back to its caller, not just a new value. That's exactly the shape you need to understand `char **argv`, functions that allocate and return data through an out-parameter, and any API where 'give me a pointer to your pointer' is the only way to reassign what the caller is holding."
 additionalResources:
 - title: Pointers to pointers, visualized
   type: video

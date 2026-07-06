@@ -136,7 +136,8 @@ export default async function LessonPage({
           </div>
         </header>
 
-        <main className="flex flex-1 items-start">
+        <main className="flex flex-1 items-start justify-center">
+          <div className="mx-auto flex w-full max-w-[1362px] items-start">
           <LessonListPanel
             level={meta.level}
             currentOrder={meta.order}
@@ -241,6 +242,7 @@ export default async function LessonPage({
                 <AddNoteButton />
               </div>
             </aside>
+          </div>
           </div>
         </main>
       </div>

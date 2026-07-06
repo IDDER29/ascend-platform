@@ -17,7 +17,7 @@ export function AuthSplitLayout({
 }) {
   return (
     <div className="flex min-h-screen bg-bg text-ink">
-      <div className="relative hidden flex-1 basis-[46%] flex-col overflow-hidden bg-gradient-to-br from-[#1B1730] via-[#2A2440] to-[#3A2A55] px-10 py-12 text-white lg:flex">
+      <div className="relative hidden w-[44%] flex-none flex-col overflow-hidden bg-gradient-to-br from-[#1B1730] via-[#2A2440] to-[#3A2A55] px-10 py-12 text-white lg:flex">
         <div className="animate-blob pointer-events-none absolute -right-16 -top-24 h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(123,77,255,0.42),transparent_66%)] blur-[12px]" />
         <div className="pointer-events-none absolute -bottom-28 -left-10 h-[320px] w-[320px] rounded-full bg-[radial-gradient(circle,rgba(255,107,74,0.28),transparent_66%)] blur-[12px]" />
         <Link href="/" className="relative flex items-center gap-2.5">

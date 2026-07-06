@@ -80,7 +80,8 @@ export default async function LessonPage({
       <AppSidebar defaultCollapsed />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-[70px] items-center gap-3 border-b border-divider bg-white/85 px-4 backdrop-blur-[14px] backdrop-saturate-[1.4] sm:gap-4 sm:px-7">
+        <header className="sticky top-0 z-30 flex h-[70px] items-center justify-center border-b border-divider bg-white/85 px-4 backdrop-blur-[14px] backdrop-saturate-[1.4] sm:px-7">
+          <div className="mx-auto flex w-full max-w-[1362px] items-center gap-3 sm:gap-4">
           <div className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-brand-gradient md:hidden">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="m6 15 6-6 6 6" />
@@ -133,6 +134,7 @@ export default async function LessonPage({
                 </svg>
               </Link>
             ) : null}
+          </div>
           </div>
         </header>
 

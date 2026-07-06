@@ -44,3 +44,7 @@ next-env.d.ts
 /local.db
 /local.db-*
 
+# local verification artifacts
+/.debug-shots
+/prod.log
+

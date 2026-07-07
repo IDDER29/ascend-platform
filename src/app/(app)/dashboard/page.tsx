@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Flame, Zap, CheckCircle2, Award, ChevronRight, Lock } from "lucide-react";
 import { getAllLessons } from "@/lib/content/lessons";
 import { LEVELS, levelIds } from "@/lib/content/schema";
-import { LabeledSidebar } from "@/components/ui/labeled-sidebar";
+import { AppSidebar } from "@/components/ui/sidebar";
 import { AppTopbar } from "@/components/ui/app-topbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen bg-radial-wash text-ink">
-      <LabeledSidebar />
+      <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopbar />
         <main className="flex-1 px-5 py-8 sm:px-10">

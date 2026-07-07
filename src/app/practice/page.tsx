@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Flame, Trophy, Zap, Check, X, Heart, Clock } from "lucide-react";
-import { IconSidebar } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/ui/sidebar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { POINTERS_DRILL } from "@/lib/practice-questions";
@@ -94,7 +94,7 @@ export default function PracticePage() {
 
     return (
       <div className="flex min-h-screen bg-radial-wash text-ink">
-        <IconSidebar />
+        <AppSidebar defaultCollapsed />
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 flex h-[70px] items-center gap-5 border-b border-divider bg-white/85 px-7 backdrop-blur-[14px] backdrop-saturate-[1.4]">
             <Link href="/dashboard" className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13.5px] font-semibold text-ink-secondary hover:bg-[#F3F1FB]">
@@ -268,7 +268,7 @@ export default function PracticePage() {
 
   return (
     <div className="flex min-h-screen bg-radial-wash text-ink">
-      <IconSidebar />
+      <AppSidebar defaultCollapsed />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-[70px] items-center gap-5 border-b border-divider bg-white/85 px-7 backdrop-blur-[14px] backdrop-saturate-[1.4]">
           <Link href="/dashboard" className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13.5px] font-semibold text-ink-secondary hover:bg-[#F3F1FB]">

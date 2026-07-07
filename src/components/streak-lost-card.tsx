@@ -37,7 +37,8 @@ export function StreakLostCard({
         </h1>
         <p className="mx-auto mb-7 max-w-[380px] text-[15.5px] leading-relaxed text-[#B8B2CC]">
           Life happens — three days off, and the flame cooled. The good news:{" "}
-          <b className="text-white">nothing you learned is gone.</b> Let&apos;s relight it today.
+          <b className="text-white">nothing you learned is gone.</b>{" "}
+          Let&apos;s relight it today.
         </p>
 
         <div className="mb-6 flex gap-3">

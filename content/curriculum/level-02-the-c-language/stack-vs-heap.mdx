@@ -9,16 +9,31 @@ learningOutcomes:
 - Explain why a local variable's storage disappears the moment its function returns
 - Allocate memory on the heap with malloc and release it with free
 - Decide, for a given variable, whether the stack or the heap is the appropriate home
+primer:
+  - title: "Memory & the machine"
+    type: "doc"
+    meta: "Previous lesson · the memory map this lesson zooms into"
+    essential: true
+  - title: "The stack and the heap"
+    type: "doc"
+    meta: "Level 01 · a first look at these two regions"
+    essential: false
 knowledgeCheck:
-- question: Why does a pointer to a local variable become useless the moment its function returns?
-  whereToLearn: 'See ''The stack: automatic, ordered, temporary'' — the frame holding that variable is popped off and may be reused by the very next call.'
-- question: In the heap lab, why does *result still print 99 even though make_on_heap already returned?
-  whereToLearn: 'See ''The heap: manual, flexible, persistent'' — the runnable lab shows malloc''d memory outliving the function that allocated it.'
+  - question: "Why does a pointer to a local variable become useless the moment its function returns?"
+    answer: "The instant a function returns, its stack frame is popped off, and every local variable inside that frame is no longer reserved for anything. The address a pointer holds doesn't change, but the frame it points into can be overwritten by the very next function call, so dereferencing it afterward reads memory that no longer belongs to that variable."
+    jumpToId: "the-stack-automatic-ordered-temporary"
+    jumpToLabel: "The stack: automatic, ordered, temporary"
+  - question: "In the heap lab, why does *result still print 99 even though make_on_heap already returned?"
+    answer: "make_on_heap allocated its int on the heap with malloc, not on the stack, so the memory isn't tied to that function's frame at all. Heap memory stays reserved after the allocating function returns — it's only released when you explicitly call free — so the address stored in result is still valid and still holds 99."
+    jumpToId: "the-heap-manual-flexible-persistent"
+    jumpToLabel: "The heap: manual, flexible, persistent"
+    jumpToDetail: "the runnable heap lab"
 assignment:
   instruction: Modify the heap lab so make_on_heap allocates and returns an array of 5 ints instead of a single one, fill it inside the function, and print all 5 values from main — then read the malloc man page's SYNOPSIS to confirm its return type and required header.
   resourceName: man 3 malloc
   resourceType: doc
   resourceUrl: 'https://man7.org/linux/man-pages/man3/malloc.3.html'
+whyThisMatters: "Almost every serious C bug — a dangling pointer, a memory leak, a stack overflow — comes from picking the wrong region for a piece of data or losing track of who owns it. Knowing on sight whether a variable is going to vanish the instant a function returns, or persist until you explicitly free it, is what lets you write functions that hand back real, valid data instead of addresses into memory that's already been reused."
 additionalResources:
 - title: Stack vs heap, visualized
   type: video

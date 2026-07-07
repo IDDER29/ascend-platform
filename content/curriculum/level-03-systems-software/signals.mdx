@@ -9,16 +9,33 @@ learningOutcomes:
 - Install a signal handler with sigaction() and safely flag work for the main program to do outside of it
 - Name which signals can never be caught, blocked, or ignored, and explain why
 - Explain why a shell must catch SIGINT itself so Ctrl-C interrupts the running command, not the shell
+primer:
+- title: "User mode vs. kernel mode, recapped"
+  type: "doc"
+  meta: "Read · 2 min · refresher on how the kernel reaches into a running process."
+  essential: true
+- title: "man 7 signal"
+  type: "doc"
+  meta: "Skim · the disposition table near the top."
+  essential: false
+  url: "https://man7.org/linux/man-pages/man7/signal.7.html"
 knowledgeCheck:
-- question: Why does handle_sigint() just set got_sigint = 1 instead of doing the real shutdown work directly inside the handler?
-  whereToLearn: Covered in "Installing a handler" — the paragraph right after the code explains why handlers should do as little as possible.
-- question: Why can't a process register a handler for SIGKILL the way it can for SIGINT?
-  whereToLearn: Covered in "Some signals can't be caught" — it explains which signals bypass handlers entirely and why the kernel forces that.
+- question: "Why does handle_sigint() just set got_sigint = 1 instead of doing the real shutdown work directly inside the handler?"
+  answer: "A signal handler can interrupt the program at literally any instruction, possibly mid-way through another unsafe call like printf(), so only a small, restricted set of operations is guaranteed safe to run inside one. Setting a volatile sig_atomic_t flag is one of those safe operations, so the handler just flags that the signal arrived and lets the ordinary, non-interrupted code in main() do the real shutdown work."
+  jumpToId: "installing-a-handler"
+  jumpToLabel: "Installing a handler"
+  jumpToDetail: "the paragraph on signal-safety right after the code"
+- question: "Why can't a process register a handler for SIGKILL the way it can for SIGINT?"
+  answer: "SIGKILL and SIGSTOP are handled directly by the kernel and are deliberately excluded from the handler-override mechanism, so no sigaction() call can intercept them. That guarantees there's always a way to force-terminate or force-pause any process, even one whose own handlers are broken or malicious — which is why kill -9 always works no matter what the target process does."
+  jumpToId: "some-signals-cant-be-caught"
+  jumpToLabel: "Some signals can't be caught"
+  jumpToDetail: "why SIGKILL and SIGSTOP bypass handlers"
 assignment:
   instruction: Read man 7 signal for the full disposition table, then extend the sigaction example to also catch SIGTERM with its own handler that prints which signal number it received.
   resourceName: man 7 signal
   resourceType: doc
   resourceUrl: 'https://man7.org/linux/man-pages/man7/signal.7.html'
+whyThisMatters: "A shell that mishandles SIGINT either dies the instant someone presses Ctrl-C, or can't interrupt a runaway child at all — neither is acceptable in a real shell. Once you know exactly which signals are catchable, which never are, and what's actually safe to do inside a handler, you can build the behavior real shells have: Ctrl-C kills the running command but leaves the shell itself alive."
 additionalResources:
 - title: kill -l and signal numbers explained
   type: doc

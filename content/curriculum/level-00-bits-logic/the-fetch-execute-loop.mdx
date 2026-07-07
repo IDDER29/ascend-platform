@@ -9,11 +9,25 @@ learningOutcomes:
 - Explain the role of the program counter and instruction register in fetching the next instruction
 - Trace how a specific example instruction moves through fetch, decode, and execute
 - Explain why "running a program" is, physically, this same loop repeating billions of times per second
+primer:
+- title: Logic gates, from switches to circuits
+  type: doc
+  meta: Reread · 4 min · the previous lesson — the ALU that executes instructions is built from these gates.
+  essential: true
+- title: 'Crash Course Computer Science #7: The Central Processing Unit (CPU)'
+  type: video
+  meta: Watch · 11 min · a walkthrough of the CPU stages this lesson names.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=FZGugFqdr60'
 knowledgeCheck:
 - question: In your own words, trace what happens to the program counter and instruction register during a single fetch step.
-  whereToLearn: Revisit "Fetch, decode, execute" — the PC's address is read, its instruction bits are copied into the IR, and only then does the PC advance to the next address.
+  answer: The CPU reads the instruction bits stored at the memory address the program counter currently holds, then copies those bits into the instruction register so they're ready to be decoded. Only after that copy happens does the program counter advance to point at the next instruction's address, so decode always works from the instruction just fetched, not the one about to be fetched.
+  jumpToId: fetch-decode-execute
+  jumpToLabel: Fetch, decode, execute
 - question: Why is it accurate to say a CPU "doesn't know" it's running a program — and what does that reveal about what a program actually is?
-  whereToLearn: Revisit "Why this loop is 'a computer'" — the CPU is just repeating fetch-decode-execute mechanically; a program is really just a sequence of bit patterns in memory that happens to redirect the PC in useful ways.
+  answer: The CPU is simply repeating the same fetch-decode-execute loop mechanically, billions of times a second, always acting on whatever the program counter currently points to — it has no awareness of "a program" as a concept. That reveals a program is really nothing more than a sequence of bit patterns sitting in memory that happen to redirect the program counter in ways that produce useful behavior, like branches and loops changing what gets fetched next.
+  jumpToId: why-this-loop-is-a-computer
+  jumpToLabel: Why this loop is "a computer"
 assignment:
   instruction: Watch the instruction-decoding videos from Ben Eater's 8-bit computer series, where he builds a real fetch-execute cycle out of physical logic chips on a breadboard — watching actual electricity carry out this loop makes it unforgettable.
   resourceName: Ben Eater — Build an 8-bit computer from scratch (YouTube series)
@@ -28,6 +42,7 @@ additionalResources:
   type: doc
   meta: ~35-page read
   url: 'https://en.wikipedia.org/wiki/Code:_The_Hidden_Language_of_Computer_Hardware_and_Software'
+whyThisMatters: "Every line of code you'll ever write eventually gets reduced to instructions marching through this exact loop — there is no other way a processor runs a program. Understanding fetch-decode-execute now is what makes concepts like the call stack, branching, interrupts, and even why infinite loops hang a machine make sense later: they're all just different ways of steering what address the program counter fetches next."
 ---
 
 You now have every ingredient: bits (lesson one), numbers built from them (lesson two), logic to combine them (lesson three), and physical gates that carry out that logic (lesson four). This final lesson of Level 00 assembles all four into the thing that turns a pile of gates into an actual computer: the <b>fetch-decode-execute cycle</b> — the loop every CPU on earth runs, over and over, to run any program at all.

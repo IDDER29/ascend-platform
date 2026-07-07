@@ -9,16 +9,33 @@ learningOutcomes:
 - Combine fork() and pipe() to send data from one process to another
 - Explain why closing the unused end of a pipe in each process isn't optional
 - Describe how a shell wires two commands together with a single pipe, fd by fd
+primer:
+- title: "fork(), recapped"
+  type: "doc"
+  meta: "Read · 2 min · why a forked child inherits copies of its parent's open file descriptors."
+  essential: true
+- title: "man 2 pipe"
+  type: "doc"
+  meta: "Skim · the DESCRIPTION section on fds[0] / fds[1]."
+  essential: false
+  url: "https://man7.org/linux/man-pages/man2/pipe.2.html"
 knowledgeCheck:
-- question: Why does the child in the pipe example call close(fds[1]) before it ever reads anything?
-  whereToLearn: Covered in "Wiring two processes together" — the inline comment on that line explains the convention.
-- question: If neither process ever closed the write end of the pipe, what would read() on the other end do differently?
-  whereToLearn: Covered in "A pipe is a kernel-managed queue" and reinforced in the next section — it explains why EOF depends on every write-end reference being closed.
+- question: "Why does the child in the pipe example call close(fds[1]) before it ever reads anything?"
+  answer: "The child is the reader and has no use for the write end, and by convention each process closes the end it doesn't need. Leaving fds[1] open in the child would count as an extra writer reference, so read() could never see end-of-file even after the parent finished writing and closed its own write end."
+  jumpToId: "wiring-two-processes-together"
+  jumpToLabel: "Wiring two processes together"
+  jumpToDetail: "the close(fds[1]) line in the child branch"
+- question: "If neither process ever closed the write end of the pipe, what would read() on the other end do differently?"
+  answer: "Instead of returning 0 (EOF) once the buffer was drained, read() would just block forever waiting for more data — the kernel only reports EOF once every file descriptor referencing the write end has been closed. A single leftover write-end reference anywhere is enough to hang a reader indefinitely."
+  jumpToId: "a-pipe-is-a-kernel-managed-queue"
+  jumpToLabel: "A pipe is a kernel-managed queue"
+  jumpToDetail: "the bounded-buffer and blocking behavior"
 assignment:
   instruction: Read man 2 pipe, then extend the pipe example so the child sends a reply back to the parent — since a pipe only flows one way, that round trip needs a second, independent pipe.
   resourceName: man 2 pipe
   resourceType: doc
   resourceUrl: 'https://man7.org/linux/man-pages/man2/pipe.2.html'
+whyThisMatters: "This is the piece that turns a shell from 'runs one command' into 'composes commands' — every time someone types ls | grep .c, this exact pipe() + fork() + close() dance is what wires the two together. Get the close-the-unused-end discipline wrong and a pipeline won't crash loudly; it'll just hang forever waiting for an EOF that never arrives."
 additionalResources:
 - title: Beej's Guide to Unix IPC — Pipes
   type: doc

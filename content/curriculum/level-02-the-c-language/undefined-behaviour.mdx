@@ -9,16 +9,31 @@ learningOutcomes:
 - Recognise a use-after-free bug and explain why a freed pointer is still dangerous even though its address hasn't changed
 - Recognise a buffer overrun and explain why C's arrays don't stop you from indexing past their end
 - Explain why code with undefined behaviour can appear to work correctly during testing and still contain a serious bug
+primer:
+  - title: "Dynamic memory"
+    type: "doc"
+    meta: "Previous lesson · the malloc/free pairing this lesson breaks on purpose"
+    essential: true
+  - title: "Pointer arithmetic"
+    type: "doc"
+    meta: "The buffer overrun lab leans directly on array indexing from this lesson"
+    essential: false
 knowledgeCheck:
-- question: Why doesn't a program printing the ‘right’ answer prove it's free of undefined behaviour?
-  whereToLearn: Covered in “What ‘undefined’ really means” and the buffer overrun lab — undefined behaviour is legally allowed to look correct while still being a bug.
-- question: After free(p), why is dereferencing p still dangerous even though p's value — the address it stores — hasn't changed?
-  whereToLearn: 'Covered in “Dangling pointers: using memory after you''ve freed it” — free releases the memory, not the pointer variable holding its address.'
+  - question: "Why doesn't a program printing the 'right' answer prove it's free of undefined behaviour?"
+    answer: "Undefined behaviour means the language standard permits literally any outcome, including output that happens to look correct — the compiler and hardware aren't required to fail loudly, or at all. A buffer overrun or use-after-free can print a plausible number today and still be a real bug, one whose behaviour can change entirely on a different run, machine, or compiler version."
+    jumpToId: "what-undefined-really-means"
+    jumpToLabel: "What ‘undefined’ really means"
+    jumpToDetail: "the buffer overrun lab"
+  - question: "After free(p), why is dereferencing p still dangerous even though p's value — the address it stores — hasn't changed?"
+    answer: "free releases the memory back to the allocator, but it does not erase or change the pointer variable itself — p still holds the exact same numeric address it did before. The danger is that the allocator is now free to hand that same address to someone else's allocation, so dereferencing p afterward can touch memory that already belongs to something completely different."
+    jumpToId: "dangling-pointers-using-memory-after-youve-freed-it"
+    jumpToLabel: "Dangling pointers: using memory after you've freed it"
 assignment:
   instruction: Read cppreference's page on undefined behavior start to finish, then take the use-after-free lab above, run it several times in a row, and write one sentence explaining why seeing 42 or 99 printed wouldn't mean the bug is fixed.
   resourceName: cppreference.com — Undefined behavior
   resourceType: doc
   resourceUrl: 'https://en.cppreference.com/c/language/behavior'
+whyThisMatters: "Undefined behaviour is why 'it worked when I tested it' is not proof a C program is correct — the compiler is allowed to assume you never trigger it, and optimizes on that assumption, so a use-after-free or buffer overrun can appear to work today and fail catastrophically after a compiler upgrade or on a different machine. Recognizing these patterns on sight, instead of trusting a clean test run, is the skill that separates C code that happens to work from C code that's actually correct."
 additionalResources:
 - title: A Guide to Undefined Behavior in C and C++, Part 1
   type: doc

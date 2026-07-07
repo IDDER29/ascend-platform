@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Code2, Video, BookOpen, FileText, Bookmark } from "lucide-react";
-import { LabeledSidebar } from "@/components/ui/labeled-sidebar";
+import { AppSidebar } from "@/components/ui/sidebar";
 import { AppTopbar } from "@/components/ui/app-topbar";
 import { cn } from "@/lib/cn";
 import { BOOKMARKS, type BookmarkIcon, type BookmarkItem } from "@/lib/bookmarks-data";
@@ -83,7 +83,7 @@ export default function BookmarksPage() {
 
   return (
     <div className="flex min-h-screen bg-radial-wash text-ink">
-      <LabeledSidebar />
+      <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopbar />
         <main className="flex-1 px-5 py-8 sm:px-10">

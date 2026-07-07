@@ -65,7 +65,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[radial-gradient(130%_60%_at_50%_-8%,#EAE4FB_0%,#F1F0F7_52%)] text-ink">
-      <header className="flex items-center justify-between px-6 py-5 sm:px-8">
+      <header className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 py-5 sm:px-8">
         <div className="flex items-center gap-2.5">
           <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-brand-gradient shadow-glow">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -73,7 +73,7 @@ export default function OnboardingPage() {
               <path d="m6 9 6-6 6 6" opacity=".55" />
             </svg>
           </div>
-          <span className="font-display text-xl font-extrabold tracking-tight">Ascend</span>
+          <span className="font-display text-[21px] font-extrabold tracking-tight">Ascend</span>
         </div>
         <Link href="/dashboard" className="text-sm font-semibold text-ink-muted">
           Skip for now

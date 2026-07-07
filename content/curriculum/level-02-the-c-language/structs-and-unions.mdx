@@ -9,16 +9,31 @@ learningOutcomes:
 - Explain why a struct's total size can be larger than the sum of its members, due to padding
 - Describe how a union shares one block of storage among all its members instead of laying them side by side
 - Predict the memory layout and size that a given struct or union declaration will produce
+primer:
+  - title: "What a pointer really is"
+    type: "doc"
+    meta: "The -> operator assumes you're comfortable dereferencing"
+    essential: true
+  - title: "Data structure alignment"
+    type: "doc"
+    meta: "Background on why padding exists, for the curious"
+    essential: false
 knowledgeCheck:
-- question: What's the actual difference in memory between a struct and a union that declare the same members?
-  whereToLearn: 'Covered in “Unions: one address, many types” — a union overlaps all its members in one shared block instead of laying them side by side like a struct does.'
-- question: Why can sizeof(struct example) come back bigger than the sum of its members' individual sizes?
-  whereToLearn: 'Covered in “Padding: why sizeof surprises you” — the compiler inserts padding bytes so members land on aligned addresses.'
+  - question: "What's the actual difference in memory between a struct and a union that declare the same members?"
+    answer: "A struct lays its members out one after another at different addresses, so each one has its own dedicated bytes. A union overlaps every member at the exact same starting address, so they all share one block of bytes — writing one member overwrites whatever bit pattern the others held."
+    jumpToId: "unions-one-address-many-types"
+    jumpToLabel: "Unions: one address, many types"
+  - question: "Why can sizeof(struct example) come back bigger than the sum of its members' individual sizes?"
+    answer: "The compiler inserts padding bytes between members so each one lands on an address aligned to its own size requirement — for example, so a 4-byte int starts at an address divisible by 4. Those padding bytes count toward sizeof even though no member data actually lives there."
+    jumpToId: "padding-why-sizeof-surprises-you"
+    jumpToLabel: "Padding: why sizeof surprises you"
+    jumpToDetail: "the sizeof(struct example) lab"
 assignment:
   instruction: Read Beej's Guide to C's section on structs and unions in full, then extend the point struct from the lab into a 3D version (add a z field) and predict its new sizeof before you compile and check.
   resourceName: Beej's Guide to C — Structs (and Unions)
   resourceType: doc
   resourceUrl: 'https://beej.us/guide/bgc/html/split/structs.html'
+whyThisMatters: "Structs are how C models everything beyond a single number — a point, a packet, a record — and once you're passing struct pointers instead of copying whole structs around, understanding padding and layout stops being trivia and starts explaining real sizeof surprises and real performance differences. Unions do the opposite job, packing multiple interpretations into one slot, which is exactly the trick behind tagged unions and reading raw binary data one field at a time."
 additionalResources:
 - title: cppreference.com — struct and union declarations
   type: doc

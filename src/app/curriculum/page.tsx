@@ -4,7 +4,7 @@ import { getAllLessons } from "@/lib/content/lessons";
 import { LEVELS, levelIds, type LevelId } from "@/lib/content/schema";
 import { getCurrentUser } from "@/lib/auth/auth";
 import { AuthProvider } from "@/lib/auth/context";
-import { LabeledSidebar } from "@/components/ui/labeled-sidebar";
+import { AppSidebar } from "@/components/ui/sidebar";
 import { AppTopbar } from "@/components/ui/app-topbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,7 @@ export default async function CurriculumPage() {
   return (
     <AuthProvider user={user}>
       <div className="flex min-h-screen bg-radial-wash text-ink">
-        <LabeledSidebar />
+        <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <AppTopbar />
           <main className="flex-1 px-5 py-8 sm:px-10">

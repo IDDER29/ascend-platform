@@ -9,16 +9,33 @@ learningOutcomes:
 - Use dup2() to make one file descriptor point at whatever another one points at
 - Predict, before running it, where a program's output will land after a dup2() redirection
 - Connect the open → dup2 → close pattern directly to how a shell implements >, < and |
+primer:
+- title: "fork() and exec(), recapped"
+  type: "doc"
+  meta: "Read · 3 min · how a child's file descriptor table survives both calls."
+  essential: true
+- title: "man 2 open"
+  type: "doc"
+  meta: "Skim · the O_WRONLY / O_CREAT / O_TRUNC flags used below."
+  essential: false
+  url: "https://man7.org/linux/man-pages/man2/open.2.html"
 knowledgeCheck:
-- question: After dup2(fd, STDOUT_FILENO) in the example, why does the code still call close(fd) right afterward — isn't fd needed anymore?
-  whereToLearn: Covered in "Redirecting with dup2()" — the inline comment on the close(fd) line explains it.
-- question: When your shell parses ls > out.txt, which process should call dup2() — the shell itself, or the forked child about to run ls?
-  whereToLearn: Covered in "This is exactly what > and < do" — the diagram shows precisely where dup2() happens relative to fork and exec.
+- question: "After dup2(fd, STDOUT_FILENO) in the example, why does the code still call close(fd) right afterward — isn't fd needed anymore?"
+  answer: "After the dup2() call, fd 1 (stdout) and fd already point at the exact same open file description, so every future write through stdout reaches the file without fd's help. Keeping fd open would just waste a descriptor for no benefit, so the code closes it the moment it becomes redundant."
+  jumpToId: "redirecting-with-dup2"
+  jumpToLabel: "Redirecting with dup2()"
+  jumpToDetail: "the close(fd) line and its comment"
+- question: "When your shell parses ls > out.txt, which process should call dup2() — the shell itself, or the forked child about to run ls?"
+  answer: "The forked child calls dup2(), and it does so before calling execve(). Doing it in the child means only that one process's fd table is rewired — the parent shell's own stdout is untouched, and because the fd table survives exec, ls inherits the redirected stdout without ever knowing it happened."
+  jumpToId: "this-is-exactly-what--and--do"
+  jumpToLabel: "This is exactly what > and < do"
+  jumpToDetail: "the sequence diagram of the child process"
 assignment:
   instruction: Read man 2 dup2 and man 2 open, then extend the redirection example to also send stderr (fd 2) to the same file — the exact open → dup2 → close pattern you'll write inside Shellforge for every > and < token.
   resourceName: man 2 dup2
   resourceType: doc
   resourceUrl: 'https://man7.org/linux/man-pages/man2/dup2.2.html'
+whyThisMatters: "This is the exact mechanism your shell needs for every '>' and '<' a user types — without open/dup2/close, ls itself would need to know about redirection, and it never does. Once you see that the fd table survives fork() and exec(), redirection stops looking like shell magic and becomes what it really is: quietly rewiring what a number means before the program even starts running."
 additionalResources:
 - title: File descriptors, explained visually
   type: video

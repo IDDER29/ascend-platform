@@ -9,16 +9,33 @@ learningOutcomes:
 - Explain how fork() produces two nearly-identical processes and how their return values tell you which is which
 - Predict what happens to a child's exit status if its parent never calls wait() on it
 - Trace a process through its lifecycle states, including how a reaped exit differs from an unreaped one
+primer:
+- title: "Program vs. process"
+  type: "doc"
+  meta: "Read · 3 min · why running the same binary twice makes two independent processes."
+  essential: true
+- title: "man 2 fork"
+  type: "doc"
+  meta: "Skim · the DESCRIPTION section on what's copied vs. shared."
+  essential: false
+  url: "https://man7.org/linux/man-pages/man2/fork.2.html"
 knowledgeCheck:
-- question: In the fork() example, what does the parent's copy of pid hold compared to the child's copy — and how does the code use that difference?
-  whereToLearn: 'Covered in "Cloning yourself: fork()" — look at the if / else if / else branching on pid right after the fork() call.'
-- question: What is a zombie process, and which line in the wait() example exists specifically to prevent one from lingering?
-  whereToLearn: 'Covered in "Reaping children: wait() and zombies" — the waitpid() call is the line doing the reaping.'
+- question: "In the fork() example, what does the parent's copy of pid hold compared to the child's copy — and how does the code use that difference?"
+  answer: "The parent's copy of pid holds the child's actual PID, a positive number, while the child's own copy of pid is 0 — even though both processes are executing the same line of code right after the call. The if (pid == 0) / else if / else chain branches on exactly that difference: the branch seeing 0 is the child's work, the branch seeing a positive number is the parent's."
+  jumpToId: "cloning-yourself-fork"
+  jumpToLabel: "Cloning yourself: fork()"
+  jumpToDetail: "the if / else if / else branch on pid"
+- question: "What is a zombie process, and which line in the wait() example exists specifically to prevent one from lingering?"
+  answer: "A zombie is a child process that has already exited but whose process-table entry is still kept around, holding its exit status until the parent collects it. The waitpid(pid, &status, 0) call in the example is what reaps that entry — it collects the exit status and lets the kernel free the row instead of leaving a zombie."
+  jumpToId: "reaping-children-wait-and-zombies"
+  jumpToLabel: "Reaping children: wait() and zombies"
+  jumpToDetail: "the waitpid() call"
 assignment:
   instruction: Compile the fork() example above, then before running it, predict how many total lines of output a version that calls fork() twice in a row (back-to-back) would print. Run it to check yourself, then read man 2 fork for the exact rules on what's copied and what's shared.
   resourceName: man 2 fork
   resourceType: doc
   resourceUrl: 'https://man7.org/linux/man-pages/man2/fork.2.html'
+whyThisMatters: "Every tool you'll build from here on — a shell, a job scheduler, a supervisor — lives or dies on getting fork() and wait() right, because that's the only way one process creates and manages another. Skip the reaping step and your shell won't crash outright; it'll just quietly pile up zombie entries every time a user runs a command, until the process table itself is full."
 additionalResources:
 - title: Process states in Linux, explained
   type: video

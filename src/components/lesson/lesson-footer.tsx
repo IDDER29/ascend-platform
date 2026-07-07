@@ -18,7 +18,7 @@ export function LessonFooter({
         </div>
         <div className="min-w-[200px] flex-1">
           <div className="mb-1 font-display text-xl font-extrabold">
-            You&apos;ve got {title} down.
+            You&apos;ve got {title.toLowerCase()} down.
           </div>
           <div className="flex flex-wrap items-center gap-3 text-sm opacity-90">
             <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-mono font-bold">

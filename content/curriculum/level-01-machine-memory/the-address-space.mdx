@@ -9,16 +9,31 @@ learningOutcomes:
 - List the major regions of a process's address space from lowest to highest address
 - Explain what lives in the code, data, heap, and stack regions
 - Explain why the stack and heap are placed at opposite ends of the address space and grow toward each other
+primer:
+  - title: "Inside the CPU: registers & the ALU"
+    type: "doc"
+    meta: "Read · 8 min · why registers are scarce and memory picks up the overflow."
+    essential: true
+  - title: "Virtual memory, briefly"
+    type: "video"
+    meta: "Watch · ~6 min · why a process sees a private address space instead of physical RAM."
+    essential: false
 knowledgeCheck:
-- question: List the major regions of a process's address space from lowest to highest address, and say what lives in each one.
-  whereToLearn: Covered in 'The layout, region by region' — the vertical memory-layout diagram.
-- question: Why do the stack and heap grow toward each other instead of both growing in the same direction?
-  whereToLearn: Covered in 'Why the layout looks like this.'
+  - question: "List the major regions of a process's address space from lowest to highest address, and say what lives in each one."
+    answer: "From lowest to highest address: text/code holds the compiled, read-only instructions; initialized and uninitialized data (BSS) holds global variables; the heap holds dynamically allocated memory and grows upward; a large unused gap follows; and the stack sits near the top, growing downward as functions call each other."
+    jumpToId: "the-layout-region-by-region"
+    jumpToLabel: "The layout, region by region"
+    jumpToDetail: "the vertical memory-layout diagram"
+  - question: "Why do the stack and heap grow toward each other instead of both growing in the same direction?"
+    answer: "Nobody knows in advance exactly how large the stack or heap will need to be, so placing them at opposite ends of the address space with a shared gap between them lets each one grow into that gap as needed, without either having to guess a fixed maximum size up front. If both keep growing, they eventually meet — which is the real mechanism behind a stack overflow."
+    jumpToId: "why-the-layout-looks-like-this"
+    jumpToLabel: "Why the layout looks like this"
 assignment:
   instruction: Read Gustavo Duarte's 'Anatomy of a Program in Memory,' a widely-cited walkthrough of exactly this layout on real Linux processes. Then, on a Linux or WSL machine, run cat /proc/self/maps in a shell and try to match what you see against the regions from this lesson.
   resourceName: Anatomy of a Program in Memory — Gustavo Duarte
   resourceType: doc
   resourceUrl: 'https://manybutfinite.com/post/anatomy-of-a-program-in-memory/'
+whyThisMatters: "Every pointer you write in C is just a number somewhere on this map, and knowing the map in advance is what turns a segfault, a stack overflow, or heap corruption from a mystery into something legible — you'll be able to glance at an address and immediately guess which region it's in and what kind of bug likely produced it."
 additionalResources:
 - title: 'Computer Systems: A Programmer''s Perspective — Ch. 9, Virtual Memory'
   type: doc

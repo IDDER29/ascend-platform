@@ -3,9 +3,19 @@
 import { redirect } from "next/navigation";
 import { signIn, signUp, AuthError } from "@/lib/auth/auth";
 import { setSessionCookie } from "@/lib/auth/session";
+import { getContinueLesson } from "@/lib/progress/queries";
 
 export interface AuthActionState {
   error: string | null;
+}
+
+async function continueHrefFor(userId: string): Promise<string> {
+  try {
+    const cont = await getContinueLesson(userId);
+    return cont.href;
+  } catch {
+    return "/curriculum/level-00-bits-logic/what-is-a-bit";
+  }
 }
 
 export async function signInAction(_prev: AuthActionState, formData: FormData): Promise<AuthActionState> {
@@ -22,7 +32,7 @@ export async function signInAction(_prev: AuthActionState, formData: FormData): 
   }
 
   await setSessionCookie(userId, keepSignedIn);
-  redirect("/dashboard");
+  redirect(await continueHrefFor(userId));
 }
 
 export async function signUpAction(_prev: AuthActionState, formData: FormData): Promise<AuthActionState> {
@@ -45,5 +55,5 @@ export async function signUpAction(_prev: AuthActionState, formData: FormData): 
   }
 
   await setSessionCookie(userId, keepSignedIn);
-  redirect("/dashboard");
+  redirect(await continueHrefFor(userId));
 }

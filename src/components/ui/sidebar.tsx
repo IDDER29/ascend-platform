@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   LayoutDashboard,
   BookOpen,
   Swords,
   Play,
   LineChart,
+  UserRound,
   Trophy,
   Bookmark,
   ChevronRight,
@@ -20,18 +21,55 @@ import { cn } from "@/lib/cn";
 
 const STORAGE_KEY = "ascend:sidebar-collapsed";
 
+const collapsedListeners = new Set<() => void>();
+
+function subscribeCollapsed(onStoreChange: () => void) {
+  collapsedListeners.add(onStoreChange);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY || event.key === null) onStoreChange();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    collapsedListeners.delete(onStoreChange);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function notifyCollapsedChange() {
+  collapsedListeners.forEach((listener) => listener());
+}
+
+function readCollapsed(): boolean {
+  return window.localStorage.getItem(STORAGE_KEY) === "true";
+}
+
 const LEARN_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/curriculum", label: "Curriculum", icon: BookOpen },
+  { href: "/dashboard", label: "Continue", icon: LayoutDashboard },
   { href: "/practice", label: "Practice", icon: Swords },
   { href: "/playground", label: "Playground", icon: Play },
 ];
 
 const YOU_ITEMS = [
   { href: "/progress", label: "Progress", icon: LineChart },
+  { href: "/profile", label: "Profile", icon: UserRound },
+];
+
+const MORE_ITEMS = [
   { href: "/achievements", label: "Achievements", icon: Trophy },
   { href: "/bookmarks", label: "Bookmarks", icon: Bookmark },
 ];
+
+function isNavActive(pathname: string | null, href: string): boolean {
+  if (!pathname) return false;
+  if (href === "/curriculum") {
+    return pathname === "/curriculum" || pathname.startsWith("/curriculum/") || pathname.startsWith("/projects/shellforge");
+  }
+  if (href === "/dashboard") {
+    return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 function Row({
   href,
@@ -39,23 +77,27 @@ function Row({
   icon: Icon,
   active,
   collapsed,
+  muted,
 }: {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
   active?: boolean;
   collapsed: boolean;
+  muted?: boolean;
 }) {
   return (
     <Link
       href={href}
       title={collapsed ? label : undefined}
       className={cn(
-        "relative mb-0.5 flex items-center gap-3 rounded-xl text-[14.5px] font-medium text-ink-secondary transition-colors",
+        "relative mb-0.5 flex items-center gap-3 rounded-xl text-[14.5px] font-medium transition-colors",
         collapsed ? "h-11 w-11 justify-center" : "px-3 py-2.5",
         active
           ? "bg-xp-bg font-bold text-[#5A32D6]"
-          : "hover:bg-[#F3F1FB]",
+          : muted
+            ? "text-ink-faint hover:bg-[#F3F1FB] hover:text-ink-secondary"
+            : "text-ink-secondary hover:bg-[#F3F1FB]",
       )}
     >
       {active && (
@@ -81,32 +123,40 @@ function Row({
   );
 }
 
-export function AppSidebar({ defaultCollapsed = false }: { defaultCollapsed?: boolean }) {
+function SectionLabel({ children, collapsed }: { children: React.ReactNode; collapsed: boolean }) {
+  if (collapsed) return <div className="h-2.5" />;
+  return (
+    <div className="mb-2 mt-1 px-3 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-fainter">
+      {children}
+    </div>
+  );
+}
+
+export function AppSidebar() {
   const pathname = usePathname();
   const user = useAuthUser();
-  const displayName = user?.name || "Amine";
-  const initial = displayName.charAt(0).toUpperCase();
+  const signedIn = Boolean(user);
+  const displayName = user?.name?.trim() || null;
+  const initial = (displayName || "?").charAt(0).toUpperCase();
 
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
-
-  useEffect(() => {
-    const stored = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
-    if (stored !== null) setCollapsed(stored === "true");
-  }, []);
+  // One preference for every AppShell page — no per-route auto-collapse.
+  const collapsed = useSyncExternalStore(
+    subscribeCollapsed,
+    readCollapsed,
+    () => false,
+  );
 
   function toggle() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      window.localStorage.setItem(STORAGE_KEY, String(next));
-      return next;
-    });
+    const next = !collapsed;
+    window.localStorage.setItem(STORAGE_KEY, String(next));
+    notifyCollapsedChange();
   }
 
   const width = collapsed ? "w-[78px]" : "w-[260px]";
+  const profileHref = signedIn ? "/profile" : "/signin";
 
   return (
     <>
-      {/* layout spacer: reserves the row width the fixed aside occupies */}
       <div className={cn("hidden flex-none md:block", width)} aria-hidden="true" />
       <aside
         className={cn(
@@ -119,10 +169,7 @@ export function AppSidebar({ defaultCollapsed = false }: { defaultCollapsed?: bo
           type="button"
           onClick={toggle}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cn(
-            "absolute top-[22px] flex h-6 w-6 flex-none items-center justify-center rounded-full border border-divider bg-white text-ink-faint shadow-[0_2px_6px_rgba(28,18,64,.08)] transition-colors hover:text-ink-secondary",
-            collapsed ? "-right-3" : "-right-3",
-          )}
+          className="absolute -right-3 top-[22px] flex h-6 w-6 flex-none items-center justify-center rounded-full border border-divider bg-white text-ink-faint shadow-[0_2px_6px_rgba(28,18,64,.08)] transition-colors hover:text-ink-secondary"
         >
           {collapsed ? <PanelLeftOpen size={13} strokeWidth={2.2} /> : <PanelLeftClose size={13} strokeWidth={2.2} />}
         </button>
@@ -145,47 +192,49 @@ export function AppSidebar({ defaultCollapsed = false }: { defaultCollapsed?: bo
           )}
         </Link>
 
-        {!collapsed && (
-          <div className="mb-2 px-3 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-fainter">
-            Learn
-          </div>
-        )}
+        <SectionLabel collapsed={collapsed}>Learn</SectionLabel>
         {LEARN_ITEMS.map((item) => (
           <Row
             key={item.label}
             {...item}
             collapsed={collapsed}
-            active={pathname?.startsWith(item.href)}
+            active={isNavActive(pathname, item.href)}
           />
         ))}
 
-        <div className={collapsed ? "h-2.5" : "h-[18px]"} />
-        {!collapsed && (
-          <div className="mb-2 px-3 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-fainter">
-            You
-          </div>
-        )}
+        <SectionLabel collapsed={collapsed}>You</SectionLabel>
         {YOU_ITEMS.map((item) => (
           <Row
             key={item.label}
             {...item}
             collapsed={collapsed}
-            active={pathname?.startsWith(item.href)}
+            active={isNavActive(pathname, item.href)}
+          />
+        ))}
+
+        <SectionLabel collapsed={collapsed}>More</SectionLabel>
+        {MORE_ITEMS.map((item) => (
+          <Row
+            key={item.label}
+            {...item}
+            collapsed={collapsed}
+            muted
+            active={isNavActive(pathname, item.href)}
           />
         ))}
 
         <div className={cn("mt-auto", collapsed ? "" : "pt-[18px]")}>
           {collapsed ? (
             <Link
-              href="/profile"
-              title={`${displayName} — Level 8`}
+              href={profileHref}
+              title={signedIn ? displayName || "Profile" : "Sign in"}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-gradient font-display font-extrabold text-white"
             >
-              {initial}
+              {signedIn ? initial : "?"}
             </Link>
-          ) : (
+          ) : signedIn ? (
             <Link
-              href="/profile"
+              href="/settings"
               className="relative block overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B1730] to-[#2C2548] p-[15px] text-white"
             >
               <div className="pointer-events-none absolute -right-6 -top-[34px] h-[120px] w-[120px] rounded-full bg-[radial-gradient(circle,rgba(123,77,255,0.55),transparent_68%)] blur-[6px]" />
@@ -195,20 +244,24 @@ export function AppSidebar({ defaultCollapsed = false }: { defaultCollapsed?: bo
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[13.5px] font-bold">{displayName}</div>
-                  <div className="font-mono text-[11px] text-[#B9B3D0]">Level 8</div>
+                  <div className="font-mono text-[11px] text-[#B9B3D0]">Settings</div>
                 </div>
                 <ChevronRight size={16} className="text-[#8F89AC]" />
               </div>
-              <div className="relative mt-3">
-                <div className="mb-1.5 flex justify-between font-mono text-[10.5px] text-[#B9B3D0]">
-                  <span>1,800 XP</span>
-                  <span>2,000</span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.14]">
-                  <div className="h-full w-[90%] rounded-full bg-gradient-to-r from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A]" />
-                </div>
-              </div>
             </Link>
+          ) : (
+            <div className="rounded-2xl border border-card-border bg-[#FAF9FD] p-4">
+              <div className="mb-1 text-[13.5px] font-bold text-ink">Learning as a guest</div>
+              <p className="mb-3 text-[12.5px] leading-relaxed text-ink-secondary">
+                Lessons are free to read. Sign in when you want progress saved.
+              </p>
+              <Link
+                href="/signin"
+                className="inline-flex w-full items-center justify-center rounded-xl bg-ink px-3 py-2.5 text-[13px] font-bold text-white"
+              >
+                Sign in to save
+              </Link>
+            </div>
           )}
         </div>
       </aside>

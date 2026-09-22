@@ -1,12 +1,46 @@
+"use client";
+
+import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { markLessonCompleteAction } from "@/lib/progress/actions";
 
 export function LessonFooter({
   title,
+  level,
+  slug,
   next,
+  initiallyComplete = false,
+  signedIn = false,
+  streakDays = null,
 }: {
   title: string;
+  level: string;
+  slug: string;
   next: { href: string; title: string } | null;
+  initiallyComplete?: boolean;
+  signedIn?: boolean;
+  streakDays?: number | null;
 }) {
+  const [complete, setComplete] = useState(initiallyComplete);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function onMarkComplete() {
+    if (!signedIn) {
+      setError("Sign in to save progress across sessions.");
+      return;
+    }
+    startTransition(async () => {
+      const result = await markLessonCompleteAction(level, slug);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setComplete(true);
+      setError(null);
+    });
+  }
+
   return (
     <div className="relative mt-9 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#6A3EF0] via-[#9A34D6] to-[#FF6B4A] px-8 py-8 text-white shadow-[0_22px_46px_rgba(106,62,240,0.3)]">
       <div className="animate-blob absolute -right-5 -top-12 h-[210px] w-[210px] rounded-full bg-white/[0.13] blur-[6px]" />
@@ -21,23 +55,41 @@ export function LessonFooter({
             You&apos;ve got {title.toLowerCase()} down.
           </div>
           <div className="flex flex-wrap items-center gap-3 text-sm opacity-90">
-            <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-mono font-bold">
-              +50 XP
-            </span>
-            <span>Streak extended to 12 days</span>
+            {complete ? (
+              <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-mono font-bold">Saved</span>
+            ) : signedIn ? (
+              <button
+                type="button"
+                onClick={onMarkComplete}
+                disabled={pending}
+                className="rounded-full bg-white/25 px-2.5 py-0.5 font-mono text-[12.5px] font-bold hover:bg-white/35 disabled:opacity-60"
+              >
+                {pending ? "Saving…" : "Mark complete"}
+              </button>
+            ) : (
+              <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[12.5px] font-semibold">
+                Sign in to save progress
+              </span>
+            )}
+            {streakDays != null && streakDays > 0 ? (
+              <span>Streak · {streakDays} day{streakDays === 1 ? "" : "s"}</span>
+            ) : null}
           </div>
+          {error ? <p className="mt-2 text-[13px] text-[#FFE8E0]">{error}</p> : null}
         </div>
         {next ? (
           <Button href={next.href} variant="invert" className="whitespace-nowrap">
-            {next.title === "Finish level" ? next.title : `Next: ${next.title}`}
+            {next.title === "Finish level" || next.title.startsWith("Shellforge")
+              ? next.title
+              : `Next: ${next.title}`}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6A3EF0" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14" />
               <path d="m12 5 7 7-7 7" />
             </svg>
           </Button>
         ) : (
-          <Button variant="secondary" disabled className="text-[#6A3EF0]">
-            You&apos;ve reached the end of this preview
+          <Button href="/projects/shellforge" variant="invert" className="whitespace-nowrap">
+            Continue to Shellforge
           </Button>
         )}
       </div>

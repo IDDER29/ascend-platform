@@ -68,8 +68,8 @@ interface LessonNavItem {
  * Prev/next across the whole curriculum, not just within one level: the last
  * lesson of a level points to the first lesson of the next level, and vice
  * versa. Returns null at the very start/end of the curriculum (there's no
- * lesson before Level 00 #1, and this pilot doesn't yet have a lesson after
- * Level 03's last one -- that slot is the Shellforge project, out of scope).
+ * lesson before Level 00 #1; after Level 03's last lesson the next step is
+ * the Shellforge demo project (`/projects/shellforge`), not another MDX lesson.
  */
 export function getLessonNavigation(
   level: LevelId,

@@ -273,7 +273,7 @@ export default function OnboardingPage() {
                     Step 4 of 4
                   </span>
                   <h1 className="mb-2.5 font-display text-[27px] font-extrabold leading-tight tracking-[-0.03em] sm:text-[30px]">
-                    You&apos;re all set, Amine.
+                    You&apos;re all set.
                   </h1>
                   <p className="text-[15px] leading-relaxed text-ink-secondary">
                     Your path starts at the very bottom — bits and logic — and climbs from there.

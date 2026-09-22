@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { Eye, EyeOff, Flame, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout";
 import { cn } from "@/lib/cn";
 import { signInAction, signUpAction, type AuthActionState } from "./actions";
@@ -72,7 +72,7 @@ export default function SignInPage() {
         </svg>
       }
       title="Pick up right where you left off."
-      subtitle="Your streak, XP and progress are waiting. Sign in and keep climbing — one concept at a time."
+      subtitle="Sign in to save completed lessons and continue the path. Free forever — no credit card."
       caption={
         <>
           {["Free forever", "Open source", "No credit card"].map((f) => (
@@ -87,25 +87,18 @@ export default function SignInPage() {
       }
       decoration={
         <div className="mt-8 max-w-[380px] rounded-[20px] border border-white/10 bg-white/[0.06] p-5 backdrop-blur-sm">
-          <div className="mb-4 flex items-center gap-3.5">
-            <div className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-gradient-to-br from-[#7B4DFF] to-[#C13AE0] font-display text-[19px] font-extrabold">
-              A
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[15px] font-bold">Welcome back, Amine</div>
-              <div className="font-mono text-[12.5px] text-[#B9B3D0]">Level 8 · The Craft tier</div>
-            </div>
-            <div className="flex flex-none items-center gap-1.5 rounded-full border border-[#FF6B4A]/30 bg-[#FF6B4A]/[0.16] px-2.5 py-1">
-              <Flame size={13} className="fill-current text-[#FF9A5C]" />
-              <span className="text-xs font-extrabold text-[#FF9A5C]">12</span>
-            </div>
+          <div className="mb-3 font-mono text-[11px] uppercase tracking-[0.12em] text-[#B9B3D0]">
+            The path
           </div>
-          <div className="mb-1.5 flex justify-between font-mono text-[11.5px] text-[#B9B3D0]">
-            <span>Next: What a pointer really is</span>
-            <span>62%</span>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-white/[0.14]">
-            <div className="h-full w-[62%] rounded-full bg-gradient-to-r from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A]" />
+          <div className="mb-1 font-display text-[18px] font-extrabold">From bits to a working shell</div>
+          <p className="mb-4 text-[13.5px] leading-relaxed text-[#B9B3D0]">
+            Four levels, open curriculum. Your account only remembers which lessons you&apos;ve finished.
+          </p>
+          <div className="flex flex-col gap-2 font-mono text-[12.5px] text-[#D8D4E6]">
+            <div>00 · Bits &amp; Logic</div>
+            <div>01 · Machine &amp; Memory</div>
+            <div>02 · The C Language</div>
+            <div>03 · Systems · Shellforge</div>
           </div>
         </div>
       }
@@ -132,7 +125,7 @@ export default function SignInPage() {
         {mode === "signin" ? "Welcome back" : "Start climbing"}
       </h2>
       <p className="mb-6 text-[15px] text-ink-secondary">
-        {mode === "signin" ? "Sign in to keep your streak alive." : "Create a free account — no credit card, ever."}
+        {mode === "signin" ? "Sign in to save your place on the path." : "Create a free account — no credit card, ever."}
       </p>
 
       <div className="mb-5 flex gap-3">
@@ -199,9 +192,9 @@ export default function SignInPage() {
           <div className="mb-1.5 flex items-center justify-between">
             <label className="text-[12.5px] font-bold text-ink-secondary">Password</label>
             {mode === "signin" && (
-              <Link href="/reset" className="text-[12.5px] font-semibold text-brand-violet">
-                Forgot?
-              </Link>
+              <span className="text-[12.5px] font-semibold text-ink-fainter" title="Password reset email isn't wired yet">
+                Forgot? (not available)
+              </span>
             )}
           </div>
           <div className="relative">

@@ -32,7 +32,7 @@ export default function Error({
           <span className="text-[#FF8A80]">Segmentation fault</span> <span className="text-[#6B6780]">(core dumped)</span>
           <br />
           <span className="text-[#6B6780]">
-            // {error.digest ? `ref ${error.digest}` : "something threw while rendering"}
+            {"// " + (error.digest ? `ref ${error.digest}` : "something threw while rendering")}
           </span>
         </div>
 

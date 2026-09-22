@@ -31,9 +31,8 @@ export const metadata: Metadata = {
 
 // Deliberately NOT reading cookies()/the session here: doing so would opt
 // the entire app into dynamic rendering. The session is only read in
-// src/app/(app)/layout.tsx, scoping that cost to the screens that actually
-// display a signed-in user (dashboard, profile, settings, ...) so the
-// homepage and all 24 lesson pages stay statically generated.
+// src/app/(learner)/layout.tsx, scoping that cost to learner chrome
+// (curriculum, continue, practice, profile, …) so the homepage stays static.
 export default function RootLayout({
   children,
 }: Readonly<{

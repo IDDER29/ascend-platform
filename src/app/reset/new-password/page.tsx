@@ -42,21 +42,20 @@ export default function SetNewPasswordPage() {
         <div className="mb-5 flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-[#E7F8F0] text-[#12A472]">
           <Check size={28} strokeWidth={2.6} />
         </div>
-        <h2 className="mb-2 font-display text-[27px] font-extrabold tracking-[-0.03em]">You&apos;re all set</h2>
+        <h2 className="mb-2 font-display text-[27px] font-extrabold tracking-[-0.03em]">Demo complete</h2>
         <p className="mb-6 text-[15px] leading-relaxed text-ink-secondary">
-          Your password is updated. Your 12-day streak and everything you&apos;ve learned are exactly where you left
-          them.
+          No password was changed — this page is a UI stub. Sign in with your existing credentials.
         </p>
         <button
-          onClick={() => router.push("/dashboard")}
+          type="button"
+          onClick={() => router.push("/signin")}
           className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A] py-3.5 text-[15.5px] font-extrabold text-white shadow-[0_14px_30px_rgba(123,77,255,0.4)] transition-transform hover:-translate-y-0.5"
         >
-          Continue to Ascend
+          Back to sign in
           <ArrowRight size={16} />
         </button>
         <div className="flex items-center justify-center gap-2 font-mono text-[12.5px] text-ink-muted">
-          <Flame size={16} className="fill-current text-[#FF6B4A]" />
-          Welcome back — streak still alive
+          Password reset email is not wired yet
         </div>
       </AuthSplitLayout>
     );

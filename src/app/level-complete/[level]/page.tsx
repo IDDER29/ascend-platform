@@ -63,11 +63,11 @@ export default async function LevelCompletePage({
         }
       : {
           href: "/projects/shellforge",
-          label: "Start the capstone: Shellforge",
+          label: "Open Shellforge (demo)",
           title: "Shellforge",
-          subtitle: "Build your own shell in C — the final project",
+          subtitle: "Demo capstone flow — no real clone or auto-grader yet",
           badge: "◆◆◆",
-          unlockLabel: "CAPSTONE UNLOCKED",
+          unlockLabel: "CAPSTONE (DEMO)",
         };
 
   return (

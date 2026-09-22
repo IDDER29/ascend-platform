@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "./section-heading";
+import { SectionBand } from "./section-band";
+import { CURRICULUM_HREF } from "@/lib/routes";
 
 const LEVELS = [
   {
+    id: "level-00-bits-logic",
     num: "00",
     bg: "bg-level-00",
     name: "Bits & Logic",
@@ -11,6 +14,7 @@ const LEVELS = [
     topics: ["Binary & number bases", "Logic gates", "The fetch–execute loop"],
   },
   {
+    id: "level-01-machine-memory",
     num: "01",
     bg: "bg-level-01",
     name: "Machine & Memory",
@@ -18,6 +22,7 @@ const LEVELS = [
     topics: ["Registers & assembly", "The stack & heap", "Caches & locality"],
   },
   {
+    id: "level-02-the-c-language",
     num: "02",
     bg: "bg-level-02",
     name: "The C Language",
@@ -25,26 +30,30 @@ const LEVELS = [
     topics: ["Pointers & memory", "Structs & unions", "malloc & free"],
   },
   {
+    id: "level-03-systems-software",
     num: "03",
     bg: "bg-level-03",
     name: "Systems & Software",
     tag: "The Architect",
-    topics: ["Processes & syscalls", "Build Shellforge", "Write Corelib"],
+    topics: ["Processes & syscalls", "Pipes & IPC", "Signals"],
   },
 ];
 
 export function CurriculumPreview() {
   return (
-    <section id="path" className="scroll-mt-[88px] py-16 sm:py-[70px]">
+    <SectionBand id="path" tone="wash">
       <SectionHeading
         eyebrow="The path"
         title="From a single bit to a working shell."
-        subtitle="Four levels. Each unlocks the next — no guessing what to learn, ever."
+        subtitle="A recommended order, not a locked one — start anywhere."
       />
+      <p className="mb-8 text-center font-mono text-[13px] text-ink-muted">
+        4 levels · 24 lessons · 1 capstone
+      </p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {LEVELS.map((level, i) => (
           <Link
-            href="/curriculum"
+            href={`${CURRICULUM_HREF}#${level.id}`}
             key={level.num}
             className="animate-rise rounded-[20px] border border-card-border bg-white p-6 shadow-card-rest transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover"
             style={{ animationDelay: `${i * 0.06}s` }}
@@ -75,7 +84,7 @@ export function CurriculumPreview() {
         ))}
       </div>
       <div className="animate-rise mt-8 text-center">
-        <Button href="/curriculum" variant="secondary" size="lg">
+        <Button href={CURRICULUM_HREF} variant="secondary" size="lg">
           See the full curriculum
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6D46F2" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14" />
@@ -83,6 +92,6 @@ export function CurriculumPreview() {
           </svg>
         </Button>
       </div>
-    </section>
+    </SectionBand>
   );
 }

@@ -40,7 +40,7 @@ export function LessonListPanel({
       </div>
 
       {lessons.map((l) => {
-        const state = l.order < currentOrder ? "done" : l.order === currentOrder ? "current" : "locked";
+        const state = l.order < currentOrder ? "done" : l.order === currentOrder ? "current" : "upcoming";
         return (
           <Link
             key={l.slug}
@@ -63,12 +63,9 @@ export function LessonListPanel({
                 <span className="h-[7px] w-[7px] animate-[pulse_1.5s_infinite] rounded-full bg-[#C13AE0]" />
               </span>
             )}
-            {state === "locked" && (
+            {state === "upcoming" && (
               <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full border border-[#E7E4F0] bg-[#F1EFF6]">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#C6C1D4" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="4" y="11" width="16" height="10" rx="2" />
-                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-                </svg>
+                <span className="h-1.5 w-1.5 rounded-full bg-[#C6C1D4]" />
               </span>
             )}
             <span
@@ -89,8 +86,17 @@ export function LessonListPanel({
 
       {nextLevelName && (
         <div className="mt-4 border-t border-divider pt-4 text-xs leading-relaxed text-ink-faint">
-          Finish all {info.totalConcepts} to unlock{" "}
-          <b className="text-brand-violet">{nextLevelName}</b>.
+          Recommended after these {info.totalConcepts}:{" "}
+          <b className="text-brand-violet">{nextLevelName}</b>. All lessons stay open.
+        </div>
+      )}
+      {!nextLevelName && (
+        <div className="mt-4 border-t border-divider pt-4 text-xs leading-relaxed text-ink-faint">
+          After this level:{" "}
+          <Link href="/projects/shellforge" className="font-bold text-brand-violet">
+            Shellforge
+          </Link>{" "}
+          (demo project flow).
         </div>
       )}
     </aside>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CURRICULUM_HREF } from "@/lib/routes";
 
 export function SiteFooter() {
   return (
@@ -24,26 +25,35 @@ export function SiteFooter() {
           <div className="mb-3.5 font-mono text-xs font-extrabold uppercase tracking-[0.08em] text-ink-fainter">
             Learn
           </div>
-          <Link href="/curriculum" className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
+          <Link href={CURRICULUM_HREF} className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
             Curriculum
           </Link>
-          <a href="#why" className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
+          <Link href="/#explore" className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
+            How it feels
+          </Link>
+          <Link href="/#how" className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
+            How you learn
+          </Link>
+          <Link href="/#why" className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
             Why Ascend
-          </a>
-          <a href="#how" className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
-            How it works
-          </a>
+          </Link>
+          <Link href="/community" className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
+            Community
+          </Link>
         </div>
         <div>
           <div className="mb-3.5 font-mono text-xs font-extrabold uppercase tracking-[0.08em] text-ink-fainter">
-            About
+            Account
           </div>
-          <span className="mb-2.5 block text-sm text-ink-fainter">
-            Roadmap — coming soon
-          </span>
-          <span className="mb-2.5 block text-sm text-ink-fainter">
-            GitHub — coming soon
-          </span>
+          <Link href="/signin" className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
+            Sign in
+          </Link>
+          <Link href="/privacy" className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
+            Privacy
+          </Link>
+          <Link href="/terms" className="mb-2.5 block text-sm text-ink-secondary hover:text-ink">
+            Terms
+          </Link>
         </div>
       </div>
       <div className="border-t border-black/[0.06]">

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, ChevronDown, ChevronRight, Lock, Play } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Play } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 interface LessonInfo {
@@ -27,7 +27,7 @@ const FILTER_DOT: Record<string, string> = {
   "level-00-bits-logic": "bg-[#12B981]",
   "level-01-machine-memory": "bg-[#7B4DFF]",
   "level-02-the-c-language": "bg-[#C13AE0]",
-  "level-03-systems-software": "bg-[#8A8698]",
+  "level-03-systems-software": "bg-[#FF6B4A]",
 };
 
 export function CurriculumLevelsPanel({
@@ -87,26 +87,22 @@ export function CurriculumLevelsPanel({
           const pct = Math.round((level.done / level.totalConcepts) * 100);
           const isCompleted = level.done === level.totalConcepts;
           const isCurrent = level.id === currentLevel;
-          const isLocked = level.done === 0 && !isCurrent;
-          const isOpen = !!expanded[level.id];
-          const xpEarned = level.done * 50;
+          const isAhead = !isCompleted && !isCurrent && level.done === 0;
+          const isOpen = expanded[level.id] ?? isCurrent;
 
           return (
             <div
+              id={level.id}
               key={level.id}
               className={cn(
-                "overflow-hidden rounded-[20px] border bg-white shadow-card-rest transition-shadow",
+                "scroll-mt-[96px] overflow-hidden rounded-[20px] border bg-white shadow-card-rest transition-shadow",
                 isCurrent ? "border-[#F1D6EC] shadow-[0_18px_44px_rgba(193,58,224,0.1)]" : "border-card-border",
               )}
             >
               <button
                 type="button"
-                disabled={isLocked}
-                onClick={() => setExpanded((e) => ({ ...e, [level.id]: !e[level.id] }))}
-                className={cn(
-                  "flex w-full items-center gap-4 px-5.5 py-5 text-left",
-                  isLocked && "cursor-default opacity-[0.68]",
-                )}
+                onClick={() => setExpanded((e) => ({ ...e, [level.id]: !isOpen }))}
+                className="flex w-full items-center gap-4 px-5.5 py-5 text-left"
               >
                 <div
                   className={cn(
@@ -123,9 +119,9 @@ export function CurriculumLevelsPanel({
                   <div className="mt-0.5 font-display text-[19px] font-bold leading-tight">
                     {level.name} <span className="text-[13px] font-medium text-ink-muted">· {level.short}</span>
                   </div>
-                  {isLocked ? (
+                  {isAhead ? (
                     <div className="mt-1.5 text-[12.5px] text-ink-fainter">
-                      Unlocks when you finish {levels.find((l) => l.id === currentLevel)?.name}
+                      Open path — recommended after earlier levels
                     </div>
                   ) : (
                     <div className="mt-2.5 flex max-w-[320px] items-center gap-2.5">
@@ -158,22 +154,20 @@ export function CurriculumLevelsPanel({
                         <span className="h-[7px] w-[7px] animate-pulse rounded-full bg-[#F0562F]" /> In progress
                       </>
                     ) : (
-                      <>
-                        <Lock size={13} strokeWidth={2.2} /> Locked
-                      </>
+                      <>Recommended later</>
                     )}
                   </span>
-                  {!isLocked && (isOpen ? <ChevronDown size={18} className="text-ink-fainter" /> : <ChevronRight size={18} className="text-ink-fainter" />)}
+                  {isOpen ? <ChevronDown size={18} className="text-ink-fainter" /> : <ChevronRight size={18} className="text-ink-fainter" />}
                 </div>
               </button>
 
-              {isOpen && !isLocked && (
+              {isOpen && (
                 <div>
                   {lessons.map((lesson) => {
                     const isDone = lesson.level !== currentLevel ? isCompleted : lesson.order < currentOrder;
                     const isLessonCurrent = lesson.level === currentLevel && lesson.order === currentOrder;
                     const isNextUp = lesson.level === currentLevel && lesson.order === currentOrder + 1;
-                    const isLessonLocked = !isDone && !isLessonCurrent && !isNextUp;
+                    const isUpcoming = !isDone && !isLessonCurrent && !isNextUp;
 
                     return (
                       <div
@@ -201,11 +195,11 @@ export function CurriculumLevelsPanel({
                           ) : isLessonCurrent ? (
                             <span className="h-2 w-2 animate-pulse rounded-full bg-[#C13AE0]" />
                           ) : isNextUp ? null : (
-                            <Lock size={13} strokeWidth={2.2} />
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#C6C1D4]" />
                           )}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <div className={cn("text-[14.5px]", isLessonLocked ? "font-medium text-[#A29EAF]" : "font-semibold text-[#2A2540]", isLessonCurrent && "font-bold")}>
+                          <div className={cn("text-[14.5px]", isUpcoming ? "font-medium text-[#A29EAF]" : "font-semibold text-[#2A2540]", isLessonCurrent && "font-bold")}>
                             {lesson.title}
                           </div>
                           <div className="mt-0.5 flex items-center gap-2 text-[11px] text-ink-fainter">
@@ -220,9 +214,6 @@ export function CurriculumLevelsPanel({
                             )}
                           </div>
                         </div>
-                        <span className={cn("whitespace-nowrap font-mono text-[11.5px]", isLessonLocked ? "text-[#C6C1D4]" : "text-ink-fainter")}>
-                          +50 XP
-                        </span>
                         {isLessonCurrent ? (
                           <Link
                             href={`/curriculum/${lesson.level}/${lesson.slug}`}
@@ -246,7 +237,12 @@ export function CurriculumLevelsPanel({
                             Review
                           </Link>
                         ) : (
-                          <span className="flex-none whitespace-nowrap text-xs font-semibold text-[#B7B3C4]">Locked</span>
+                          <Link
+                            href={`/curriculum/${lesson.level}/${lesson.slug}`}
+                            className="flex-none whitespace-nowrap rounded-full border border-card-border-soft px-4 py-2 text-[12.5px] font-semibold text-ink-secondary"
+                          >
+                            Open
+                          </Link>
                         )}
                       </div>
                     );
@@ -258,9 +254,8 @@ export function CurriculumLevelsPanel({
                 <div className="flex items-center justify-between border-t border-[#F4F2FA] px-5.5 py-3">
                   <span className="text-[13px] text-ink-fainter">
                     <b className={cn("font-bold", level.id === "level-00-bits-logic" ? "text-[#12B981]" : "text-[#7B4DFF]")}>
-                      +{xpEarned} XP earned
-                    </b>{" "}
-                    · {level.done} concepts mastered
+                      {level.done} concepts done
+                    </b>
                   </span>
                   <Link href={`/curriculum/${level.id}/${lessons[0]?.slug}`} className="text-[12.5px] font-bold text-brand-violet">
                     Review level →

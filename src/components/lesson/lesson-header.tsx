@@ -29,7 +29,7 @@ export function LessonHeader({ meta }: { meta: LessonFrontmatter }) {
           CONCEPT {String(meta.order).padStart(2, "0")}
         </span>
         <span className="font-mono text-[12.5px] text-ink-faint">
-          {meta.timeMin} min read · +50 XP
+          {meta.timeMin} min read
         </span>
       </div>
       <div className="flex items-center gap-3">

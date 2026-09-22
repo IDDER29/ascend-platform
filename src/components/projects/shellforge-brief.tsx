@@ -188,16 +188,16 @@ export function ShellforgeBrief() {
           <div className="relative">
             <div className="pointer-events-none flex select-none flex-col gap-3 blur-[5px]">
               {[
-                { i: "E", n: "elena", xp: "892 XP", note: "clean two-file parser, elegant pipe recursion" },
-                { i: "M", n: "marc", xp: "1.2k XP", note: "single-pass tokenizer, handles nested quotes" },
-                { i: "K", n: "kenji", xp: "640 XP", note: "heavily commented — great for a first read" },
+                { i: "E", n: "elena", note: "clean two-file parser, elegant pipe recursion" },
+                { i: "M", n: "marc", note: "single-pass tokenizer, handles nested quotes" },
+                { i: "K", n: "kenji", note: "heavily commented — great for a first read" },
               ].map((p) => (
                 <div key={p.n} className="flex items-center gap-3.5 rounded-[13px] border border-[#F0EEF6] p-3.5">
                   <div className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-brand-gradient font-bold text-white">
                     {p.i}
                   </div>
                   <div className="flex-1">
-                    <div className="text-[14px] font-bold">{p.n} · {p.xp}</div>
+                    <div className="text-[14px] font-bold">{p.n}</div>
                     <div className="text-[12.5px] text-ink-fainter">{p.note}</div>
                   </div>
                 </div>
@@ -207,10 +207,9 @@ export function ShellforgeBrief() {
               <div className="mb-3.5 flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-ink text-white shadow-[0_12px_26px_rgba(24,21,40,0.3)]">
                 <GitBranch size={22} strokeWidth={2.2} />
               </div>
-              <div className="mb-1.5 font-display text-[19px] font-extrabold">Submit to unlock</div>
+              <div className="mb-1.5 font-display text-[19px] font-extrabold">Peer solutions later</div>
               <p className="max-w-[320px] text-[14px] leading-relaxed text-ink-secondary">
-                Pass the project first, then compare your approach with <b>2,140</b> peer solutions.
-                No spoilers before you&apos;ve built it yourself.
+                Peer solutions aren&apos;t live yet. The brief and submit flow are a demo — build the shell on your own first.
               </p>
             </div>
           </div>

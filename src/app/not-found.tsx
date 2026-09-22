@@ -29,7 +29,7 @@ export default function NotFound() {
           <br />
           <span className="text-[#FF8A80]">Segmentation fault</span> <span className="text-[#6B6780]">(core dumped)</span>
           <br />
-          <span className="text-[#6B6780]">// you followed a pointer that doesn&apos;t exist</span>
+          <span className="text-[#6B6780]">{"// you followed a pointer that doesn't exist"}</span>
         </div>
 
         <h1 className="mb-3 font-display text-[28px] font-extrabold tracking-[-0.03em] text-ink sm:text-[34px]">

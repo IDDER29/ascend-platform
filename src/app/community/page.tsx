@@ -58,14 +58,17 @@ export default function CommunityPage() {
       <main className="mx-auto w-full max-w-[1080px] px-6 py-12 sm:px-8 sm:py-[52px]">
         <div className="mx-auto mb-10 max-w-[640px] text-center">
           <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand-violet/20 bg-brand-violet/[0.08] px-3.5 py-1.5 font-mono text-[11.5px] uppercase tracking-[0.1em] text-[#8A6AF2]">
-            Free · always open
+            Demo · not live
           </div>
           <h1 className="mb-3 font-display text-[32px] font-extrabold leading-tight tracking-[-0.03em] sm:text-[36px]">
             Learn alongside people on the same climb.
           </h1>
-          <p className="mb-5 text-[15.5px] leading-relaxed text-ink-secondary">
+          <p className="mb-3 text-[15.5px] leading-relaxed text-ink-secondary">
             Stuck on a segfault, comparing solutions, or just want to say the drop finally clicked — this is where
             Ascend learners talk to each other.
+          </p>
+          <p className="mb-5 rounded-xl border border-[#E4DBFB] bg-[#F1EDFE] px-4 py-3 text-left text-[13px] leading-relaxed text-[#5A32D6]">
+            This page is a UI preview. Threads are sample data; new posts stay in your browser only and aren&apos;t shared with anyone.
           </p>
           <button
             onClick={() => setComposing((c) => !c)}

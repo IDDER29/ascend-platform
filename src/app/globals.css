@@ -18,8 +18,8 @@
   --color-level-01-to: #c13ae0;
   --color-level-02-from: #c13ae0;
   --color-level-02-to: #ff6b4a;
-  --color-level-03-from: #8a8698;
-  --color-level-03-to: #b7b3c4;
+  --color-level-03-from: #ff6b4a;
+  --color-level-03-to: #ff9f43;
 
   /* Surfaces & ink */
   --color-bg: #f1f0f7;
@@ -212,7 +212,7 @@
   background: linear-gradient(135deg, #c13ae0, #ff6b4a);
 }
 .bg-level-03 {
-  background: linear-gradient(135deg, #8a8698, #b7b3c4);
+  background: linear-gradient(135deg, #ff6b4a, #ff9f43);
 }
 
 html {

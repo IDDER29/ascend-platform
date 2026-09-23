@@ -1,13 +1,21 @@
+import Link from "next/link";
 import {
   getFoundationPaths,
   getRolePaths,
   pathHref,
+  pathOutlineMeta,
+  pathSelectHref,
 } from "@/lib/paths/catalog";
 import {
   PathFoundationTile,
   PathRoleRow,
 } from "@/components/paths/path-catalog";
-import { HUB_CONTENT_CLASS, HUB_MAIN_CLASS } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import {
+  HUB_CONTENT_CLASS,
+  HUB_MAIN_CLASS,
+  PageHeader,
+} from "@/components/ui/page-header";
 
 export const metadata = {
   title: "All paths — Ascend",
@@ -19,19 +27,38 @@ export const metadata = {
 export default function PathsPage() {
   const foundations = getFoundationPaths();
   const roles = getRolePaths();
+  const liveFoundations = foundations.find((p) => p.status === "live");
+  const startHref =
+    (liveFoundations && pathSelectHref(liveFoundations)) ??
+    pathHref("foundations");
 
   return (
     <main className={HUB_MAIN_CLASS}>
       <div className={HUB_CONTENT_CLASS}>
-        <header className="mb-10 max-w-[640px]">
-          <h1 className="font-display text-[32px] font-extrabold tracking-[-0.032em] text-ink sm:text-[36px]">
-            All paths
-          </h1>
-          <p className="mt-2 text-[16px] leading-relaxed text-ink-secondary">
-            Start with the right foundations, then choose the role you&apos;re training
-            for.
-          </p>
-        </header>
+        <PageHeader
+          eyebrow="Learn / Paths"
+          title="All paths"
+          description="Start with the right foundations, then choose the role you're training for."
+          actions={
+            <Button href={startHref} size="md">
+              Start Foundations
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </Button>
+          }
+        />
 
         <section className="mb-12">
           <h2 className="mb-4 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-fainter">
@@ -44,7 +71,7 @@ export default function PathsPage() {
                 title={path.title}
                 body={path.body}
                 href={pathHref(path.slug)}
-                meta={path.requiresLabel ?? (path.status === "live" ? "Where systems paths begin" : "On-ramp for AI Engineer")}
+                meta={pathOutlineMeta(path)}
                 soon={path.status === "soon"}
               />
             ))}
@@ -67,12 +94,26 @@ export default function PathsPage() {
                 title={path.title}
                 body={path.body}
                 href={pathHref(path.slug)}
-                requiresLabel={path.requiresLabel}
+                meta={pathOutlineMeta(path)}
                 soon={path.status === "soon"}
               />
             ))}
           </div>
         </section>
+
+        <aside className="mt-14 max-w-[54ch] border-t border-divider pt-8">
+          <p className="text-[14px] leading-relaxed text-ink-secondary">
+            New here? Start with{" "}
+            <Link
+              href={pathHref("foundations")}
+              className="font-medium text-brand-violet hover:underline"
+            >
+              Foundations
+            </Link>
+            — the shared on-ramp for systems paths — then pick the role you&apos;re
+            training for.
+          </p>
+        </aside>
       </div>
     </main>
   );

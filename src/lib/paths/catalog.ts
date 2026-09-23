@@ -248,6 +248,27 @@ export function catalogMeta(path: PathDef): string {
   return bits.join(" · ");
 }
 
+/** Catalog row/tile meta — course shape first, then requires (status lives in the badge). */
+export function pathOutlineMeta(path: PathDef): string {
+  const n = path.courses.length;
+  const courses = `${n} course${n === 1 ? "" : "s"}`;
+  const bits: string[] = [];
+
+  if (path.status === "soon") {
+    bits.push(`${courses} planned`);
+  } else {
+    const lessons = path.courses.reduce((sum, course) => {
+      const count = courseLessonCount(course);
+      return count != null ? sum + count : sum;
+    }, 0);
+    if (lessons > 0) bits.push(`${lessons} lesson${lessons === 1 ? "" : "s"}`);
+    bits.push(courses);
+  }
+
+  if (path.requiresLabel) bits.push(path.requiresLabel);
+  return bits.join(" · ");
+}
+
 function lessonsForLevel(levelId: LevelId) {
   return getAllLessons()
     .filter((l) => l.meta.level === levelId)

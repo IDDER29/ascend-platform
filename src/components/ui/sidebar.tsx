@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSyncExternalStore } from "react";
+import { useLayoutEffect, useState, useSyncExternalStore } from "react";
 import {
   LayoutDashboard,
   BookOpen,
@@ -16,12 +16,18 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
+import { SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
 import { useAuthUser } from "@/lib/auth/context";
+import { ThemeToggle } from "@/components/homepage/theme-toggle";
+import { PlaceholderAvatar } from "@/components/ui/placeholder-avatar";
 import { cn } from "@/lib/cn";
 
 const STORAGE_KEY = "ascend:sidebar-collapsed";
 
 const collapsedListeners = new Set<() => void>();
+
+/** Survives remounts; avoids expand→collapse flash on refresh. */
+let memoryCollapsed: boolean | null = null;
 
 function subscribeCollapsed(onStoreChange: () => void) {
   collapsedListeners.add(onStoreChange);
@@ -40,7 +46,28 @@ function notifyCollapsedChange() {
 }
 
 function readCollapsed(): boolean {
-  return window.localStorage.getItem(STORAGE_KEY) === "true";
+  if (memoryCollapsed !== null) return memoryCollapsed;
+  try {
+    memoryCollapsed = window.localStorage.getItem(STORAGE_KEY) === "true";
+  } catch {
+    memoryCollapsed = false;
+  }
+  return memoryCollapsed;
+}
+
+function writeCollapsed(next: boolean) {
+  memoryCollapsed = next;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, String(next));
+  } catch {
+    // ignore
+  }
+  try {
+    document.documentElement.classList.toggle("sidebar-collapsed", next);
+  } catch {
+    // ignore
+  }
+  notifyCollapsedChange();
 }
 
 const LEARN_ITEMS = [
@@ -118,15 +145,14 @@ function Row({
       >
         <Icon size={collapsed ? 18 : 17} strokeWidth={2.1} />
       </span>
-      {!collapsed && <span>{label}</span>}
+      <span className="app-sidebar-label">{label}</span>
     </Link>
   );
 }
 
-function SectionLabel({ children, collapsed }: { children: React.ReactNode; collapsed: boolean }) {
-  if (collapsed) return <div className="h-2.5" />;
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-2 mt-1 px-3 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-fainter">
+    <div className="app-sidebar-section mb-2 mt-1 px-3 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-fainter">
       {children}
     </div>
   );
@@ -137,39 +163,68 @@ export function AppSidebar() {
   const user = useAuthUser();
   const signedIn = Boolean(user);
   const displayName = user?.name?.trim() || null;
-  const initial = (displayName || "?").charAt(0).toUpperCase();
 
-  // One preference for every AppShell page — no per-route auto-collapse.
-  const collapsed = useSyncExternalStore(
+  const forceCollapsedByRoute = Boolean(pathname?.startsWith("/curriculum2"));
+
+  const storedCollapsed = useSyncExternalStore(
     subscribeCollapsed,
     readCollapsed,
     () => false,
   );
 
+  const [widthReady, setWidthReady] = useState(false);
+  useLayoutEffect(() => {
+    const stored = readCollapsed();
+    document.documentElement.classList.toggle(
+      "sidebar-collapsed",
+      stored || forceCollapsedByRoute,
+    );
+    setWidthReady(true);
+  }, [forceCollapsedByRoute]);
+
+  const collapsed = forceCollapsedByRoute || storedCollapsed;
+
   function toggle() {
-    const next = !collapsed;
-    window.localStorage.setItem(STORAGE_KEY, String(next));
-    notifyCollapsedChange();
+    if (forceCollapsedByRoute) return;
+    writeCollapsed(!storedCollapsed);
   }
 
   const width = collapsed ? "w-[78px]" : "w-[260px]";
-  const profileHref = signedIn ? "/profile" : "/signin";
+  const profileHref = signedIn ? "/profile" : SIGNIN_HREF;
 
   return (
     <>
-      <div className={cn("hidden flex-none md:block", width)} aria-hidden="true" />
+      <div
+        className={cn(
+          "app-sidebar-spacer hidden flex-none md:block",
+          width,
+          widthReady && "transition-[width] duration-150",
+        )}
+        aria-hidden="true"
+      />
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-20 hidden flex-col border-r border-divider bg-white transition-[width] duration-150 md:flex",
+          "app-sidebar fixed inset-y-0 left-0 z-20 hidden flex-col border-r border-divider bg-bg md:flex",
           collapsed ? "items-center py-5" : "p-4",
           width,
+          widthReady && "transition-[width] duration-150",
         )}
       >
         <button
           type="button"
           onClick={toggle}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="absolute -right-3 top-[22px] flex h-6 w-6 flex-none items-center justify-center rounded-full border border-divider bg-white text-ink-faint shadow-[0_2px_6px_rgba(28,18,64,.08)] transition-colors hover:text-ink-secondary"
+          disabled={forceCollapsedByRoute}
+          title={
+            forceCollapsedByRoute
+              ? "Sidebar stays collapsed on the map view"
+              : collapsed
+                ? "Expand sidebar"
+                : "Collapse sidebar"
+          }
+          className={cn(
+            "absolute -right-3 top-[22px] flex h-6 w-6 flex-none items-center justify-center rounded-full border border-divider bg-elevated text-ink-faint shadow-[0_2px_6px_rgba(28,18,64,.08)] transition-colors hover:text-ink-secondary",
+            forceCollapsedByRoute && "cursor-not-allowed opacity-50",
+          )}
         >
           {collapsed ? <PanelLeftOpen size={13} strokeWidth={2.2} /> : <PanelLeftClose size={13} strokeWidth={2.2} />}
         </button>
@@ -187,12 +242,12 @@ export function AppSidebar() {
               <path d="m6 9 6-6 6 6" opacity=".55" />
             </svg>
           </div>
-          {!collapsed && (
-            <span className="font-display text-xl font-extrabold tracking-tight">Ascend</span>
-          )}
+          <span className="app-sidebar-brand-text font-display text-[19px] font-extrabold tracking-tight text-ink">
+            Ascend
+          </span>
         </Link>
 
-        <SectionLabel collapsed={collapsed}>Learn</SectionLabel>
+        <SectionLabel>Learn</SectionLabel>
         {LEARN_ITEMS.map((item) => (
           <Row
             key={item.label}
@@ -201,8 +256,7 @@ export function AppSidebar() {
             active={isNavActive(pathname, item.href)}
           />
         ))}
-
-        <SectionLabel collapsed={collapsed}>You</SectionLabel>
+        <SectionLabel>You</SectionLabel>
         {YOU_ITEMS.map((item) => (
           <Row
             key={item.label}
@@ -211,8 +265,7 @@ export function AppSidebar() {
             active={isNavActive(pathname, item.href)}
           />
         ))}
-
-        <SectionLabel collapsed={collapsed}>More</SectionLabel>
+        <SectionLabel>More</SectionLabel>
         {MORE_ITEMS.map((item) => (
           <Row
             key={item.label}
@@ -223,43 +276,53 @@ export function AppSidebar() {
           />
         ))}
 
-        <div className={cn("mt-auto", collapsed ? "" : "pt-[18px]")}>
+        <div className={cn("mt-auto flex flex-col", collapsed ? "items-center gap-2" : "gap-3 pt-[18px]")}>
+          <ThemeToggle
+            className={cn(collapsed ? "shrink-0" : "self-start")}
+          />
           {collapsed ? (
             <Link
               href={profileHref}
               title={signedIn ? displayName || "Profile" : "Sign in"}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-gradient font-display font-extrabold text-white"
+              className="rounded-full"
             >
-              {signedIn ? initial : "?"}
+              <PlaceholderAvatar
+                name={signedIn ? displayName : null}
+                size="sm"
+                className="h-10 w-10 rounded-full"
+              />
             </Link>
           ) : signedIn ? (
             <Link
               href="/settings"
-              className="relative block overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B1730] to-[#2C2548] p-[15px] text-white"
+              className="app-sidebar-expanded-only relative block overflow-hidden rounded-2xl border border-card-border bg-elevated p-[15px] text-ink"
             >
-              <div className="pointer-events-none absolute -right-6 -top-[34px] h-[120px] w-[120px] rounded-full bg-[radial-gradient(circle,rgba(123,77,255,0.55),transparent_68%)] blur-[6px]" />
               <div className="relative flex items-center gap-2.5">
-                <div className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-brand-gradient font-display text-base font-extrabold">
-                  {initial}
-                </div>
+                <PlaceholderAvatar name={displayName} size="sm" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13.5px] font-bold">{displayName}</div>
-                  <div className="font-mono text-[11px] text-[#B9B3D0]">Settings</div>
+                  <div className="truncate text-[13.5px] font-bold">{displayName || "Learner"}</div>
+                  <div className="font-mono text-[11px] text-ink-faint">Settings</div>
                 </div>
-                <ChevronRight size={16} className="text-[#8F89AC]" />
+                <ChevronRight size={16} className="text-ink-fainter" />
               </div>
             </Link>
           ) : (
-            <div className="rounded-2xl border border-card-border bg-[#FAF9FD] p-4">
+            <div className="app-sidebar-expanded-only rounded-2xl border border-card-border bg-paper p-4 dark:bg-elevated">
               <div className="mb-1 text-[13.5px] font-bold text-ink">Learning as a guest</div>
               <p className="mb-3 text-[12.5px] leading-relaxed text-ink-secondary">
                 Lessons are free to read. Sign in when you want progress saved.
               </p>
               <Link
-                href="/signin"
-                className="inline-flex w-full items-center justify-center rounded-xl bg-ink px-3 py-2.5 text-[13px] font-bold text-white"
+                href={SIGNIN_HREF}
+                className="inline-flex w-full items-center justify-center rounded-xl bg-ink px-3 py-2.5 text-[13px] font-bold text-bg"
               >
                 Sign in to save
+              </Link>
+              <Link
+                href={SIGNUP_HREF}
+                className="mt-2 inline-flex w-full items-center justify-center text-[12.5px] font-semibold text-brand-violet hover:underline"
+              >
+                New here? Create account
               </Link>
             </div>
           )}

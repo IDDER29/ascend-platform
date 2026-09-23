@@ -2,8 +2,13 @@
 
 import { useState } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { OutboundLink } from "@/components/ui/olink";
 
-export function LessonFeedback() {
+export function LessonFeedback({
+  issueUrl = null,
+}: {
+  issueUrl?: string | null;
+}) {
   const [choice, setChoice] = useState<"up" | "down" | null>(null);
 
   return (
@@ -16,8 +21,8 @@ export function LessonFeedback() {
           title="Yes, this was helpful"
           className={`flex h-9 w-9 items-center justify-center rounded-[11px] border transition-colors ${
             choice === "up"
-              ? "border-[#12B981] bg-[#E9F9F2] text-[#12B981]"
-              : "border-card-border-soft text-[#12B981] hover:bg-[#F3F1FA]"
+              ? "border-xp-border bg-xp-bg text-xp-text"
+              : "border-card-border-soft text-xp-text hover:bg-xp-bg/60"
           }`}
         >
           <ThumbsUp size={16} strokeWidth={2.2} fill={choice === "up" ? "currentColor" : "none"} />
@@ -28,20 +33,34 @@ export function LessonFeedback() {
           title="No, this needs work"
           className={`flex h-9 w-9 items-center justify-center rounded-[11px] border transition-colors ${
             choice === "down"
-              ? "border-card-border bg-[#F3F1FA] text-ink-secondary"
-              : "border-card-border-soft text-ink-fainter hover:bg-[#F3F1FA]"
+              ? "border-card-border bg-elevated text-ink-secondary"
+              : "border-card-border-soft text-ink-fainter hover:bg-elevated"
           }`}
         >
           <ThumbsDown size={16} strokeWidth={2.2} fill={choice === "down" ? "currentColor" : "none"} />
         </button>
       </div>
-      {choice && (
-        <div className="text-xs text-ink-fainter">
-          {choice === "up"
-            ? "Thanks — glad it landed."
-            : "Thanks for the signal — this is a demo build, so feedback isn't recorded yet."}
+      {choice === "up" ? (
+        <div className="text-xs text-ink-fainter">Thanks — glad it landed.</div>
+      ) : null}
+      {choice === "down" ? (
+        <div className="max-w-sm text-center text-xs leading-relaxed text-ink-fainter">
+          {issueUrl ? (
+            <>
+              Thanks for the signal.{" "}
+              <OutboundLink
+                href={issueUrl}
+                className="font-semibold text-ink-secondary hover:text-ink"
+              >
+                Report what felt off
+              </OutboundLink>{" "}
+              so we can fix it.
+            </>
+          ) : (
+            "Thanks for the signal — we'll keep improving this lesson."
+          )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

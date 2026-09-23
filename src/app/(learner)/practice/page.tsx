@@ -93,7 +93,7 @@ export default function PracticePage() {
 
     return (
       <>
-          <header className="sticky top-[72px] z-20 flex h-[70px] items-center gap-5 border-b border-divider bg-white/85 px-7 backdrop-blur-[14px] backdrop-saturate-[1.4]">
+          <header className="sticky top-0 z-20 flex h-[70px] items-center gap-5 border-b border-divider bg-white/85 px-7 backdrop-blur-[14px] backdrop-saturate-[1.4]">
             <Link href="/dashboard" className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13.5px] font-semibold text-ink-secondary hover:bg-[#F3F1FB]">
               <X size={17} strokeWidth={2.3} />
               Close
@@ -264,7 +264,7 @@ export default function PracticePage() {
 
   return (
     <>
-        <header className="sticky top-[72px] z-20 flex h-[70px] items-center gap-5 border-b border-divider bg-white/85 px-7 backdrop-blur-[14px] backdrop-saturate-[1.4]">
+        <header className="sticky top-0 z-20 flex h-[70px] items-center gap-5 border-b border-divider bg-white/85 px-7 backdrop-blur-[14px] backdrop-saturate-[1.4]">
           <Link href="/dashboard" className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13.5px] font-semibold text-ink-secondary hover:bg-[#F3F1FB]">
             <X size={17} strokeWidth={2.3} />
             Exit

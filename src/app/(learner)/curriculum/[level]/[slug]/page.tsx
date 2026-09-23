@@ -10,19 +10,24 @@ import { LEVELS, levelIds } from "@/lib/content/schema";
 import { mdxComponents } from "@/lib/mdx-components";
 
 import { KnowledgeCheck } from "@/components/ui/knowledge-check";
-import { ProgressBar } from "@/components/ui/progress-bar";
 import { LessonHeader } from "@/components/lesson/lesson-header";
 import { LearningOutcomes } from "@/components/lesson/learning-outcomes";
 import { PrimerBox } from "@/components/lesson/primer-box";
-import { LessonListPanel } from "@/components/lesson/lesson-list-panel";
+import {
+  LessonMapProvider,
+  LessonMapRail,
+} from "@/components/lesson/lesson-map-drawer";
 import { OnThisPageRail, type RailItem } from "@/components/lesson/on-this-page-rail";
 import { AssignmentCard } from "@/components/lesson/assignment-card";
 import { AdditionalResources } from "@/components/lesson/additional-resources";
 import { AddNoteButton } from "@/components/lesson/add-note-button";
 import { LessonFooter } from "@/components/lesson/lesson-footer";
 import { LessonFeedback } from "@/components/lesson/lesson-feedback";
+import { LessonContributeLinks } from "@/components/lesson/lesson-contribute-links";
+import { LessonSupportStrip } from "@/components/lesson/lesson-support-strip";
 import { getCurrentUser } from "@/lib/auth/auth";
 import { isLessonComplete, getStreak } from "@/lib/progress/queries";
+import { lessonEditUrl, lessonIssueUrl } from "@/lib/brand/repo";
 
 export async function generateStaticParams() {
   return getAllLessonParams();
@@ -52,8 +57,7 @@ export default async function LessonPage({
 
   const { meta, body } = lesson;
   const levelInfo = LEVELS[meta.level];
-  const percent = Math.round((meta.order / levelInfo.totalConcepts) * 100);
-  const { prev, next } = getLessonNavigation(meta.level, meta.order);
+  const { next } = getLessonNavigation(meta.level, meta.order);
   const isLastInLevel = next !== null && meta.order === levelInfo.totalConcepts;
   const nextNav = next
     ? isLastInLevel
@@ -92,85 +96,28 @@ export default async function LessonPage({
   const endOfCurriculum = next === null;
   const footerNext = nextNav
     ?? (endOfCurriculum ? { href: "/projects/shellforge", title: "Shellforge project" } : null);
+  const editUrl = lessonEditUrl(meta.level, meta.slug);
+  const issueUrl = lessonIssueUrl({
+    level: meta.level,
+    slug: meta.slug,
+    title: meta.title,
+  });
 
   return (
-    <>
-        <header className="sticky top-[72px] z-20 flex h-[70px] items-center justify-center border-b border-divider bg-white/85 px-4 backdrop-blur-[14px] backdrop-saturate-[1.4] sm:px-7">
-          <div className="mx-auto flex w-full max-w-[1362px] items-center gap-3 sm:gap-4">
-          <Link
-            href="/curriculum"
-            className="flex h-8 w-8 flex-none items-center justify-center rounded-lg bg-brand-gradient md:hidden"
-            title="Curriculum"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m6 15 6-6 6 6" />
-              <path d="m6 9 6-6 6 6" opacity=".55" />
-            </svg>
-          </Link>
-          <div className="min-w-0 flex-1 sm:flex-none">
-            <div className="truncate text-[13.5px] font-bold">
-              <span className="hidden sm:inline">
-                {levelInfo.name}
-                <span className="font-medium text-ink-fainter"> / </span>
-              </span>
-              <span className="font-semibold text-ink-secondary">{meta.title}</span>
-            </div>
-            <div className="font-mono text-[11.5px] text-ink-faint">
-              Concept {meta.order} of {levelInfo.totalConcepts}
-            </div>
-          </div>
-          <div className="mx-1.5 hidden max-w-[260px] flex-1 items-center gap-2.5 sm:flex">
-            <ProgressBar percent={percent} />
-            <span className="font-mono text-[11px] text-ink-faint">{percent}%</span>
-          </div>
-          <div className="ml-auto flex flex-none gap-1.5">
-            {prev ? (
-              <Link
-                href={prev.href}
-                title={`Previous: ${prev.title}`}
-                className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-card-border-soft text-ink-secondary transition-colors hover:bg-[#F3F1FA]"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m15 18-6-6 6-6" />
-                </svg>
-              </Link>
-            ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-card-border-soft text-ink-fainter opacity-40">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m15 18-6-6 6-6" />
-                </svg>
-              </span>
-            )}
-            {nextNav ? (
-              <Link
-                href={nextNav.href}
-                title={`Next: ${nextNav.title}`}
-                className="flex h-9 items-center gap-1.5 rounded-[10px] bg-brand-violet px-4 text-[13.5px] font-bold text-white shadow-[0_8px_18px_rgba(109,70,242,0.32)] transition-transform hover:-translate-y-0.5"
-              >
-                {isLastInLevel ? "Finish level" : "Next"}
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m9 6 6 6-6 6" />
-                </svg>
-              </Link>
-            ) : null}
-          </div>
-          </div>
-        </header>
-
-        <main className="flex flex-1 items-start justify-center">
-          <div className="mx-auto flex w-full max-w-[1362px] items-start">
-          <LessonListPanel
-            level={meta.level}
-            currentOrder={meta.order}
-            lessons={lessonsInLevel}
-            nextLevelName={nextLevelName}
-          />
-
+    <LessonMapProvider
+      level={meta.level}
+      currentOrder={meta.order}
+      lessons={lessonsInLevel}
+      nextLevelName={nextLevelName}
+    >
+        <main className="relative flex flex-1 items-start bg-paper dark:bg-bg">
+          <div className="flex w-full items-start">
+          <LessonMapRail />
           <div className="flex min-w-0 flex-1 flex-wrap items-start">
-            <div className="flex min-w-0 flex-1 justify-center px-4 py-8 sm:px-8 md:px-11 md:py-[50px]">
-              <article className="w-full min-w-0 max-w-[724px]">
+            <div className="flex min-w-0 flex-1 justify-center px-2.5 py-8 md:py-[50px]">
+              <article className="w-full min-w-0 max-w-[724px] text-ink">
                 <LessonHeader meta={meta} />
-                <h1 className="mb-[18px] font-display text-[40px] font-extrabold leading-[1.03] tracking-[-0.032em]">
+                <h1 className="mb-[18px] font-display text-[36px] font-extrabold leading-[1.05] tracking-[-0.032em] text-ink sm:text-[40px]">
                   {meta.title}
                 </h1>
 
@@ -193,35 +140,35 @@ export default async function LessonPage({
 
                 <h2
                   id="knowledge-check"
-                  className="mb-3 mt-9 scroll-mt-[160px] font-display text-2xl font-bold tracking-tight"
+                  className="mb-3 mt-9 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight text-ink"
                 >
                   Knowledge check
                 </h2>
                 <p className="mb-5 text-[15.5px] leading-relaxed text-ink-secondary">
                   Answer these in your own words before moving on — no peeking. If
                   one stumps you, that&apos;s exactly the bit to revisit: expand{" "}
-                  <b className="text-[#5A32D6]">&ldquo;Where to learn this&rdquo;</b>{" "}
+                  <b className="text-brand-violet">&ldquo;Where to learn this&rdquo;</b>{" "}
                   for the spot that covers it.
                 </p>
                 <KnowledgeCheck items={meta.knowledgeCheck} />
 
-                <div className="mt-4 flex items-center gap-3 rounded-2xl border-[1.5px] border-[#C7E9D8] bg-[#F3FBF7] px-[18px] py-3.5">
-                  <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] bg-[#12B981] text-white">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <div className="mt-4 flex items-center gap-3 rounded-2xl border border-xp-border bg-xp-bg/50 px-[18px] py-3.5">
+                  <span className="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] bg-brand-gradient text-white">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M20 6 9 17l-5-5" />
                     </svg>
                   </span>
-                  <span className="flex-1 text-[14.5px] font-semibold text-[#0E7D57]">
+                  <span className="flex-1 text-[14.5px] font-semibold text-ink-secondary">
                     Comfortable with all three? You&apos;ve got {meta.title.toLowerCase()} down.
                   </span>
-                  <span className="whitespace-nowrap rounded-full bg-[#E9F9F2] px-2.5 py-1 font-mono text-[12.5px] font-bold text-[#0E9E6E]">
+                  <span className="whitespace-nowrap rounded-full bg-brand-gradient px-2.5 py-1 font-mono text-[12.5px] font-bold text-white">
                     Ready
                   </span>
                 </div>
 
                 <h2
                   id="assignment"
-                  className="mb-3 mt-10 scroll-mt-[160px] font-display text-2xl font-bold tracking-tight"
+                  className="mb-3 mt-10 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight text-ink"
                 >
                   Assignment
                 </h2>
@@ -234,11 +181,11 @@ export default async function LessonPage({
 
                 <h2
                   id="why-this-matters"
-                  className="mb-3 mt-9 scroll-mt-[160px] font-display text-2xl font-bold tracking-tight"
+                  className="mb-3 mt-9 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight text-ink"
                 >
                   Why this matters
                 </h2>
-                <p className="text-[16.5px] leading-[1.75] text-[#413D50]">
+                <p className="text-[16.5px] leading-[1.75] text-ink-secondary">
                   {meta.whyThisMatters}
                 </p>
 
@@ -251,11 +198,13 @@ export default async function LessonPage({
                   signedIn={Boolean(user)}
                   streakDays={streakDays}
                 />
-                <LessonFeedback />
+                <LessonContributeLinks editUrl={editUrl} issueUrl={issueUrl} />
+                <LessonFeedback issueUrl={issueUrl} />
+                <LessonSupportStrip />
               </article>
             </div>
 
-            <aside className="sticky top-[142px] hidden max-h-[calc(100vh-142px)] w-full max-w-[324px] flex-1 basis-[252px] overflow-auto border-l border-divider px-6 py-[34px] lg:block">
+            <aside className="sticky top-0 hidden max-h-screen w-full max-w-[324px] flex-1 basis-[252px] overflow-auto border-l border-divider bg-paper px-6 py-[34px] dark:bg-bg lg:block">
               <div className="mb-3 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-fainter">
                 On this page
               </div>
@@ -274,6 +223,6 @@ export default async function LessonPage({
           </div>
           </div>
         </main>
-    </>
+    </LessonMapProvider>
   );
 }

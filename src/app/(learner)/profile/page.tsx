@@ -14,6 +14,7 @@ import {
 } from "@/lib/progress/queries";
 import { ProfileShareButton } from "./profile-share";
 import { HUB_CONTENT_CLASS, HUB_MAIN_CLASS } from "@/components/ui/page-header";
+import { PlaceholderAvatar } from "@/components/ui/placeholder-avatar";
 
 export const metadata = {
   title: "Profile — Ascend",
@@ -71,7 +72,6 @@ export default async function ProfilePage() {
 
   const displayName = user?.name?.trim() || null;
   const username = user?.username || null;
-  const initial = (displayName || "?").charAt(0).toUpperCase();
 
   return (
     <main className={HUB_MAIN_CLASS}>
@@ -79,9 +79,7 @@ export default async function ProfilePage() {
         <div className="relative mb-6 overflow-hidden rounded-[24px] bg-gradient-to-br from-[#1B1730] via-[#2A2440] to-[#3A2A55] p-7 text-white shadow-[0_24px_50px_rgba(23,20,31,0.3)] sm:p-8">
           <div className="animate-blob pointer-events-none absolute -right-10 -top-[90px] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle,rgba(123,77,255,0.4),transparent_66%)] blur-[10px]" />
           <div className="relative flex flex-wrap items-start gap-6">
-            <div className="flex h-[104px] w-[104px] flex-none items-center justify-center rounded-[26px] bg-gradient-to-br from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A] font-display text-[44px] font-extrabold shadow-[0_12px_30px_rgba(123,77,255,0.5)]">
-              {initial}
-            </div>
+            <PlaceholderAvatar name={displayName} size="lg" className="shadow-[0_8px_24px_rgba(0,0,0,0.18)]" />
             <div className="min-w-[220px] flex-1">
               <h1 className="font-display text-[28px] font-extrabold tracking-[-0.02em] sm:text-[30px]">
                 {displayName || "Guest learner"}

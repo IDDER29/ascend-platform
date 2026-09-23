@@ -1,7 +1,15 @@
 import { BookOpen, Hammer, Zap, Bug, MessageSquare } from "lucide-react";
 import { SectionBand } from "./section-band";
 import { cn } from "@/lib/cn";
-import { landingEyebrowClass } from "./landing-styles";
+import {
+  glassSurfaceClass,
+  glassWashClass,
+  landingEyebrowClass,
+  landingH2Class,
+  landingIconCrystalClass,
+  landingIconTileClass,
+  landingLeadClass,
+} from "./landing-styles";
 
 const STEPS = [
   {
@@ -36,18 +44,8 @@ const STEPS = [
   },
 ];
 
-const breakGlassInnerClass = [
-  "relative grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] gap-x-3 px-2.5 py-3.5 sm:grid-cols-[3rem_minmax(0,1fr)] sm:gap-x-5 sm:px-4 sm:py-5",
-  "rounded-[16px] border border-white/75 bg-white/40 sm:rounded-[18px]",
-  "shadow-[0_10px_32px_rgba(15,26,20,0.07),inset_0_1px_0_rgba(255,255,255,0.95)]",
-  "backdrop-blur-2xl backdrop-saturate-150",
-  "transition-[box-shadow,border-color] duration-200",
-  "hover:border-white/90 hover:shadow-[0_14px_36px_rgba(15,26,20,0.09),inset_0_1px_0_rgba(255,255,255,1)]",
-  "dark:border-white/[0.16] dark:bg-white/[0.09]",
-  "dark:shadow-[0_16px_42px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.16)]",
-  "dark:hover:border-white/[0.22]",
-  "motion-reduce:bg-white/85 motion-reduce:backdrop-blur-none dark:motion-reduce:bg-elevated",
-].join(" ");
+const breakInnerLayoutClass =
+  "relative grid min-w-0 grid-cols-[2.75rem_minmax(0,1fr)] gap-x-3 px-2.5 py-3.5 sm:grid-cols-[3rem_minmax(0,1fr)] sm:gap-x-5 sm:px-4 sm:py-5";
 
 /**
  * How you learn — stacked process rows.
@@ -60,10 +58,10 @@ export function PedagogySection() {
       <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-12 xl:gap-16">
         <div className="animate-rise min-w-0 lg:sticky lg:top-[100px] lg:self-start">
           <div className={landingEyebrowClass}>How you learn</div>
-          <h2 className="mb-3.5 max-w-xl font-display text-[clamp(1.6rem,4.5vw,2.5rem)] font-extrabold leading-[1.08] tracking-[-0.03em] text-balance">
+          <h2 className={landingH2Class}>
             Reading a chapter isn&apos;t the same as knowing it.
           </h2>
-          <p className="max-w-md text-[15.5px] leading-relaxed text-ink-secondary text-pretty sm:text-[16.5px]">
+          <p className={landingLeadClass}>
             Most courses stop at read-then-continue. Ascend adds the steps where
             understanding sticks.
           </p>
@@ -80,8 +78,8 @@ export function PedagogySection() {
                 <div className="relative flex flex-col items-center">
                   <span
                     className={cn(
-                      "relative z-[1] flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-white sm:h-12 sm:w-12 sm:rounded-[14px]",
-                      step.accent ? "icon-crystal" : "bg-brand-gradient",
+                      "relative z-[1]",
+                      step.accent ? landingIconCrystalClass : landingIconTileClass,
                     )}
                   >
                     <step.icon
@@ -139,14 +137,8 @@ export function PedagogySection() {
               >
                 {step.accent ? (
                   <>
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute inset-[-10px] -z-10 overflow-hidden"
-                    >
-                      <span className="absolute left-[6%] top-[18%] h-32 w-32 rounded-full bg-brand-violet/22 blur-3xl dark:bg-brand-violet/28" />
-                      <span className="absolute bottom-[8%] right-[10%] h-28 w-28 rounded-full bg-brand-orange/18 blur-3xl dark:bg-brand-orange/22" />
-                    </span>
-                    <div className={breakGlassInnerClass}>{body}</div>
+                    <span aria-hidden className={glassWashClass} />
+                    <div className={cn(glassSurfaceClass, breakInnerLayoutClass)}>{body}</div>
                   </>
                 ) : (
                   body

@@ -1,7 +1,11 @@
 import { Layers, Focus, Hammer, Users } from "lucide-react";
 import { SectionHeading } from "./section-heading";
 import { SectionBand } from "./section-band";
-import { landingCardClass, landingCardTitleClass } from "./landing-styles";
+import {
+  landingCardClass,
+  landingCardTitleClass,
+  landingIconTileClass,
+} from "./landing-styles";
 
 const REASONS = [
   {
@@ -51,7 +55,7 @@ export function WhySection() {
                 {r.badge}
               </span>
             ) : null}
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-[12px] bg-brand-gradient text-white shadow-[0_4px_10px_rgba(0,0,0,0.1)] sm:h-11 sm:w-11 sm:rounded-[13px] dark:shadow-none">
+            <div className={`mb-4 ${landingIconTileClass}`}>
               <r.icon size={20} strokeWidth={2.2} />
             </div>
             <h3 className={`mb-2 min-w-0 ${r.badge ? "pr-16" : ""} ${landingCardTitleClass}`}>{r.title}</h3>

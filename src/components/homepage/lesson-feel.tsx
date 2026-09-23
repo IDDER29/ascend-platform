@@ -2,7 +2,7 @@ import { SectionBand } from "./section-band";
 import { TrafficLights } from "./mac-chrome";
 import { CURRICULUM_HREF } from "@/lib/routes";
 import { Button } from "@/components/ui/button";
-import { landingEyebrowClass } from "./landing-styles";
+import { landingEyebrowClass, landingH2Class, landingLeadClass } from "./landing-styles";
 
 /**
  * Shows the calm anatomy of a lesson — window chrome + nested Terminal.
@@ -15,10 +15,10 @@ export function LessonFeel() {
       <div className="grid min-w-0 items-start gap-8 sm:gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-center lg:gap-12 xl:gap-16">
         <div className="animate-rise min-w-0">
           <div className={landingEyebrowClass}>Inside a lesson</div>
-          <h2 className="mb-3.5 max-w-xl font-display text-[clamp(1.6rem,4.5vw,2.5rem)] font-extrabold leading-[1.08] tracking-[-0.03em] text-balance">
+          <h2 className={landingH2Class}>
             One concept. Quiet focus. Then the next.
           </h2>
-          <p className="mb-6 max-w-md text-[15.5px] leading-relaxed text-ink-secondary text-pretty sm:text-[16.5px]">
+          <p className={`${landingLeadClass} mb-6`}>
             Lessons are short pages — a clear explanation, a bit of code when it
             helps, and a knowledge check. No sidebar noise while you read.
           </p>

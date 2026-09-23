@@ -12,16 +12,16 @@ export function TruthTable({ caption, rowsJson }: { caption: string; rowsJson: s
   const [header, ...body] = rows;
   return (
     <div className="my-6 not-prose">
-      <div className="mb-2 font-display text-[15.5px] font-bold text-[#2A2540]">
+      <div className="mb-2 font-display text-[15.5px] font-bold text-ink">
         {decodeEntities(caption)}
       </div>
-      <table className="w-full max-w-xs overflow-hidden rounded-xl border border-divider text-center">
+      <table className="w-full max-w-xs overflow-hidden rounded-xl border border-card-border text-center">
         <thead>
           <tr>
             {header.map((h, i) => (
               <th
                 key={i}
-                className="border-b border-divider bg-[#FBFAFE] px-4 py-2.5 font-mono text-[12px] font-bold uppercase tracking-wide text-ink-faint"
+                className="border-b border-divider bg-elevated/60 px-4 py-2.5 font-mono text-[12px] font-bold uppercase tracking-wide text-ink-faint"
               >
                 {h}
               </th>
@@ -34,7 +34,7 @@ export function TruthTable({ caption, rowsJson }: { caption: string; rowsJson: s
               {row.map((cell, j) => (
                 <td
                   key={j}
-                  className="border-b border-divider px-4 py-2.5 font-mono text-[14px] font-semibold text-[#413D50] last:border-b-0"
+                  className="border-b border-divider px-4 py-2.5 font-mono text-[14px] font-semibold text-ink-secondary last:border-b-0"
                 >
                   {cell}
                 </td>

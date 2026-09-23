@@ -27,17 +27,17 @@ export function CodeBlock({
   const lines: string[] = JSON.parse(linesJson);
 
   return (
-    <div className="my-6 overflow-hidden rounded-2xl border border-[#E7E3F2] shadow-[0_12px_30px_rgba(28,18,64,0.08)] not-prose">
+    <div className="my-6 overflow-hidden rounded-2xl border border-card-border bg-paper shadow-[var(--shadow-card-rest)] not-prose dark:bg-elevated">
       {runnable && (
-        <div className="flex items-center gap-2.5 border-b border-divider bg-[#FBFAFE] px-4 py-3">
+        <div className="flex items-center gap-2.5 border-b border-divider bg-elevated/50 px-4 py-3">
           <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-faint">
             {lang}
           </span>
           <button
             onClick={() => setRan(true)}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-[#12B981] px-4 py-2 text-[12.5px] font-extrabold text-[#06231A] shadow-[0_8px_16px_rgba(18,185,129,0.28)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-4 py-2 text-[12.5px] font-extrabold text-white shadow-[0_6px_16px_rgba(13,159,110,0.22)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="#06231A">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="6 3 20 12 6 21 6 3" />
             </svg>
             Run

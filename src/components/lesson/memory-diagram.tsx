@@ -13,14 +13,14 @@ function MemoryBox({ label, value, meta, tone }: MemoryBoxProps) {
       className={cn(
         "flex-1 rounded-xl border-[1.5px] px-4 py-3.5",
         tone === "value"
-          ? "border-[#A6E6CC] bg-[#E9F9F2]"
-          : "border-[#C9B8F5] bg-xp-bg",
+          ? "border-xp-border bg-xp-bg"
+          : "border-card-border bg-elevated",
       )}
     >
       <div
         className={cn(
           "font-mono text-xs font-bold",
-          tone === "value" ? "text-[#0E9E6E]" : "text-brand-violet",
+          tone === "value" ? "text-xp-text" : "text-ink-faint",
         )}
       >
         {label}
@@ -29,8 +29,8 @@ function MemoryBox({ label, value, meta, tone }: MemoryBoxProps) {
         className={cn(
           "mt-0.5",
           tone === "value"
-            ? "font-display text-2xl font-extrabold text-[#0E9E6E]"
-            : "font-mono text-[15px] font-bold text-[#5A32D6]",
+            ? "font-display text-2xl font-extrabold text-xp-text"
+            : "font-mono text-[15px] font-bold text-ink",
         )}
       >
         {value}
@@ -38,7 +38,7 @@ function MemoryBox({ label, value, meta, tone }: MemoryBoxProps) {
       <div
         className={cn(
           "mt-1 font-mono text-[10.5px]",
-          tone === "value" ? "text-[#7FB79E]" : "text-[#A08BD6]",
+          tone === "value" ? "text-brand-violet/70" : "text-ink-fainter",
         )}
       >
         {meta}
@@ -49,7 +49,7 @@ function MemoryBox({ label, value, meta, tone }: MemoryBoxProps) {
 
 export function MemoryDiagram() {
   return (
-    <div className="my-6 rounded-2xl border border-divider bg-[#FBFAFE] px-6 py-5">
+    <div className="my-6 rounded-2xl border border-card-border bg-paper px-6 py-5 dark:bg-elevated">
       <div className="mb-4 font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-faint">
         A peek at memory
       </div>

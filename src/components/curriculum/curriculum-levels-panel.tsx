@@ -36,20 +36,25 @@ export function CurriculumLevelsPanel({
   currentLevel,
   currentOrder,
   totalLessons,
+  hideFilters = false,
 }: {
   levels: LevelInfo[];
   lessonsByLevel: Record<string, LessonInfo[]>;
   currentLevel: string;
   currentOrder: number;
   totalLessons: number;
+  /** Hide All/level chips (e.g. Foundations path with a single level). */
+  hideFilters?: boolean;
 }) {
   const [filter, setFilter] = useState<string>("all");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ [currentLevel]: true });
 
   const visibleLevels = filter === "all" ? levels : levels.filter((l) => l.id === filter);
+  const showFilters = !hideFilters && levels.length > 1;
 
   return (
     <div>
+      {showFilters ? (
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2.5">
           <button
@@ -80,6 +85,7 @@ export function CurriculumLevelsPanel({
           ))}
         </div>
       </div>
+      ) : null}
 
       <div className="flex flex-col gap-4">
         {visibleLevels.map((level) => {

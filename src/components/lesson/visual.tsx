@@ -24,11 +24,11 @@ export function Visual({
   description: string;
 }) {
   return (
-    <div className="my-6 rounded-2xl border border-divider bg-[#FBFAFE] px-6 py-5 not-prose">
+    <div className="my-6 rounded-2xl border border-card-border bg-paper px-6 py-5 not-prose dark:bg-elevated">
       <div className="mb-2.5 font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-faint">
         {LABELS[type] ?? "DIAGRAM"}
       </div>
-      <div className="mb-2 font-display text-[15.5px] font-bold text-[#2A2540]">
+      <div className="mb-2 font-display text-[15.5px] font-bold text-ink">
         {decodeEntities(caption)}
       </div>
       <div className="text-[14.5px] leading-relaxed text-ink-secondary">

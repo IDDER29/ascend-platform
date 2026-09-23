@@ -3,6 +3,7 @@ import { SectionHeading } from "./section-heading";
 import { SectionBand } from "./section-band";
 import { CURRICULUM_HREF } from "@/lib/routes";
 import { landingCardClass, landingCardTitleClass } from "./landing-styles";
+import { cn } from "@/lib/cn";
 
 const LEVELS = [
   {
@@ -66,7 +67,10 @@ export function CurriculumPreview() {
           >
             <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
               <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] sm:h-11 sm:w-11 sm:rounded-[13px] ${level.bg} font-display text-[16px] font-extrabold text-white shadow-[0_4px_10px_rgba(0,0,0,0.1)] sm:text-[17px] dark:shadow-none`}
+                className={cn(
+                  "icon-tile font-display text-[16px] font-extrabold sm:text-[17px]",
+                  level.bg,
+                )}
               >
                 {level.num}
               </div>

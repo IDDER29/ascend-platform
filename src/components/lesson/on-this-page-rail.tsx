@@ -40,7 +40,7 @@ export function OnThisPageRail({ items }: { items: RailItem[] }) {
           className={cn(
             "-ml-0.5 border-l-2 px-3 py-1.5 text-[13px] leading-snug transition-colors duration-150",
             activeId === item.id
-              ? "border-brand-violet font-bold text-[#5A32D6]"
+              ? "border-brand-violet font-bold text-brand-violet"
               : "border-transparent font-medium text-ink-muted hover:text-ink-secondary",
           )}
         >

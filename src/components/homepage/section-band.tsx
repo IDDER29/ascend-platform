@@ -25,7 +25,7 @@ export function SectionBand({
       id={id}
       className={cn(id && "scroll-mt-[88px]", "min-w-0", tones[tone], className)}
     >
-      <div className="mx-auto w-full min-w-0 max-w-[1200px] px-4 py-12 sm:px-8 sm:py-[72px]">
+          <div className="mx-auto w-full min-w-0 max-w-[var(--layout-max)] px-4 py-12 sm:px-8 sm:py-[72px]">
         {children}
       </div>
     </section>

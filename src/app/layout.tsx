@@ -27,6 +27,10 @@ export const metadata: Metadata = {
   title: "Ascend — Learn how computers really work",
   description:
     "A free, open-source, bottom-up computer-science curriculum. Bits, logic, the CPU, memory, C, and operating systems — from a single bit up.",
+  applicationName: "Ascend",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+  },
 };
 
 // Deliberately NOT reading cookies()/the session here: doing so would opt
@@ -53,7 +57,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('ascend-theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('ascend-theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');if(localStorage.getItem('ascend:sidebar-collapsed')==='true')document.documentElement.classList.add('sidebar-collapsed')}catch(e){}})()`,
           }}
         />
       </head>

@@ -21,7 +21,9 @@
   --level-03-from: #c46a2b;
   --level-03-to: #e08a3c;
 
-  --surface-bg: #f2f4f1;
+  /* Neutral page wash — mint cast removed so long reading stays easy on the eyes.
+     Brand green lives on accents/CTAs (xp-bg, brand-gradient), not the page field. */
+  --surface-bg: #f4f4f3;
   --surface-paper: #ffffff;
   --surface-elevated: #ffffff;
   --ink: #0f1a14;
@@ -51,6 +53,28 @@
   --hero-wash-a: rgba(13, 159, 110, 0.22);
   --hero-wash-b: rgba(212, 160, 23, 0.16);
   --hero-grid: rgba(13, 159, 110, 0.12);
+
+  /* Shared formulas — change once, used by utility classes */
+  --brand-glow: 0 4px 12px rgba(13, 159, 110, 0.2);
+  --brand-glow-strong: 0 8px 28px rgba(13, 159, 110, 0.22);
+  --brand-sheen: linear-gradient(125deg, rgba(255, 255, 255, 0.35) 0%, transparent 42%);
+  --glass-bg: rgba(255, 255, 255, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.75);
+  --glass-border-hover: rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 10px 32px rgba(15, 26, 20, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  --glass-shadow-hover: 0 14px 36px rgba(15, 26, 20, 0.09), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --glass-wash-a: rgba(13, 159, 110, 0.22);
+  --glass-wash-b: rgba(212, 160, 23, 0.18);
+  --crystal-shadow: 0 6px 18px rgba(13, 159, 110, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+  --crystal-rim: inset 0 0 0 1.5px rgba(255, 255, 255, 0.55);
+  --layout-max: 1200px;
+  --radius-icon: 12px;
+  --radius-icon-lg: 14px;
+  --radius-glass: 16px;
+  --radius-glass-lg: 18px;
+  --radius-cta: 22px;
+  --focus-ring: #0d9f6e;
 }
 
 .dark {
@@ -85,6 +109,21 @@
   --hero-wash-a: rgba(13, 159, 110, 0.1);
   --hero-wash-b: rgba(212, 160, 23, 0.06);
   --hero-grid: rgba(59, 198, 160, 0.055);
+
+  --brand-glow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --brand-glow-strong: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --brand-sheen: linear-gradient(125deg, rgba(255, 255, 255, 0.22) 0%, transparent 42%);
+  --glass-bg: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-border-hover: rgba(255, 255, 255, 0.22);
+  --glass-shadow: 0 16px 42px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  --glass-shadow-hover: 0 18px 46px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  --glass-wash-a: rgba(13, 159, 110, 0.28);
+  --glass-wash-b: rgba(212, 160, 23, 0.22);
+  --crystal-shadow: 0 8px 22px rgba(13, 159, 110, 0.38), inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+  --crystal-rim: inset 0 0 0 1.5px rgba(255, 255, 255, 0.32);
+  --focus-ring: #3aa87a;
 
   color-scheme: dark;
 }
@@ -260,6 +299,18 @@
   }
 }
 
+@keyframes here-breathe {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.08);
+  }
+}
+
 .animate-rise {
   animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -291,6 +342,9 @@
 .animate-confetti-fall {
   animation: confetti-fall linear infinite;
 }
+.animate-here-breathe {
+  animation: here-breathe 2.4s ease-in-out infinite;
+}
 
 .bg-brand-gradient {
   background: linear-gradient(
@@ -299,6 +353,195 @@
     var(--color-brand-magenta) 58%,
     var(--color-brand-orange)
   );
+}
+
+/* ─── Global brand primitives (change tokens above; these consume them) ─── */
+
+/** Nav / footer Ascend mark — gradient + light sheen */
+.brand-mark {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 11px;
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-violet),
+    var(--color-brand-magenta) 58%,
+    var(--color-brand-orange)
+  );
+  box-shadow: var(--brand-glow);
+}
+.brand-mark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--brand-sheen);
+}
+.brand-mark > * {
+  position: relative;
+  z-index: 1;
+}
+.brand-mark--sm {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+}
+
+/** Standard step / feature icon tile */
+.icon-tile {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-icon);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+@media (min-width: 640px) {
+  .icon-tile {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 13px;
+  }
+}
+.dark .icon-tile {
+  box-shadow: none;
+}
+
+/** Frosted glass island (Break card, etc.) */
+.glass-surface {
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  border-radius: var(--radius-glass);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(40px) saturate(1.5);
+  -webkit-backdrop-filter: blur(40px) saturate(1.5);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.glass-surface:hover {
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--glass-shadow-hover);
+}
+@media (min-width: 640px) {
+  .glass-surface {
+    border-radius: var(--radius-glass-lg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glass-surface {
+    background: color-mix(in srgb, var(--surface-paper) 85%, transparent);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .dark .glass-surface {
+    background: var(--surface-elevated);
+  }
+}
+
+/** Soft color wash behind a glass island */
+.glass-wash {
+  pointer-events: none;
+  position: absolute;
+  inset: -10px;
+  z-index: -1;
+  overflow: hidden;
+}
+.glass-wash::before,
+.glass-wash::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(48px);
+}
+.glass-wash::before {
+  left: 6%;
+  top: 18%;
+  width: 8rem;
+  height: 8rem;
+  background: var(--glass-wash-a);
+}
+.glass-wash::after {
+  right: 10%;
+  bottom: 8%;
+  width: 7rem;
+  height: 7rem;
+  background: var(--glass-wash-b);
+}
+
+/** Section eyebrow + headline + lead — landing rhythm */
+.landing-eyebrow {
+  margin-bottom: 0.875rem;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brand-violet);
+}
+.landing-h2 {
+  margin-bottom: 0.875rem;
+  max-width: 36rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4.5vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.landing-h2--center {
+  margin-inline: auto;
+  max-width: 48rem;
+  font-size: clamp(1.6rem, 4.5vw, 2.625rem);
+}
+.landing-lead {
+  max-width: 28rem;
+  font-size: 15.5px;
+  line-height: 1.625;
+  color: var(--color-ink-secondary);
+  text-wrap: pretty;
+}
+@media (min-width: 640px) {
+  .landing-lead {
+    font-size: 16.5px;
+  }
+}
+
+/** Brand gradient CTA panel */
+.cta-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-cta);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-violet),
+    var(--color-brand-magenta) 58%,
+    var(--color-brand-orange)
+  );
+  color: #fff;
+  text-align: center;
+  box-shadow: var(--brand-glow-strong);
+}
+@media (min-width: 640px) {
+  .cta-panel {
+    border-radius: 28px;
+  }
+}
+.cta-panel::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 6rem;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.18), transparent);
 }
 
 /*
@@ -315,10 +558,7 @@
     var(--color-brand-magenta) 52%,
     var(--color-brand-orange)
   );
-  box-shadow:
-    0 6px 18px rgba(13, 159, 110, 0.3),
-    inset 0 2px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+  box-shadow: var(--crystal-shadow);
 }
 .icon-crystal::before {
   content: "";
@@ -327,7 +567,6 @@
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  /* Bright crystal facet streak across the tile */
   background: linear-gradient(
     118deg,
     transparent 28%,
@@ -347,17 +586,10 @@
   border-radius: inherit;
   pointer-events: none;
   z-index: 0;
-  /* Frost veil + glass rim + bottom depth */
   background:
     radial-gradient(120% 90% at 18% 12%, rgba(255, 255, 255, 0.55), transparent 42%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, transparent 40%, rgba(0, 0, 0, 0.1) 100%);
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.55);
-}
-.dark .icon-crystal {
-  box-shadow:
-    0 8px 22px rgba(13, 159, 110, 0.38),
-    inset 0 2px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: var(--crystal-rim);
 }
 .dark .icon-crystal::before {
   background: linear-gradient(
@@ -375,7 +607,6 @@
   background:
     radial-gradient(120% 90% at 18% 12%, rgba(255, 255, 255, 0.32), transparent 42%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 42%, rgba(0, 0, 0, 0.22) 100%);
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.32);
 }
 @media (prefers-reduced-motion: no-preference) {
   .icon-crystal::before {
@@ -559,12 +790,12 @@ body {
 }
 
 ::selection {
-  background: #0d9f6e;
+  background: var(--focus-ring);
   color: #fff;
 }
 
 :focus-visible {
-  outline: 2.5px solid #0d9f6e;
+  outline: 2.5px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -580,4 +811,28 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--ink-faint);
+}
+
+/* App sidebar FOUC — set by layout script from localStorage before paint */
+html.sidebar-collapsed .app-sidebar,
+html.sidebar-collapsed .app-sidebar-spacer {
+  width: 78px;
+}
+html.sidebar-collapsed .app-sidebar {
+  align-items: center;
+  padding: 1.25rem 0;
+}
+html.sidebar-collapsed .app-sidebar-label,
+html.sidebar-collapsed .app-sidebar-brand-text,
+html.sidebar-collapsed .app-sidebar-expanded-only {
+  display: none !important;
+}
+html.sidebar-collapsed .app-sidebar-section {
+  height: 10px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
 }

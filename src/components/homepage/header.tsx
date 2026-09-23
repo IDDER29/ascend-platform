@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/homepage/theme-toggle";
+import { brandMarkClass } from "@/components/homepage/landing-styles";
 import { cn } from "@/lib/cn";
-import { CURRICULUM_HREF, FIRST_LESSON_HREF } from "@/lib/routes";
+import { CURRICULUM_HREF, FIRST_LESSON_HREF, SIGNIN_HREF } from "@/lib/routes";
 
 /**
  * Marketing nav — Odin-style destinations + Get Started CTA + theme toggle.
@@ -34,7 +35,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-card-border/70 bg-bg/80 backdrop-blur-xl backdrop-saturate-150 dark:bg-bg/75 dark:border-card-border/50">
       <nav
-        className="mx-auto flex h-16 w-full min-w-0 max-w-[1200px] items-center gap-3 px-4 sm:h-[68px] sm:gap-4 sm:px-8 lg:gap-6"
+        className="mx-auto flex h-16 w-full min-w-0 max-w-[var(--layout-max)] items-center gap-3 px-4 sm:h-[68px] sm:gap-4 sm:px-8 lg:gap-6"
         aria-label="Primary"
       >
         <Link
@@ -42,12 +43,8 @@ export function SiteHeader() {
           className={cn("flex shrink-0 items-center gap-2.5 rounded-lg", focusRing)}
           onClick={() => setOpen(false)}
         >
-          <span className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-[11px] bg-brand-gradient shadow-[0_4px_12px_rgba(13,159,110,0.2),inset_0_1px_0_rgba(255,255,255,0.45)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
-            <span
-              aria-hidden
-              className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,rgba(255,255,255,0.35)_0%,transparent_42%)]"
-            />
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="relative">
+          <span className={brandMarkClass}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="m6 15 6-6 6 6" />
               <path d="m6 9 6-6 6 6" opacity=".55" />
             </svg>
@@ -84,7 +81,7 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-2 sm:gap-2.5">
           <ThemeToggle className="hidden sm:inline-flex" />
           <Link
-            href="/signin"
+            href={SIGNIN_HREF}
             className={cn(
               "hidden rounded-full px-3 py-2 text-[14px] font-semibold text-ink-secondary transition-colors hover:text-ink md:inline-flex",
               focusRing,
@@ -145,7 +142,7 @@ export function SiteHeader() {
               <ThemeToggle />
             </div>
             <Link
-              href="/signin"
+              href={SIGNIN_HREF}
               onClick={() => setOpen(false)}
               className="rounded-xl px-3.5 py-3 text-center text-[15px] font-semibold text-ink-secondary hover:bg-black/[0.03] hover:text-ink dark:hover:bg-white/[0.06]"
             >

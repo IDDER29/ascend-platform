@@ -1,13 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { ctaPanelClass } from "@/components/homepage/landing-styles";
 import { CURRICULUM_HREF } from "@/lib/routes";
 
 export function FinalCta() {
   return (
-    <section className="animate-rise relative overflow-hidden rounded-[22px] bg-brand-gradient px-5 py-10 text-center text-white shadow-[0_8px_28px_rgba(13,159,110,0.2),inset_0_1px_0_rgba(255,255,255,0.28)] sm:rounded-[28px] sm:px-12 sm:py-14 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.14)]">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/18 to-transparent"
-      />
+    <section className={`${ctaPanelClass} px-5 py-10 sm:px-12 sm:py-14`}>
       <div className="animate-blob pointer-events-none absolute -left-10 -top-20 h-[min(260px,50vw)] w-[min(260px,50vw)] rounded-full bg-white/[0.12] blur-[10px]" />
       <div
         className="animate-blob pointer-events-none absolute -bottom-20 -right-5 h-[min(220px,45vw)] w-[min(220px,45vw)] rounded-full bg-white/10 blur-[8px]"

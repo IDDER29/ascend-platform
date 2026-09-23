@@ -8,16 +8,16 @@ const ICONS: Record<AdditionalResource["type"], typeof Play> = {
 };
 
 const COLORS: Record<AdditionalResource["type"], string> = {
-  video: "bg-[#FFF1EC] text-[#FF6B4A]",
-  doc: "bg-[#FBEBFA] text-[#C13AE0]",
-  pdf: "bg-[#FFF1EC] text-[#FF6B4A]",
+  video: "bg-brand-gradient text-white",
+  doc: "bg-xp-bg text-xp-text",
+  pdf: "bg-xp-bg text-xp-text",
 };
 
 function VideoCard({ r }: { r: AdditionalResource }) {
   const inner = (
     <>
-      <div className="relative flex h-[100px] items-center justify-center bg-gradient-to-br from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A]">
-        <span className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-white/[0.92] text-brand-violet">
+      <div className="relative flex h-[100px] items-center justify-center bg-xp-bg/40">
+        <span className="flex h-[46px] w-[46px] items-center justify-center rounded-full bg-brand-gradient text-white shadow-[var(--brand-glow)]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
             <polygon points="8 5 19 12 8 19 8 5" />
           </svg>
@@ -29,13 +29,13 @@ function VideoCard({ r }: { r: AdditionalResource }) {
         )}
       </div>
       <div className="px-3.5 py-3">
-        <div className="text-[13.5px] font-bold leading-tight">{r.title}</div>
+        <div className="text-[13.5px] font-bold leading-tight text-ink">{r.title}</div>
         <div className="mt-0.5 text-[11.5px] text-ink-faint">{r.meta}</div>
       </div>
     </>
   );
   const className =
-    "mb-3 block overflow-hidden rounded-[14px] border border-card-border bg-white shadow-[0_4px_14px_rgba(28,18,64,0.05)] transition-transform duration-150 hover:-translate-y-0.5";
+    "mb-3 block overflow-hidden rounded-[14px] border border-card-border bg-paper shadow-[var(--shadow-card-rest)] transition-transform duration-150 hover:-translate-y-0.5 dark:bg-elevated";
   return r.url ? (
     <a href={r.url} target="_blank" rel="noreferrer" className={className}>
       {inner}
@@ -66,7 +66,7 @@ export function AdditionalResources({
               <Icon size={15} strokeWidth={2.2} />
             </span>
             <div className="min-w-0">
-              <div className="text-[13px] font-bold text-[#2A2540]">{r.title}</div>
+              <div className="text-[13px] font-bold text-ink">{r.title}</div>
               <div className="text-[11px] text-ink-faint">{r.meta}</div>
             </div>
           </>
@@ -77,14 +77,14 @@ export function AdditionalResources({
             href={r.url}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-3 rounded-xl border border-card-border bg-white px-3.5 py-3 transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-card-hover"
+            className="flex items-center gap-3 rounded-xl border border-card-border bg-paper px-3.5 py-3 transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-card-hover dark:bg-elevated"
           >
             {inner}
           </a>
         ) : (
           <div
             key={i}
-            className="flex items-center gap-3 rounded-xl border border-dashed border-card-border bg-white/60 px-3.5 py-3 opacity-70"
+            className="flex items-center gap-3 rounded-xl border border-dashed border-card-border bg-paper/60 px-3.5 py-3 opacity-70 dark:bg-elevated/60"
             title="Referenced in this lesson's diagram above — no external link"
           >
             {inner}

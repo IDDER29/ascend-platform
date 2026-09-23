@@ -15,7 +15,7 @@ export function OutboundLink({
       target="_blank"
       rel="noreferrer"
       className={cn(
-        "inline-flex items-center gap-1.5 font-bold text-brand-violet transition-colors duration-150 hover:text-[#5A32D6]",
+        "inline-flex items-center gap-1.5 font-bold text-brand-violet transition-colors duration-150 hover:text-xp-text",
         className,
       )}
     >

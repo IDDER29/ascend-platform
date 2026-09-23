@@ -42,7 +42,7 @@ export function LessonFooter({
   }
 
   return (
-    <div className="relative mt-9 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#6A3EF0] via-[#9A34D6] to-[#FF6B4A] px-8 py-8 text-white shadow-[0_22px_46px_rgba(106,62,240,0.3)]">
+    <div className="relative mt-9 overflow-hidden rounded-[20px] bg-brand-gradient px-8 py-8 text-white shadow-[0_18px_40px_rgba(13,159,110,0.22)]">
       <div className="animate-blob absolute -right-5 -top-12 h-[210px] w-[210px] rounded-full bg-white/[0.13] blur-[6px]" />
       <div className="relative flex flex-wrap items-center gap-5">
         <div className="flex h-14 w-14 flex-none items-center justify-center rounded-2xl border border-white/30 bg-white/20">
@@ -75,14 +75,14 @@ export function LessonFooter({
               <span>Streak · {streakDays} day{streakDays === 1 ? "" : "s"}</span>
             ) : null}
           </div>
-          {error ? <p className="mt-2 text-[13px] text-[#FFE8E0]">{error}</p> : null}
+          {error ? <p className="mt-2 text-[13px] text-white/90">{error}</p> : null}
         </div>
         {next ? (
           <Button href={next.href} variant="invert" className="whitespace-nowrap">
             {next.title === "Finish level" || next.title.startsWith("Shellforge")
               ? next.title
               : `Next: ${next.title}`}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6A3EF0" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14" />
               <path d="m12 5 7 7-7 7" />
             </svg>

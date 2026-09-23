@@ -1,5 +1,18 @@
 /** Canonical learner entry URLs. */
 export const CURRICULUM_HREF = "/curriculum";
 
+export const PATHS_HREF = "/paths";
+
 export const FIRST_LESSON_HREF =
   "/curriculum/level-00-bits-logic/what-is-a-bit";
+
+/** Auth — one page; signup via query for deep links / analytics. */
+export const SIGNIN_HREF = "/signin";
+export const SIGNUP_HREF = "/signin?mode=signup";
+
+/** Password reset flow (UI ready; email gated by RESET_EMAIL_ENABLED). */
+export {
+  RESET_HREF,
+  RESET_NEW_PASSWORD_HREF,
+  RESET_EXPIRED_HREF,
+} from "@/lib/auth/reset-flow";

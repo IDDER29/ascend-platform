@@ -12,7 +12,7 @@ export function ProgressBar({
   return (
     <div
       className={cn(
-        "h-1.5 w-full overflow-hidden rounded-full bg-[#F0EEF7]",
+        "h-1.5 w-full overflow-hidden rounded-full bg-card-border",
         className,
       )}
     >

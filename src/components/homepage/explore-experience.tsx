@@ -3,7 +3,7 @@ import { SectionHeading } from "./section-heading";
 import { SectionBand } from "./section-band";
 import { Button } from "@/components/ui/button";
 import { CURRICULUM_HREF } from "@/lib/routes";
-import { landingCardOnTintClass, landingCardTitleClass } from "./landing-styles";
+import { landingCardOnTintClass, landingCardTitleClass, landingIconTileClass } from "./landing-styles";
 
 const STEPS = [
   {
@@ -47,7 +47,7 @@ export function ExploreExperience() {
             style={{ animationDelay: `${i * 0.06}s` }}
           >
             <div className="mb-4 flex min-w-0 items-center justify-between gap-2">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-brand-gradient text-white shadow-[0_4px_10px_rgba(0,0,0,0.1)] sm:h-11 sm:w-11 sm:rounded-[13px] dark:shadow-none">
+              <div className={landingIconTileClass}>
                 <step.icon size={20} strokeWidth={2.2} />
               </div>
               <span className="shrink-0 font-mono text-[10.5px] text-ink-muted sm:text-[11px]">

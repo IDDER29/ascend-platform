@@ -24,10 +24,10 @@ interface LevelInfo {
 }
 
 const FILTER_DOT: Record<string, string> = {
-  "level-00-bits-logic": "bg-[#12B981]",
-  "level-01-machine-memory": "bg-[#7B4DFF]",
-  "level-02-the-c-language": "bg-[#C13AE0]",
-  "level-03-systems-software": "bg-[#FF6B4A]",
+  "level-00-bits-logic": "bg-[#0D9F6E]",
+  "level-01-machine-memory": "bg-[#1A9B8E]",
+  "level-02-the-c-language": "bg-[#D4A017]",
+  "level-03-systems-software": "bg-[#C46A2B]",
 };
 
 export function CurriculumLevelsPanel({
@@ -96,7 +96,7 @@ export function CurriculumLevelsPanel({
               key={level.id}
               className={cn(
                 "scroll-mt-[96px] overflow-hidden rounded-[20px] border bg-white shadow-card-rest transition-shadow",
-                isCurrent ? "border-[#F1D6EC] shadow-[0_18px_44px_rgba(193,58,224,0.1)]" : "border-card-border",
+                isCurrent ? "border-[#C8E8D8] shadow-[0_18px_44px_rgba(13,159,110,0.12)]" : "border-card-border",
               )}
             >
               <button
@@ -176,7 +176,7 @@ export function CurriculumLevelsPanel({
                           "flex items-center gap-3.5 border-t border-[#F4F2FA] px-5.5 py-3.5",
                           isLessonCurrent && "bg-gradient-to-r from-[#FBF3FE] to-white",
                         )}
-                        style={isLessonCurrent ? { boxShadow: "inset 3px 0 0 #C13AE0" } : undefined}
+                        style={isLessonCurrent ? { boxShadow: "inset 3px 0 0 #0D9F6E" } : undefined}
                       >
                         <span
                           className={cn(
@@ -184,7 +184,7 @@ export function CurriculumLevelsPanel({
                             isDone
                               ? `${level.accent} text-white`
                               : isLessonCurrent
-                                ? "border-2 border-[#C13AE0] bg-white shadow-[0_0_0_4px_rgba(193,58,224,0.13)]"
+                                ? "border-2 border-[#0D9F6E] bg-white shadow-[0_0_0_4px_rgba(13,159,110,0.15)]"
                                 : isNextUp
                                   ? "border-2 border-[#D8D3E6] bg-white"
                                   : "border border-[#E7E4F0] bg-[#F1EFF6] text-ink-fainter",
@@ -193,7 +193,7 @@ export function CurriculumLevelsPanel({
                           {isDone ? (
                             <Check size={13} strokeWidth={2.6} />
                           ) : isLessonCurrent ? (
-                            <span className="h-2 w-2 animate-pulse rounded-full bg-[#C13AE0]" />
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-[#0D9F6E]" />
                           ) : isNextUp ? null : (
                             <span className="h-1.5 w-1.5 rounded-full bg-[#C6C1D4]" />
                           )}
@@ -209,7 +209,7 @@ export function CurriculumLevelsPanel({
                             {isLessonCurrent && (
                               <>
                                 <span>·</span>
-                                <span className="font-bold text-[#C13AE0]">in progress</span>
+                                <span className="font-bold text-[#0D9F6E]">in progress</span>
                               </>
                             )}
                           </div>
@@ -217,7 +217,7 @@ export function CurriculumLevelsPanel({
                         {isLessonCurrent ? (
                           <Link
                             href={`/curriculum/${lesson.level}/${lesson.slug}`}
-                            className="flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-[#C13AE0] to-[#FF6B4A] px-4.5 py-2.5 text-[12.5px] font-bold text-white shadow-[0_8px_18px_rgba(193,58,224,0.27)]"
+                            className="flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full bg-brand-gradient px-4.5 py-2.5 text-[12.5px] font-bold text-white shadow-glow"
                           >
                             Continue
                             <Play size={11} className="fill-current" />
@@ -225,7 +225,7 @@ export function CurriculumLevelsPanel({
                         ) : isNextUp ? (
                           <Link
                             href={`/curriculum/${lesson.level}/${lesson.slug}`}
-                            className="flex-none whitespace-nowrap rounded-full border-[1.5px] border-[#C13AE0] px-4 py-2 text-[12.5px] font-bold text-[#C13AE0]"
+                            className="flex-none whitespace-nowrap rounded-full border-[1.5px] border-[#0D9F6E] px-4 py-2 text-[12.5px] font-bold text-[#0D9F6E]"
                           >
                             Start
                           </Link>
@@ -253,7 +253,7 @@ export function CurriculumLevelsPanel({
               {isCompleted && (
                 <div className="flex items-center justify-between border-t border-[#F4F2FA] px-5.5 py-3">
                   <span className="text-[13px] text-ink-fainter">
-                    <b className={cn("font-bold", level.id === "level-00-bits-logic" ? "text-[#12B981]" : "text-[#7B4DFF]")}>
+                    <b className={cn("font-bold", level.id === "level-00-bits-logic" ? "text-[#0D9F6E]" : "text-[#1A9B8E]")}>
                       {level.done} concepts done
                     </b>
                   </span>

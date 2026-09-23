@@ -1,53 +1,153 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Runtime tokens — overridable for .dark.
+ * @theme inline must reference these via var() so utilities stay dynamic
+ * (literal hex in @theme gets baked into .bg-bg / .text-ink as fixed RGB).
+ */
+:root {
+  --brand-violet: #0d9f6e;
+  --brand-magenta: #1a9b8e;
+  --brand-orange: #d4a017;
+
+  --level-00-from: #0d9f6e;
+  --level-00-to: #3bc6a0;
+  --level-01-from: #1a9b8e;
+  --level-01-to: #0d9f6e;
+  --level-02-from: #c4920a;
+  --level-02-to: #d4a017;
+  --level-03-from: #c46a2b;
+  --level-03-to: #e08a3c;
+
+  --surface-bg: #f2f4f1;
+  --surface-paper: #ffffff;
+  --surface-elevated: #ffffff;
+  --ink: #0f1a14;
+  --ink-secondary: #3d5248;
+  --ink-muted: #6b7f74;
+  --ink-faint: #8fa097;
+  --ink-fainter: #b5c2ba;
+  --card-border: #e2e8e4;
+  --card-border-soft: #dce4df;
+  --divider: #e5ebe7;
+
+  --streak-bg: #f4f0e6;
+  --streak-border: #e2d6b4;
+  --streak-text: #9a740c;
+  --xp-bg: #e6f5ee;
+  --xp-border: #c8e8d8;
+  --xp-text: #0a7a54;
+
+  --elevate-rest: 0 6px 20px rgba(15, 26, 20, 0.05);
+  --elevate-hover: 0 16px 38px rgba(15, 26, 20, 0.1);
+  --elevate-glow: 0 8px 18px rgba(13, 159, 110, 0.35);
+
+  --landing-tint: #eaf4ef;
+  --landing-warm: #faf6eb;
+  --landing-ink: #0c1612;
+  --hero-surface: #e4efe8;
+  --hero-wash-a: rgba(13, 159, 110, 0.22);
+  --hero-wash-b: rgba(212, 160, 23, 0.16);
+  --hero-grid: rgba(13, 159, 110, 0.12);
+}
+
+.dark {
+  /* Night study desk — lifted charcoal, soft ink, quiet phosphor */
+  --surface-bg: #121816;
+  --surface-paper: #161c19;
+  --surface-elevated: #1e2622;
+  --ink: #dce6e0;
+  --ink-secondary: #a8b8b0;
+  --ink-muted: #84948c;
+  --ink-faint: #6a7a72;
+  --ink-fainter: #55635c;
+  --card-border: #2c3631;
+  --card-border-soft: #252e2a;
+  --divider: #222a26;
+
+  --streak-bg: #1a2018;
+  --streak-border: #3a4530;
+  --streak-text: #cbb24a;
+  --xp-bg: #1a2c24;
+  --xp-border: #243d32;
+  --xp-text: #5bc896;
+
+  --elevate-rest: 0 1px 0 rgba(255, 255, 255, 0.045), 0 8px 22px rgba(0, 0, 0, 0.28);
+  --elevate-hover: 0 1px 0 rgba(255, 255, 255, 0.06), 0 14px 32px rgba(0, 0, 0, 0.38);
+  --elevate-glow: 0 4px 14px rgba(13, 159, 110, 0.12);
+
+  --landing-tint: #141a17;
+  --landing-warm: #17150f;
+  --landing-ink: #0c100e;
+  --hero-surface: #101614;
+  --hero-wash-a: rgba(13, 159, 110, 0.1);
+  --hero-wash-b: rgba(212, 160, 23, 0.06);
+  --hero-grid: rgba(59, 198, 160, 0.055);
+
+  color-scheme: dark;
+}
+
 @theme inline {
   /* Fonts */
   --font-display: var(--font-bricolage), sans-serif;
   --font-sans: var(--font-hanken), sans-serif;
   --font-mono: var(--font-space-mono), monospace;
 
-  /* Brand */
-  --color-brand-violet: #7b4dff;
-  --color-brand-magenta: #c13ae0;
-  --color-brand-orange: #ff6b4a;
+  /* Brand — Phosphor (no purple) */
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-magenta: var(--brand-magenta);
+  --color-brand-orange: var(--brand-orange);
 
   /* Per-level accents */
-  --color-level-00-from: #12b981;
-  --color-level-00-to: #3bc6f0;
-  --color-level-01-from: #7b4dff;
-  --color-level-01-to: #c13ae0;
-  --color-level-02-from: #c13ae0;
-  --color-level-02-to: #ff6b4a;
-  --color-level-03-from: #ff6b4a;
-  --color-level-03-to: #ff9f43;
+  --color-level-00-from: var(--level-00-from);
+  --color-level-00-to: var(--level-00-to);
+  --color-level-01-from: var(--level-01-from);
+  --color-level-01-to: var(--level-01-to);
+  --color-level-02-from: var(--level-02-from);
+  --color-level-02-to: var(--level-02-to);
+  --color-level-03-from: var(--level-03-from);
+  --color-level-03-to: var(--level-03-to);
 
   /* Surfaces & ink */
-  --color-bg: #f1f0f7;
-  --color-ink: #181528;
-  --color-ink-secondary: #5c5773;
-  --color-ink-muted: #8a8698;
-  --color-ink-faint: #a29eb4;
-  --color-ink-fainter: #c6c1d4;
-  --color-card-border: #edebf4;
-  --color-card-border-soft: #e9e5f4;
-  --color-divider: #ece9f5;
+  --color-bg: var(--surface-bg);
+  --color-paper: var(--surface-paper);
+  --color-elevated: var(--surface-elevated);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-ink-fainter: var(--ink-fainter);
+  --color-card-border: var(--card-border);
+  --color-card-border-soft: var(--card-border-soft);
+  --color-divider: var(--divider);
 
   /* Semantic chips */
-  --color-streak-bg: #fff1ec;
-  --color-streak-border: #ffdace;
-  --color-streak-text: #f0562f;
-  --color-xp-bg: #f1edfe;
-  --color-xp-border: #e4dbfb;
-  --color-xp-text: #5a32d6;
+  --color-streak-bg: var(--streak-bg);
+  --color-streak-border: var(--streak-border);
+  --color-streak-text: var(--streak-text);
+  --color-xp-bg: var(--xp-bg);
+  --color-xp-border: var(--xp-border);
+  --color-xp-text: var(--xp-text);
 
   /* Shadows */
-  --shadow-card-rest: 0 6px 20px rgba(28, 18, 64, 0.05);
-  --shadow-card-hover: 0 16px 38px rgba(28, 18, 64, 0.1);
-  --shadow-glow: 0 8px 18px rgba(123, 77, 255, 0.42);
+  --shadow-card-rest: var(--elevate-rest);
+  --shadow-card-hover: var(--elevate-hover);
+  --shadow-glow: var(--elevate-glow);
 
   /* Radii */
   --radius-card: 18px;
   --radius-pill: 999px;
+
+  /* Landing surfaces — Phosphor */
+  --color-landing-tint: var(--landing-tint);
+  --color-landing-warm: var(--landing-warm);
+  --color-landing-ink: var(--landing-ink);
+  --color-hero-surface: var(--hero-surface);
+  --color-hero-wash-a: var(--hero-wash-a);
+  --color-hero-wash-b: var(--hero-wash-b);
+  --color-hero-grid: var(--hero-grid);
 }
 
 @keyframes grow {
@@ -193,26 +293,260 @@
 }
 
 .bg-brand-gradient {
-  background: linear-gradient(135deg, #7b4dff, #c13ae0 58%, #ff6b4a);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-violet),
+    var(--color-brand-magenta) 58%,
+    var(--color-brand-orange)
+  );
+}
+
+/*
+ * Crystal glaze on brand gradient — used for Break icon.
+ * Same green→gold family as siblings; glass is the difference.
+ */
+.icon-crystal {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-violet),
+    var(--color-brand-magenta) 52%,
+    var(--color-brand-orange)
+  );
+  box-shadow:
+    0 6px 18px rgba(13, 159, 110, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+}
+.icon-crystal::before {
+  content: "";
+  position: absolute;
+  inset: -20% -40%;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  /* Bright crystal facet streak across the tile */
+  background: linear-gradient(
+    118deg,
+    transparent 28%,
+    rgba(255, 255, 255, 0.15) 38%,
+    rgba(255, 255, 255, 0.78) 46%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(255, 255, 255, 0.55) 54%,
+    rgba(255, 255, 255, 0.12) 62%,
+    transparent 72%
+  );
+  transform: rotate(-8deg);
+}
+.icon-crystal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  /* Frost veil + glass rim + bottom depth */
+  background:
+    radial-gradient(120% 90% at 18% 12%, rgba(255, 255, 255, 0.55), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, transparent 40%, rgba(0, 0, 0, 0.1) 100%);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.55);
+}
+.dark .icon-crystal {
+  box-shadow:
+    0 8px 22px rgba(13, 159, 110, 0.38),
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+}
+.dark .icon-crystal::before {
+  background: linear-gradient(
+    118deg,
+    transparent 28%,
+    rgba(255, 255, 255, 0.1) 38%,
+    rgba(255, 255, 255, 0.45) 46%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0.35) 54%,
+    rgba(255, 255, 255, 0.08) 62%,
+    transparent 72%
+  );
+}
+.dark .icon-crystal::after {
+  background:
+    radial-gradient(120% 90% at 18% 12%, rgba(255, 255, 255, 0.32), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 42%, rgba(0, 0, 0, 0.22) 100%);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.32);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .icon-crystal::before {
+    animation: crystal-sheen 6s ease-in-out 0.8s infinite;
+  }
+}
+@keyframes crystal-sheen {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: rotate(-8deg) translateX(-4%);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(-8deg) translateX(6%);
+  }
 }
 .bg-brand-gradient-wash {
-  background: linear-gradient(90deg, #7b4dff, #c13ae0);
+  background: linear-gradient(90deg, var(--color-brand-violet), var(--color-brand-magenta));
 }
 .bg-radial-wash {
-  background: radial-gradient(120% 80% at 100% 0%, #eeebfa 0%, #f1f0f7 46%);
+  background: radial-gradient(
+    120% 80% at 100% 0%,
+    color-mix(in srgb, var(--color-brand-violet) 12%, var(--color-bg)),
+    var(--color-bg) 46%
+  );
+}
+.bg-landing-tint {
+  background: var(--color-landing-tint);
+}
+.bg-landing-warm {
+  background: var(--color-landing-warm);
+}
+.bg-landing-ink {
+  background: var(--color-landing-ink);
+}
+.text-headline-grad {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-brand-violet),
+    var(--color-brand-magenta),
+    var(--color-brand-orange)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dark .text-headline-grad {
+  background-image: linear-gradient(90deg, #3aa87a, #2f9a7c, #b8952e);
+}
+.bg-path-rail {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-level-00-from),
+    var(--color-brand-violet),
+    var(--color-brand-orange)
+  );
+}
+.bg-path-rail-vert {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-level-00-from),
+    var(--color-brand-violet),
+    var(--color-brand-orange)
+  );
 }
 
 .bg-level-00 {
-  background: linear-gradient(135deg, #12b981, #3bc6f0);
+  background: linear-gradient(135deg, var(--color-level-00-from), var(--color-level-00-to));
 }
 .bg-level-01 {
-  background: linear-gradient(135deg, #7b4dff, #c13ae0);
+  background: linear-gradient(135deg, var(--color-level-01-from), var(--color-level-01-to));
 }
 .bg-level-02 {
-  background: linear-gradient(135deg, #c13ae0, #ff6b4a);
+  background: linear-gradient(135deg, var(--color-level-02-from), var(--color-level-02-to));
 }
 .bg-level-03 {
-  background: linear-gradient(135deg, #ff6b4a, #ff9f43);
+  background: linear-gradient(135deg, var(--color-level-03-from), var(--color-level-03-to));
+}
+
+/* Theme previews — brand accents only; surfaces come from :root / .dark */
+.theme-phosphor {
+  --brand-violet: #0d9f6e;
+  --brand-magenta: #1a9b8e;
+  --brand-orange: #d4a017;
+  --level-00-from: #0d9f6e;
+  --level-00-to: #3bc6a0;
+  --level-01-from: #1a9b8e;
+  --level-01-to: #0d9f6e;
+  --level-02-from: #c4920a;
+  --level-02-to: #d4a017;
+  --level-03-from: #c46a2b;
+  --level-03-to: #e08a3c;
+}
+
+.theme-blueprint {
+  --color-brand-violet: #2f5f8a;
+  --color-brand-magenta: #4a7ba7;
+  --color-brand-orange: #b87333;
+  --color-level-00-from: #3d6b94;
+  --color-level-00-to: #6a93b5;
+  --color-level-01-from: #2f5f8a;
+  --color-level-01-to: #4a7ba7;
+  --color-level-02-from: #8a6b45;
+  --color-level-02-to: #b87333;
+  --color-level-03-from: #a35a28;
+  --color-level-03-to: #c47a42;
+  --color-bg: #eef1f4;
+  --color-ink: #1a2332;
+  --color-ink-secondary: #4a5568;
+  --color-ink-muted: #718096;
+  --color-ink-faint: #8d9aab;
+  --color-ink-fainter: #b4becb;
+  --color-card-border: #dde3ea;
+  --color-card-border-soft: #d5dde6;
+  --color-divider: #e2e8ef;
+  --color-xp-bg: #e8eef4;
+  --color-xp-border: #cdd8e4;
+  --color-xp-text: #2f5f8a;
+  --color-streak-bg: #f7efe6;
+  --color-streak-border: #e8d4bc;
+  --color-streak-text: #9a5a20;
+  --shadow-card-rest: 0 6px 20px rgba(26, 35, 50, 0.05);
+  --shadow-card-hover: 0 16px 38px rgba(26, 35, 50, 0.1);
+  --shadow-glow: 0 8px 18px rgba(47, 95, 138, 0.32);
+  --color-landing-tint: #e6edf4;
+  --color-landing-warm: #f6f0e9;
+  --color-landing-ink: #1a2332;
+  --color-hero-surface: #dfe8f0;
+  --color-hero-wash-a: rgba(47, 95, 138, 0.22);
+  --color-hero-wash-b: rgba(184, 115, 51, 0.14);
+  --color-hero-grid: rgba(47, 95, 138, 0.14);
+}
+
+.theme-graphite {
+  --color-brand-violet: #e85d04;
+  --color-brand-magenta: #f48c06;
+  --color-brand-orange: #faa307;
+  --color-level-00-from: #2d2d2d;
+  --color-level-00-to: #4a4a4a;
+  --color-level-01-from: #3d3d3d;
+  --color-level-01-to: #5c5c5c;
+  --color-level-02-from: #e85d04;
+  --color-level-02-to: #f48c06;
+  --color-level-03-from: #f48c06;
+  --color-level-03-to: #faa307;
+  --color-bg: #f0f0f0;
+  --color-ink: #121212;
+  --color-ink-secondary: #4a4a4a;
+  --color-ink-muted: #727272;
+  --color-ink-faint: #8f8f8f;
+  --color-ink-fainter: #b5b5b5;
+  --color-card-border: #e2e2e2;
+  --color-card-border-soft: #dadada;
+  --color-divider: #e6e6e6;
+  --color-xp-bg: #fff0e6;
+  --color-xp-border: #ffd9bf;
+  --color-xp-text: #c44a00;
+  --color-streak-bg: #fff0e6;
+  --color-streak-border: #ffd9bf;
+  --color-streak-text: #c44a00;
+  --shadow-card-rest: 0 6px 20px rgba(0, 0, 0, 0.05);
+  --shadow-card-hover: 0 16px 38px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 8px 18px rgba(232, 93, 4, 0.32);
+  --color-landing-tint: #ebebeb;
+  --color-landing-warm: #fff5eb;
+  --color-landing-ink: #121212;
+  --color-hero-surface: #e8e4e0;
+  --color-hero-wash-a: rgba(232, 93, 4, 0.16);
+  --color-hero-wash-b: rgba(0, 0, 0, 0.06);
+  --color-hero-grid: rgba(232, 93, 4, 0.1);
 }
 
 html {
@@ -225,12 +559,12 @@ body {
 }
 
 ::selection {
-  background: #6d46f2;
+  background: #0d9f6e;
   color: #fff;
 }
 
 :focus-visible {
-  outline: 2.5px solid #6d46f2;
+  outline: 2.5px solid #0d9f6e;
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -240,10 +574,10 @@ body {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d6d2e6;
+  background: var(--ink-fainter);
   border-radius: 99px;
-  border: 3px solid #f1f0f7;
+  border: 3px solid var(--surface-bg);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c2bcd8;
+  background: var(--ink-faint);
 }

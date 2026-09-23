@@ -14,18 +14,18 @@ export function SectionBand({
 }) {
   const tones = {
     wash: "bg-bg",
-    paper: "bg-white",
-    tint: "bg-[#F6F3FC]",
-    warm: "bg-[#FFF8F4]",
-    ink: "bg-[#181428] text-white",
+    paper: "bg-paper",
+    tint: "bg-landing-tint",
+    warm: "bg-landing-warm",
+    ink: "bg-landing-ink text-white",
   } as const;
 
   return (
     <section
       id={id}
-      className={cn(id && "scroll-mt-[88px]", tones[tone], className)}
+      className={cn(id && "scroll-mt-[88px]", "min-w-0", tones[tone], className)}
     >
-      <div className="mx-auto w-full max-w-[1200px] px-6 py-16 sm:px-8 sm:py-[72px]">
+      <div className="mx-auto w-full min-w-0 max-w-[1200px] px-4 py-12 sm:px-8 sm:py-[72px]">
         {children}
       </div>
     </section>

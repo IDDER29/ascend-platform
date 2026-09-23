@@ -94,7 +94,7 @@ function Row({
         "relative mb-0.5 flex items-center gap-3 rounded-xl text-[14.5px] font-medium transition-colors",
         collapsed ? "h-11 w-11 justify-center" : "px-3 py-2.5",
         active
-          ? "bg-xp-bg font-bold text-[#5A32D6]"
+          ? "bg-xp-bg font-bold text-xp-text"
           : muted
             ? "text-ink-faint hover:bg-[#F3F1FB] hover:text-ink-secondary"
             : "text-ink-secondary hover:bg-[#F3F1FB]",

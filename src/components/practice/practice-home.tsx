@@ -17,6 +17,7 @@ import {
   dueCount,
   dueQueueIds,
   ensureUnlockedCards,
+  gradeFromMcqCorrect,
   migrateMissQueueOnce,
   nextReviewAt,
   readCards,
@@ -373,7 +374,11 @@ export function PracticeHome({
       .map((a) => a.questionId);
     const questionIds = nextAnswered.map((a) => a.questionId);
     const answeredIds = new Set(questionIds);
-    const updated = applyGrades(effectiveUserId, nextAnswered);
+    const grades = nextAnswered.map(({ questionId, correct }) => ({
+      questionId,
+      grade: gradeFromMcqCorrect(correct),
+    }));
+    const updated = applyGrades(effectiveUserId, grades);
     refreshDueState();
 
     if (userId && !demo) {

@@ -8,6 +8,7 @@ import {
   dueCount,
   dueQueueIds,
   ensureUnlockedCards,
+  gradeFromMcqCorrect,
   mergeMissesAsLearning,
   migrateMissQueueOnce,
   newDayStorageKey,
@@ -120,8 +121,8 @@ test("storage helpers persist cards, metadata, unlocked cards, grades, and misse
   const graded = applyGrades(
     "u1",
     [
-      { questionId: "q1", correct: true },
-      { questionId: "q2", correct: false },
+      { questionId: "q1", grade: "good" },
+      { questionId: "q2", grade: "again" },
     ],
     now,
   );
@@ -138,6 +139,34 @@ test("storage helpers persist cards, metadata, unlocked cards, grades, and misse
     ["q1", "q2", "q3"],
   );
   assert.equal(storage.getItem(missQueueKey("u1")), null);
+});
+
+test("gradeFromMcqCorrect maps binary MCQ results to Again or Good", () => {
+  assert.equal(gradeFromMcqCorrect(false), "again");
+  assert.equal(gradeFromMcqCorrect(true), "good");
+});
+
+test("applyGrades passes Hard and Easy through to card scheduling", (t) => {
+  installLocalStorage(t);
+  const now = new Date("2026-09-25T15:00:00.000Z");
+  writeCards("u1", [
+    createNewCard("hard-card", now),
+    createNewCard("easy-card", now),
+  ]);
+
+  const graded = applyGrades(
+    "u1",
+    [
+      { questionId: "hard-card", grade: "hard" },
+      { questionId: "easy-card", grade: "easy" },
+    ],
+    now,
+  );
+
+  assert.equal(graded[0].state, "learning");
+  assert.equal(graded[0].dueAt, now.toISOString());
+  assert.equal(graded[1].state, "review");
+  assert.equal(graded[1].intervalDays, 4);
 });
 
 test("nextReviewAt returns the earliest future due date", () => {

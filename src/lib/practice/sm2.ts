@@ -1,6 +1,6 @@
 // src/lib/practice/sm2.ts
 export type CardState = "new" | "learning" | "review";
-export type PracticeGrade = "again" | "good";
+export type PracticeGrade = "again" | "hard" | "good" | "easy";
 
 export type PracticeCard = {
   questionId: string;
@@ -62,6 +62,54 @@ export function gradeCard(
       updatedAt: iso,
     };
   }
+
+  if (grade === "hard") {
+    if (card.state === "new" || card.state === "learning") {
+      return {
+        ...card,
+        state: "learning",
+        dueAt: iso,
+        updatedAt: iso,
+      };
+    }
+    const ease = Math.max(MIN_EASE, card.ease - 0.15);
+    const intervalDays = Math.max(1, Math.round(card.intervalDays * 1.2));
+    return {
+      ...card,
+      reps: card.reps + 1,
+      ease,
+      intervalDays,
+      dueAt: addDaysIso(now, intervalDays),
+      updatedAt: iso,
+    };
+  }
+
+  if (grade === "easy") {
+    if (card.state === "new" || card.state === "learning") {
+      return {
+        ...card,
+        state: "review",
+        reps: 1,
+        intervalDays: 4,
+        dueAt: addDaysIso(now, 4),
+        updatedAt: iso,
+      };
+    }
+    const ease = Math.min(MAX_EASE, card.ease + 0.15);
+    const intervalDays = Math.max(
+      1,
+      Math.round(card.intervalDays * ease * 1.3),
+    );
+    return {
+      ...card,
+      reps: card.reps + 1,
+      ease,
+      intervalDays,
+      dueAt: addDaysIso(now, intervalDays),
+      updatedAt: iso,
+    };
+  }
+
   // Good
   if (card.state === "new" || card.state === "learning") {
     return {

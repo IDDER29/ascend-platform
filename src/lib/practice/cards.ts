@@ -4,6 +4,7 @@ import {
   gradeCard,
   localDayKey,
   type PracticeCard,
+  type PracticeGrade,
 } from "./sm2";
 
 export type NewDayMeta = { date: string; count: number };
@@ -146,7 +147,7 @@ export function migrateMissQueueOnce(
 
 export function applyGrades(
   userId: string | null,
-  grades: { questionId: string; correct: boolean }[],
+  grades: { questionId: string; grade: PracticeGrade }[],
   now = new Date(),
 ): PracticeCard[] {
   const cards = readCards(userId);
@@ -158,17 +159,21 @@ export function applyGrades(
   const meta =
     storedMeta.date === day ? storedMeta : { date: day, count: 0 };
 
-  for (const { questionId, correct } of grades) {
+  for (const { questionId, grade } of grades) {
     const index = indexes.get(questionId);
     if (index === undefined) continue;
     const previous = cards[index];
-    cards[index] = gradeCard(previous, correct ? "good" : "again", now);
+    cards[index] = gradeCard(previous, grade, now);
     if (previous.state === "new") meta.count += 1;
   }
 
   writeCards(userId, cards);
   writeNewDayMeta(userId, meta);
   return cards;
+}
+
+export function gradeFromMcqCorrect(correct: boolean): PracticeGrade {
+  return correct ? "good" : "again";
 }
 
 function dueCards(

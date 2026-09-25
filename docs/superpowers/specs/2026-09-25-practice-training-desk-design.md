@@ -1,7 +1,7 @@
 # Practice training desk (elite atmosphere + momentum)
 
 **Date:** 2026-09-25  
-**Status:** Implementing  
+**Status:** Done  
 **Routes:** `/practice` · `/practice/[pathSlug]` · `/practice/[pathSlug]/[sectionId]` · in-session / results  
 **Builds on:** `2026-09-25-practice-tree-scope-design.md`, study-desk polish, Phosphor  
 **Chosen approach:** Shared “training desk” visual system across home, drill-in, and session — intensity dialed by mode; honest momentum, no streak/XP theater  
@@ -91,12 +91,12 @@ Legacy `--brand-violet` tokens remain green/teal values; no purple inventing.
 
 ## Success criteria
 
-- [ ] Home reads as one composition: Due stage → Paths → Training rail  
-- [ ] Due stage feels elite (type, wash, motion) without promo-card chrome  
-- [ ] Path/section pages share desk language with quieter heat + strong Study CTA  
-- [ ] Session stays cool/focus; results feel earned  
-- [ ] Momentum rail shows honest hit rate + cleared today / recent — no XP theater  
-- [ ] Phosphor tokens only; no purple; hub 960 preserved  
+- [x] Home reads as one composition: Due stage → Paths → Training rail  
+- [x] Due stage feels elite (type, wash, motion) without promo-card chrome  
+- [x] Path/section pages share desk language with quieter heat + strong Study CTA  
+- [x] Session stays cool/focus; results feel earned  
+- [x] Momentum rail shows honest hit rate + cleared today / recent — no XP theater  
+- [x] Phosphor tokens only; no purple; hub 960 preserved  
 
 ## Roadmap note
 

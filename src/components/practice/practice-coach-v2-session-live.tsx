@@ -217,7 +217,7 @@ export function PracticeCoachV2SessionLive({
     recordGrade(gradeFromMcqCorrect(correct), correct);
   }
 
-  function gradeTyped(grade: "again" | "hard" | "good") {
+  function gradeTyped() {
     const question = questions[index];
     if (
       !question ||
@@ -226,7 +226,8 @@ export function PracticeCoachV2SessionLive({
     ) {
       return;
     }
-    recordGrade(grade, answersMatch(typedAnswer, question.answers));
+    const correct = answersMatch(typedAnswer, question.answers);
+    recordGrade(correct ? "good" : "again", correct);
   }
 
   const question = questions[index];
@@ -239,8 +240,7 @@ export function PracticeCoachV2SessionLive({
   }
 
   const progress = `${index + 1} / ${questions.length}`;
-  const wrongReviewHref =
-    feedback && !feedback.correct ? reviewHrefs[question.id] : undefined;
+  const reviewHref = reviewHrefs[question.id];
 
   return (
     <section className="text-[#16181D]">
@@ -288,15 +288,15 @@ export function PracticeCoachV2SessionLive({
                 {feedback.correct ? "Nice work." : "Not quite yet."}
               </h1>
             </div>
-            {!feedback.correct && question.hint ? (
+            {question.hint ? (
               <div className="mt-6 rounded-xl border border-[#E2DED3] bg-[#F6F4EE] p-4">
                 <p className="text-xs font-black uppercase tracking-wide">Hint</p>
                 <p className="mt-2 text-sm leading-6">{question.hint}</p>
               </div>
             ) : null}
-            {!feedback.correct && wrongReviewHref ? (
+            {reviewHref ? (
               <Link
-                href={wrongReviewHref}
+                href={reviewHref}
                 className="mt-5 inline-block text-sm font-black text-[#D9622B] underline underline-offset-4"
               >
                 Review the lesson
@@ -408,7 +408,7 @@ export function PracticeCoachV2SessionLive({
                   value={typedAnswer}
                   onChange={(event) => setTypedAnswer(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter") gradeTyped("good");
+                    if (event.key === "Enter") gradeTyped();
                   }}
                   className="mt-2 w-full rounded-xl border border-[#E2DED3] bg-[#F6F4EE] px-4 py-3 font-mono outline-none focus:border-[#16181D]"
                   autoComplete="off"
@@ -425,7 +425,7 @@ export function PracticeCoachV2SessionLive({
                           ? "bg-[#D7F26B]"
                           : "border border-[#E2DED3]"
                       }`}
-                      onClick={() => gradeTyped(grade)}
+                      onClick={gradeTyped}
                     >
                       {grade}
                     </button>

@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, X } from "lucide-react";
 import { PracticeDemoBar } from "@/components/practice/practice-demo-bar";
-import type { PracticeDemoView } from "@/lib/practice/demo";
+import {
+  practiceDemoCards,
+  type PracticeDemoView,
+} from "@/lib/practice/demo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
@@ -19,6 +22,7 @@ import {
   readCards,
   readNewDayMeta,
   writeCards,
+  writeNewDayMeta,
 } from "@/lib/practice/cards";
 import {
   buildSession,
@@ -45,7 +49,7 @@ import {
   savePracticeSessionAction,
   upsertPracticeCardsAction,
 } from "@/lib/practice/actions";
-import type { PracticeCard } from "@/lib/practice/sm2";
+import { localDayKey, type PracticeCard } from "@/lib/practice/sm2";
 import type { PracticeQuestion } from "@/lib/practice/types";
 import { PATHS_HREF } from "@/lib/routes";
 
@@ -223,13 +227,27 @@ export function PracticeHome({
   }, [effectiveUserId]);
 
   useEffect(() => {
+    if (demo && demoView !== "empty") {
+      const now = new Date();
+      writeCards(effectiveUserId, practiceDemoCards(now));
+      writeNewDayMeta(effectiveUserId, { date: localDayKey(now), count: 0 });
+      queueMicrotask(refreshDueState);
+      return;
+    }
     if (initialCards.length > 0) {
       writeCards(effectiveUserId, initialCards);
     }
     migrateMissQueueOnce(effectiveUserId);
     ensureUnlockedCards(effectiveUserId, [...unlockedIds]);
     queueMicrotask(refreshDueState);
-  }, [effectiveUserId, initialCards, refreshDueState, unlockedIds]);
+  }, [
+    demo,
+    demoView,
+    effectiveUserId,
+    initialCards,
+    refreshDueState,
+    unlockedIds,
+  ]);
 
   useEffect(() => {
     if (demo) {
@@ -522,7 +540,11 @@ function PracticeHub({
               </h2>
               <p className="mt-1.5 max-w-[38ch] text-[14px] leading-relaxed text-ink-secondary">
                 {dueNow > 0
-                  ? `${dueNow} card${dueNow === 1 ? " is" : "s are"} ready for review.`
+                  ? `${dueNow} card${dueNow === 1 ? " is" : "s are"} ready for review.${
+                      nextReviewLabel
+                        ? ` Next review ${nextReviewLabel}.`
+                        : ""
+                    }`
                   : nextReviewLabel
                     ? `Next review ${nextReviewLabel}.`
                     : "Study unlocked cards anytime, or pick a path below."}

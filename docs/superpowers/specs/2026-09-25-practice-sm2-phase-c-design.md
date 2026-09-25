@@ -1,7 +1,7 @@
 # Practice Phase C — SM-2 card schedule
 
 **Date:** 2026-09-25  
-**Status:** Implementing  
+**Status:** Done
 **Route:** `/practice`  
 **Builds on:** `2026-09-25-practice-retention-home-design.md` (Phase A+B Done)  
 **Chosen approach:** Per-card schedule store (DB + guest localStorage)
@@ -159,13 +159,13 @@ Session answers
 
 ## Success criteria
 
-- [ ] Due count matches SM-2 due set + new-cap, not miss-queue length
-- [ ] Wrong → Again (due now); correct → Good (interval advanced)
-- [ ] Unlock creates `new` cards; Due respects 20 new/day
-- [ ] Path/free study grades update the same store
-- [ ] Guests persist in localStorage; signed-in round-trip via DB when available
-- [ ] One-shot miss-queue migrate → learning/due now
-- [ ] Hit rate / Recent semantics unchanged; no streak UI
+- [x] Due count matches SM-2 due set + new-cap, not miss-queue length
+- [x] Wrong → Again (due now); correct → Good (interval advanced)
+- [x] Unlock creates `new` cards; Due respects 20 new/day
+- [x] Path/free study grades update the same store
+- [x] Guests persist in localStorage; signed-in round-trip via DB when available
+- [x] One-shot miss-queue migrate → learning/due now
+- [x] Hit rate / Recent semantics unchanged; no streak UI
 
 ## Out of scope (later)
 

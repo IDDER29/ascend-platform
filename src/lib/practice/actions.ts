@@ -8,6 +8,7 @@ import type {
   PracticeScopeType,
   PracticeSessionRecord,
 } from "@/lib/practice/history";
+import { PRACTICE_BANK } from "@/lib/practice/bank";
 import type { PracticeCard } from "@/lib/practice/sm2";
 
 export type PracticeActionResult =
@@ -85,6 +86,105 @@ function cardFields(card: PracticeCard) {
     lapses: card.lapses,
     updatedAt: card.updatedAt,
   };
+}
+
+const MAX_UPSERT_CARDS = 8;
+const MIN_EASE = 1.3;
+const MAX_EASE = 3.0;
+const PRACTICE_BANK_IDS = new Set(PRACTICE_BANK.map((q) => q.id));
+const VALID_CARD_STATES = new Set<PracticeCard["state"]>([
+  "new",
+  "learning",
+  "review",
+]);
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function isParseableDateString(value: unknown): value is string {
+  if (typeof value !== "string" || value.length === 0) return false;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time);
+}
+
+function validatePracticeCardInput(
+  raw: unknown,
+): { ok: true; card: PracticeCard } | { ok: false; error: string } {
+  if (raw === null || typeof raw !== "object") {
+    return { ok: false, error: "Invalid practice card payload." };
+  }
+  const c = raw as Record<string, unknown>;
+  const questionId = c.questionId;
+  if (typeof questionId !== "string" || !PRACTICE_BANK_IDS.has(questionId)) {
+    return { ok: false, error: "Unknown or invalid practice question id." };
+  }
+  const state = c.state;
+  if (
+    typeof state !== "string" ||
+    !VALID_CARD_STATES.has(state as PracticeCard["state"])
+  ) {
+    return { ok: false, error: "Invalid practice card state." };
+  }
+  if (
+    !isNonNegativeInteger(c.reps) ||
+    !isNonNegativeInteger(c.lapses) ||
+    !isNonNegativeInteger(c.intervalDays)
+  ) {
+    return {
+      ok: false,
+      error: "Practice card reps, lapses, and interval must be non-negative integers.",
+    };
+  }
+  const ease = c.ease;
+  if (
+    typeof ease !== "number" ||
+    !Number.isFinite(ease) ||
+    ease < MIN_EASE ||
+    ease > MAX_EASE
+  ) {
+    return {
+      ok: false,
+      error: "Practice card ease must be a finite number between 1.3 and 3.0.",
+    };
+  }
+  if (!isParseableDateString(c.dueAt) || !isParseableDateString(c.updatedAt)) {
+    return { ok: false, error: "Practice card dates must be valid ISO timestamps." };
+  }
+  return {
+    ok: true,
+    card: {
+      questionId,
+      state: state as PracticeCard["state"],
+      reps: c.reps,
+      ease,
+      intervalDays: c.intervalDays,
+      dueAt: c.dueAt,
+      lapses: c.lapses,
+      updatedAt: c.updatedAt,
+    },
+  };
+}
+
+function validateUpsertCardsInput(
+  input: unknown,
+): { ok: true; cards: PracticeCard[] } | { ok: false; error: string } {
+  if (!Array.isArray(input)) {
+    return { ok: false, error: "Practice cards must be an array." };
+  }
+  if (input.length > MAX_UPSERT_CARDS) {
+    return {
+      ok: false,
+      error: `At most ${MAX_UPSERT_CARDS} practice cards per sync.`,
+    };
+  }
+  const cards: PracticeCard[] = [];
+  for (const item of input) {
+    const validated = validatePracticeCardInput(item);
+    if (!validated.ok) return validated;
+    cards.push(validated.card);
+  }
+  return { ok: true, cards };
 }
 
 export async function listPracticeSessionsForUser(
@@ -169,8 +269,11 @@ export async function upsertPracticeCardsAction(
   if (!user) return { ok: false, error: "Sign in to sync Practice cards." };
   if (!db) return { ok: false, error: "Database unavailable." };
 
+  const validated = validateUpsertCardsInput(cards);
+  if (!validated.ok) return validated;
+
   try {
-    for (const card of cards) {
+    for (const card of validated.cards) {
       const fields = cardFields(card);
       await db
         .insert(schema.practiceCards)

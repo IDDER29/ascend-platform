@@ -550,17 +550,13 @@ function PracticeHub({
       {/* Main — Due + decks */}
       <div className="flex min-w-0 flex-col gap-8 lg:pr-9">
         <section className="relative overflow-hidden rounded-[18px] border border-xp-border/60 bg-xp-bg px-5 py-5 sm:px-6 sm:py-6">
-          <div
-            className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-brand-violet/[0.05] blur-2xl"
-            aria-hidden
-          />
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-stretch sm:justify-between sm:gap-10">
             <div className="flex min-w-0 flex-1 flex-col">
               <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-xp-text/85">
                 {dueNow > 0 ? "Due now" : "Caught up"}
               </p>
               <h2 className="mt-1.5 max-w-[18ch] font-display text-[22px] font-extrabold tracking-[-0.03em] text-ink sm:text-[24px]">
-                {dueNow > 0 ? "Study due cards" : "Nothing due"}
+                {dueNow > 0 ? "Ready to review" : "Nothing due"}
               </h2>
               <p className="mt-1.5 max-w-[38ch] text-[14px] leading-relaxed text-ink-secondary">
                 {dueNow > 0
@@ -712,7 +708,7 @@ function PracticeHub({
                         {path.lessonCount === 1 ? "" : "s"}
                       </span>
                     </span>
-                    <span className="mt-1 flex flex-none items-center gap-0.5 text-[13px] font-bold text-brand-violet">
+                    <span className="mt-1 flex flex-none items-center gap-0.5 text-[13px] font-bold text-ink-fainter transition-colors group-hover:text-ink">
                       Study
                       <svg
                         width="13"
@@ -724,7 +720,6 @@ function PracticeHub({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         aria-hidden
-                        className="transition-transform group-hover:translate-x-0.5"
                       >
                         <path d="M5 12h14" />
                         <path d="m12 5 7 7-7 7" />
@@ -766,8 +761,8 @@ function PracticeHub({
                                   type="button"
                                   onClick={() => toggleLesson(lesson.key)}
                                   className={cn(
-                                    "flex w-full items-center gap-3 rounded-[10px] px-2 py-2 text-left transition-colors",
-                                    on ? "bg-xp-bg" : "hover:bg-elevated",
+                                    "flex w-full items-center gap-3 rounded-[10px] px-2 py-2 text-left transition-colors hover:bg-elevated/70",
+                                    on && "bg-xp-bg",
                                   )}
                                 >
                                   <span
@@ -888,7 +883,7 @@ function PracticeHub({
                 <li
                   key={session.id}
                   className={cn(
-                    "flex items-center gap-2 py-2",
+                    "-mx-2 flex items-center gap-2 rounded-[10px] px-2 py-2 transition-colors hover:bg-elevated/70",
                     i > 0 && "border-t border-divider",
                   )}
                 >

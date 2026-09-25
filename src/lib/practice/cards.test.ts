@@ -49,6 +49,16 @@ test("dueCount respects new-per-day remaining", () => {
   assert.equal(ids.length, 8);
 });
 
+test("stale new-day metadata from prior day does not block new cards", () => {
+  const now = new Date("2026-09-25T15:00:00");
+  const cards = Array.from({ length: 25 }, (_, i) =>
+    createNewCard(`q-${i}`, now),
+  );
+  const staleMeta = { date: "2026-09-24", count: NEW_PER_DAY };
+  assert.equal(dueCount(cards, staleMeta, now), NEW_PER_DAY);
+  assert.equal(dueQueueIds(cards, staleMeta, now, 8).length, 8);
+});
+
 test("reviews due are unlimited ahead of new drip", () => {
   const now = new Date("2026-09-25T15:00:00");
   const review = gradeCard(createNewCard("r1", now), "good", now);

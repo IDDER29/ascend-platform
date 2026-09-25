@@ -179,7 +179,9 @@ function dueCards(
   const nowMs = now.getTime();
   const due = cards.filter((card) => Date.parse(card.dueAt) <= nowMs);
   const reviews = due.filter((card) => card.state !== "new");
-  const remaining = Math.max(0, NEW_PER_DAY - meta.count);
+  const usedToday =
+    meta.date === localDayKey(now) ? meta.count : 0;
+  const remaining = Math.max(0, NEW_PER_DAY - usedToday);
   const newCards = due.filter((card) => card.state === "new").slice(0, remaining);
   return [...reviews, ...newCards];
 }

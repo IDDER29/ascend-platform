@@ -968,7 +968,7 @@ function SessionView({
                 key={question.id}
                 className={cn(
                   "flex h-[20px] w-[20px] flex-none items-center justify-center rounded-full",
-                  state === "correct" && "bg-[#12B981]",
+                  state === "correct" && "bg-xp-text",
                   state === "wrong" && "bg-[#F87171]",
                   state === "current" &&
                     "border-2 border-brand-violet bg-paper",
@@ -1018,7 +1018,7 @@ function SessionView({
               const isCorrectOpt = i === q.correct;
 
               let stateClass =
-                "border-divider bg-paper hover:border-xp-border hover:bg-xp-bg/40";
+                "border-divider bg-paper hover:border-divider hover:bg-elevated/70";
               let badgeClass = "bg-elevated text-ink-secondary";
               let indicator = (
                 <span className="h-[22px] w-[22px] flex-none rounded-full border-2 border-divider bg-paper" />
@@ -1026,10 +1026,10 @@ function SessionView({
 
               if (checked) {
                 if (isCorrectOpt) {
-                  stateClass = "border-[#12B981] bg-[#F3FBF7]";
-                  badgeClass = "bg-[#12B981] text-white";
+                  stateClass = "border-xp-border bg-xp-bg";
+                  badgeClass = "bg-xp-text text-white";
                   indicator = (
-                    <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-[#12B981]">
+                    <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-xp-text">
                       <Check size={12} className="text-white" strokeWidth={3} />
                     </span>
                   );
@@ -1094,7 +1094,7 @@ function SessionView({
             <button
               type="button"
               onClick={onToggleHint}
-              className="text-[13.5px] font-semibold text-ink-fainter hover:text-ink-secondary"
+              className="text-[13.5px] font-semibold text-ink-fainter hover:text-ink"
             >
               Hint
             </button>
@@ -1131,7 +1131,7 @@ function ResultsView({
 
   return (
     <div className="mx-auto w-full max-w-[640px]">
-      <h2 className="font-display text-[24px] font-extrabold tracking-tight text-ink">
+      <h2 className="font-mono text-[14px] font-bold tabular-nums text-ink-secondary">
         {correctCount} correct / {questions.length}
       </h2>
       <p className="mt-1.5 text-[14.5px] text-ink-secondary">
@@ -1153,7 +1153,7 @@ function ResultsView({
                     className={cn(
                       "flex h-6 w-6 flex-none items-center justify-center rounded-full",
                       a.correct
-                        ? "bg-[#E7F8F0] text-[#12A472]"
+                        ? "bg-xp-bg text-xp-text"
                         : "bg-[#FEECEC] text-[#F0562F]",
                     )}
                   >
@@ -1189,7 +1189,7 @@ function ResultsView({
                 <Link
                   key={question.id}
                   href={reviewHrefs[question.id] ?? PATHS_HREF}
-                  className="-mx-1 flex items-center gap-3 rounded-[11px] px-2 py-2.5 transition-colors hover:bg-elevated"
+                  className="-mx-1 flex items-center gap-3 rounded-[11px] px-2 py-2.5 transition-colors hover:bg-elevated/70"
                 >
                   {row}
                 </Link>

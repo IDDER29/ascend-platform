@@ -1,7 +1,7 @@
 # Hub width 960 + Practice study polish
 
 **Date:** 2026-09-25  
-**Status:** Implementing  
+**Status:** Done
 **Routes:** AppShell learner hubs (shared width); `/practice` (study polish)  
 **Chosen approach:** One hub width token (`HUB_CONTENT` → 960) + Practice full study pass  
 **Builds on:** `2026-09-25-practice-study-desk-layout-design.md`, `2026-09-25-dashboard-list-row-hover-design.md`, `2026-09-25-practice-sm2-phase-c-design.md`

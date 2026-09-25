@@ -1,7 +1,7 @@
 # Practice training desk (elite atmosphere + momentum)
 
 **Date:** 2026-09-25  
-**Status:** Draft  
+**Status:** Implementing  
 **Routes:** `/practice` · `/practice/[pathSlug]` · `/practice/[pathSlug]/[sectionId]` · in-session / results  
 **Builds on:** `2026-09-25-practice-tree-scope-design.md`, study-desk polish, Phosphor  
 **Chosen approach:** Shared “training desk” visual system across home, drill-in, and session — intensity dialed by mode; honest momentum, no streak/XP theater  

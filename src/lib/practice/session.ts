@@ -173,7 +173,10 @@ export function buildSession(opts: {
   const size = opts.size ?? 8;
   const scope = opts.scope ?? { type: "all" };
   const rng = opts.rng ?? Math.random;
-  const pool = questionsForScope(opts.completedKeys, scope);
+  // Task 2: allow typed + cloze once produce panel ships
+  const pool = questionsForScope(opts.completedKeys, scope).filter(
+    (q) => q.kind === "mcq" || q.kind === "flashcard",
+  );
   const byId = new Map(pool.map((q) => [q.id, q]));
   const picked: PracticeItem[] = [];
   const seen = new Set<string>();

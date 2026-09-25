@@ -1,10 +1,12 @@
-import type { PracticeQuestion } from "./types";
+import { FLASHCARD_BANK } from "./bank-flashcards";
+import type { McqItem, PracticeItem } from "./types";
 
 const L02 = "level-02-the-c-language";
 const L00 = "level-00-bits-logic";
 
-export const PRACTICE_BANK: PracticeQuestion[] = [
+const MCQ_BANK: McqItem[] = [
   {
+    kind: "mcq",
     id: "ptr-01",
     prompt: "What does `&x` give you?",
     code: ["int x = 42;", 'printf("%p", &x);'],
@@ -22,6 +24,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "address-of",
   },
   {
+    kind: "mcq",
     id: "ptr-02",
     prompt: "Which line correctly declares a pointer to an int?",
     options: ["int p;", "int *p;", "ptr int p;", "int p[];"],
@@ -33,6 +36,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "declare-pointer",
   },
   {
+    kind: "mcq",
     id: "ptr-03",
     prompt: "What does this program print?",
     code: ["int  x = 42;", "int *p = &x;", 'printf("%d", *p);'],
@@ -50,6 +54,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "dereference",
   },
   {
+    kind: "mcq",
     id: "ptr-04",
     prompt:
       "An `int arr[5]` array sits at address 0x1000. What is `&arr[2]`, assuming a 4-byte int?",
@@ -62,6 +67,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "pointer-arithmetic",
   },
   {
+    kind: "mcq",
     id: "ptr-05",
     prompt: "After `*p = 7;`, why does the original variable x change too?",
     options: [
@@ -78,6 +84,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "dereference-write",
   },
   {
+    kind: "mcq",
     id: "ptr-06",
     prompt: "What is `p` in `int **p`?",
     options: [
@@ -94,6 +101,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "double-pointer",
   },
   {
+    kind: "mcq",
     id: "ptr-07",
     prompt: "What's the risk of dereferencing an uninitialized pointer?",
     code: ["int *p;", 'printf("%d", *p);'],
@@ -111,6 +119,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "uninitialized-deref",
   },
   {
+    kind: "mcq",
     id: "ptr-08",
     prompt:
       "Why does `void swap(int *a, int *b)` work, but `void swap(int a, int b)` doesn't?",
@@ -128,6 +137,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "swap-by-pointer",
   },
   {
+    kind: "mcq",
     id: "ptr-09",
     prompt: "After `int arr[5]; int *p = arr;`, what does `p` point to?",
     options: [
@@ -144,6 +154,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "array-decay",
   },
   {
+    kind: "mcq",
     id: "ptr-10",
     prompt: "What does `const int *p` mean?",
     options: [
@@ -160,6 +171,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "const-pointer",
   },
   {
+    kind: "mcq",
     id: "bits-01",
     prompt: "What is a single bit?",
     options: [
@@ -176,6 +188,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "bit-definition",
   },
   {
+    kind: "mcq",
     id: "bits-02",
     prompt: "How many distinct values can 4 bits represent?",
     options: ["4", "8", "16", "32"],
@@ -187,6 +200,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "binary-capacity",
   },
   {
+    kind: "mcq",
     id: "bool-01",
     prompt: "In boolean logic, what is the output of AND when both inputs are 1?",
     options: ["0", "1", "Undefined", "Depends on voltage"],
@@ -198,6 +212,7 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     conceptId: "and-gate-truth",
   },
   {
+    kind: "mcq",
     id: "gates-01",
     prompt: "Which gate outputs 1 when either input is 1 (but not both required)?",
     options: ["AND", "OR", "NOT", "XOR only when inputs differ"],
@@ -208,4 +223,9 @@ export const PRACTICE_BANK: PracticeQuestion[] = [
     lessonSlug: "logic-gates-from-switches-to-circuits",
     conceptId: "or-gate",
   },
+];
+
+export const PRACTICE_BANK: PracticeItem[] = [
+  ...MCQ_BANK,
+  ...FLASHCARD_BANK,
 ];

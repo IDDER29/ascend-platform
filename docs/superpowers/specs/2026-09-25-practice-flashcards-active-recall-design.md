@@ -1,7 +1,7 @@
 # Practice active recall — flashcards (slice 1)
 
 **Date:** 2026-09-25  
-**Status:** Draft  
+**Status:** Implementing
 **Route:** `/practice`  
 **Builds on:** `2026-09-25-practice-sm2-phase-c-design.md`, hub polish  
 **Chosen approach:** Discriminated bank items + shared session shell; 4-grade SM-2 under the hood  

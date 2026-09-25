@@ -50,7 +50,7 @@ import {
   upsertPracticeCardsAction,
 } from "@/lib/practice/actions";
 import { localDayKey, type PracticeCard } from "@/lib/practice/sm2";
-import type { PracticeQuestion } from "@/lib/practice/types";
+import type { PracticeItem } from "@/lib/practice/types";
 import { PATHS_HREF } from "@/lib/routes";
 
 type PracticeHomeProps = {
@@ -100,12 +100,13 @@ function labelForScope(scope: PracticeScope): ActiveScope {
     pathSlug: null,
   };
 }
-function sampleSession(): PracticeQuestion[] {
+function sampleSession(): PracticeItem[] {
   const prefer = ["bits-01", "bits-02", "bool-01", "ptr-01", "ptr-03"];
   const byId = new Map(PRACTICE_BANK.map((q) => [q.id, q]));
   const picked = prefer
     .map((id) => byId.get(id))
-    .filter((q): q is PracticeQuestion => Boolean(q));
+    .filter((item): item is PracticeItem => Boolean(item))
+    .filter((item) => item.kind === "mcq");
   return picked.length >= 3 ? picked.slice(0, 5) : PRACTICE_BANK.slice(0, 5);
 }
 
@@ -201,7 +202,7 @@ export function PracticeHome({
     if (demoView === "results") return "results";
     return "ready";
   });
-  const [questions, setQuestions] = useState<PracticeQuestion[]>(() =>
+  const [questions, setQuestions] = useState<PracticeItem[]>(() =>
     demoView === "session" || demoView === "results" ? sampleSession() : [],
   );
   const [index, setIndex] = useState(0);
@@ -354,7 +355,7 @@ export function PracticeHome({
 
   function checkAnswer() {
     const q = questions[index];
-    if (!q || selected === null || checked) return;
+    if (!q || q.kind !== "mcq" || selected === null || checked) return;
     const isCorrect = selected === q.correct;
     setChecked(true);
     setAnswered((prev) => [
@@ -928,7 +929,7 @@ function SessionView({
   onToggleHint,
   onExit,
 }: {
-  questions: PracticeQuestion[];
+  questions: PracticeItem[];
   index: number;
   selected: number | null;
   checked: boolean;
@@ -942,6 +943,7 @@ function SessionView({
 }) {
   const q = questions[index];
   if (!q) return null;
+  if (q.kind !== "mcq") return null;
 
   return (
     <div className="mx-auto w-full max-w-[640px]">
@@ -1121,7 +1123,7 @@ function ResultsView({
   onAgain,
   onHub,
 }: {
-  questions: PracticeQuestion[];
+  questions: PracticeItem[];
   answered: Answered[];
   reviewHrefs: Record<string, string>;
   onAgain: () => void;

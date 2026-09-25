@@ -3,7 +3,7 @@ import {
   PRACTICE_PATH_TITLES,
   practicePathSlugForLevel,
 } from "./path-map";
-import type { PracticeQuestion } from "./types";
+import type { PracticeItem } from "./types";
 
 /** Always available even with zero lesson completions (Foundations starter). */
 export const DEFAULT_PRACTICE_LEVEL = "level-00-bits-logic";
@@ -19,7 +19,7 @@ export function completionKey(level: string, slug: string): string {
   return `${level}/${slug}`;
 }
 
-export function isDefaultPracticeQuestion(q: PracticeQuestion): boolean {
+export function isDefaultPracticeQuestion(q: PracticeItem): boolean {
   return q.lessonLevel === DEFAULT_PRACTICE_LEVEL;
 }
 
@@ -29,7 +29,7 @@ export function isDefaultPracticeQuestion(q: PracticeQuestion): boolean {
  */
 export function unlockedQuestions(
   completedKeys: Set<string>,
-): PracticeQuestion[] {
+): PracticeItem[] {
   return PRACTICE_BANK.filter(
     (q) =>
       isDefaultPracticeQuestion(q) ||
@@ -40,7 +40,7 @@ export function unlockedQuestions(
 export function questionsForScope(
   completedKeys: Set<string>,
   scope: PracticeScope,
-): PracticeQuestion[] {
+): PracticeItem[] {
   const unlocked = unlockedQuestions(completedKeys);
   if (scope.type === "all" || scope.type === "due") return unlocked;
   if (scope.type === "path") {
@@ -153,12 +153,12 @@ export function buildSession(opts: {
   priorityIds: string[];
   size?: number;
   scope?: PracticeScope;
-}): PracticeQuestion[] {
+}): PracticeItem[] {
   const size = opts.size ?? 8;
   const scope = opts.scope ?? { type: "all" };
   const pool = questionsForScope(opts.completedKeys, scope);
   const byId = new Map(pool.map((q) => [q.id, q]));
-  const picked: PracticeQuestion[] = [];
+  const picked: PracticeItem[] = [];
   const seen = new Set<string>();
 
   for (const id of opts.priorityIds) {

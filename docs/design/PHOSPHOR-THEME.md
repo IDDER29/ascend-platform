@@ -16,7 +16,7 @@ Phosphor is Ascend’s production visual language: a **quiet night-study desk**,
 | Brand | Green → teal → soft gold | Systems / “phosphor” glow; **no purple** |
 | Light | Soft mint-gray paper (`#f2f4f1`) | Eye comfort for long reading |
 | Dark | Lifted charcoal (`#121816`), soft ink | Night study — not pure black, not purple-on-black |
-| Type | Bricolage (display) · Hanken (body) · IBM Plex Mono (labels) | Technical but human |
+| Type | Bricolage (display) · Hanken (body) · Space Mono (labels) | Technical but human |
 | Motion | Few, intentional (`rise`, crystal sheen, CTA blobs) | Presence without noise |
 
 Legacy token names `--brand-violet` / `--brand-magenta` still exist for compatibility; **values are green/teal**. Prefer semantic usage (`bg-brand-gradient`, `text-brand-violet`) over inventing new brand hexes in components.
@@ -33,7 +33,7 @@ Ascend is a **teaching** product. Most time is spent reading. Prefer calm samene
 |------|------|-----|
 | Display | Bricolage (`font-display`) | Page / course / section titles |
 | Body | Hanken (`font-sans`) | Descriptions, lesson prose, card copy |
-| Labels | IBM Plex Mono (`font-mono`) | Breadcrumbs, meta, status, “Course · N lessons” |
+| Labels | Space Mono (`font-mono`) | Breadcrumbs, meta, status, “Course · N lessons” |
 
 Do **not** add a fourth family. Do **not** put display or mono on long paragraphs.
 

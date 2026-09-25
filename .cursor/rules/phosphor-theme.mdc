@@ -23,10 +23,12 @@ Full doctrine: `docs/design/PHOSPHOR-THEME.md`
 | Brand fill | `.bg-brand-gradient` |
 | Feature icon | `landingIconTileClass` |
 | Break (special) | `landingIconCrystalClass` + `glassSurfaceClass` |
-| Section type | `landingEyebrowClass` + `landingH2Class` + `landingLeadClass` |
+| Section type (marketing) | `landingEyebrowClass` + `landingH2Class` + `landingLeadClass` |
+| Type scale (hub / lessons) | `docs/design/PHOSPHOR-THEME.md` §2 — Bricolage / Hanken / Space Mono + size ladder |
 | Logo mark | `brandMarkClass` / `brandMarkSmClass` |
 | Final CTA | `ctaPanelClass` |
 | Page width | `max-w-[var(--layout-max)]` or `SectionBand` |
+| Hub main stage | `HUB_MAIN_CLASS` (`bg-paper` vs sidebar `bg-bg`) |
 
 ## Break signature
 

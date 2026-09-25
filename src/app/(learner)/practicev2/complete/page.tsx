@@ -18,7 +18,7 @@ export default async function Page({ searchParams }: Props) {
     : params.session;
 
   return (
-    <main className="flex-1 bg-paper px-5 py-8 sm:px-10">
+    <main className="flex-1 bg-[#F6F4EE] px-5 py-8 sm:px-10">
       <div className="mx-auto w-full max-w-[1100px]">
         <PracticeCoachV2CompleteLive
           userId={data.userId}

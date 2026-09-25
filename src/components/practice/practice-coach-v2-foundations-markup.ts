@@ -28,7 +28,7 @@ export const PRACTICE_COACH_V2_FOUNDATIONS_CSS = `
   outline:3px solid #5A74E6;
   outline-offset:3px;
 }
-@media (max-width:1023px){
+@media (max-width:1279px){
   .practice-coach-v2-foundations .coach-path-grid{
     grid-template-columns:1fr !important;
   }

@@ -240,7 +240,8 @@ export function PracticeCoachV2SessionLive({
   }
 
   const progress = `${index + 1} / ${questions.length}`;
-  const reviewHref = reviewHrefs[question.id];
+  const reviewHref =
+    feedback && !feedback.correct ? reviewHrefs[question.id] : undefined;
 
   return (
     <section className="text-[#16181D]">
@@ -288,10 +289,22 @@ export function PracticeCoachV2SessionLive({
                 {feedback.correct ? "Nice work." : "Not quite yet."}
               </h1>
             </div>
-            {question.hint ? (
+            {!feedback.correct && question.hint ? (
               <div className="mt-6 rounded-xl border border-[#E2DED3] bg-[#F6F4EE] p-4">
                 <p className="text-xs font-black uppercase tracking-wide">Hint</p>
                 <p className="mt-2 text-sm leading-6">{question.hint}</p>
+              </div>
+            ) : null}
+            {!feedback.correct &&
+            (question.kind === "typed" || question.kind === "cloze") &&
+            question.answers[0] ? (
+              <div className="mt-6 rounded-xl border border-[#E2DED3] bg-[#F6F4EE] p-4">
+                <p className="text-xs font-black uppercase tracking-wide">
+                  Expected answer
+                </p>
+                <p className="mt-2 font-mono text-sm font-semibold leading-6">
+                  {question.answers[0]}
+                </p>
               </div>
             ) : null}
             {reviewHref ? (
@@ -414,23 +427,14 @@ export function PracticeCoachV2SessionLive({
                   autoComplete="off"
                   autoFocus
                 />
-                <div className="mt-6 grid grid-cols-3 gap-3">
-                  {(["again", "hard", "good"] as const).map((grade) => (
-                    <button
-                      key={grade}
-                      type="button"
-                      disabled={typedAnswer.trim().length === 0}
-                      className={`rounded-xl px-3 py-3 text-sm font-black capitalize disabled:cursor-not-allowed disabled:opacity-40 ${
-                        grade === "good"
-                          ? "bg-[#D7F26B]"
-                          : "border border-[#E2DED3]"
-                      }`}
-                      onClick={gradeTyped}
-                    >
-                      {grade}
-                    </button>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  disabled={typedAnswer.trim().length === 0}
+                  className="mt-6 w-full rounded-xl bg-[#16181D] px-5 py-3 font-black text-white transition enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                  onClick={gradeTyped}
+                >
+                  Check
+                </button>
               </>
             ) : null}
           </div>

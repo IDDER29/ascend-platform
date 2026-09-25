@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, X } from "lucide-react";
 import { PracticeDemoBar } from "@/components/practice/practice-demo-bar";
 import type { PracticeDemoView } from "@/lib/practice/demo";
@@ -10,13 +10,19 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
 import {
-  clearMissesResolved,
-  enqueueMisses,
-  readMissIds,
-  writeMissIds,
-} from "@/lib/practice/miss-queue";
+  applyGrades,
+  dueCount,
+  dueQueueIds,
+  ensureUnlockedCards,
+  migrateMissQueueOnce,
+  nextReviewAt,
+  readCards,
+  readNewDayMeta,
+  writeCards,
+} from "@/lib/practice/cards";
 import {
   buildSession,
+  questionsForScope,
   unlockedLessonOptions,
   unlockedPathBuckets,
   unlockedQuestions,
@@ -35,7 +41,11 @@ import {
   readLocalHistory,
   type PracticeSessionRecord,
 } from "@/lib/practice/history";
-import { savePracticeSessionAction } from "@/lib/practice/actions";
+import {
+  savePracticeSessionAction,
+  upsertPracticeCardsAction,
+} from "@/lib/practice/actions";
+import type { PracticeCard } from "@/lib/practice/sm2";
 import type { PracticeQuestion } from "@/lib/practice/types";
 import { PATHS_HREF } from "@/lib/routes";
 
@@ -44,6 +54,7 @@ type PracticeHomeProps = {
   completedKeys: string[];
   reviewHrefs: Record<string, string>;
   initialHistory?: PracticeSessionRecord[];
+  initialCards: PracticeCard[];
   demoView?: PracticeDemoView | null;
 };
 
@@ -57,7 +68,6 @@ type ActiveScope = {
 };
 
 const DEMO_USER = "demo-preview";
-const subscribeToNothing = () => () => {};
 
 function labelForScope(scope: PracticeScope): ActiveScope {
   if (scope.type === "due") {
@@ -150,6 +160,7 @@ export function PracticeHome({
   completedKeys,
   reviewHrefs,
   initialHistory = [],
+  initialCards,
   demoView = null,
 }: PracticeHomeProps) {
   const demo = Boolean(demoView);
@@ -200,6 +211,25 @@ export function PracticeHome({
       correct: i < 3,
     }));
   });
+  const [dueNow, setDueNow] = useState(0);
+  const [nextReview, setNextReview] = useState<string | null>(null);
+
+  const refreshDueState = useCallback(() => {
+    const cards = readCards(effectiveUserId);
+    const meta = readNewDayMeta(effectiveUserId);
+    const now = new Date();
+    setDueNow(dueCount(cards, meta, now));
+    setNextReview(nextReviewAt(cards, now));
+  }, [effectiveUserId]);
+
+  useEffect(() => {
+    if (initialCards.length > 0) {
+      writeCards(effectiveUserId, initialCards);
+    }
+    migrateMissQueueOnce(effectiveUserId);
+    ensureUnlockedCards(effectiveUserId, [...unlockedIds]);
+    queueMicrotask(refreshDueState);
+  }, [effectiveUserId, initialCards, refreshDueState, unlockedIds]);
 
   useEffect(() => {
     if (demo) {
@@ -220,16 +250,6 @@ export function PracticeHome({
     }
     setHistoryReady(true);
   }, [demo, demoView, effectiveUserId]);
-
-  useEffect(() => {
-    if (!demo || demoView !== "ready") return;
-    writeMissIds(
-      DEMO_USER,
-      sampleSession()
-        .slice(0, 2)
-        .map((q) => q.id),
-    );
-  }, [demo, demoView]);
 
   useEffect(() => {
     if (!demoView) return;
@@ -261,18 +281,21 @@ export function PracticeHome({
     }
   }, [demoView]);
 
-  const waitingMisses = useSyncExternalStore(
-    subscribeToNothing,
-    () =>
-      readMissIds(effectiveUserId).filter((id) => unlockedIds.has(id)).length,
-    () => (demo && demoView === "ready" ? 2 : 0),
-  );
-
   function startSession(scope: PracticeScope = { type: "all" }) {
     const labeled = labelForScope(scope);
+    const cards = readCards(effectiveUserId);
+    const meta = readNewDayMeta(effectiveUserId);
+    const dueIds = dueQueueIds(cards, meta, new Date(), 8);
+    const idsInScope = new Set(
+      questionsForScope(completed, scope).map((question) => question.id),
+    );
+    const priorityIds =
+      scope.type === "due"
+        ? dueIds
+        : dueIds.filter((id) => idsInScope.has(id));
     const next = buildSession({
       completedKeys: completed,
-      priorityIds: readMissIds(effectiveUserId),
+      priorityIds,
       size: 8,
       scope,
     });
@@ -306,11 +329,17 @@ export function PracticeHome({
       .filter((a) => a.correct)
       .map((a) => a.questionId);
     const questionIds = nextAnswered.map((a) => a.questionId);
+    const answeredIds = new Set(questionIds);
+    const updated = applyGrades(effectiveUserId, nextAnswered);
+    refreshDueState();
+
+    if (userId && !demo) {
+      void upsertPracticeCardsAction(
+        updated.filter((card) => answeredIds.has(card.questionId)),
+      );
+    }
 
     if (!demo) {
-      enqueueMisses(effectiveUserId, missIds);
-      clearMissesResolved(effectiveUserId, correctIds);
-
       const record: PracticeSessionRecord = {
         id: newSessionId(),
         at: new Date().toISOString(),
@@ -364,7 +393,8 @@ export function PracticeHome({
       ) : phase === "ready" ? (
         <PracticeHub
           completed={completed}
-          waitingMisses={waitingMisses}
+          dueNow={dueNow}
+          nextReviewAt={nextReview}
           history={historyReady ? history : initialHistory}
           signedIn={Boolean(userId)}
           onStart={startSession}
@@ -417,13 +447,15 @@ function EmptyPanel() {
 
 function PracticeHub({
   completed,
-  waitingMisses,
+  dueNow,
+  nextReviewAt,
   history,
   signedIn,
   onStart,
 }: {
   completed: Set<string>;
-  waitingMisses: number;
+  dueNow: number;
+  nextReviewAt: string | null;
   history: PracticeSessionRecord[];
   signedIn: boolean;
   onStart: (scope: PracticeScope) => void;
@@ -440,6 +472,17 @@ function PracticeHub({
   );
   const recent = history.slice(0, 6);
   const last = history[0] ?? null;
+  const nextReviewLabel = useMemo(() => {
+    if (!nextReviewAt) return null;
+    const date = new Date(nextReviewAt);
+    if (!Number.isFinite(date.getTime())) return null;
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  }, [nextReviewAt]);
 
   const [picking, setPicking] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -472,17 +515,17 @@ function PracticeHub({
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-stretch sm:justify-between sm:gap-10">
             <div className="flex min-w-0 flex-1 flex-col">
               <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-xp-text/85">
-                {waitingMisses > 0 ? "Due queue" : "Caught up"}
+                {dueNow > 0 ? "Due now" : "Caught up"}
               </p>
               <h2 className="mt-1.5 max-w-[18ch] font-display text-[22px] font-extrabold tracking-[-0.03em] text-ink sm:text-[24px]">
-                {waitingMisses > 0
-                  ? "Redo what you missed"
-                  : "Nothing due right now"}
+                {dueNow > 0 ? "Study due cards" : "Nothing due"}
               </h2>
               <p className="mt-1.5 max-w-[38ch] text-[14px] leading-relaxed text-ink-secondary">
-                {waitingMisses > 0
-                  ? "Misses stay due until you answer them correctly."
-                  : "Study unlocked cards anytime, or pick a path below."}
+                {dueNow > 0
+                  ? `${dueNow} card${dueNow === 1 ? " is" : "s are"} ready for review.`
+                  : nextReviewLabel
+                    ? `Next review ${nextReviewLabel}.`
+                    : "Study unlocked cards anytime, or pick a path below."}
               </p>
               {last ? (
                 <p className="mt-2.5 font-mono text-[11px] text-ink-fainter">
@@ -491,16 +534,16 @@ function PracticeHub({
                 </p>
               ) : null}
               <div className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-2 pt-5">
-                {waitingMisses > 0 ? (
+                {dueNow > 0 ? (
                   <Button onClick={() => onStart({ type: "due" })} size="md">
-                    Study due
+                    Study due cards
                   </Button>
                 ) : (
                   <Button onClick={() => onStart({ type: "all" })} size="md">
                     Study unlocked
                   </Button>
                 )}
-                {waitingMisses > 0 ? (
+                {dueNow > 0 ? (
                   <button
                     type="button"
                     onClick={() => onStart({ type: "all" })}
@@ -513,11 +556,11 @@ function PracticeHub({
             </div>
 
             <div className="flex flex-none flex-row items-end gap-5 border-t border-xp-border/40 pt-4 sm:w-[112px] sm:flex-col sm:items-end sm:border-l sm:border-t-0 sm:border-xp-border/40 sm:pl-6 sm:pt-0">
-              {waitingMisses > 0 ? (
+              {dueNow > 0 ? (
                 <>
                   <div className="text-left sm:w-full sm:text-right">
                     <p className="font-display text-[48px] font-extrabold leading-none tracking-[-0.045em] tabular-nums text-ink sm:text-[56px]">
-                      {waitingMisses}
+                      {dueNow}
                     </p>
                     <p className="mt-1 font-mono text-[10.5px] font-bold uppercase tracking-[0.12em] text-xp-text">
                       due
@@ -562,7 +605,7 @@ function PracticeHub({
               Decks
             </h3>
             <p className="mt-0.5 text-[12.5px] text-ink-fainter">
-              One path at a time · misses in that path come first
+              One path at a time · due cards in that path come first
             </p>
           </div>
 

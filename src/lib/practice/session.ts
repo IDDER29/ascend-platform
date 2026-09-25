@@ -156,7 +156,10 @@ export function buildSession(opts: {
 }): PracticeItem[] {
   const size = opts.size ?? 8;
   const scope = opts.scope ?? { type: "all" };
-  const pool = questionsForScope(opts.completedKeys, scope);
+  // Task 3: include flashcards in session pool
+  const pool = questionsForScope(opts.completedKeys, scope).filter(
+    (q) => q.kind === "mcq",
+  );
   const byId = new Map(pool.map((q) => [q.id, q]));
   const picked: PracticeItem[] = [];
   const seen = new Set<string>();

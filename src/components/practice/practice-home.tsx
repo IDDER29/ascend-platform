@@ -5,6 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, ChevronRight, X } from "lucide-react";
 import { PracticeDemoBar } from "@/components/practice/practice-demo-bar";
 import {
+  DESK_ROW_SHEEN,
+  DESK_STAGE,
+  DESK_WASH_HOME,
+} from "@/components/practice/practice-desk";
+import {
   practiceDemoCards,
   type PracticeDemoView,
 } from "@/lib/practice/demo";
@@ -68,6 +73,7 @@ import {
   type PracticePathDrillIn,
   type PracticeSectionDrillIn,
 } from "@/lib/practice/drill-in";
+import { trainingMomentum } from "@/lib/practice/momentum";
 import { PATHS_HREF } from "@/lib/routes";
 
 type PracticeHomeProps = {
@@ -830,6 +836,7 @@ function PracticeHub({
     () => pathProgressFromHistory(history),
     [history],
   );
+  const momentum = useMemo(() => trainingMomentum(history), [history]);
   const recent = history.slice(0, 6);
   const last = history[0] ?? null;
   const nextReviewLabel = useMemo(() => {
@@ -867,13 +874,13 @@ function PracticeHub({
     <div className="grid w-full grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.5fr)_minmax(240px,280px)] lg:items-start lg:gap-0">
       {/* Main — Due + decks */}
       <div className="flex min-w-0 flex-col gap-8 lg:pr-9">
-        <section className="relative overflow-hidden rounded-[18px] border border-xp-border/60 bg-xp-bg px-5 py-5 sm:px-6 sm:py-6">
+        <section className={cn(DESK_STAGE, DESK_WASH_HOME, "animate-rise")}>
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-stretch sm:justify-between sm:gap-10">
             <div className="flex min-w-0 flex-1 flex-col">
               <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-xp-text/85">
                 {dueNow > 0 ? "Due now" : "Caught up"}
               </p>
-              <h2 className="mt-1.5 max-w-[18ch] font-display text-[22px] font-extrabold tracking-[-0.03em] text-ink sm:text-[24px]">
+              <h2 className="mt-1.5 max-w-[18ch] font-display text-[26px] font-extrabold tracking-[-0.03em] text-ink sm:text-[30px]">
                 {dueNow > 0 ? "Ready to review" : "Nothing due"}
               </h2>
               <p className="mt-1.5 max-w-[38ch] text-[14px] leading-relaxed text-ink-secondary">
@@ -987,8 +994,8 @@ function PracticeHub({
                   <Link
                     href={`/practice/${path.pathSlug}`}
                     className={cn(
-                      "group flex w-full items-start gap-3.5 px-3.5 py-3.5 text-left transition-colors sm:px-4",
-                      "hover:bg-elevated/70",
+                      "group flex w-full items-start gap-3 px-3.5 py-3 text-left sm:px-4",
+                      DESK_ROW_SHEEN,
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-violet/35",
                     )}
                   >
@@ -1130,90 +1137,96 @@ function PracticeHub({
         <section>
           <div className="mb-2.5">
             <h3 className="font-display text-[14px] font-extrabold text-ink">
-              Hit rate
+              Training
             </h3>
             <p className="mt-0.5 text-[12px] leading-snug text-ink-fainter">
               Correct ÷ seen — not a schedule
             </p>
           </div>
-          {pathProgress.length === 0 ? (
+          {history.length === 0 ? (
             <p className="text-[13px] leading-relaxed text-ink-secondary">
-              Study once and rates land here.
+              Study once and training stats land here.
             </p>
           ) : (
-            <ul className="flex flex-col gap-3">
-              {pathProgress.map((row) => (
-                <li key={row.pathSlug}>
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className="min-w-0 truncate text-[13px] font-semibold text-ink">
-                      {row.title}
-                    </p>
-                    <span className="flex-none font-mono text-[12px] font-bold tabular-nums text-xp-text">
-                      {row.accuracy}%
-                    </span>
-                  </div>
-                  <p className="mt-0.5 font-mono text-[10.5px] text-ink-fainter">
-                    {row.correct}/{row.total} seen
-                    {row.sessions > 1 ? ` · ${row.sessions} sessions` : ""}
-                  </p>
-                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-elevated">
-                    <div
-                      className="h-full rounded-full bg-brand-gradient"
-                      style={{ width: `${row.accuracy}%` }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+            <>
+              <p className="mb-4 font-mono text-[10.5px] leading-relaxed tabular-nums text-ink-fainter">
+                Cleared today · {momentum.cardsClearedToday}
+                <span aria-hidden> · </span>
+                Sessions · {momentum.sessionsThisWeek} this week
+                {nextReviewLabel ? (
+                  <>
+                    <span aria-hidden> · </span>
+                    Next review · {nextReviewLabel}
+                  </>
+                ) : null}
+              </p>
 
-        <section>
-          <div className="mb-2.5">
-            <h3 className="font-display text-[14px] font-extrabold text-ink">
-              Recent
-            </h3>
-            <p className="mt-0.5 text-[12px] leading-snug text-ink-fainter">
-              {signedIn
-                ? "Device cache · syncs when DB is ready"
-                : "Saved on this device"}
-            </p>
-          </div>
-          {recent.length === 0 ? (
-            <p className="text-[13px] leading-relaxed text-ink-secondary">
-              No sessions yet.
-            </p>
-          ) : (
-            <ul className="flex flex-col">
-              {recent.map((session, i) => (
-                <li
-                  key={session.id}
-                  className={cn(
-                    "-mx-2 flex items-center gap-2 rounded-[10px] px-2 py-2 transition-colors hover:bg-elevated/70",
-                    i > 0 && "border-t border-divider",
-                  )}
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-ink">
-                      {session.scopeLabel}
-                    </p>
+              <ul className="flex flex-col gap-3">
+                {pathProgress.map((row) => (
+                  <li key={row.pathSlug}>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="min-w-0 truncate text-[13px] font-semibold text-ink">
+                        {row.title}
+                      </p>
+                      <span className="flex-none font-mono text-[12px] font-bold tabular-nums text-xp-text">
+                        {row.accuracy}%
+                      </span>
+                    </div>
                     <p className="mt-0.5 font-mono text-[10.5px] text-ink-fainter">
-                      {formatSessionWhen(session.at)}
+                      {row.correct}/{row.total} seen
+                      {row.sessions > 1 ? ` · ${row.sessions} sessions` : ""}
                     </p>
-                  </div>
-                  <span
+                    <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-elevated">
+                      <div
+                        className="h-full rounded-full bg-brand-gradient"
+                        style={{ width: `${row.accuracy}%` }}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mb-2.5 mt-6 border-t border-divider pt-5">
+                <h4 className="font-display text-[13px] font-extrabold text-ink">
+                  Recent
+                </h4>
+                <p className="mt-0.5 text-[12px] leading-snug text-ink-fainter">
+                  {signedIn
+                    ? "Device cache · syncs when DB is ready"
+                    : "Saved on this device"}
+                </p>
+              </div>
+              <ul className="flex flex-col">
+                {recent.map((session, i) => (
+                  <li
+                    key={session.id}
                     className={cn(
-                      "flex-none font-mono text-[12px] font-bold tabular-nums",
-                      session.correct === session.total
-                        ? "text-xp-text"
-                        : "text-ink-secondary",
+                      "-mx-2 flex items-center gap-2 rounded-[10px] px-2 py-2 transition-colors hover:bg-elevated/70",
+                      i > 0 && "border-t border-divider",
                     )}
                   >
-                    {session.correct}/{session.total}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-ink">
+                        {session.scopeLabel}
+                      </p>
+                      <p className="mt-0.5 font-mono text-[10.5px] text-ink-fainter">
+                        {formatSessionWhen(session.at)}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "flex-none font-mono text-[12px] font-bold tabular-nums",
+                        session.correct === session.total
+                          ? "text-xp-text"
+                          : "text-ink-secondary",
+                      )}
+                    >
+                      {session.correct}/{session.total}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </section>
       </aside>

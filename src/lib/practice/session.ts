@@ -142,10 +142,24 @@ export function unlockedLessonOptions(
   });
 }
 
+/** Fisher–Yates; injectable rng for tests. */
+export function shuffleInPlace<T>(
+  items: T[],
+  rng: () => number = Math.random,
+): T[] {
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [items[i], items[j]] = [items[j]!, items[i]!];
+  }
+  return items;
+}
+
 /**
  * Session builder:
- * - `due`: due ids in queue order only, no filler
- * - otherwise: priority ids in scope first, then shuffle the rest
+ * - `due`: due ids only (composition from caller), no filler
+ * - otherwise: priority ids in scope first, then fill from shuffled pool
+ * - **Final order is always shuffled** so MCQ / flashcard / future kinds
+ *   interleave — the learner should not predict the next format.
  * Caps at `size` (default 8).
  */
 export function buildSession(opts: {
@@ -153,9 +167,12 @@ export function buildSession(opts: {
   priorityIds: string[];
   size?: number;
   scope?: PracticeScope;
+  /** Inject for tests; defaults to Math.random */
+  rng?: () => number;
 }): PracticeItem[] {
   const size = opts.size ?? 8;
   const scope = opts.scope ?? { type: "all" };
+  const rng = opts.rng ?? Math.random;
   const pool = questionsForScope(opts.completedKeys, scope);
   const byId = new Map(pool.map((q) => [q.id, q]));
   const picked: PracticeItem[] = [];
@@ -166,21 +183,21 @@ export function buildSession(opts: {
     if (!q || seen.has(q.id)) continue;
     picked.push(q);
     seen.add(q.id);
-    if (picked.length >= size) return picked;
+    if (picked.length >= size) {
+      return shuffleInPlace(picked, rng);
+    }
   }
 
-  if (scope.type === "due") return picked;
+  if (scope.type !== "due") {
+    const rest = pool.filter((q) => !seen.has(q.id));
+    shuffleInPlace(rest, rng);
+    for (const q of rest) {
+      picked.push(q);
+      if (picked.length >= size) break;
+    }
+  }
 
-  const rest = pool.filter((q) => !seen.has(q.id));
-  for (let i = rest.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [rest[i], rest[j]] = [rest[j], rest[i]];
-  }
-  for (const q of rest) {
-    picked.push(q);
-    if (picked.length >= size) break;
-  }
-  return picked;
+  return shuffleInPlace(picked, rng);
 }
 
 /** Click handlers pass a MouseEvent; only explicit answered arrays should apply. */

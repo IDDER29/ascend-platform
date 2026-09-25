@@ -117,12 +117,20 @@ function sampleSession(): PracticeItem[] {
     "bits-02",
     "bool-01",
     "ptr-01",
+    "bits-fc-02",
   ];
   const byId = new Map(PRACTICE_BANK.map((q) => [q.id, q]));
   const picked = prefer
     .map((id) => byId.get(id))
     .filter((item): item is PracticeItem => Boolean(item));
-  return picked.length >= 3 ? picked.slice(0, 5) : PRACTICE_BANK.slice(0, 5);
+  const session =
+    picked.length >= 3 ? picked.slice(0, 5) : PRACTICE_BANK.slice(0, 5);
+  // Interleave formats so demo sessions don’t telegraph “MCQ then flashcard”.
+  for (let i = session.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [session[i], session[j]] = [session[j]!, session[i]!];
+  }
+  return session;
 }
 
 /** Demo-only history so the desk rail isn’t an empty hole in layout review. */

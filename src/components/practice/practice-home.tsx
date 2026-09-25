@@ -962,10 +962,10 @@ function PracticeHub({
         <section>
           <div className="mb-3">
             <h3 className="font-display text-[16px] font-extrabold text-ink">
-              Decks
+              Paths
             </h3>
             <p className="mt-0.5 text-[12.5px] text-ink-fainter">
-              One path at a time · due cards in that path come first
+              Open a path to choose a branch or lesson
             </p>
           </div>
 
@@ -984,11 +984,8 @@ function PracticeHub({
                   key={path.pathSlug}
                   className={cn(i > 0 && "border-t border-divider")}
                 >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onStart({ type: "path", pathSlug: path.pathSlug })
-                    }
+                  <Link
+                    href={`/practice/${path.pathSlug}`}
                     className={cn(
                       "group flex w-full items-start gap-3.5 px-3.5 py-3.5 text-left transition-colors sm:px-4",
                       "hover:bg-elevated/70",
@@ -1027,23 +1024,14 @@ function PracticeHub({
                       </span>
                     </span>
                     <span className="mt-1 flex flex-none items-center gap-0.5 text-[13px] font-bold text-ink-fainter transition-colors group-hover:text-ink">
-                      Study
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                      Open path
+                      <ChevronRight
+                        size={14}
                         aria-hidden
-                      >
-                        <path d="M5 12h14" />
-                        <path d="m12 5 7 7-7 7" />
-                      </svg>
+                        className="transition-transform group-hover:translate-x-0.5"
+                      />
                     </span>
-                  </button>
+                  </Link>
                 </li>
               );
             })}

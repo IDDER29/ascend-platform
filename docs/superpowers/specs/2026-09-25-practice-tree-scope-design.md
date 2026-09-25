@@ -1,7 +1,7 @@
 # Practice tree + scope (dashboard slice 1)
 
 **Date:** 2026-09-25  
-**Status:** Implementing
+**Status:** Done
 **Routes:** `/practice` · `/practice/[pathSlug]` · `/practice/[pathSlug]/[sectionId]`  
 **Builds on:** Practice SM-2, flashcards/cloze/typed, study-desk polish  
 **Chosen approach:** Reuse path/course outlines as the Practice tree; drill-in pages; Due stays primary on home  
@@ -87,11 +87,11 @@ No new DB tables. Outlines already exist (`foundations-outline`, `course-outline
 
 ## Success criteria
 
-- [ ] `/practice` Due + path list into drill-in  
-- [ ] Path page lists sections; Study whole path works  
-- [ ] Section page lists lessons; Study branch / lesson works  
-- [ ] Section scope filters bank correctly  
-- [ ] Empty scopes honest; Phosphor; SM-2 unchanged  
+- [x] `/practice` Due + path list into drill-in
+- [x] Path page lists sections; Study whole path works
+- [x] Section page lists lessons; Study branch / lesson works
+- [x] Section scope filters bank correctly
+- [x] Empty scopes honest; Phosphor; SM-2 unchanged
 
 ## Roadmap note
 

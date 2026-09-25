@@ -12,7 +12,7 @@ export default async function PracticeV2Page() {
   const data = await loadPracticePageData();
 
   return (
-    <main className="flex-1 bg-paper px-5 py-8 sm:px-10">
+    <main className="flex-1 bg-[#F6F4EE] px-5 py-8 sm:px-10">
       <div className="mx-auto w-full max-w-[1100px]">
         <PracticeCoachV2HomeLive
           userId={data.userId}

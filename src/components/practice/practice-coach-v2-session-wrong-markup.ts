@@ -13,6 +13,12 @@ export const PRACTICE_COACH_V2_SESSION_WRONG_CSS = `.practice-coach-v2-session-w
   min-width:0;
   max-width:100%;
 }
+.practice-coach-v2-session-wrong sc-raw-table{display:table}
+.practice-coach-v2-session-wrong sc-raw-thead{display:table-header-group}
+.practice-coach-v2-session-wrong sc-raw-tbody{display:table-row-group}
+.practice-coach-v2-session-wrong sc-raw-tr{display:table-row}
+.practice-coach-v2-session-wrong sc-raw-th,
+.practice-coach-v2-session-wrong sc-raw-td{display:table-cell}
 .practice-coach-v2-session-wrong a[href]:hover{filter:brightness(.97)}
 .practice-coach-v2-session-wrong a[href]:active{transform:translateY(2px)}
 .practice-coach-v2-session-wrong a:focus-visible,

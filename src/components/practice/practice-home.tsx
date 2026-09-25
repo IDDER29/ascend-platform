@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, ChevronRight, X } from "lucide-react";
 import { PracticeDemoBar } from "@/components/practice/practice-demo-bar";
 import {
   practiceDemoCards,
@@ -63,6 +63,10 @@ import type {
   PracticeItem,
   TypedItem,
 } from "@/lib/practice/types";
+import type {
+  PracticePathDrillIn,
+  PracticeSectionDrillIn,
+} from "@/lib/practice/drill-in";
 import { PATHS_HREF } from "@/lib/routes";
 
 type PracticeHomeProps = {
@@ -72,6 +76,7 @@ type PracticeHomeProps = {
   initialHistory?: PracticeSessionRecord[];
   initialCards: PracticeCard[];
   demoView?: PracticeDemoView | null;
+  drillIn?: PracticePathDrillIn | PracticeSectionDrillIn;
 };
 
 type Phase = "ready" | "session" | "results";
@@ -221,12 +226,19 @@ function sampleHistory(): PracticeSessionRecord[] {
 }
 
 export function PracticeHome({
+  ...props
+}: PracticeHomeProps) {
+  return <PracticeSessionHost {...props} />;
+}
+
+export function PracticeSessionHost({
   userId,
   completedKeys,
   reviewHrefs,
   initialHistory = [],
   initialCards,
   demoView = null,
+  drillIn,
 }: PracticeHomeProps) {
   const demo = Boolean(demoView);
   const effectiveUserId = demo ? DEMO_USER : userId;
@@ -519,14 +531,18 @@ export function PracticeHome({
       {showEmpty ? (
         <EmptyPanel />
       ) : phase === "ready" ? (
-        <PracticeHub
-          completed={completed}
-          dueNow={dueNow}
-          nextReviewAt={nextReview}
-          history={historyReady ? history : initialHistory}
-          signedIn={Boolean(userId)}
-          onStart={startSession}
-        />
+        drillIn ? (
+          <DrillInHub data={drillIn} onStart={startSession} />
+        ) : (
+          <PracticeHub
+            completed={completed}
+            dueNow={dueNow}
+            nextReviewAt={nextReview}
+            history={historyReady ? history : initialHistory}
+            signedIn={Boolean(userId)}
+            onStart={startSession}
+          />
+        )
       ) : phase === "results" ? (
         <ResultsView
           questions={questions}
@@ -534,6 +550,7 @@ export function PracticeHome({
           reviewHrefs={reviewHrefs}
           onAgain={() => startSession(activeScope.scope)}
           onHub={() => setPhase("ready")}
+          backLabel={drillIn ? "Back to scope" : "Back to Practice"}
         />
       ) : (
         <SessionView
@@ -555,6 +572,163 @@ export function PracticeHome({
         />
       )}
     </>
+  );
+}
+
+function DrillInHub({
+  data,
+  onStart,
+}: {
+  data: PracticePathDrillIn | PracticeSectionDrillIn;
+  onStart: (scope: PracticeScope) => void;
+}) {
+  if ("sections" in data) {
+    const questionCount = data.sections.reduce(
+      (total, section) => total + section.questionCount,
+      0,
+    );
+
+    return (
+      <div className="flex min-w-0 flex-col gap-8">
+        <section className="flex flex-col gap-4 border-y border-divider py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-display text-[18px] font-extrabold text-ink">
+              Study the whole path
+            </h2>
+            <p className="mt-1 text-[13.5px] text-ink-secondary">
+              Due cards in this path come first, then unlocked cards are
+              shuffled.
+            </p>
+          </div>
+          <Button
+            onClick={() =>
+              onStart({ type: "path", pathSlug: data.pathSlug })
+            }
+            disabled={questionCount === 0}
+          >
+            {questionCount > 0
+              ? `Study path · ${questionCount}`
+              : "No cards unlocked"}
+          </Button>
+        </section>
+
+        <section>
+          <h2 className="font-display text-[16px] font-extrabold text-ink">
+            Sections
+          </h2>
+          <p className="mt-0.5 text-[12.5px] text-ink-fainter">
+            Open a branch for lesson-level practice.
+          </p>
+          <ul className="mt-3 overflow-hidden rounded-[14px] border border-divider bg-paper">
+            {data.sections.map((section, index) => (
+              <li
+                key={section.id}
+                className={cn(index > 0 && "border-t border-divider")}
+              >
+                <Link
+                  href={`/practice/${data.pathSlug}/${section.id}`}
+                  className="group flex items-center gap-4 px-4 py-4 transition-colors hover:bg-elevated/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-violet/35"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="font-display text-[15px] font-extrabold text-ink">
+                      {section.title}
+                    </span>
+                    {section.blurb ? (
+                      <span className="mt-0.5 block text-[13px] leading-snug text-ink-secondary">
+                        {section.blurb}
+                      </span>
+                    ) : null}
+                    <span className="mt-1 block font-mono text-[11px] tabular-nums text-ink-fainter">
+                      {section.lessonCount} lesson
+                      {section.lessonCount === 1 ? "" : "s"} ·{" "}
+                      {section.questionCount} unlocked
+                    </span>
+                  </span>
+                  <span className="flex flex-none items-center gap-1 text-[13px] font-bold text-ink-fainter transition-colors group-hover:text-ink">
+                    Continue
+                    <ChevronRight
+                      size={14}
+                      aria-hidden
+                      className="transition-transform group-hover:translate-x-0.5"
+                    />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-8">
+      <section className="flex flex-col gap-4 border-y border-divider py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="font-display text-[18px] font-extrabold text-ink">
+            Study this branch
+          </h2>
+          <p className="mt-1 text-[13.5px] text-ink-secondary">
+            Practice unlocked cards from every lesson in this section.
+          </p>
+        </div>
+        <Button
+          onClick={() =>
+            onStart({
+              type: "section",
+              pathSlug: data.pathSlug,
+              sectionId: data.sectionId,
+            })
+          }
+          disabled={data.questionCount === 0}
+        >
+          {data.questionCount > 0
+            ? `Study branch · ${data.questionCount}`
+            : "No cards unlocked"}
+        </Button>
+      </section>
+
+      <section>
+        <h2 className="font-display text-[16px] font-extrabold text-ink">
+          Lessons
+        </h2>
+        <p className="mt-0.5 text-[12.5px] text-ink-fainter">
+          Focus a session on one lesson.
+        </p>
+        <ul className="mt-3 overflow-hidden rounded-[14px] border border-divider bg-paper">
+          {data.lessons.map((lesson, index) => (
+            <li
+              key={lesson.key}
+              className={cn(
+                "flex items-center gap-4 px-4 py-4",
+                index > 0 && "border-t border-divider",
+              )}
+            >
+              <span className="min-w-0 flex-1">
+                <span className="font-display text-[15px] font-extrabold text-ink">
+                  {lesson.title}
+                </span>
+                <span className="mt-1 block font-mono text-[11px] tabular-nums text-ink-fainter">
+                  {lesson.questionCount} unlocked card
+                  {lesson.questionCount === 1 ? "" : "s"}
+                </span>
+              </span>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  onStart({ type: "lessons", keys: [lesson.key] })
+                }
+                disabled={lesson.questionCount === 0}
+              >
+                Study
+                <ChevronRight size={13} aria-hidden />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
   );
 }
 
@@ -1502,12 +1676,14 @@ function ResultsView({
   reviewHrefs,
   onAgain,
   onHub,
+  backLabel,
 }: {
   questions: PracticeItem[];
   answered: Answered[];
   reviewHrefs: Record<string, string>;
   onAgain: () => void;
   onHub: () => void;
+  backLabel: string;
 }) {
   const correctCount = answered.filter((a) => gradeIsHit(a.grade)).length;
 
@@ -1585,7 +1761,7 @@ function ResultsView({
       <div className="mt-6 flex flex-wrap gap-3">
         <Button onClick={onAgain}>Practice again</Button>
         <Button onClick={onHub} variant="secondary">
-          Back to Practice
+          {backLabel}
         </Button>
       </div>
     </div>

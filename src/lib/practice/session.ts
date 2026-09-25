@@ -182,3 +182,11 @@ export function buildSession(opts: {
   }
   return picked;
 }
+
+/** Click handlers pass a MouseEvent; only explicit answered arrays should apply. */
+export function coalesceAnsweredSnapshot<T>(
+  override: unknown,
+  fallback: T[],
+): T[] {
+  return Array.isArray(override) ? override : fallback;
+}

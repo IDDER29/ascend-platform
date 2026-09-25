@@ -27,6 +27,7 @@ import {
 } from "@/lib/practice/cards";
 import {
   buildSession,
+  coalesceAnsweredSnapshot,
   questionsForScope,
   unlockedLessonOptions,
   unlockedPathBuckets,
@@ -434,9 +435,10 @@ export function PracticeHome({
     setPhase("results");
   }
 
-  function next(nextAnswered = answered) {
+  function next(nextAnswered?: unknown) {
+    const snapshot = coalesceAnsweredSnapshot(nextAnswered, answered);
     if (index + 1 >= questions.length) {
-      finishSession(nextAnswered);
+      finishSession(snapshot);
       return;
     }
     setIndex((i) => i + 1);
@@ -491,7 +493,7 @@ export function PracticeHome({
           answered={answered}
           onSelect={setSelected}
           onCheck={checkAnswer}
-          onNext={next}
+          onNext={() => next()}
           onReveal={() => setRevealed(true)}
           onFlashGrade={gradeFlashcard}
           onToggleHint={() => setShowHint((v) => !v)}

@@ -575,6 +575,7 @@ export function PracticeSessionHost({
         <SessionView
           questions={questions}
           index={index}
+          scopeLabel={activeScope.scopeLabel}
           selected={selected}
           checked={checked}
           revealed={revealed}
@@ -1251,6 +1252,7 @@ function PracticeHub({
 function SessionView({
   questions,
   index,
+  scopeLabel,
   selected,
   checked,
   revealed,
@@ -1267,6 +1269,7 @@ function SessionView({
 }: {
   questions: PracticeItem[];
   index: number;
+  scopeLabel?: string;
   selected: number | null;
   checked: boolean;
   revealed: boolean;
@@ -1283,58 +1286,46 @@ function SessionView({
 }) {
   const q = questions[index];
   if (!q) return null;
+  const hits = answered.filter((answer) => gradeIsHit(answer.grade)).length;
+  const progress =
+    ((index + (answered[index] ? 1 : 0)) / questions.length) * 100;
 
   return (
     <div className="mx-auto w-full max-w-[640px]">
-      <div className="mb-5 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onExit}
-          className="rounded-lg px-2 py-1.5 text-[13px] font-semibold text-ink-fainter transition-colors hover:text-ink"
-        >
-          Exit
-        </button>
-        <div className="flex flex-1 items-center justify-center gap-1.5">
-          {questions.map((question, i) => {
-            const prior = answered[i];
-            const state = prior
-              ? gradeIsHit(prior.grade)
-                ? "correct"
-                : "wrong"
-              : i === index
-                ? "current"
-                : "pending";
-            return (
-              <span
-                key={question.id}
-                className={cn(
-                  "flex h-[20px] w-[20px] flex-none items-center justify-center rounded-full",
-                  state === "correct" && "bg-xp-text",
-                  state === "wrong" && "bg-[#F87171]",
-                  state === "current" &&
-                    "border-2 border-brand-violet bg-paper",
-                  state === "pending" && "border border-divider bg-elevated",
-                )}
-              >
-                {state === "correct" ? (
-                  <Check size={9} className="text-white" strokeWidth={3.5} />
-                ) : null}
-                {state === "wrong" ? (
-                  <X size={9} className="text-white" strokeWidth={3.5} />
-                ) : null}
-                {state === "current" ? (
-                  <span className="h-1.5 w-1.5 rounded-full bg-brand-violet" />
-                ) : null}
-              </span>
-            );
-          })}
+      <div className="mb-5">
+        <div className="grid grid-cols-3 items-center gap-3">
+          <button
+            type="button"
+            onClick={onExit}
+            className="justify-self-start rounded-lg px-2 py-1.5 text-[13px] font-semibold text-ink-fainter transition-colors hover:text-ink"
+          >
+            Exit
+          </button>
+          <span className="justify-self-center font-mono text-[12px] font-bold tabular-nums text-ink-secondary">
+            {index + 1} / {questions.length}
+          </span>
+          {answered.length > 0 ? (
+            <span className="justify-self-end font-mono text-[11px] tabular-nums text-ink-fainter">
+              {hits}/{answered.length} hit
+            </span>
+          ) : (
+            <span />
+          )}
         </div>
-        <span className="w-10 text-right font-mono text-[12px] text-ink-fainter">
-          {index + 1}/{questions.length}
-        </span>
+        {scopeLabel ? (
+          <p className="mt-1 truncate text-center text-[12px] font-medium text-ink-fainter">
+            {scopeLabel}
+          </p>
+        ) : null}
+        <div className="mt-3 h-1 overflow-hidden rounded-full bg-elevated">
+          <div
+            className="h-full rounded-full bg-brand-gradient transition-[width] duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
 
-      <Card hover={false}>
+      <Card key={q.id} hover={false} className="animate-rise">
         <div className="p-6 sm:p-7">
           {q.kind === "flashcard" ? (
             <>
@@ -1758,12 +1749,24 @@ function ResultsView({
 
   return (
     <div className="mx-auto w-full max-w-[640px]">
-      <h2 className="font-mono text-[14px] font-bold tabular-nums text-ink-secondary">
-        {correctCount} correct / {questions.length}
-      </h2>
-      <p className="mt-1.5 text-[14.5px] text-ink-secondary">
-        Review misses below — then drill again when you’re ready.
-      </p>
+      <section className={cn(DESK_STAGE, DESK_WASH_QUIET)}>
+        <div className="relative">
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-ink-fainter">
+            Session complete
+          </p>
+          <div className="mt-2 flex items-end gap-2">
+            <h2 className="font-display text-[36px] font-extrabold leading-none tracking-tight text-ink sm:text-[40px]">
+              {correctCount}/{questions.length}
+            </h2>
+            <span className="pb-0.5 font-mono text-[12px] font-bold text-xp-text">
+              hits
+            </span>
+          </div>
+          <p className="mt-3 text-[14.5px] text-ink-secondary">
+            Review misses below — then study again when you’re ready.
+          </p>
+        </div>
+      </section>
 
       <Card hover={false} className="mt-6">
         <div className="p-5 sm:p-6">
@@ -1828,7 +1831,7 @@ function ResultsView({
       </Card>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <Button onClick={onAgain}>Practice again</Button>
+        <Button onClick={onAgain}>Study again</Button>
         <Button onClick={onHub} variant="secondary">
           {backLabel}
         </Button>

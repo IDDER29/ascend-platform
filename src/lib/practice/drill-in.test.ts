@@ -1,9 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  countDueQuestions,
   practicePathDrillIn,
   practiceSectionDrillIn,
 } from "./drill-in";
+
+test("countDueQuestions intersects due IDs with scope question IDs", () => {
+  assert.equal(
+    countDueQuestions(["q-1", "q-2", "q-3"], new Set(["q-2", "q-3", "q-4"])),
+    2,
+  );
+  assert.equal(countDueQuestions(["q-1"], new Set()), 0);
+});
 
 test("practicePathDrillIn returns sections with unlocked card counts", () => {
   const data = practicePathDrillIn(new Set(), "foundations");
@@ -15,6 +24,10 @@ test("practicePathDrillIn returns sections with unlocked card counts", () => {
     ["bits", "logic", "machine-runs"],
   );
   assert.ok((data.sections[0]?.questionCount ?? 0) > 0);
+  assert.equal(
+    data.sections[0]?.questionIds.length,
+    data.sections[0]?.questionCount,
+  );
   assert.equal(practicePathDrillIn(new Set(), "missing"), null);
 });
 
@@ -42,6 +55,11 @@ test("practiceSectionDrillIn returns lesson rows scoped to the section", () => {
     ],
   );
   assert.ok(data.lessons.every((lesson) => lesson.questionCount > 0));
+  assert.ok(
+    data.lessons.every(
+      (lesson) => lesson.questionIds.length === lesson.questionCount,
+    ),
+  );
   assert.equal(
     practiceSectionDrillIn(new Set(), "foundations", "pointers"),
     null,

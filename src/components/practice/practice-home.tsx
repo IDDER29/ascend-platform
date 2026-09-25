@@ -63,9 +63,10 @@ import type {
   PracticeItem,
   TypedItem,
 } from "@/lib/practice/types";
-import type {
-  PracticePathDrillIn,
-  PracticeSectionDrillIn,
+import {
+  countDueQuestions,
+  type PracticePathDrillIn,
+  type PracticeSectionDrillIn,
 } from "@/lib/practice/drill-in";
 import { PATHS_HREF } from "@/lib/routes";
 
@@ -290,6 +291,9 @@ export function PracticeSessionHost({
     }));
   });
   const [dueNow, setDueNow] = useState(0);
+  const [dueQuestionIds, setDueQuestionIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [nextReview, setNextReview] = useState<string | null>(null);
 
   const refreshDueState = useCallback(() => {
@@ -297,6 +301,9 @@ export function PracticeSessionHost({
     const meta = readNewDayMeta(effectiveUserId);
     const now = new Date();
     setDueNow(dueCount(cards, meta, now));
+    setDueQuestionIds(
+      new Set(dueQueueIds(cards, meta, now, cards.length)),
+    );
     setNextReview(nextReviewAt(cards, now));
   }, [effectiveUserId]);
 
@@ -532,7 +539,11 @@ export function PracticeSessionHost({
         <EmptyPanel />
       ) : phase === "ready" ? (
         drillIn ? (
-          <DrillInHub data={drillIn} onStart={startSession} />
+          <DrillInHub
+            data={drillIn}
+            dueQuestionIds={dueQuestionIds}
+            onStart={startSession}
+          />
         ) : (
           <PracticeHub
             completed={completed}
@@ -577,9 +588,11 @@ export function PracticeSessionHost({
 
 function DrillInHub({
   data,
+  dueQuestionIds,
   onStart,
 }: {
   data: PracticePathDrillIn | PracticeSectionDrillIn;
+  dueQuestionIds: ReadonlySet<string>;
   onStart: (scope: PracticeScope) => void;
 }) {
   if ("sections" in data) {
@@ -587,14 +600,26 @@ function DrillInHub({
       (total, section) => total + section.questionCount,
       0,
     );
+    const dueCount = data.sections.reduce(
+      (total, section) =>
+        total + countDueQuestions(section.questionIds, dueQuestionIds),
+      0,
+    );
 
     return (
       <div className="flex min-w-0 flex-col gap-8">
         <section className="flex flex-col gap-4 border-y border-divider py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="font-display text-[18px] font-extrabold text-ink">
-              Study the whole path
-            </h2>
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <h2 className="font-display text-[18px] font-extrabold text-ink">
+                Study the whole path
+              </h2>
+              {dueCount > 0 ? (
+                <span className="font-mono text-[11px] tabular-nums text-ink-fainter">
+                  {dueCount} due
+                </span>
+              ) : null}
+            </div>
             <p className="mt-1 text-[13.5px] text-ink-secondary">
               Due cards in this path come first, then unlocked cards are
               shuffled.
@@ -620,54 +645,76 @@ function DrillInHub({
             Open a branch for lesson-level practice.
           </p>
           <ul className="mt-3 overflow-hidden rounded-[14px] border border-divider bg-paper">
-            {data.sections.map((section, index) => (
-              <li
-                key={section.id}
-                className={cn(index > 0 && "border-t border-divider")}
-              >
-                <Link
-                  href={`/practice/${data.pathSlug}/${section.id}`}
-                  className="group flex items-center gap-4 px-4 py-4 transition-colors hover:bg-elevated/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-violet/35"
+            {data.sections.map((section, index) => {
+              const sectionDueCount = countDueQuestions(
+                section.questionIds,
+                dueQuestionIds,
+              );
+              return (
+                <li
+                  key={section.id}
+                  className={cn(index > 0 && "border-t border-divider")}
                 >
-                  <span className="min-w-0 flex-1">
-                    <span className="font-display text-[15px] font-extrabold text-ink">
-                      {section.title}
-                    </span>
-                    {section.blurb ? (
-                      <span className="mt-0.5 block text-[13px] leading-snug text-ink-secondary">
-                        {section.blurb}
+                  <Link
+                    href={`/practice/${data.pathSlug}/${section.id}`}
+                    className="group flex items-center gap-4 px-4 py-4 transition-colors hover:bg-elevated/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-violet/35"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="font-display text-[15px] font-extrabold text-ink">
+                        {section.title}
                       </span>
-                    ) : null}
-                    <span className="mt-1 block font-mono text-[11px] tabular-nums text-ink-fainter">
-                      {section.lessonCount} lesson
-                      {section.lessonCount === 1 ? "" : "s"} ·{" "}
-                      {section.questionCount} unlocked
+                      {section.blurb ? (
+                        <span className="mt-0.5 block text-[13px] leading-snug text-ink-secondary">
+                          {section.blurb}
+                        </span>
+                      ) : null}
+                      <span className="mt-1 block font-mono text-[11px] tabular-nums text-ink-fainter">
+                        {section.lessonCount} lesson
+                        {section.lessonCount === 1 ? "" : "s"} ·{" "}
+                        {section.questionCount} unlocked
+                        {sectionDueCount > 0
+                          ? ` · ${sectionDueCount} due`
+                          : ""}
+                      </span>
                     </span>
-                  </span>
-                  <span className="flex flex-none items-center gap-1 text-[13px] font-bold text-ink-fainter transition-colors group-hover:text-ink">
-                    Continue
-                    <ChevronRight
-                      size={14}
-                      aria-hidden
-                      className="transition-transform group-hover:translate-x-0.5"
-                    />
-                  </span>
-                </Link>
-              </li>
-            ))}
+                    <span className="flex flex-none items-center gap-1 text-[13px] font-bold text-ink-fainter transition-colors group-hover:text-ink">
+                      Continue
+                      <ChevronRight
+                        size={14}
+                        aria-hidden
+                        className="transition-transform group-hover:translate-x-0.5"
+                      />
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </section>
       </div>
     );
   }
 
+  const sectionDueCount = data.lessons.reduce(
+    (total, lesson) =>
+      total + countDueQuestions(lesson.questionIds, dueQuestionIds),
+    0,
+  );
+
   return (
     <div className="flex min-w-0 flex-col gap-8">
       <section className="flex flex-col gap-4 border-y border-divider py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-display text-[18px] font-extrabold text-ink">
-            Study this branch
-          </h2>
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <h2 className="font-display text-[18px] font-extrabold text-ink">
+              Study this branch
+            </h2>
+            {sectionDueCount > 0 ? (
+              <span className="font-mono text-[11px] tabular-nums text-ink-fainter">
+                {sectionDueCount} due
+              </span>
+            ) : null}
+          </div>
           <p className="mt-1 text-[13.5px] text-ink-secondary">
             Practice unlocked cards from every lesson in this section.
           </p>
@@ -696,36 +743,43 @@ function DrillInHub({
           Focus a session on one lesson.
         </p>
         <ul className="mt-3 overflow-hidden rounded-[14px] border border-divider bg-paper">
-          {data.lessons.map((lesson, index) => (
-            <li
-              key={lesson.key}
-              className={cn(
-                "flex items-center gap-4 px-4 py-4",
-                index > 0 && "border-t border-divider",
-              )}
-            >
-              <span className="min-w-0 flex-1">
-                <span className="font-display text-[15px] font-extrabold text-ink">
-                  {lesson.title}
-                </span>
-                <span className="mt-1 block font-mono text-[11px] tabular-nums text-ink-fainter">
-                  {lesson.questionCount} unlocked card
-                  {lesson.questionCount === 1 ? "" : "s"}
-                </span>
-              </span>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() =>
-                  onStart({ type: "lessons", keys: [lesson.key] })
-                }
-                disabled={lesson.questionCount === 0}
+          {data.lessons.map((lesson, index) => {
+            const lessonDueCount = countDueQuestions(
+              lesson.questionIds,
+              dueQuestionIds,
+            );
+            return (
+              <li
+                key={lesson.key}
+                className={cn(
+                  "flex items-center gap-4 px-4 py-4",
+                  index > 0 && "border-t border-divider",
+                )}
               >
-                Study
-                <ChevronRight size={13} aria-hidden />
-              </Button>
-            </li>
-          ))}
+                <span className="min-w-0 flex-1">
+                  <span className="font-display text-[15px] font-extrabold text-ink">
+                    {lesson.title}
+                  </span>
+                  <span className="mt-1 block font-mono text-[11px] tabular-nums text-ink-fainter">
+                    {lesson.questionCount} unlocked card
+                    {lesson.questionCount === 1 ? "" : "s"}
+                    {lessonDueCount > 0 ? ` · ${lessonDueCount} due` : ""}
+                  </span>
+                </span>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() =>
+                    onStart({ type: "lessons", keys: [lesson.key] })
+                  }
+                  disabled={lesson.questionCount === 0}
+                >
+                  Study
+                  <ChevronRight size={13} aria-hidden />
+                </Button>
+              </li>
+            );
+          })}
         </ul>
       </section>
     </div>

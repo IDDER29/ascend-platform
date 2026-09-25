@@ -7,6 +7,16 @@ import {
   practiceTreeForPath,
 } from "@/lib/practice/tree";
 
+export function countDueQuestions(
+  questionIds: string[],
+  dueIds: ReadonlySet<string>,
+): number {
+  return questionIds.reduce(
+    (count, questionId) => count + Number(dueIds.has(questionId)),
+    0,
+  );
+}
+
 export type PracticePathDrillIn = {
   pathSlug: string;
   title: string;
@@ -16,6 +26,7 @@ export type PracticePathDrillIn = {
     blurb?: string;
     lessonCount: number;
     questionCount: number;
+    questionIds: string[];
   }[];
 };
 
@@ -32,6 +43,7 @@ export type PracticeSectionDrillIn = {
     slug: string;
     title: string;
     questionCount: number;
+    questionIds: string[];
   }[];
 };
 
@@ -45,17 +57,21 @@ export function practicePathDrillIn(
   return {
     pathSlug,
     title: path.title,
-    sections: path.sections.map((section) => ({
-      id: section.id,
-      title: section.title,
-      blurb: section.blurb,
-      lessonCount: section.lessons.length,
-      questionCount: questionsForScope(completedKeys, {
+    sections: path.sections.map((section) => {
+      const questions = questionsForScope(completedKeys, {
         type: "section",
         pathSlug,
         sectionId: section.id,
-      }).length,
-    })),
+      });
+      return {
+        id: section.id,
+        title: section.title,
+        blurb: section.blurb,
+        lessonCount: section.lessons.length,
+        questionCount: questions.length,
+        questionIds: questions.map((question) => question.id),
+      };
+    }),
   };
 }
 
@@ -81,13 +97,17 @@ export function practiceSectionDrillIn(
     title: section.title,
     blurb: section.blurb,
     questionCount: questions.length,
-    lessons: section.lessons.map((lesson) => ({
-      ...lesson,
-      questionCount: questions.filter(
+    lessons: section.lessons.map((lesson) => {
+      const lessonQuestions = questions.filter(
         (question) =>
           completionKey(question.lessonLevel, question.lessonSlug) ===
           lesson.key,
-      ).length,
-    })),
+      );
+      return {
+        ...lesson,
+        questionCount: lessonQuestions.length,
+        questionIds: lessonQuestions.map((question) => question.id),
+      };
+    }),
   };
 }

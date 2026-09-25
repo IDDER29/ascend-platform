@@ -137,6 +137,26 @@ function sampleSession(): PracticeItem[] {
     const j = Math.floor(Math.random() * (i + 1));
     [session[i], session[j]] = [session[j]!, session[i]!];
   }
+  // Demo session starts at index 1 with index 0 pre-answered — keep typed/cloze visible.
+  const preAnsweredKind = (kind: PracticeItem["kind"]) =>
+    kind === "typed" || kind === "cloze";
+  const demoFirstKind = (kind: PracticeItem["kind"]) =>
+    kind === "mcq" || kind === "flashcard";
+  const first = session[0];
+  if (first && preAnsweredKind(first.kind)) {
+    const swapIdx = session.findIndex(
+      (item, i) => i > 0 && demoFirstKind(item.kind),
+    );
+    if (swapIdx !== -1) {
+      [session[0], session[swapIdx]] = [session[swapIdx]!, session[0]!];
+    }
+  }
+  for (const id of ["bits-typed-01", "bits-cloze-01"] as const) {
+    if (!session.some((item) => item.id === id)) {
+      const fallback = byId.get(id);
+      if (fallback) session[session.length - 1] = fallback;
+    }
+  }
   return session;
 }
 

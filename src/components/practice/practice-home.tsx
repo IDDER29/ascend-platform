@@ -671,12 +671,16 @@ function DrillInHub({
                   <Link
                     href={`/practice/${data.pathSlug}/${section.id}`}
                     className={cn(
-                      "group flex items-center gap-3 px-3.5 py-3 sm:px-4",
+                      "group relative flex items-center gap-3 overflow-hidden px-3.5 py-3 sm:px-4",
                       DESK_ROW_SHEEN,
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-violet/35",
                     )}
                   >
-                    <span className="min-w-0 flex-1">
+                    <span
+                      aria-hidden
+                      className="desk-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-xp-bg/0 via-xp-bg/70 to-brand-violet/10 opacity-0 transition-opacity duration-200"
+                    />
+                    <span className="relative z-[1] min-w-0 flex-1">
                       <span className="font-display text-[15px] font-extrabold text-ink">
                         {section.title}
                       </span>
@@ -694,7 +698,7 @@ function DrillInHub({
                           : ""}
                       </span>
                     </span>
-                    <span className="flex flex-none items-center gap-1 text-[13px] font-bold text-ink-fainter transition-colors group-hover:text-ink">
+                    <span className="relative z-[1] flex flex-none items-center gap-1 text-[13px] font-bold text-ink-fainter transition-colors group-hover:text-ink">
                       Continue
                       <ChevronRight
                         size={14}
@@ -1009,14 +1013,18 @@ function PracticeHub({
                   <Link
                     href={`/practice/${path.pathSlug}`}
                     className={cn(
-                      "group flex w-full items-start gap-3 px-3.5 py-3 text-left sm:px-4",
+                      "group relative flex w-full items-start gap-3 overflow-hidden px-3.5 py-3 text-left sm:px-4",
                       DESK_ROW_SHEEN,
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-violet/35",
                     )}
                   >
                     <span
+                      aria-hidden
+                      className="desk-sheen pointer-events-none absolute inset-0 bg-gradient-to-r from-xp-bg/0 via-xp-bg/70 to-brand-violet/10 opacity-0 transition-opacity duration-200"
+                    />
+                    <span
                       className={cn(
-                        "mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-[10px] font-display text-[12.5px] font-extrabold",
+                        "relative z-[1] mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-[10px] font-display text-[12.5px] font-extrabold",
                         isFoundations
                           ? "bg-brand-gradient text-white"
                           : "border border-divider bg-elevated text-ink",
@@ -1024,7 +1032,7 @@ function PracticeHub({
                     >
                       {mark}
                     </span>
-                    <span className="min-w-0 flex-1">
+                    <span className="relative z-[1] min-w-0 flex-1">
                       <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                         <span className="font-display text-[15px] font-extrabold text-ink">
                           {path.title}
@@ -1045,7 +1053,7 @@ function PracticeHub({
                         {path.lessonCount === 1 ? "" : "s"}
                       </span>
                     </span>
-                    <span className="mt-1 flex flex-none items-center gap-0.5 text-[13px] font-bold text-ink-fainter transition-colors group-hover:text-ink">
+                    <span className="relative z-[1] mt-1 flex flex-none items-center gap-0.5 text-[13px] font-bold text-ink-fainter transition-colors group-hover:text-ink">
                       Open path
                       <ChevronRight
                         size={14}

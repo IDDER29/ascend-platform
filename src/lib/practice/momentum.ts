@@ -18,7 +18,11 @@ export function cardsClearedToday(
   now = new Date(),
 ): number {
   const start = startOfLocalDay(now).getTime();
-  const end = start + 86_400_000;
+  const end = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+  ).getTime();
   return sessions.reduce((sum, s) => {
     const t = new Date(s.at).getTime();
     if (Number.isNaN(t) || t < start || t >= end) return sum;

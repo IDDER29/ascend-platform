@@ -33,6 +33,22 @@ it("cardsClearedToday sums totals for sessions on the local calendar day", () =>
   assert.equal(cardsClearedToday(sessions, now), 8);
 });
 
+it("cardsClearedToday uses a DST-safe local midnight boundary", () => {
+  const originalTz = process.env.TZ;
+  process.env.TZ = "America/New_York";
+  try {
+    const now = new Date("2026-03-08T15:00:00");
+    const sessions = [
+      session({ at: "2026-03-08T23:30:00", total: 2 }),
+      // The next local day starts 23 elapsed hours after spring-forward midnight.
+      session({ at: "2026-03-09T00:30:00", total: 7 }),
+    ];
+    assert.equal(cardsClearedToday(sessions, now), 2);
+  } finally {
+    process.env.TZ = originalTz;
+  }
+});
+
 it("sessionsThisWeek counts sessions from local Monday 00:00 through now", () => {
   // 2026-09-25 is a Friday; Monday is 2026-09-21
   const now = new Date("2026-09-25T15:00:00");

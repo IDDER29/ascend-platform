@@ -1,11 +1,12 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export type PageHeaderProps = {
-  /** e.g. "Learn / Curriculum" — accent the last segment with a slash split if needed */
+  /** Optional quiet label above the title (avoid fake Learn/You slash trails on hubs). */
   eyebrow?: string;
   title: string;
-  description?: React.ReactNode;
-  actions?: React.ReactNode;
+  description?: ReactNode;
+  actions?: ReactNode;
   className?: string;
 };
 
@@ -45,8 +46,14 @@ export function PageHeader({ eyebrow, title, description, actions, className }: 
   );
 }
 
-/** Standard content width for hub pages inside AppShell. */
-export const HUB_CONTENT_CLASS = "mx-auto w-full max-w-[1200px]";
+/** Standard content width for AppShell learner hubs (Continue / Practice / Paths / …). */
+export const HUB_CONTENT_CLASS = "mx-auto w-full max-w-[960px]";
 
-/** Standard main padding for hub pages. */
-export const HUB_MAIN_CLASS = "flex-1 px-5 py-8 sm:px-10";
+/**
+ * Alias of `HUB_CONTENT_CLASS` — kept for existing imports (e.g. dashboard).
+ * Prefer `HUB_CONTENT_CLASS` on new pages.
+ */
+export const HUB_NARROW_CLASS = HUB_CONTENT_CLASS;
+
+/** Standard main for hub pages — paper stage vs sidebar `bg-bg`. */
+export const HUB_MAIN_CLASS = "flex-1 bg-paper px-5 py-8 sm:px-10";

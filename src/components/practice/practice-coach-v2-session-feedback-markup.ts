@@ -47,6 +47,6 @@ export const PRACTICE_COACH_V2_SESSION_FEEDBACK_HTML = `<div class="coach-main" 
 <div style="display: flex; flex-direction: column"><h2 id="fb-title" style="margin: 0; font-family: var(--font-bricolage), sans-serif; font-weight: 800; font-size: 22px">Correct</h2><span style="font-size: 13px; color: #3D4A0B">3 in a row</span></div>
 </div>
 <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #2A330A">A bit is one binary digit, so it has exactly two states. Eight bits make a byte.</p>
-<a href="/practicev2/session/wrong" style="display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 16px; background: #16181D; box-shadow: 0 5px 0 #000000; color: #F6F4EE; font-weight: 700; font-size: 17px; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; margin-bottom: 5px">Continue</a>
+<a href="/practicev2/session/flashcard" style="display: flex; align-items: center; justify-content: center; height: 56px; border-radius: 16px; background: #16181D; box-shadow: 0 5px 0 #000000; color: #F6F4EE; font-weight: 700; font-size: 17px; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; margin-bottom: 5px">Continue</a>
 </section>
 </div>`;

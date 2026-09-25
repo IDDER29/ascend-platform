@@ -46,7 +46,7 @@ export const PRACTICE_COACH_V2_SESSION_HTML = `<div class="coach-main" style="pa
 </div>
 <footer style="border-top: 2px solid #E2DED3; background: #FFFFFF; padding: 24px 48px; display: flex; justify-content: center">
 <div style="width: 760px; display: flex; align-items: center; justify-content: space-between; gap: 24px">
-<a href="/practicev2/session/correct" style="display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 22px; border-radius: 16px; border: 2px solid #D5D0C3; color: #4A4E57; font-weight: 600; font-size: 16px; text-decoration: none">Skip
+<a href="/practicev2/session/flashcard" style="display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 22px; border-radius: 16px; border: 2px solid #D5D0C3; color: #4A4E57; font-weight: 600; font-size: 16px; text-decoration: none">Skip
 <kbd style="min-width: 24px; height: 24px; box-sizing: border-box; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #D5D0C3; border-bottom-width: 2px; border-radius: 6px; background: #F6F4EE; font-family: var(--font-plex-mono), monospace; font-size: 12px">S</kbd></a>
 <span style="font-size: 13px; color: #5A5E66">Press 1–4 to choose</span>
 <a href="/practicev2/session/correct" style="display: flex; align-items: center; justify-content: center; gap: 12px; height: 56px; width: 240px; border-radius: 16px; background: #D7F26B; box-shadow: 0 5px 0 #9DB43A; color: #16181D; font-weight: 700; font-size: 17px; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; margin-bottom: 5px">Check

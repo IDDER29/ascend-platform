@@ -52,7 +52,7 @@ export const PRACTICE_COACH_V2_SESSION_CORRECT_HTML = `<div class="coach-main" s
 <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #2A330A; max-width: 460px">A bit is one binary digit, so it has exactly two states. Eight bits make a byte.</p>
 </div>
 </div>
-<a href="/practicev2/session/wrong" style="display: flex; align-items: center; justify-content: center; gap: 12px; height: 56px; width: 220px; flex-shrink: 0; border-radius: 16px; background: #16181D; box-shadow: 0 5px 0 #000000; color: #F6F4EE; font-weight: 700; font-size: 17px; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; margin-bottom: 5px">Continue
+<a href="/practicev2/session/flashcard" style="display: flex; align-items: center; justify-content: center; gap: 12px; height: 56px; width: 220px; flex-shrink: 0; border-radius: 16px; background: #16181D; box-shadow: 0 5px 0 #000000; color: #F6F4EE; font-weight: 700; font-size: 17px; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; margin-bottom: 5px">Continue
 <kbd style="height: 24px; box-sizing: border-box; padding: 0 7px; display: inline-flex; align-items: center; border: 1px solid #4A4E57; border-bottom-width: 2px; border-radius: 6px; background: #2C2F36; font-family: var(--font-plex-mono), monospace; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; color: #F6F4EE">Enter</kbd></a>
 </div>
 </section>

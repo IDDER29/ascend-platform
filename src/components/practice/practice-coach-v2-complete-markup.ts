@@ -100,7 +100,7 @@ export const PRACTICE_COACH_V2_COMPLETE_HTML = `<div class="coach-main" style="p
 </section>
 
 <div style="display: flex; flex-direction: column; gap: 12px">
-<a href="/practicev2/session/wrong" style="display: flex; align-items: center; justify-content: center; gap: 12px; height: 60px; border-radius: 16px; background: #D7F26B; box-shadow: 0 5px 0 #9DB43A; color: #16181D; font-weight: 700; font-size: 17px; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; margin-bottom: 5px">Fix 2 misses now
+<a href="/practicev2" style="display: flex; align-items: center; justify-content: center; gap: 12px; height: 60px; border-radius: 16px; background: #D7F26B; box-shadow: 0 5px 0 #9DB43A; color: #16181D; font-weight: 700; font-size: 17px; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; margin-bottom: 5px">Fix 2 misses now
 <kbd style="height: 24px; box-sizing: border-box; padding: 0 7px; display: inline-flex; align-items: center; border: 1px solid #9DB43A; border-bottom-width: 2px; border-radius: 6px; background: #E8F7A6; font-family: var(--font-plex-mono), monospace; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none">Enter</kbd></a>
 <a href="/practicev2/caught-up" style="display: flex; align-items: center; justify-content: center; height: 52px; border-radius: 14px; border: 2px solid #D5D0C3; color: #16181D; font-weight: 600; font-size: 15px; text-decoration: none">Back to practice</a>
 </div>

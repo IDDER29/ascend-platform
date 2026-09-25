@@ -57,9 +57,9 @@ export const PRACTICE_COACH_V2_SESSION_FLASHCARD_HTML = `<div class="coach-main"
 <div style="width: 760px; display: flex; align-items: center; justify-content: space-between; gap: 24px">
 <span id="grade-label" style="font-size: 16px; font-weight: 600">Did you know it?</span>
 <div role="group" aria-labelledby="grade-label" style="display: flex; gap: 16px">
-<a href="/practicev2" style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 56px; width: 220px; border-radius: 16px; background: #FFFFFF; border: 2px solid #F4B596; box-shadow: 0 5px 0 #F4B596; color: #9A3412; font-weight: 700; font-size: 16px; text-decoration: none; margin-bottom: 5px">Missed it
+<a href="/practicev2/session/wrong" style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 56px; width: 220px; border-radius: 16px; background: #FFFFFF; border: 2px solid #F4B596; box-shadow: 0 5px 0 #F4B596; color: #9A3412; font-weight: 700; font-size: 16px; text-decoration: none; margin-bottom: 5px">Missed it
 <kbd style="width: 24px; height: 24px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #F4B596; border-bottom-width: 2px; border-radius: 6px; background: #FFF4EE; font-family: var(--font-plex-mono), monospace; font-size: 12px; font-weight: 500">1</kbd></a>
-<a href="/practicev2" style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 56px; width: 220px; border-radius: 16px; background: #D7F26B; box-shadow: 0 5px 0 #9DB43A; color: #16181D; font-weight: 700; font-size: 16px; text-decoration: none; margin-bottom: 5px">Got it
+<a href="/practicev2/session/correct" style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 56px; width: 220px; border-radius: 16px; background: #D7F26B; box-shadow: 0 5px 0 #9DB43A; color: #16181D; font-weight: 700; font-size: 16px; text-decoration: none; margin-bottom: 5px">Got it
 <kbd style="width: 24px; height: 24px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #9DB43A; border-bottom-width: 2px; border-radius: 6px; background: #E8F7A6; font-family: var(--font-plex-mono), monospace; font-size: 12px; font-weight: 500">2</kbd></a>
 </div>
 </div>

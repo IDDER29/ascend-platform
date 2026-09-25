@@ -144,7 +144,7 @@ export const PRACTICE_COACH_V2_HTML = `<main class="coach-main" style="padding: 
 <span style="flex-grow: 1; height: 10px; border-radius: 999px; background: #3A3D45"></span>
 </div>
 <div class="coach-due-cta" style="display: flex; align-items: center; gap: 20px; margin-top: 6px; flex-wrap: wrap">
-<a href="/practice?demo=1&amp;view=session" style="display: flex; align-items: center; justify-content: center; gap: 14px; height: 60px; width: 272px; max-width: 100%; border-radius: 16px; background: #D7F26B; box-shadow: 0 5px 0 #9DB43A; color: #16181D; font-weight: 700; font-size: 18px; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none">Start review
+<a href="/practicev2/session" style="display: flex; align-items: center; justify-content: center; gap: 14px; height: 60px; width: 272px; max-width: 100%; border-radius: 16px; background: #D7F26B; box-shadow: 0 5px 0 #9DB43A; color: #16181D; font-weight: 700; font-size: 18px; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none">Start review
 <kbd style="height: 26px; box-sizing: border-box; padding: 0 8px; display: inline-flex; align-items: center; border: 1px solid #9DB43A; border-bottom-width: 2px; border-radius: 6px; background: #E8F7A6; font-family: var(--font-plex-mono), monospace; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; color: #16181D">Enter</kbd></a>
 <div style="display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 1.5; color: #B9BCC4">
 <span>Last time <strong style="color: #F6F4EE; font-weight: 600">5/8</strong></span>
@@ -200,7 +200,7 @@ export const PRACTICE_COACH_V2_HTML = `<main class="coach-main" style="padding: 
 </div>
 <div class="coach-modes-grid" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
 
-<a href="/practice?demo=1&amp;view=session" style="display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 18px; background: #FFFFFF; border: 2px solid #E2DED3; box-shadow: 0 4px 0 #E2DED3; color: #16181D; text-decoration: none">
+<a href="/practicev2/session" style="display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 18px; background: #FFFFFF; border: 2px solid #E2DED3; box-shadow: 0 4px 0 #E2DED3; color: #16181D; text-decoration: none">
 <span style="display: flex; justify-content: space-between; align-items: flex-start">
 <span style="width: 48px; height: 48px; border-radius: 14px; background: #FDE7DA; color: #C2410C; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path></svg></span>
 <span style="padding: 3px 9px; border-radius: 999px; background: #FDE7DA; color: #9A3412; font-size: 12px; font-weight: 600">11 today</span>
@@ -211,7 +211,7 @@ export const PRACTICE_COACH_V2_HTML = `<main class="coach-main" style="padding: 
 </span>
 </a>
 
-<a href="/practice?demo=1&amp;view=session" style="display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 18px; background: #FFFFFF; border: 2px solid #E2DED3; box-shadow: 0 4px 0 #E2DED3; color: #16181D; text-decoration: none">
+<a href="/practicev2/session" style="display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 18px; background: #FFFFFF; border: 2px solid #E2DED3; box-shadow: 0 4px 0 #E2DED3; color: #16181D; text-decoration: none">
 <span style="display: flex; justify-content: space-between; align-items: flex-start">
 <span style="width: 48px; height: 48px; border-radius: 14px; background: #F0F8CF; color: #4D5E0E; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"></path></svg></span>
 <span style="padding: 3px 9px; border-radius: 999px; background: #F0F8CF; color: #4D5E0E; font-size: 12px; font-weight: 600">5 cards</span>
@@ -222,7 +222,7 @@ export const PRACTICE_COACH_V2_HTML = `<main class="coach-main" style="padding: 
 </span>
 </a>
 
-<a href="/practice?demo=1&amp;view=session" style="display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 18px; background: #FFFFFF; border: 2px solid #E2DED3; box-shadow: 0 4px 0 #E2DED3; color: #16181D; text-decoration: none">
+<a href="/practicev2/session" style="display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 18px; background: #FFFFFF; border: 2px solid #E2DED3; box-shadow: 0 4px 0 #E2DED3; color: #16181D; text-decoration: none">
 <span style="display: flex; justify-content: space-between; align-items: flex-start">
 <span style="width: 48px; height: 48px; border-radius: 14px; background: #E3E8FF; color: #1F3BB8; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg></span>
 <span style="padding: 3px 9px; border-radius: 999px; background: #E3E8FF; color: #1F3BB8; font-size: 12px; font-weight: 600">32 cards</span>
@@ -233,7 +233,7 @@ export const PRACTICE_COACH_V2_HTML = `<main class="coach-main" style="padding: 
 </span>
 </a>
 
-<a href="/practice" style="display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 18px; background: #FFFFFF; border: 2px solid #E2DED3; box-shadow: 0 4px 0 #E2DED3; color: #16181D; text-decoration: none">
+<a href="/practicev2/custom" style="display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: 18px; background: #FFFFFF; border: 2px solid #E2DED3; box-shadow: 0 4px 0 #E2DED3; color: #16181D; text-decoration: none">
 <span style="display: flex; justify-content: space-between; align-items: flex-start">
 <span style="width: 48px; height: 48px; border-radius: 14px; background: #ECE9E0; color: #16181D; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>
 <span style="padding: 3px 9px; border-radius: 999px; background: #ECE9E0; color: #4A4E57; font-size: 12px; font-weight: 600">Your pick</span>
@@ -310,14 +310,14 @@ export const PRACTICE_COACH_V2_HTML = `<main class="coach-main" style="padding: 
 <td style="padding: 8px 0; color: #4A4E57">2:13 PM</td>
 <td style="padding: 8px 0"><div aria-hidden="true" style="display: flex; gap: 3px"><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span></div></td>
 <td style="padding: 8px 0; text-align: right; font-family: var(--font-plex-mono), monospace">5/8</td>
-<td style="padding: 8px 0; text-align: right; width: 150px"><a href="/practice?demo=1&amp;view=session" style="display: inline-flex; align-items: center; height: 44px; padding: 0 14px; border-radius: 10px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Retry 3 misses</a></td>
+<td style="padding: 8px 0; text-align: right; width: 150px"><a href="/practicev2/session" style="display: inline-flex; align-items: center; height: 44px; padding: 0 14px; border-radius: 10px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Retry 3 misses</a></td>
 </tr>
 <tr style="border-top: 1px solid #ECE9E0">
 <td style="padding: 8px 0; font-weight: 600">Due cards</td>
 <td style="padding: 8px 0; color: #4A4E57">12:23 PM</td>
 <td style="padding: 8px 0"><div aria-hidden="true" style="display: flex; gap: 3px"><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span></div></td>
 <td style="padding: 8px 0; text-align: right; font-family: var(--font-plex-mono), monospace">5/8</td>
-<td style="padding: 8px 0; text-align: right"><a href="/practice?demo=1&amp;view=session" style="display: inline-flex; align-items: center; height: 44px; padding: 0 14px; border-radius: 10px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Retry 3 misses</a></td>
+<td style="padding: 8px 0; text-align: right"><a href="/practicev2/session" style="display: inline-flex; align-items: center; height: 44px; padding: 0 14px; border-radius: 10px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Retry 3 misses</a></td>
 </tr>
 <tr style="border-top: 1px solid #ECE9E0">
 <td style="padding: 8px 0; font-weight: 600">1 lesson</td>
@@ -338,14 +338,14 @@ export const PRACTICE_COACH_V2_HTML = `<main class="coach-main" style="padding: 
 <td style="padding: 8px 0; color: #4A4E57">2:49 AM</td>
 <td style="padding: 8px 0"><div aria-hidden="true" style="display: flex; gap: 3px"><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span></div></td>
 <td style="padding: 8px 0; text-align: right; font-family: var(--font-plex-mono), monospace">0/2</td>
-<td style="padding: 8px 0; text-align: right"><a href="/practice?demo=1&amp;view=session" style="display: inline-flex; align-items: center; height: 44px; padding: 0 14px; border-radius: 10px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Retry 2 misses</a></td>
+<td style="padding: 8px 0; text-align: right"><a href="/practicev2/session" style="display: inline-flex; align-items: center; height: 44px; padding: 0 14px; border-radius: 10px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Retry 2 misses</a></td>
 </tr>
 <tr style="border-top: 1px solid #ECE9E0">
 <td style="padding: 8px 0; font-weight: 600">Everything unlocked</td>
 <td style="padding: 8px 0; color: #4A4E57">2:44 AM</td>
 <td style="padding: 8px 0"><div aria-hidden="true" style="display: flex; gap: 3px"><span style="width: 8px; height: 18px; border-radius: 2px; background: #2E4BDB"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span><span style="width: 8px; height: 18px; border-radius: 2px; background: #D9622B"></span></div></td>
 <td style="padding: 8px 0; text-align: right; font-family: var(--font-plex-mono), monospace">1/4</td>
-<td style="padding: 8px 0; text-align: right"><a href="/practice?demo=1&amp;view=session" style="display: inline-flex; align-items: center; height: 44px; padding: 0 14px; border-radius: 10px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Retry 3 misses</a></td>
+<td style="padding: 8px 0; text-align: right"><a href="/practicev2/session" style="display: inline-flex; align-items: center; height: 44px; padding: 0 14px; border-radius: 10px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Retry 3 misses</a></td>
 </tr>
 </tbody>
 </table>
@@ -395,7 +395,7 @@ export const PRACTICE_COACH_V2_HTML = `<main class="coach-main" style="padding: 
 <span style="font-weight: 600; color: #16181D">Today</span><span>Sat</span><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span>
 </div>
 </div>
-<a href="/practice" style="display: flex; align-items: center; gap: 6px; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Browse all 32 cards
+<a href="/practicev2/bank" style="display: flex; align-items: center; gap: 6px; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Browse all 32 cards
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
 </section>
 

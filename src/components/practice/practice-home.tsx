@@ -7,7 +7,9 @@ import { PracticeDemoBar } from "@/components/practice/practice-demo-bar";
 import {
   DESK_ROW_SHEEN,
   DESK_STAGE,
+  DESK_STUDY_PUNCH,
   DESK_WASH_HOME,
+  DESK_WASH_QUIET,
 } from "@/components/practice/practice-desk";
 import {
   practiceDemoCards,
@@ -613,34 +615,38 @@ function DrillInHub({
     );
 
     return (
-      <div className="flex min-w-0 flex-col gap-8">
-        <section className="flex flex-col gap-4 border-y border-divider py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex flex-wrap items-baseline gap-x-2">
-              <h2 className="font-display text-[18px] font-extrabold text-ink">
-                Study the whole path
-              </h2>
-              {dueCount > 0 ? (
-                <span className="font-mono text-[11px] tabular-nums text-ink-fainter">
-                  {dueCount} due
-                </span>
-              ) : null}
+      <div className="flex min-w-0 flex-col gap-6">
+        <section className={cn(DESK_STUDY_PUNCH, DESK_WASH_QUIET)}>
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-baseline gap-x-2">
+                <h2 className="font-display text-[18px] font-extrabold text-ink">
+                  Study the whole path
+                </h2>
+                {dueCount > 0 ? (
+                  <span className="font-mono text-[11px] tabular-nums text-ink-fainter">
+                    {dueCount} due
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-1 text-[13.5px] text-ink-secondary">
+                Due cards in this path come first, then unlocked cards are
+                shuffled.
+              </p>
             </div>
-            <p className="mt-1 text-[13.5px] text-ink-secondary">
-              Due cards in this path come first, then unlocked cards are
-              shuffled.
-            </p>
+            <Button
+              size="md"
+              className="w-full flex-none sm:w-auto"
+              onClick={() =>
+                onStart({ type: "path", pathSlug: data.pathSlug })
+              }
+              disabled={questionCount === 0}
+            >
+              {questionCount > 0
+                ? `Study path · ${questionCount}`
+                : "No cards unlocked"}
+            </Button>
           </div>
-          <Button
-            onClick={() =>
-              onStart({ type: "path", pathSlug: data.pathSlug })
-            }
-            disabled={questionCount === 0}
-          >
-            {questionCount > 0
-              ? `Study path · ${questionCount}`
-              : "No cards unlocked"}
-          </Button>
         </section>
 
         <section>
@@ -663,7 +669,11 @@ function DrillInHub({
                 >
                   <Link
                     href={`/practice/${data.pathSlug}/${section.id}`}
-                    className="group flex items-center gap-4 px-4 py-4 transition-colors hover:bg-elevated/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-violet/35"
+                    className={cn(
+                      "group flex items-center gap-3 px-3.5 py-3 sm:px-4",
+                      DESK_ROW_SHEEN,
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-violet/35",
+                    )}
                   >
                     <span className="min-w-0 flex-1">
                       <span className="font-display text-[15px] font-extrabold text-ink">
@@ -708,37 +718,41 @@ function DrillInHub({
   );
 
   return (
-    <div className="flex min-w-0 flex-col gap-8">
-      <section className="flex flex-col gap-4 border-y border-divider py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex flex-wrap items-baseline gap-x-2">
-            <h2 className="font-display text-[18px] font-extrabold text-ink">
-              Study this branch
-            </h2>
-            {sectionDueCount > 0 ? (
-              <span className="font-mono text-[11px] tabular-nums text-ink-fainter">
-                {sectionDueCount} due
-              </span>
-            ) : null}
+    <div className="flex min-w-0 flex-col gap-6">
+      <section className={cn(DESK_STUDY_PUNCH, DESK_WASH_QUIET)}>
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <h2 className="font-display text-[18px] font-extrabold text-ink">
+                Study this branch
+              </h2>
+              {sectionDueCount > 0 ? (
+                <span className="font-mono text-[11px] tabular-nums text-ink-fainter">
+                  {sectionDueCount} due
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1 text-[13.5px] text-ink-secondary">
+              Practice unlocked cards from every lesson in this section.
+            </p>
           </div>
-          <p className="mt-1 text-[13.5px] text-ink-secondary">
-            Practice unlocked cards from every lesson in this section.
-          </p>
+          <Button
+            size="md"
+            className="w-full flex-none sm:w-auto"
+            onClick={() =>
+              onStart({
+                type: "section",
+                pathSlug: data.pathSlug,
+                sectionId: data.sectionId,
+              })
+            }
+            disabled={data.questionCount === 0}
+          >
+            {data.questionCount > 0
+              ? `Study branch · ${data.questionCount}`
+              : "No cards unlocked"}
+          </Button>
         </div>
-        <Button
-          onClick={() =>
-            onStart({
-              type: "section",
-              pathSlug: data.pathSlug,
-              sectionId: data.sectionId,
-            })
-          }
-          disabled={data.questionCount === 0}
-        >
-          {data.questionCount > 0
-            ? `Study branch · ${data.questionCount}`
-            : "No cards unlocked"}
-        </Button>
       </section>
 
       <section>
@@ -758,7 +772,7 @@ function DrillInHub({
               <li
                 key={lesson.key}
                 className={cn(
-                  "flex items-center gap-4 px-4 py-4",
+                  "flex items-center gap-3 px-3.5 py-3 sm:px-4",
                   index > 0 && "border-t border-divider",
                 )}
               >

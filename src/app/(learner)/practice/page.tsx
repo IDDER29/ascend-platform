@@ -74,7 +74,7 @@ export default async function PracticePage({ searchParams }: PracticePageProps) 
           description={
             demoOn
               ? "Demo layouts with example questions — not real progress."
-              : "Retrieve it, then check — misses come back on a schedule."
+              : "Mixed recall—choices, flashcards, cloze, and short answers—in one shuffled queue. Misses come back on a schedule."
           }
         />
         <Suspense fallback={null}>

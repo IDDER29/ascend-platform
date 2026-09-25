@@ -1,7 +1,7 @@
 # Practice active recall â€” cloze + typed (slice 2)
 
 **Date:** 2026-09-25  
-**Status:** Implementing  
+**Status:** Done  
 **Route:** `/practice`  
 **Builds on:** `2026-09-25-practice-flashcards-active-recall-design.md`  
 **Chosen approach:** Shared produce shell + `kind: "cloze" | "typed"`; hybrid auto-check then Again/Hard on miss  
@@ -90,17 +90,17 @@ MCQ + flashcard panels unchanged. `buildSession` already shuffles final order â€
 | Slice | Status |
 |-------|--------|
 | Flashcards | Done |
-| **Cloze + typed** | **This** |
+| **Cloze + typed** | Done |
 | Explain | Later |
 
 ## Success criteria
 
-- [ ] `typed` and `cloze` in bank; unlock rules unchanged  
-- [ ] Hybrid grade path works; normalize unit-tested  
-- [ ] Mixed shuffled sessions include new kinds  
-- [ ] Miss never offers Good after reveal  
-- [ ] Demo shows both formats  
-- [ ] Phosphor; no mastery theater  
+- [x] `typed` and `cloze` in bank; unlock rules unchanged  
+- [x] Hybrid grade path works; normalize unit-tested  
+- [x] Mixed shuffled sessions include new kinds  
+- [x] Miss never offers Good after reveal  
+- [x] Demo shows both formats  
+- [x] Phosphor; no mastery theater  
 
 ## Out of scope
 

@@ -119,6 +119,8 @@ function sampleSession(): PracticeItem[] {
   const prefer = [
     "bits-01",
     "bits-fc-01",
+    "bits-typed-01",
+    "bits-cloze-01",
     "bits-02",
     "bool-01",
     "ptr-01",

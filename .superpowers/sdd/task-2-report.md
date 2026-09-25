@@ -1,28 +1,41 @@
-# Task 2 Report: Practice Drill-in Pages
+# Task 2 Report: Route + renderer + home links
 
-## Changes
-- Added path and section server routes with linked breadcrumbs and `notFound()`.
-- Added tested drill-in models with section/lesson unlocked-card counts.
-- Reused the full session machine through exported `PracticeSessionHost`.
-- Added path, section, and single-lesson scoped start actions.
-- Kept Phosphor list surfaces, 960px hub width, and Continue row hover grammar.
-- Centralized mirrored user progress, history, cards, and review-link loading.
+## Status
+
+**Complete.** `/practicev2/foundations` serves the Foundations path desk inside the learner AppShell with cream shell matching `/practicev2`.
+
+## Commits
+
+- `d3b8603` — `feat(practicev2): add Foundations path route and wire home links`
+
+Files in commit:
+
+| File | Action |
+|------|--------|
+| `src/components/practice/practice-coach-v2-foundations.tsx` | Created — client renderer mirroring `PracticeCoachV2` |
+| `src/app/(learner)/practicev2/foundations/page.tsx` | Created — metadata + cream `main` wrapper |
+| `src/components/practice/practice-coach-v2-markup.ts` | Added (untracked) with 7× `href="/practicev2/foundations"` |
+
+Note: `practice-coach-v2-markup.ts` was previously untracked on this branch; the commit includes the full home extract plus href wiring (not href-only diff). `/practice/foundations` production route untouched.
 
 ## Verification
-- TDD red observed for missing drill-in model; green after implementation.
-- `npx --yes tsx --test src/lib/practice/*.test.ts` — 30 passed.
-- `npx tsc --noEmit` — exit 0.
-- Targeted ESLint and scoped `git diff --check` — exit 0.
 
-## Commit
-- `668c48c feat(practice): path and section drill-in pages`
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/practicev2/foundations
+# → 200
 
-## Note
-- Unrelated pre-existing worktree changes were not staged or committed.
+curl -s http://localhost:3000/practicev2/foundations | grep -o "Foundations" | head -3
+# → Foundations (×3)
+```
 
-## Important review finding follow-up
-- Added question IDs to path sections and section lessons so due cards can be intersected with each drill-in scope.
-- Reused the live `dueQueueIds` result after server-loaded cards are mirrored locally, preserving the new-card daily limit.
-- Added quiet mono `N due` labels to whole-path/branch actions and section/lesson rows only when the count is positive.
-- Added regression coverage for scope question IDs and due-ID intersection.
-- Verification: 31 practice tests passed; TypeScript, targeted ESLint, and scoped diff checks passed.
+## Self-review
+
+- **Pattern parity:** Renderer matches `practice-coach-v2.tsx` (`style` id + scoped wrapper class + `dangerouslySetInnerHTML`).
+- **Shell parity:** Page uses same `flex-1 bg-[#F6F4EE] px-5 py-8 sm:px-10` and `max-w-[1100px]` as `practicev2/page.tsx`.
+- **Links:** All 7 home Foundations targets (Open path + 6 lesson chips) point to `/practicev2/foundations`; no other hrefs in markup file were changed in this task.
+- **Skipped (optional):** `sc-camel-view-box` → `viewBox` in foundations markup — deferred to Task 3 per brief.
+- **Follow-up (out of scope):** `/practicev2` home page (`page.tsx`, `practice-coach-v2.tsx`) remains untracked; user may commit separately when ready.
+
+## Concerns
+
+- None blocking. Home at `/practicev2` still requires committing its page/component if not already on branch.

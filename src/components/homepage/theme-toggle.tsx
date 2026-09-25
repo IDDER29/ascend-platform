@@ -1,40 +1,103 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const STORAGE_KEY = "ascend-theme";
 
-function applyTheme(mode: "light" | "dark") {
+export type ThemeMode = "light" | "dark";
+export type ThemePreference = "light" | "dark" | "system";
+
+const themeListeners = new Set<() => void>();
+
+function subscribeTheme(onStoreChange: () => void) {
+  themeListeners.add(onStoreChange);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY || event.key === null) onStoreChange();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    themeListeners.delete(onStoreChange);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function systemMode(): ThemeMode {
+  try {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function readTheme(): ThemeMode {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === "dark" || stored === "light") return stored;
+    return systemMode();
+  } catch {
+    return "light";
+  }
+}
+
+function applyTheme(mode: ThemeMode) {
   document.documentElement.classList.toggle("dark", mode === "dark");
 }
+
+function notifyTheme() {
+  themeListeners.forEach((listener) => listener());
+}
+
+function writeTheme(mode: ThemeMode) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, mode);
+  } catch {
+    // ignore
+  }
+  applyTheme(mode);
+  notifyTheme();
+}
+
+/** Stored preference: explicit light/dark, or system (no key). */
+export function getThemePreference(): ThemePreference {
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === "dark" || stored === "light") return stored;
+    return "system";
+  } catch {
+    return "system";
+  }
+}
+
+/** Apply Light / Dark / System — same storage as sidebar ThemeToggle. */
+export function setThemePreference(pref: ThemePreference) {
+  if (pref === "system") {
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    applyTheme(systemMode());
+    notifyTheme();
+    return;
+  }
+  writeTheme(pref);
+}
+
+const emptySubscribe = () => () => {};
 
 /**
  * Light / dark toggle — persists in localStorage, syncs the `dark` class on <html>.
  */
 export function ThemeToggle({ className }: { className?: string }) {
-  const [mode, setMode] = useState<"light" | "dark">("light");
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    const next =
-      stored === "dark" || stored === "light"
-        ? stored
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-    setMode(next);
-    applyTheme(next);
-    setReady(true);
-  }, []);
+  const mode = useSyncExternalStore(subscribeTheme, readTheme, () => "light");
+  const ready = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   function toggle() {
-    const next = mode === "dark" ? "light" : "dark";
-    setMode(next);
-    applyTheme(next);
-    window.localStorage.setItem(STORAGE_KEY, next);
+    writeTheme(mode === "dark" ? "light" : "dark");
   }
 
   return (

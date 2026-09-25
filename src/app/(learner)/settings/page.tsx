@@ -1,13 +1,28 @@
 import { getCurrentUser } from "@/lib/auth/auth";
 import { getProfileSettings } from "@/lib/progress/queries";
-import { SettingsClient } from "./settings-client";
+import { SettingsSectionHeader } from "@/components/settings/settings-shell";
+import { ProfileSettingsForm } from "@/components/settings/profile-settings-form";
 
 export const metadata = {
-  title: "Settings — Ascend",
+  title: "Public profile — Settings — Ascend",
 };
 
-export default async function SettingsPage() {
+export default async function SettingsProfilePage() {
   const user = await getCurrentUser();
-  const profile = user ? await getProfileSettings(user.id) : null;
-  return <SettingsClient initial={profile} signedIn={Boolean(user)} />;
+  const profile = user ? await getProfileSettings(user.id).catch(() => null) : null;
+
+  return (
+    <>
+      <SettingsSectionHeader
+        title="Public profile"
+        description="How you appear on Ascend. Learning stays on Continue."
+      />
+      <ProfileSettingsForm
+        initialName={profile?.name ?? ""}
+        initialUsername={profile?.username ?? ""}
+        initialBio={profile?.bio ?? ""}
+        signedIn={Boolean(user)}
+      />
+    </>
+  );
 }

@@ -105,7 +105,6 @@ export default function BookmarksPage() {
     <main className={HUB_MAIN_CLASS}>
       <div className={HUB_CONTENT_CLASS}>
         <PageHeader
-          eyebrow="You / Bookmarks"
           title="Bookmarks"
           description="Saved lessons and snippets — not wired to a database yet. Removals only last this session."
           actions={
@@ -138,7 +137,7 @@ export default function BookmarksPage() {
             <p className="text-[13px] text-ink-muted">
               {items.length === 0
                 ? "Bookmarks aren't saved to an account yet. When they are, lessons and snippets you pin will show up here."
-                : `No ${tab}s saved yet — bookmark one from a lesson, resource, or the Playground.`}
+                : `No ${tab}s saved yet — bookmark one from a lesson or resource.`}
             </p>
           </div>
         ) : (

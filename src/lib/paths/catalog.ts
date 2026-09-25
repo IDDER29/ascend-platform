@@ -1,6 +1,11 @@
 import { getAllLessons } from "@/lib/content/lessons";
 import { LEVELS, type LevelId } from "@/lib/content/schema";
 import { FIRST_LESSON_HREF } from "@/lib/routes";
+import { lessonHref } from "@/lib/paths/lesson-urls";
+import {
+  foundationsItemRole,
+  foundationsLiveItems,
+} from "@/lib/paths/foundations-outline";
 
 export type PathStatus = "live" | "soon";
 
@@ -38,12 +43,12 @@ export const PATHS: PathDef[] = [
     status: "live",
     eyebrow: "Foundations",
     title: "Foundations",
-    body: "Hands-on first principles — how a bit becomes a decision, and what you'll lean on before systems paths.",
+    body: "This is where it all begins! A hands-on introduction to the essential ideas you'll need to understand real, working machines — bits, logic, and how decisions get made in hardware. You'll learn what systems programmers actually lean on, and the foundations you'll need for later paths.",
     courses: [
       {
         id: "foundations-course",
         title: "Foundations",
-        body: "Bits, logic, and the groundwork every systems path builds on.",
+        body: "This is where it all begins! A hands-on introduction to bits, logic, and first principles — the groundwork every systems path builds on.",
         levelId: "level-00-bits-logic",
       },
     ],
@@ -54,7 +59,7 @@ export const PATHS: PathDef[] = [
     status: "soon",
     eyebrow: "Foundations",
     title: "Python Foundations",
-    body: "The Python on-ramp for applied AI — language basics you'll need before RAG, agents, and LLM apps.",
+    body: "This course is the Python on-ramp for applied AI. You'll learn language basics, tooling, and project habits in the order shown — everything you need before RAG, agents, and LLM apps, without wandering the whole Python universe first.",
     courses: [
       {
         id: "python-language",
@@ -78,7 +83,7 @@ export const PATHS: PathDef[] = [
     status: "live",
     eyebrow: "Path",
     title: "Systems Programmer",
-    body: "Understand the machine and write C that touches it — through systems software and a working shell.",
+    body: "This path takes you through Ascend's systems curriculum. Take the courses in the order shown: how the machine runs, how C touches hardware, how the OS keeps it alive — then prove it with Shellforge. You'll learn everything you need to understand the machine end-to-end and write software that meets it.",
     requiresLabel: "Requires Foundations",
     requiresSlug: "foundations",
     courses: [
@@ -115,7 +120,7 @@ export const PATHS: PathDef[] = [
     status: "soon",
     eyebrow: "Path",
     title: "Linux Engineer",
-    body: "From distro and shell to VMs and containers — run and ship real Linux systems bone to bone.",
+    body: "This path takes you from living on a distro to shipping real systems. Work through the courses in order: Linux fundamentals, virtual machines, containers & Docker, then bone-to-bone projects. You'll learn to run, isolate, and operate Linux systems the way practitioners actually do.",
     requiresLabel: "Requires Foundations",
     requiresSlug: "foundations",
     courses: [
@@ -155,7 +160,7 @@ export const PATHS: PathDef[] = [
     status: "soon",
     eyebrow: "Path",
     title: "Network Engineer",
-    body: "How machines talk — protocols, stacks, and the paths packets take.",
+    body: "This path takes you through how machines talk. Follow the courses in order: network foundations, core protocols, then operating networks. You'll learn what packets are, how stacks and tools reveal them, and how to change networks without flying blind.",
     requiresLabel: "Requires Foundations",
     requiresSlug: "foundations",
     courses: [
@@ -188,7 +193,7 @@ export const PATHS: PathDef[] = [
     status: "soon",
     eyebrow: "Path",
     title: "AI Engineer",
-    body: "Build with LLMs — RAG, agents, contract decoding, and applied AI systems.",
+    body: "This path takes you through applied LLM systems. Take the courses in order: LLM applications, RAG, agents, then contracts & decoding. You'll learn to build grounded, tool-using AI apps — from first API call to structured outputs you can trust.",
     requiresLabel: "Requires Python Foundations",
     requiresSlug: "python-foundations",
     courses: [
@@ -269,6 +274,96 @@ export function pathOutlineMeta(path: PathDef): string {
   return bits.join(" · ");
 }
 
+/** Per-course lines for catalog cards (title + lesson count when known). */
+export function pathCourseSummaries(
+  path: PathDef,
+): { title: string; lessonsLabel: string | null }[] {
+  return path.courses.map((course) => {
+    const n = courseLessonCount(course);
+    return {
+      title: course.title,
+      lessonsLabel:
+        n != null ? `${n} lesson${n === 1 ? "" : "s"}` : null,
+    };
+  });
+}
+
+/** Type + size line for catalog cards: "Course · 6 lessons" / "Path · 4 courses". */
+export function pathTypeMeta(path: PathDef): {
+  typeLabel: string;
+  sizeLabel: string;
+} {
+  const courseN = path.courses.length;
+  const isCourse = courseN <= 1;
+  const typeLabel = isCourse ? "Course" : "Path";
+
+  const lessons = path.courses.reduce((sum, course) => {
+    const count = courseLessonCount(course);
+    return count != null ? sum + count : sum;
+  }, 0);
+
+  if (isCourse) {
+    return {
+      typeLabel,
+      sizeLabel:
+        lessons > 0
+          ? `${lessons} lesson${lessons === 1 ? "" : "s"}`
+          : "1 course",
+    };
+  }
+
+  return {
+    typeLabel,
+    sizeLabel: `${courseN} course${courseN === 1 ? "" : "s"}`,
+  };
+}
+
+const PATH_MARKS: Record<string, string> = {
+  foundations: "F",
+  "python-foundations": "Py",
+  "systems-programmer": "SP",
+  "linux-engineer": "Lx",
+  "network-engineer": "Net",
+  "ai-engineer": "AI",
+};
+
+/** Short mark for path identity circles. */
+export function pathMark(path: PathDef): string {
+  return PATH_MARKS[path.slug] ?? path.title.slice(0, 2).toUpperCase();
+}
+
+/**
+ * Progress 0–1 for live paths with curriculum levels (and href capstones).
+ * `null` = soon / not measurable (no progress ring fill).
+ * Href-only courses (e.g. Shellforge) count as 1 unit; treated incomplete
+ * until the learner has any completion on that path’s levels *and* we can’t
+ * prove the capstone — so they hold the fraction below 1 when levels are done.
+ */
+export function pathProgressFraction(
+  path: PathDef,
+  completed: ReadonlyArray<{ level: string; slug: string }>,
+): number | null {
+  if (path.status !== "live") return null;
+  const levelIds = path.courses
+    .map((c) => c.levelId)
+    .filter((id): id is LevelId => Boolean(id));
+  const hrefOnly = path.courses.filter((c) => !c.levelId && c.href);
+
+  const lessons = getAllLessons().filter((l) =>
+    levelIds.includes(l.meta.level as LevelId),
+  );
+  const total = lessons.length + hrefOnly.length;
+  if (total === 0) return null;
+
+  const done = new Set(completed.map((c) => `${c.level}/${c.slug}`));
+  const lessonDone = lessons.filter((l) =>
+    done.has(`${l.meta.level}/${l.meta.slug}`),
+  ).length;
+  // Capstones without lesson_progress stay incomplete (never inflate to 100%).
+  const hrefDone = 0;
+  return (lessonDone + hrefDone) / total;
+}
+
 function lessonsForLevel(levelId: LevelId) {
   return getAllLessons()
     .filter((l) => l.meta.level === levelId)
@@ -278,7 +373,7 @@ function lessonsForLevel(levelId: LevelId) {
 export function firstLessonHrefForLevel(levelId: LevelId): string {
   const first = lessonsForLevel(levelId)[0];
   if (!first) return FIRST_LESSON_HREF;
-  return `/curriculum/${first.meta.level}/${first.meta.slug}`;
+  return lessonHref(first.meta.level, first.meta.slug);
 }
 
 export function courseLessonCount(course: PathCourse): number | null {
@@ -291,6 +386,28 @@ export function courseProjectCount(course: PathCourse): number | null {
   if (course.href === "/projects/shellforge") return 1;
   if (course.plannedProjects != null) return course.plannedProjects;
   return null;
+}
+
+/** Lesson + project totals for path progress (Odin-style skills block). */
+export function pathSkillsCounts(path: PathDef): {
+  lessons: number;
+  projects: number;
+} {
+  if (path.slug === "foundations") {
+    const items = foundationsLiveItems();
+    return {
+      lessons: items.filter((i) => foundationsItemRole(i) === "lesson").length,
+      projects: items.filter((i) => foundationsItemRole(i) === "project").length,
+    };
+  }
+
+  let lessons = 0;
+  let projects = 0;
+  for (const course of path.courses) {
+    lessons += courseLessonCount(course) ?? 0;
+    projects += courseProjectCount(course) ?? 0;
+  }
+  return { lessons, projects };
 }
 
 export function courseOpenHref(course: PathCourse): string | null {
@@ -307,6 +424,61 @@ export function pathSelectHref(path: PathDef): string | null {
     if (href) return href;
   }
   return null;
+}
+
+/**
+ * Next incomplete lesson in this path (course order).
+ * If all done, last lesson in the path. Used by Continue.
+ */
+export function pathContinueHref(
+  path: PathDef,
+  completed: ReadonlyArray<{ level: string; slug: string }>,
+): string | null {
+  if (path.status !== "live") return null;
+
+  const done = new Set(completed.map((c) => `${c.level}/${c.slug}`));
+  let lastHref: string | null = null;
+
+  for (const course of path.courses) {
+    if (!course.levelId) {
+      const open = courseOpenHref(course);
+      if (open) lastHref = open;
+      continue;
+    }
+
+    const lessons = lessonsForLevel(course.levelId);
+    for (const lesson of lessons) {
+      const key = `${lesson.meta.level}/${lesson.meta.slug}`;
+      const href = lessonHref(lesson.meta.level, lesson.meta.slug);
+      lastHref = href;
+      if (!done.has(key)) return href;
+    }
+  }
+
+  return lastHref ?? pathSelectHref(path);
+}
+
+/** True when the learner has completed any lesson in this path. */
+export function pathHasProgress(
+  path: PathDef,
+  completed: ReadonlyArray<{ level: string; slug: string }>,
+): boolean {
+  const fraction = pathProgressFraction(path, completed);
+  return fraction != null && fraction > 0;
+}
+
+/**
+ * Engaged = selected this path, or already has lesson progress on it.
+ * Catalog primary CTA: Continue when engaged, Select otherwise.
+ */
+export function pathIsEngaged(
+  path: PathDef,
+  selectedSlug: string | null,
+  completed: ReadonlyArray<{ level: string; slug: string }>,
+): boolean {
+  if (path.status !== "live") return false;
+  if (selectedSlug === path.slug) return true;
+  return pathHasProgress(path, completed);
 }
 
 export function pathSelectHrefWithContinue(

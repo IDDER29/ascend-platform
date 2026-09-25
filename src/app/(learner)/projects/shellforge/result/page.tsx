@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Check, X, MessageSquare, GitBranch, RefreshCw, BookOpen, Trophy } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { HUB_CONTENT_CLASS, HUB_MAIN_CLASS } from "@/components/ui/page-header";
 import { PeerSolutions } from "@/components/projects/peer-solutions";
 import { cn } from "@/lib/cn";
 
@@ -135,8 +136,8 @@ export default async function ShellforgeResultPage({
   const score = passed ? 90 : 68;
 
   return (
-        <main className="flex-1 px-5 py-8 sm:px-10">
-          <div className="mx-auto w-full max-w-[1160px]">
+        <main className={HUB_MAIN_CLASS}>
+          <div className={HUB_CONTENT_CLASS}>
             <div className="mb-4.5 font-mono text-xs text-ink-fainter">
               <Link href="/curriculum" className="hover:text-ink-secondary">Curriculum</Link>{" "}
               <span className="text-[#C6C1D4]">/</span> Level 03{" "}

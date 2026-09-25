@@ -1,16 +1,20 @@
-import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth/auth";
+import { listCompletedLessons } from "@/lib/progress/queries";
 import {
-  getFoundationPaths,
-  getRolePaths,
+  PATHS,
+  getPathBySlug,
+  pathContinueHref,
   pathHref,
-  pathOutlineMeta,
-  pathSelectHref,
+  pathIsEngaged,
+  pathMark,
+  pathProgressFraction,
+  pathTypeMeta,
 } from "@/lib/paths/catalog";
+import { getSelectedPathSlug } from "@/lib/paths/selected-path";
 import {
-  PathFoundationTile,
-  PathRoleRow,
+  PathActionCard,
+  PathFeaturedStart,
 } from "@/components/paths/path-catalog";
-import { Button } from "@/components/ui/button";
 import {
   HUB_CONTENT_CLASS,
   HUB_MAIN_CLASS,
@@ -20,100 +24,106 @@ import {
 export const metadata = {
   title: "All paths — Ascend",
   description:
-    "Start with the right foundations, then choose the role you're training for.",
+    "Start with Foundations if you're new, or choose any path you want to train on.",
   robots: { index: false },
 };
 
-export default function PathsPage() {
-  const foundations = getFoundationPaths();
-  const roles = getRolePaths();
-  const liveFoundations = foundations.find((p) => p.status === "live");
-  const startHref =
-    (liveFoundations && pathSelectHref(liveFoundations)) ??
+export default async function PathsPage() {
+  const foundations = getPathBySlug("foundations");
+  const viewHref = pathHref("foundations");
+  const foundationsMeta = foundations ? pathTypeMeta(foundations) : null;
+
+  let completed: { level: string; slug: string }[] = [];
+  const selectedSlug = await getSelectedPathSlug();
+
+  const user = await getCurrentUser();
+  if (user) {
+    try {
+      completed = await listCompletedLessons(user.id);
+    } catch {
+      // db unavailable — empty rings / select only
+    }
+  }
+
+  const foundationsProgress = foundations
+    ? pathProgressFraction(foundations, completed)
+    : null;
+  const foundationsEngaged = foundations
+    ? pathIsEngaged(foundations, selectedSlug, completed)
+    : false;
+  const foundationsContinueHref =
+    (foundations && pathContinueHref(foundations, completed)) ??
     pathHref("foundations");
+
+  const choosePaths = PATHS.filter((p) => p.slug !== "foundations").sort(
+    (a, b) => {
+      if (a.status === b.status) return 0;
+      return a.status === "live" ? -1 : 1;
+    },
+  );
 
   return (
     <main className={HUB_MAIN_CLASS}>
       <div className={HUB_CONTENT_CLASS}>
         <PageHeader
-          eyebrow="Learn / Paths"
           title="All paths"
-          description="Start with the right foundations, then choose the role you're training for."
-          actions={
-            <Button href={startHref} size="md">
-              Start Foundations
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
-            </Button>
-          }
+          description="Pick a track to train on."
         />
 
-        <section className="mb-12">
-          <h2 className="mb-4 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-fainter">
-            Start here
-          </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {foundations.map((path) => (
-              <PathFoundationTile
-                key={path.slug}
-                title={path.title}
-                body={path.body}
-                href={pathHref(path.slug)}
-                meta={pathOutlineMeta(path)}
-                soon={path.status === "soon"}
-              />
-            ))}
+        {foundations && foundations.status === "live" && foundationsMeta ? (
+          <div className="mb-10 sm:mb-12">
+            <PathFeaturedStart
+              title={foundations.title}
+              body={foundations.body}
+              typeLabel={foundationsMeta.typeLabel}
+              courseCountLabel={foundationsMeta.sizeLabel}
+              mark={pathMark(foundations)}
+              slug={foundations.slug}
+              progress={foundationsProgress}
+              gradientId="path-ring-featured-foundations"
+              engaged={foundationsEngaged}
+              continueHref={foundationsContinueHref}
+              viewHref={viewHref}
+            />
           </div>
-        </section>
+        ) : null}
 
         <section>
-          <div className="mb-2">
-            <h2 className="font-mono text-[12px] uppercase tracking-[0.14em] text-ink-fainter">
+          <div className="mb-4">
+            <h2 className="font-display text-xl font-extrabold tracking-tight text-ink sm:text-2xl">
               Then choose a learning path
             </h2>
             <p className="mt-1.5 max-w-[54ch] text-[13px] text-ink-fainter">
-              Each path is a role you can train toward.
+              Each path is a role you can train toward. Take courses in order.
             </p>
           </div>
-          <div className="mt-2 border-t border-divider">
-            {roles.map((path) => (
-              <PathRoleRow
-                key={path.slug}
-                title={path.title}
-                body={path.body}
-                href={pathHref(path.slug)}
-                meta={pathOutlineMeta(path)}
-                soon={path.status === "soon"}
-              />
-            ))}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {choosePaths.map((path) => {
+              const progress = pathProgressFraction(path, completed);
+              const meta = pathTypeMeta(path);
+              const engaged = pathIsEngaged(path, selectedSlug, completed);
+              const primaryHref = pathContinueHref(path, completed);
+              return (
+                <PathActionCard
+                  key={path.slug}
+                  title={path.title}
+                  body={path.body}
+                  typeLabel={meta.typeLabel}
+                  courseCountLabel={meta.sizeLabel}
+                  mark={pathMark(path)}
+                  slug={path.slug}
+                  progress={progress}
+                  gradientId={`path-ring-${path.slug}`}
+                  soon={path.status === "soon"}
+                  engaged={engaged}
+                  continueHref={primaryHref}
+                  viewHref={pathHref(path.slug)}
+                />
+              );
+            })}
           </div>
         </section>
-
-        <aside className="mt-14 max-w-[54ch] border-t border-divider pt-8">
-          <p className="text-[14px] leading-relaxed text-ink-secondary">
-            New here? Start with{" "}
-            <Link
-              href={pathHref("foundations")}
-              className="font-medium text-brand-violet hover:underline"
-            >
-              Foundations
-            </Link>
-            — the shared on-ramp for systems paths — then pick the role you&apos;re
-            training for.
-          </p>
-        </aside>
       </div>
     </main>
   );

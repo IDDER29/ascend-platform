@@ -132,7 +132,7 @@
   /* Fonts */
   --font-display: var(--font-bricolage), sans-serif;
   --font-sans: var(--font-hanken), sans-serif;
-  --font-mono: var(--font-space-mono), monospace;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
   /* Brand — Phosphor (no purple) */
   --color-brand-violet: var(--brand-violet);

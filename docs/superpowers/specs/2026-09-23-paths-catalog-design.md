@@ -30,13 +30,15 @@
 
 ## Page surfaces
 
-### `/paths` (catalog) — Layout A
+### `/paths` (catalog) — Layout C (current)
 
-1. Header: **All paths** + short thesis  
-2. Section **Start here** — Foundations + Python Foundations as **2 compact side-by-side tiles** (whole tile clickable)  
-3. Section **Then choose a learning path** — four **full-width role rows** (title + short body + status; whole row clickable; no fat bordered card corridor)  
-4. Live rows stronger; soon rows quieter + “Coming soon”  
-5. Links → `/paths/[slug]`
+See **`docs/superpowers/specs/2026-09-23-paths-catalog-layout-c-design.md`**.
+
+1. Header + short thesis  
+2. **Featured Foundations** — Start + Explore (first move for new students)  
+3. **All paths** — equal tiles for all six paths (Foundations included)  
+4. Tile → detail; button → Start / Preview  
+5. No instructional “how to choose” band; Foundations not demoted to chips
 
 ### `/paths/[slug]` (detail)
 
@@ -58,23 +60,23 @@
 
 ## Copy (catalog)
 
-| Card | Body (locked) |
-|------|----------------|
-| Foundations | Hands-on first principles — how a bit becomes a decision, and what you'll lean on before systems paths. |
-| Python Foundations | The Python on-ramp for applied AI — language basics you'll need before RAG, agents, and LLM apps. |
-| Systems Programmer | Understand the machine and write C that touches it — through systems software and a working shell. |
-| Linux Engineer | From distro and shell to VMs and containers — run and ship real Linux systems bone to bone. |
-| Network Engineer | How machines talk — protocols, stacks, and the paths packets take. |
-| AI Engineer | Build with LLMs — RAG, agents, contract decoding, and applied AI systems. |
+Longer Odin-style bodies live in `src/lib/paths/catalog.ts` (`PATHS[].body`). Pattern: what the path is → take courses in order → outcome. Catalog cards show up to ~5 lines (`line-clamp-5`).
 
-Header lead: *Start with the right foundations, then choose the role you're training for.*
+| Card | Intent |
+|------|--------|
+| Foundations | Where it all begins — hands-on bits/logic; foundations for later paths |
+| Python Foundations | Python on-ramp for AI; language + tooling before RAG/agents |
+| Systems Programmer | Full systems curriculum in order → Shellforge |
+| Linux Engineer | Distro → VMs → containers → bone-to-bone ops |
+| Network Engineer | Packets → protocols → operating networks |
+| AI Engineer | LLM apps → RAG → agents → contracts |
 
 ## Files
 
 | Path | Role |
 |------|------|
 | `src/lib/paths/catalog.ts` | All path defs, courses, status, href helpers |
-| `src/components/paths/path-catalog.tsx` | Foundation tiles + role rows (Layout A) |
+| `src/components/paths/path-catalog.tsx` | On-ramp chips + role gallery cards (Layout B) |
 | `src/components/paths/path-detail.tsx` | Detail layout (courses list) |
 | `src/app/(learner)/paths/page.tsx` | Catalog |
 | `src/app/(learner)/paths/[slug]/page.tsx` | Detail + `generateStaticParams` |

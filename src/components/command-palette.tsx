@@ -50,14 +50,6 @@ const ACTIONS: PaletteAction[] = [
     kbd: "G P",
   },
   {
-    title: "Open the Playground",
-    href: "/playground",
-    icon: Play,
-    iconBg: "bg-[#F1EDFE]",
-    iconFg: "text-[#6D46F2]",
-    kbd: "G L",
-  },
-  {
     title: "View achievements",
     href: "/achievements",
     icon: Trophy,

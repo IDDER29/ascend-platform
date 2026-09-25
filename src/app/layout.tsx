@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Hanken_Grotesk, Space_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { getAllLessons } from "@/lib/content/lessons";
 import { LEVELS } from "@/lib/content/schema";
 import { CommandPalette, type PaletteLesson } from "@/components/command-palette";
+import { lessonHref } from "@/lib/paths/lesson-urls";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -17,10 +18,10 @@ const hanken = Hanken_Grotesk({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const spaceMono = Space_Mono({
-  variable: "--font-space-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -44,15 +45,16 @@ export default function RootLayout({
 }>) {
   const paletteLessons: PaletteLesson[] = getAllLessons().map((lesson) => ({
     title: lesson.meta.title,
-    href: `/curriculum/${lesson.meta.level}/${lesson.meta.slug}`,
+    href: lessonHref(lesson.meta.level, lesson.meta.slug),
     subtitle: `${LEVELS[lesson.meta.level].name} · ${lesson.meta.order}/${LEVELS[lesson.meta.level].totalConcepts}`,
   }));
 
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
-      className={`${bricolage.variable} ${hanken.variable} ${spaceMono.variable} h-full overflow-x-hidden antialiased`}
+      className={`${bricolage.variable} ${hanken.variable} ${plexMono.variable} h-full overflow-x-hidden antialiased`}
     >
       <head>
         <script

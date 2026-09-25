@@ -3,13 +3,15 @@ import { getCurrentUser } from "@/lib/auth/auth";
 import {
   countCompletedInLevel,
   getContinueLesson,
-  getStreak,
+  listCompletedLessons,
 } from "@/lib/progress/queries";
 import {
   PATHS,
   getPathBySlug,
-  pathSelectHrefWithContinue,
+  pathContinueHref,
+  pathIsEngaged,
 } from "@/lib/paths/catalog";
+import { getSelectedPathSlug } from "@/lib/paths/selected-path";
 import { PathDetail } from "@/components/paths/path-detail";
 import { FoundationsDetail } from "@/components/paths/foundations-detail";
 import { HUB_CONTENT_CLASS, HUB_MAIN_CLASS } from "@/components/ui/page-header";
@@ -43,36 +45,31 @@ export default async function PathDetailPage({
   if (!path) notFound();
 
   const user = await getCurrentUser();
-  let continueHref: string | null = null;
-  let continueLevel: string | null = null;
-  let foundationsOrder = 1;
+  const selectedSlug = await getSelectedPathSlug();
+  let completed: { level: string; slug: string }[] = [];
   let foundationsDone = 0;
-  let streakCurrent = 0;
+  let foundationsOrder = 1;
 
   if (user) {
     try {
-      const cont = await getContinueLesson(user.id);
-      continueHref = cont.href;
-      continueLevel = cont.level;
+      const [done, lessons, cont] = await Promise.all([
+        countCompletedInLevel(user.id, "level-00-bits-logic"),
+        listCompletedLessons(user.id),
+        getContinueLesson(user.id),
+      ]);
+      foundationsDone = done;
+      completed = lessons;
       if (cont.level === "level-00-bits-logic") {
         foundationsOrder = cont.order;
       }
-      const [done, streak] = await Promise.all([
-        countCompletedInLevel(user.id, "level-00-bits-logic"),
-        getStreak(user.id),
-      ]);
-      foundationsDone = done;
-      streakCurrent = streak?.current ?? 0;
     } catch {
       // open-path defaults
     }
   }
 
-  const selectHref = pathSelectHrefWithContinue(
-    path,
-    continueHref,
-    continueLevel,
-  );
+  const continueHref = pathContinueHref(path, completed);
+  const engaged = pathIsEngaged(path, selectedSlug, completed);
+  const signedIn = Boolean(user);
 
   return (
     <main className={HUB_MAIN_CLASS}>
@@ -82,11 +79,21 @@ export default async function PathDetailPage({
             path={path}
             currentOrder={foundationsOrder}
             doneCount={foundationsDone}
-            streakCurrent={streakCurrent}
-            signedIn={Boolean(user)}
+            completed={completed}
+            continueHref={
+              continueHref ?? "/lessons/foundations-bits-what-is-a-bit"
+            }
+            engaged={engaged}
+            signedIn={signedIn}
           />
         ) : (
-          <PathDetail path={path} selectHref={selectHref} />
+          <PathDetail
+            path={path}
+            continueHref={continueHref}
+            engaged={engaged}
+            completed={completed}
+            signedIn={signedIn}
+          />
         )}
       </div>
     </main>

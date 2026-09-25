@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { signIn, signUp, AuthError } from "@/lib/auth/auth";
 import { setSessionCookie } from "@/lib/auth/session";
 import { getContinueLesson } from "@/lib/progress/queries";
+import { FIRST_LESSON_HREF } from "@/lib/routes";
 
 export interface AuthActionState {
   error: string | null;
@@ -14,7 +15,7 @@ async function continueHrefFor(userId: string): Promise<string> {
     const cont = await getContinueLesson(userId);
     return cont.href;
   } catch {
-    return "/curriculum/level-00-bits-logic/what-is-a-bit";
+    return FIRST_LESSON_HREF;
   }
 }
 

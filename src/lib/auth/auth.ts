@@ -11,6 +11,8 @@ export interface PublicUser {
   email: string;
   name: string;
   username: string;
+  /** When the account was created — for tenure (“Day N on Ascend”). */
+  createdAt: Date;
 }
 
 /** Throws a user-facing message instead of a raw connection error when the db is unreachable. */
@@ -69,7 +71,7 @@ export async function signUp(input: { email: string; password: string; name: str
   await conn.insert(schema.profiles).values({ userId, name, username, bio: "" });
   await conn.insert(schema.streaks).values({ userId });
 
-  return { id: userId, email, name, username };
+  return { id: userId, email, name, username, createdAt: now };
 }
 
 export async function signIn(input: { email: string; password: string }): Promise<PublicUser> {
@@ -82,7 +84,14 @@ export async function signIn(input: { email: string; password: string }): Promis
   if (!valid) throw new AuthError("Invalid email or password.");
 
   const profile = await conn.query.profiles.findFirst({ where: eq(schema.profiles.userId, user.id) });
-  return { id: user.id, email: user.email, name: profile?.name ?? "", username: profile?.username ?? "" };
+  return {
+    id: user.id,
+    email: user.email,
+    name: profile?.name ?? "",
+    username: profile?.username ?? "",
+    createdAt:
+      user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt),
+  };
 }
 
 /**
@@ -105,7 +114,16 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
     const profile = await db.query.profiles.findFirst({ where: eq(schema.profiles.userId, userId) });
     if (!profile) return null;
 
-    return { id: user.id, email: user.email, name: profile.name, username: profile.username };
+    return {
+      id: user.id,
+      email: user.email,
+      name: profile.name,
+      username: profile.username,
+      createdAt:
+        user.createdAt instanceof Date
+          ? user.createdAt
+          : new Date(user.createdAt),
+    };
   } catch (err) {
     // Next's own static-render probe bails out of cookies() with this
     // digest during `next build` -- not a real failure, just how Next

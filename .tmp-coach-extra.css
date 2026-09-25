@@ -1,0 +1,43 @@
+/* vietnamese */
+/* latin-ext */
+/* latin */
+/* vietnamese */
+/* latin-ext */
+/* latin */
+/* vietnamese */
+/* latin-ext */
+/* latin */
+/* cyrillic-ext */
+/* cyrillic */
+/* vietnamese */
+/* latin-ext */
+/* latin */
+/* cyrillic-ext */
+/* cyrillic */
+/* greek */
+/* vietnamese */
+/* latin-ext */
+/* latin */
+/* cyrillic-ext */
+/* cyrillic */
+/* greek */
+/* vietnamese */
+/* latin-ext */
+/* latin */
+/* cyrillic-ext */
+/* cyrillic */
+/* greek */
+/* vietnamese */
+/* latin-ext */
+/* latin */
+
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;background:#F6F4EE;color:#16181D}
+a{color:#2E4BDB}a:hover{color:#1F3BB8}
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+h1,h2,h3{text-wrap:balance}
+::selection{background:#D7F26B;color:#16181D}
+a,button,label,input,select{transition:transform .12s ease,filter .15s ease,background-color .15s ease,border-color .15s ease}
+a[href]:hover,button:not(:disabled):hover,label:hover{filter:brightness(.97)}
+a[href]:active,button:not(:disabled):active{transform:translateY(2px)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #5A74E6;outline-offset:3px}
+button:disabled{cursor:not-allowed}

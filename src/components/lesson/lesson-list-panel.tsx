@@ -6,6 +6,7 @@ interface LessonRow {
   slug: string;
   title: string;
   order: number;
+  href?: string;
 }
 
 /** Lesson map body — used inside the on-demand drawer (not a permanent rail). */
@@ -53,7 +54,7 @@ export function LessonListPanel({
           return (
             <Link
               key={l.slug}
-              href={`/curriculum/${level}/${l.slug}`}
+              href={l.href ?? `/curriculum/${level}/${l.slug}`}
               className={cn(
                 "group flex items-start gap-2.5 rounded-xl px-2.5 py-2.5 no-underline transition-colors duration-150",
                 state === "current" && "bg-xp-bg ring-1 ring-xp-border",

@@ -130,7 +130,6 @@ export default function AchievementsPage() {
     <main className={HUB_MAIN_CLASS}>
       <div className={HUB_CONTENT_CLASS}>
         <PageHeader
-          eyebrow="You / Achievements"
           title="Achievements"
           description="A preview of badges we may award later. Nothing here is earned yet — Ascend doesn't have a badge engine."
         />

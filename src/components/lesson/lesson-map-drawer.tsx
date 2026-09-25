@@ -9,11 +9,55 @@ import {
   useMemo,
   useSyncExternalStore,
 } from "react";
-import { List, PanelLeftClose } from "lucide-react";
 import type { LevelId } from "@/lib/content/schema";
 import { LessonListPanel } from "@/components/lesson/lesson-list-panel";
+import { cn } from "@/lib/cn";
 
-type LessonRow = { slug: string; title: string; order: number };
+/** Ascend course-contents mark — outline rows for sticky chrome. */
+function CourseContentsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden
+    >
+      <rect
+        x="2.5"
+        y="2.5"
+        width="15"
+        height="15"
+        rx="3.25"
+        stroke="currentColor"
+        strokeWidth="1.55"
+      />
+      <circle cx="6.85" cy="7" r="1.15" fill="currentColor" />
+      <path
+        d="M9.35 7h5.15"
+        stroke="currentColor"
+        strokeWidth="1.55"
+        strokeLinecap="round"
+      />
+      <circle cx="6.85" cy="10" r="1.15" fill="currentColor" />
+      <path
+        d="M9.35 10h5.15"
+        stroke="currentColor"
+        strokeWidth="1.55"
+        strokeLinecap="round"
+      />
+      <circle cx="6.85" cy="13" r="1.15" fill="currentColor" />
+      <path
+        d="M9.35 13h3.5"
+        stroke="currentColor"
+        strokeWidth="1.55"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+type LessonRow = { slug: string; title: string; order: number; href?: string };
 
 type LessonMapContextValue = {
   open: boolean;
@@ -102,7 +146,11 @@ export function LessonMapProvider({
   nextLevelName: string | null;
   children: React.ReactNode;
 }) {
-  const open = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
+  const open = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
 
   useLayoutEffect(() => {
     hydrateFromStorage();
@@ -121,7 +169,15 @@ export function LessonMapProvider({
   }, [open]);
 
   const value = useMemo(
-    () => ({ open, toggle, close, level, currentOrder, lessons, nextLevelName }),
+    () => ({
+      open,
+      toggle,
+      close,
+      level,
+      currentOrder,
+      lessons,
+      nextLevelName,
+    }),
     [open, toggle, close, level, currentOrder, lessons, nextLevelName],
   );
 
@@ -131,46 +187,56 @@ export function LessonMapProvider({
 }
 
 /**
- * Closed: floating icon only.
- * Open: full-height left rail.
- * Open state lives in module memory — remounts no longer slide the rail out.
+ * Odin-style sticky strip above lesson content — toggle course contents.
+ * Sits in the article column so it flows with the page (not a floating FAB).
  */
-export function LessonMapRail() {
-  const { open, toggle, level, currentOrder, lessons, nextLevelName } = useLessonMap();
+export function LessonMapToggleBar() {
+  const { open, toggle } = useLessonMap();
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={false}
-        aria-controls="lesson-map-rail"
-        title="Show lessons"
-        className="absolute left-3 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-xl border border-card-border bg-paper text-ink-secondary shadow-[var(--elevate-rest)] transition-colors hover:bg-xp-bg hover:text-xp-text dark:bg-elevated"
+  return (
+    <div className="sticky top-0 z-20 -mx-2.5 bg-paper px-2.5 dark:bg-bg md:-mx-0 md:px-0">
+      <div
+        className={cn(
+          "flex h-12 items-center border-b",
+          open ? "border-divider" : "border-divider/50",
+        )}
       >
-        <List size={18} strokeWidth={2.2} />
-      </button>
-    );
-  }
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={open}
+          aria-controls="lesson-map-rail"
+          aria-label={open ? "Hide course contents" : "Show course contents"}
+          title={open ? "Hide course contents" : "Show course contents"}
+          className={cn(
+            "-ml-1 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-[11px]",
+            "border border-card-border bg-elevated text-ink transition-all duration-150",
+            "hover:border-xp-border hover:bg-xp-bg hover:text-xp-text",
+            "active:scale-[0.96] active:bg-xp-bg",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-violet/40 focus-visible:ring-offset-2 focus-visible:ring-offset-paper dark:focus-visible:ring-offset-bg",
+            open &&
+              "border-xp-border bg-xp-bg text-xp-text shadow-[0_0_0_3px_rgba(13,159,110,0.12)] hover:border-xp-border hover:bg-xp-bg hover:text-xp-text",
+          )}
+        >
+          <CourseContentsIcon className="size-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Left course-contents rail — only mounts when open. Toggle lives in LessonMapToggleBar. */
+export function LessonMapRail() {
+  const { open, level, currentOrder, lessons, nextLevelName } = useLessonMap();
+
+  if (!open) return null;
 
   return (
     <aside
       id="lesson-map-rail"
       className="sticky top-0 z-10 flex h-screen w-[288px] flex-none flex-col self-start border-r border-divider bg-bg"
     >
-      <div className="flex flex-none items-center justify-end px-3 pt-4">
-        <button
-          type="button"
-          onClick={toggle}
-          aria-expanded={true}
-          aria-controls="lesson-map-rail"
-          title="Hide lessons"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-xp-border bg-xp-bg text-xp-text transition-colors hover:bg-xp-bg"
-        >
-          <PanelLeftClose size={18} strokeWidth={2.2} />
-        </button>
-      </div>
-      <div className="min-h-0 flex-1 overflow-auto px-4 pb-6 pt-2">
+      <div className="min-h-0 flex-1 overflow-auto px-4 pb-6 pt-5">
         <LessonListPanel
           level={level}
           currentOrder={currentOrder}

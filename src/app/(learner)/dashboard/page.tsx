@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Flame, CheckCircle2, ChevronRight } from "lucide-react";
 import { getAllLessons } from "@/lib/content/lessons";
 import { LEVELS, levelIds, type LevelId } from "@/lib/content/schema";
 import { getCurrentUser } from "@/lib/auth/auth";
@@ -8,115 +7,264 @@ import {
   countCompletedInLevel,
   getStreak,
   listCompletedLessons,
+  type LessonCompletion,
 } from "@/lib/progress/queries";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PageHeader, HUB_CONTENT_CLASS, HUB_MAIN_CLASS } from "@/components/ui/page-header";
+import { listRecentShellforgeSubmissions } from "@/lib/projects/queries";
+import { getFollowingMap } from "@/lib/paths/selected-path";
+import {
+  daysOnSince,
+  formatAccountTenure,
+} from "@/lib/dashboard/tenure";
+import {
+  pathDaysOnPath,
+  resolveContinuePathSlug,
+} from "@/lib/dashboard/continue-target";
+import {
+  getPathBySlug,
+  pathHref as catalogPathHref,
+  pathProgressFraction,
+  pathContinueHref,
+} from "@/lib/paths/catalog";
+import { pathItemRole } from "@/components/paths/path-outline-marks";
+import { lessonHref } from "@/lib/paths/lesson-urls";
+import { FIRST_LESSON_HREF, SIGNIN_HREF } from "@/lib/routes";
+import { PageHeader, HUB_MAIN_CLASS, HUB_NARROW_CLASS } from "@/components/ui/page-header";
+import {
+  ContinueBand,
+  DashboardPulse,
+  DashboardWorkGrid,
+  NeedsWorkBanner,
+} from "@/components/dashboard/continue-home";
+import {
+  buildRecentProjects,
+  formatHeaderDate,
+  formatLastActiveLabel,
+  greetingForHour,
+  lessonBlurb,
+  lessonStructureLabel,
+  lessonsOnPath,
+  nextProjectCta,
+  resolvePathHandoff,
+  streakHabitLine,
+  type RecentProject,
+} from "@/lib/dashboard/continue";
 
 export const metadata = {
   title: "Continue — Ascend",
 };
 
 const FALLBACK_LEVEL: LevelId = "level-00-bits-logic";
-const FALLBACK_ORDER = 1;
+const DEFAULT_PATH_SLUG = "foundations";
 
-const LEVEL_ACCENT: Record<string, string> = {
-  "level-00-bits-logic": "bg-level-00",
-  "level-01-machine-memory": "bg-level-01",
-  "level-02-the-c-language": "bg-level-02",
-  "level-03-systems-software": "bg-level-03",
-};
-
-function greetingForHour(hour: number): string {
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
-
-function formatHeaderDate(d: Date): string {
-  return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
-}
-
+/**
+ * Reading order (top → bottom):
+ * 1. Orient  2. Act (Continue)  3. Pulse  4. Optional real urgency  5. Work
+ * Continue path = last completed lesson/project; Your paths = following only.
+ */
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   const lessons = getAllLessons();
   const totalLessons = lessons.length;
+  const first = lessons[0];
 
-  let continueHref = lessons[0]
-    ? `/curriculum/${lessons[0].meta.level}/${lessons[0].meta.slug}`
-    : "/curriculum";
-  let currentLevel: LevelId = FALLBACK_LEVEL;
-  let currentOrder = FALLBACK_ORDER;
-  let levelDone: Record<string, number> = Object.fromEntries(levelIds.map((id) => [id, 0]));
+  let continueHref = first
+    ? lessonHref(first.meta.level, first.meta.slug)
+    : FIRST_LESSON_HREF;
+  let levelDone: Record<string, number> = Object.fromEntries(
+    levelIds.map((id) => [id, 0]),
+  );
   let streakCurrent = 0;
+  let lastActiveDate: string | null = null;
   let totalCompleted = 0;
+  let completed: LessonCompletion[] = [];
+  let recentProjects: RecentProject[] = [];
+  let shellforgePassedAt: Date | null = null;
 
   if (user) {
     try {
-      const cont = await getContinueLesson(user.id);
+      const [cont, streak, completedRows, doneCounts, submissions] =
+        await Promise.all([
+          getContinueLesson(user.id),
+          getStreak(user.id),
+          listCompletedLessons(user.id),
+          Promise.all(
+            levelIds.map(
+              async (id) =>
+                [id, await countCompletedInLevel(user.id, id)] as const,
+            ),
+          ),
+          listRecentShellforgeSubmissions(user.id, 5).catch(() => []),
+        ]);
       continueHref = cont.href;
-      currentLevel = cont.level as LevelId;
-      currentOrder = cont.order;
-
-      const [streak, completed, doneCounts] = await Promise.all([
-        getStreak(user.id),
-        listCompletedLessons(user.id),
-        Promise.all(
-          levelIds.map(async (id) => [id, await countCompletedInLevel(user.id, id)] as const),
-        ),
-      ]);
-
       streakCurrent = streak?.current ?? 0;
-      totalCompleted = completed.length;
+      lastActiveDate = streak?.lastActiveDate ?? null;
+      completed = completedRows;
+      totalCompleted = completedRows.length;
       levelDone = Object.fromEntries(doneCounts);
+      recentProjects = buildRecentProjects(
+        submissions,
+        completedRows,
+        new Date(),
+      );
+      const passedSf = submissions
+        .filter((s) => s.outcome === "passed")
+        .sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime())[0];
+      shellforgePassedAt = passedSf?.submittedAt ?? null;
     } catch {
-      // db unavailable — keep open-path defaults
+      // db unavailable — still render a usable guest-style continue surface
     }
   }
 
-  const currentIndex = lessons.findIndex(
-    (l) => l.meta.level === currentLevel && l.meta.order === currentOrder,
+  const followingMap = await getFollowingMap();
+  const continueSlug =
+    resolveContinuePathSlug({
+      completed,
+      shellforgePassedAt,
+    }) ?? DEFAULT_PATH_SLUG;
+  const path =
+    getPathBySlug(continueSlug) ?? getPathBySlug(DEFAULT_PATH_SLUG)!;
+  const pathHref = catalogPathHref(path.slug);
+  const projectCta = nextProjectCta(path, completed);
+
+  const pathLessons = lessonsOnPath(path);
+  const pathContHref = pathContinueHref(path, completed);
+  if (pathContHref) {
+    continueHref = pathContHref;
+  }
+
+  let currentLesson =
+    pathLessons.find(
+      (l) => lessonHref(l.meta.level, l.meta.slug) === continueHref,
+    ) ?? null;
+  if (!currentLesson && pathLessons.length > 0) {
+    const done = new Set(completed.map((c) => `${c.level}/${c.slug}`));
+    currentLesson =
+      pathLessons.find((l) => !done.has(`${l.meta.level}/${l.meta.slug}`)) ??
+      pathLessons[pathLessons.length - 1] ??
+      null;
+  }
+  if (!currentLesson) {
+    currentLesson = lessons[0] ?? null;
+  }
+
+  if (currentLesson && !pathContHref) {
+    continueHref = lessonHref(currentLesson.meta.level, currentLesson.meta.slug);
+  }
+
+  const continueIndex = pathLessons.findIndex(
+    (l) =>
+      l.meta.level === currentLesson?.meta.level &&
+      l.meta.slug === currentLesson?.meta.slug,
   );
-  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
-  const currentLesson = lessons[safeIndex];
-  const upNext = lessons.slice(safeIndex, safeIndex + 4);
+  const safeIndex = continueIndex >= 0 ? continueIndex : 0;
+  const upNextSource = pathLessons.length > 0 ? pathLessons : lessons;
+  const lookFrom = (pathLessons.length > 0 ? safeIndex : 0) + 1;
+  const upNext = upNextSource.slice(lookFrom, lookFrom + 4);
+
+  const pathFraction = pathProgressFraction(path, completed);
+  const pathPct =
+    pathFraction != null
+      ? Math.round(Math.min(1, Math.max(0, pathFraction)) * 100)
+      : null;
+  const projectsDone = completed.filter(
+    (c) => pathItemRole({ slug: c.slug }) === "project",
+  ).length;
 
   const firstName = user?.name?.trim().split(/\s+/)[0] ?? "";
   const now = new Date();
   const greeting = greetingForHour(now.getHours());
-  const levelMeta = currentLesson ? LEVELS[currentLesson.meta.level] : LEVELS[FALLBACK_LEVEL];
-  const doneInCurrentLevel = currentLesson ? (levelDone[currentLesson.meta.level] ?? 0) : 0;
-  const remainingInLevel = Math.max(levelMeta.totalConcepts - doneInCurrentLevel, 0);
+  const levelMeta = currentLesson
+    ? LEVELS[currentLesson.meta.level]
+    : LEVELS[FALLBACK_LEVEL];
+  const upNextLevelName = upNext[0]
+    ? LEVELS[upNext[0].meta.level as LevelId].name
+    : levelMeta.name;
+  const doneInCurrentLevel = currentLesson
+    ? (levelDone[currentLesson.meta.level] ?? 0)
+    : 0;
+  const remainingInLevel = Math.max(
+    levelMeta.totalConcepts - doneInCurrentLevel,
+    0,
+  );
   const lessonProgressPct = currentLesson
     ? Math.round((doneInCurrentLevel / levelMeta.totalConcepts) * 100)
     : 0;
+  const engaged = Boolean(user && totalCompleted > 0);
+  const lastActiveLabel = formatLastActiveLabel(lastActiveDate, now);
+  const continueBlurb = currentLesson
+    ? lessonBlurb(currentLesson.meta.whyThisMatters)
+    : null;
+  const stepInLevel = Math.min(
+    doneInCurrentLevel + 1,
+    levelMeta.totalConcepts,
+  );
+  const structureLabel = currentLesson
+    ? lessonStructureLabel(currentLesson)
+    : "";
+  const habit = streakHabitLine({
+    signedIn: Boolean(user),
+    lastActiveDate,
+    streakCurrent,
+    continueTimeMin: currentLesson?.meta.timeMin ?? 5,
+    now,
+  });
+  const handoff =
+    upNext.length === 0
+      ? resolvePathHandoff(
+          path,
+          completed,
+          currentLesson?.meta.level ?? null,
+        )
+      : null;
+  const needsWork = recentProjects.find((p) => p.statusTone === "fail") ?? null;
 
-  const levelsFullyDone = levelIds.filter(
-    (id) => (levelDone[id] ?? 0) >= LEVELS[id].totalConcepts,
-  ).length;
+  const enrolledRows = Object.entries(followingMap)
+    .map(([slug, selectedAt]) => {
+      const p = getPathBySlug(slug);
+      if (!p || p.status !== "live") return null;
+      return {
+        path: p,
+        progress: pathProgressFraction(p, completed),
+        active: p.slug === path.slug,
+        daysOnPath: pathDaysOnPath(p, completed, now),
+        selectedAt,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row != null)
+    .sort((a, b) => b.selectedAt.getTime() - a.selectedAt.getTime())
+    .map(({ selectedAt: _s, ...row }) => row);
 
-  const pathPct = totalLessons ? Math.round((totalCompleted / totalLessons) * 100) : 0;
+  const accountDays =
+    user?.createdAt != null ? daysOnSince(user.createdAt, now) : null;
+  const pathDaysOnActive = pathDaysOnPath(path, completed, now);
 
   return (
     <main className={HUB_MAIN_CLASS}>
-      <div className={HUB_CONTENT_CLASS}>
+      <div className={HUB_NARROW_CLASS}>
         <PageHeader
-          eyebrow="Learn / Continue"
-          title={user && firstName ? `${greeting}, ${firstName}.` : `${greeting}.`}
+          className="mb-5"
+          title={
+            user && firstName ? `${greeting}, ${firstName}.` : `${greeting}.`
+          }
           description={
             user ? (
               remainingInLevel > 0 ? (
                 <>
-                  You&apos;re <b className="text-[#5A32D6]">{remainingInLevel} concepts</b> from
-                  finishing {levelMeta.name}.
+                  One clear next step —{" "}
+                  <b className="text-brand-violet">{remainingInLevel}</b>{" "}
+                  {remainingInLevel === 1 ? "lesson" : "lessons"} left in{" "}
+                  {levelMeta.name}.
                 </>
               ) : (
-                <>You&apos;ve completed every lesson in the curriculum. Review anytime.</>
+                <>Level clear. Review anytime or open your path.</>
               )
             ) : (
               <>
-                The full path is open —{" "}
-                <Link href="/signin" className="font-bold text-brand-violet hover:underline">
+                Start the path free —{" "}
+                <Link
+                  href={SIGNIN_HREF}
+                  className="font-bold text-brand-violet hover:underline"
+                >
                   sign in
                 </Link>{" "}
                 to save progress.
@@ -124,220 +272,75 @@ export default async function DashboardPage() {
             )
           }
           actions={
-            <div className="flex flex-col items-end gap-2">
-              <div className="flex items-center gap-2.5 text-[13px] text-ink-secondary">
-                <span className="font-mono">{formatHeaderDate(now)}</span>
-                {user && streakCurrent > 0 ? (
-                  <>
-                    <span className="h-1 w-1 rounded-full bg-[#CFC9DE]" />
-                    <span className="flex items-center gap-1 font-bold text-streak-text">
-                      <Flame size={14} className="fill-current" /> Day {streakCurrent}
-                    </span>
-                  </>
-                ) : null}
-              </div>
-              <Button href={continueHref} variant="dark">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="6 3 20 12 6 21 6 3" />
-                </svg>
-                {user ? "Resume" : "Start"}
-              </Button>
+            <div className="flex flex-col items-end gap-0.5 text-right">
+              <span className="font-mono text-[13px] text-ink-fainter">
+                {formatHeaderDate(now)}
+              </span>
+              {accountDays != null ? (
+                <span className="font-mono text-[11px] font-bold tracking-[0.04em] text-ink-secondary">
+                  {formatAccountTenure(accountDays)}
+                </span>
+              ) : null}
             </div>
           }
         />
 
-            <div className="relative mb-5 overflow-hidden rounded-[24px] bg-gradient-to-br from-[#6A3EF0] via-[#9A34D6] to-[#FF6B4A] p-8 text-white shadow-[0_24px_50px_rgba(106,62,240,0.32)]">
-              <div className="animate-blob pointer-events-none absolute -right-10 -top-[90px] h-[320px] w-[320px] rounded-full bg-white/[0.13] blur-[10px]" />
-              <div className="relative flex flex-wrap items-end gap-6">
-                {currentLesson ? (
-                  <>
-                    <div className="min-w-[230px] flex-1">
-                      <span className="mb-3 block font-mono text-[11px] uppercase tracking-[0.12em] opacity-85">
-                        Continue learning
-                      </span>
-                      <div className="mb-3 flex items-center gap-2.5">
-                        <span className="flex h-[52px] w-[52px] flex-none items-center justify-center rounded-2xl border border-white/30 bg-white/[0.16] font-mono text-lg font-bold">
-                          {String(currentLesson.meta.order).padStart(2, "0")}
-                        </span>
-                        <div className="font-mono text-[11.5px] opacity-80">
-                          {levelMeta.name} · {doneInCurrentLevel} / {levelMeta.totalConcepts}
-                        </div>
-                      </div>
-                      <div className="mb-4 font-display text-[26px] font-extrabold leading-tight tracking-tight sm:text-[28px]">
-                        {currentLesson.meta.title}
-                      </div>
-                      <div className="flex max-w-[320px] items-center gap-3">
-                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.26]">
-                          <div
-                            className="h-full rounded-full bg-white"
-                            style={{ width: `${lessonProgressPct}%` }}
-                          />
-                        </div>
-                        <span className="font-mono text-[12.5px] font-bold">{lessonProgressPct}%</span>
-                      </div>
-                    </div>
-                    <Button href={continueHref} variant="invert">
-                      {user ? "Resume lesson" : "Start lesson"}
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6A3EF0" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14" />
-                        <path d="m12 5 7 7-7 7" />
-                      </svg>
-                    </Button>
-                  </>
-                ) : null}
-              </div>
-            </div>
+        {currentLesson ? (
+          <ContinueBand
+            engaged={engaged}
+            timeMin={currentLesson.meta.timeMin}
+            lastActiveLabel={lastActiveLabel}
+            stepInLevel={stepInLevel}
+            levelTotal={levelMeta.totalConcepts}
+            levelName={levelMeta.name}
+            doneInLevel={doneInCurrentLevel}
+            order={currentLesson.meta.order}
+            title={currentLesson.meta.title}
+            blurb={continueBlurb}
+            structureLabel={structureLabel}
+            progressPct={lessonProgressPct}
+            daysOnPath={pathDaysOnActive}
+            continueHref={continueHref}
+            pathHref={pathHref}
+          />
+        ) : (
+          <p className="mb-5 rounded-[16px] bg-elevated/70 px-5 py-6 text-[14px] leading-relaxed text-ink-secondary ring-1 ring-divider">
+            No lessons are available yet. Check back soon, or{" "}
+            <Link
+              href="/paths"
+              className="font-bold text-brand-violet hover:underline"
+            >
+              browse paths
+            </Link>
+            .
+          </p>
+        )}
 
-            {user ? (
-              <div className="mb-5 flex flex-wrap gap-4">
-                <Card className="flex-[1_1_180px] p-5" hover={false}>
-                  <div className="flex items-center gap-2 text-streak-text">
-                    <Flame size={16} className="fill-current" />
-                    <span className="font-display text-[24px] font-extrabold">{streakCurrent}</span>
-                  </div>
-                  <div className="mt-1 text-[12.5px] text-ink-muted">Day streak</div>
-                </Card>
-                <Card className="flex-[1_1_180px] p-5" hover={false}>
-                  <div className="flex items-center gap-2 text-[#12A472]">
-                    <CheckCircle2 size={16} />
-                    <span className="font-display text-[24px] font-extrabold">
-                      {totalCompleted}/{totalLessons}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-[12.5px] text-ink-muted">Lessons done · {pathPct}%</div>
-                </Card>
-              </div>
-            ) : null}
+        <DashboardPulse
+          signedIn={Boolean(user)}
+          streak={streakCurrent}
+          lessonsLabel={`${totalCompleted}/${totalLessons}`}
+          projectsLabel={String(projectsDone)}
+          pathPctLabel={pathPct != null ? `${pathPct}%` : "—"}
+          pathHref={pathHref}
+          habit={habit}
+          continueHref={continueHref}
+        />
 
-            <div className="flex flex-wrap items-start gap-5">
-              <Card hover={false} className="min-w-0 flex-[100_1_480px]">
-                <div className="p-6">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className="font-display text-[17px] font-extrabold">
-                      Up next in {levelMeta.name}
-                    </div>
-                    <Link
-                      href="/curriculum"
-                      className="flex items-center gap-1 text-[12.5px] font-bold text-brand-violet"
-                    >
-                      View path <ChevronRight size={13} />
-                    </Link>
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    {upNext.map((lesson, i) => {
-                      const isCurrent = i === 0;
-                      const accent = LEVEL_ACCENT[lesson.meta.level] ?? "bg-level-00";
-                      return (
-                        <Link
-                          key={lesson.meta.slug}
-                          href={`/curriculum/${lesson.meta.level}/${lesson.meta.slug}`}
-                          className={`-mx-1.5 flex items-center gap-3.5 rounded-[14px] px-3 py-3 ${
-                            isCurrent
-                              ? "bg-gradient-to-r from-[#FBF3FE] to-white shadow-[inset_3px_0_0_#C13AE0]"
-                              : "hover:bg-[#FAF9FE]"
-                          }`}
-                        >
-                          <span
-                            className={`flex h-[38px] w-[38px] flex-none items-center justify-center rounded-[11px] font-mono text-[13px] font-extrabold ${
-                              isCurrent ? `${accent} text-white` : "bg-[#F2F0F8] text-[#A8A3BC]"
-                            }`}
-                          >
-                            {isCurrent ? (
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
-                                <polygon points="6 3 20 12 6 21 6 3" />
-                              </svg>
-                            ) : (
-                              i + 1
-                            )}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-[14.5px] font-bold text-[#2A2540]">
-                              {lesson.meta.title}
-                            </div>
-                            <div className="mt-0.5 font-mono text-xs text-ink-faint">
-                              {lesson.meta.timeMin} min
-                            </div>
-                          </div>
-                          {isCurrent ? (
-                            <span className="whitespace-nowrap text-[11.5px] font-bold text-[#C13AE0]">
-                              {user ? "up next" : "start here"}
-                            </span>
-                          ) : null}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Card>
+        {needsWork ? <NeedsWorkBanner project={needsWork} /> : null}
 
-              <Card hover={false} className="w-full min-w-[280px] max-w-[360px] flex-1">
-                <div className="p-6">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className="font-display text-[17px] font-extrabold">Your climb</div>
-                    <span className="font-mono text-[12.5px] text-ink-faint">
-                      {levelsFullyDone} / {levelIds.length} levels
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-2.5">
-                    {levelIds.map((levelId) => {
-                      const level = LEVELS[levelId];
-                      const done = levelDone[levelId] ?? 0;
-                      const pct = Math.round((done / level.totalConcepts) * 100);
-                      const isCurrent = levelId === currentLevel;
-                      const isCompleted = done >= level.totalConcepts;
-                      const firstLesson = lessons.find((l) => l.meta.level === levelId);
-                      const levelHref = firstLesson
-                        ? `/curriculum/${firstLesson.meta.level}/${firstLesson.meta.slug}`
-                        : "/curriculum";
-
-                      return (
-                        <div
-                          key={levelId}
-                          className={`flex items-center gap-3.5 rounded-[15px] border p-3.5 ${
-                            isCurrent
-                              ? "border-[#F3D9EE] bg-gradient-to-r from-[#FDF7FE] to-white"
-                              : "border-[#F0EEF6]"
-                          }`}
-                        >
-                          <div
-                            className={`flex h-11 w-11 flex-none items-center justify-center rounded-[13px] ${LEVEL_ACCENT[levelId]} font-display text-base font-extrabold text-white`}
-                          >
-                            {isCompleted ? (
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 6 9 17l-5-5" />
-                              </svg>
-                            ) : (
-                              levelId.slice(6, 8)
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[15px] font-bold text-[#2A2540]">{level.name}</div>
-                            <div className="mt-1.5 flex items-center gap-2.5">
-                              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#F0EEF7]">
-                                <div
-                                  className={`h-full rounded-full ${LEVEL_ACCENT[levelId]}`}
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-                              <span className="font-mono text-[11px] text-ink-faint">
-                                {done}/{level.totalConcepts}
-                              </span>
-                            </div>
-                          </div>
-                          <Link
-                            href={isCurrent ? continueHref : levelHref}
-                            className="flex-none whitespace-nowrap rounded-full border border-card-border-soft px-3.5 py-2 text-[12.5px] font-semibold text-ink-secondary"
-                          >
-                            {isCurrent ? "Continue" : isCompleted ? "Review" : "Open"}
-                          </Link>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </main>
+        <DashboardWorkGrid
+          levelName={upNextLevelName}
+          pathHref={pathHref}
+          upNext={upNext}
+          handoff={handoff}
+          continueHref={continueHref}
+          enrolledRows={enrolledRows}
+          projectCta={projectCta}
+          recentProjects={recentProjects}
+          signedIn={Boolean(user)}
+        />
+      </div>
+    </main>
   );
 }

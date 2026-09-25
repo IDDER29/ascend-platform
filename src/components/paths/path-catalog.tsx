@@ -1,136 +1,321 @@
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { selectPathAction } from "@/lib/paths/actions";
+import {
+  Binary,
+  Bot,
+  Code2,
+  Network,
+  Server,
+  Terminal,
+  type LucideIcon,
+} from "lucide-react";
 
-/** Compact foundation on-ramp tile (catalog "Start here"). */
-export function PathFoundationTile({
-  title,
-  body,
-  href,
-  meta,
-  soon = false,
+const PATH_ICONS: Record<string, LucideIcon> = {
+  foundations: Binary,
+  "python-foundations": Code2,
+  "systems-programmer": Terminal,
+  "linux-engineer": Server,
+  "network-engineer": Network,
+  "ai-engineer": Bot,
+};
+
+/** Select (sets path cookie) or Continue (link to next lesson). */
+function PathPrimaryButton({
+  slug,
+  engaged,
+  continueHref,
+  size = "sm",
 }: {
-  title: string;
-  body: string;
-  href: string;
-  meta: string;
-  soon?: boolean;
+  slug: string;
+  engaged: boolean;
+  continueHref: string;
+  size?: "sm" | "md";
 }) {
+  if (engaged) {
+    return (
+      <Button href={continueHref} size={size}>
+        Continue
+      </Button>
+    );
+  }
+
   return (
-    <Link
-      href={href}
-      className={cn(
-        "group flex min-w-0 flex-col gap-2 rounded-2xl border p-5 transition-colors",
-        soon
-          ? "border-divider bg-paper/60 opacity-70 hover:opacity-90 dark:bg-elevated/50"
-          : "border-card-border bg-paper shadow-[0_1px_0_rgba(15,26,20,0.04)] hover:border-xp-border hover:bg-xp-bg/40 dark:bg-elevated dark:shadow-none",
-      )}
+    <form action={selectPathAction}>
+      <input type="hidden" name="slug" value={slug} />
+      <Button type="submit" size={size}>
+        Select
+      </Button>
+    </form>
+  );
+}
+
+/** Path mark in a circle; optional progress ring for live measurable paths. */
+export function PathMarkRing({
+  mark,
+  slug,
+  progress,
+  gradientId,
+  size = "md",
+  className,
+}: {
+  mark: string;
+  slug: string;
+  /** 0–1 when live+measurable; null = no progress arc (soon / unknown). */
+  progress: number | null;
+  /** Unique SVG gradient id (required when multiple rings on one page). */
+  gradientId: string;
+  size?: "md" | "lg";
+  className?: string;
+}) {
+  const dim = size === "lg" ? 72 : 52;
+  const stroke = size === "lg" ? 3.5 : 3;
+  const r = (dim - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const showRing = progress != null;
+  const pct = showRing ? Math.min(1, Math.max(0, progress)) : 0;
+  const offset = c * (1 - pct);
+  const Icon = PATH_ICONS[slug];
+  const iconSize = size === "lg" ? 26 : 20;
+  const label =
+    showRing && pct > 0
+      ? `${mark}, ${Math.round(pct * 100)}% complete`
+      : mark;
+
+  return (
+    <div
+      className={cn("relative flex-none", className)}
+      style={{ width: dim, height: dim }}
+      role="img"
+      aria-label={label}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fainter">
-          Foundations
-        </span>
-        {soon ? (
-          <span className="rounded-md bg-xp-bg px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-xp-text">
-            Soon
-          </span>
+      <svg
+        width={dim}
+        height={dim}
+        viewBox={`0 0 ${dim} ${dim}`}
+        className="absolute inset-0 -rotate-90"
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="var(--brand-violet)" />
+            <stop offset="55%" stopColor="var(--brand-magenta)" />
+            <stop offset="100%" stopColor="var(--brand-orange)" />
+          </linearGradient>
+        </defs>
+        <circle
+          cx={dim / 2}
+          cy={dim / 2}
+          r={r}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={stroke}
+          className="text-divider"
+        />
+        {showRing ? (
+          <circle
+            cx={dim / 2}
+            cy={dim / 2}
+            r={r}
+            fill="none"
+            stroke={`url(#${gradientId})`}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={offset}
+            className="transition-[stroke-dashoffset] duration-500 ease-out"
+          />
+        ) : null}
+      </svg>
+      <div
+        className={cn(
+          "absolute flex items-center justify-center rounded-full border border-card-border bg-paper text-ink dark:bg-elevated",
+          size === "lg" ? "inset-[7px]" : "inset-[5px]",
+        )}
+      >
+        {Icon ? (
+          <Icon size={iconSize} strokeWidth={1.9} aria-hidden className="text-ink" />
         ) : (
-          <span className="font-mono text-[10px] uppercase tracking-wide text-brand-violet">
-            Live
+          <span
+            className={cn(
+              "font-display font-extrabold tracking-tight text-ink",
+              size === "lg" ? "text-lg" : "text-[13px]",
+            )}
+          >
+            {mark}
           </span>
         )}
       </div>
-      <h2
-        className={cn(
-          "font-display font-extrabold tracking-tight group-hover:text-xp-text",
-          soon ? "text-lg text-ink-secondary sm:text-xl" : "text-xl text-ink sm:text-2xl",
-        )}
-      >
-        {title}
-      </h2>
+    </div>
+  );
+}
+
+/** Full-width featured Foundations — Select/Continue + View. */
+export function PathFeaturedStart({
+  title,
+  body,
+  typeLabel,
+  courseCountLabel,
+  mark,
+  slug,
+  progress,
+  gradientId,
+  engaged,
+  continueHref,
+  viewHref,
+}: {
+  title: string;
+  body: string;
+  typeLabel: string;
+  courseCountLabel: string;
+  mark: string;
+  slug: string;
+  progress: number | null;
+  gradientId: string;
+  engaged: boolean;
+  continueHref: string;
+  viewHref: string;
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-[22px] border border-xp-border bg-paper dark:bg-elevated">
+      <div
+        className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-brand-gradient opacity-[0.08] blur-3xl dark:opacity-[0.05]"
+        aria-hidden
+      />
+      <div className="relative flex flex-col gap-6 p-6 sm:gap-8 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 max-w-[640px] gap-4 sm:gap-5">
+          <PathMarkRing
+            mark={mark}
+            slug={slug}
+            progress={progress}
+            gradientId={gradientId}
+            size="lg"
+          />
+          <div className="min-w-0">
+            <h2 className="font-display text-[28px] font-extrabold tracking-[-0.03em] text-ink sm:text-[32px]">
+              {title}
+            </h2>
+            <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-fainter">
+              {typeLabel}
+              <span className="mx-2 text-divider">·</span>
+              {courseCountLabel}
+            </p>
+            <p className="mt-3 max-w-[62ch] text-[15px] leading-relaxed text-ink-secondary">
+              {body}
+            </p>
+          </div>
+        </div>
+        <div className="flex w-full flex-none flex-wrap items-center justify-end gap-3 lg:w-auto">
+          <PathPrimaryButton
+            slug={slug}
+            engaged={engaged}
+            continueHref={continueHref}
+            size="md"
+          />
+          <Button href={viewHref} variant="secondary" size="md">
+            View
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Grid path card — equal tile; mark left; actions bottom-right.
+ */
+export function PathActionCard({
+  title,
+  body,
+  typeLabel,
+  courseCountLabel,
+  mark,
+  slug,
+  progress,
+  gradientId,
+  soon = false,
+  engaged = false,
+  continueHref,
+  viewHref,
+}: {
+  title: string;
+  body: string;
+  typeLabel: string;
+  courseCountLabel: string;
+  mark: string;
+  slug: string;
+  progress: number | null;
+  gradientId: string;
+  soon?: boolean;
+  engaged?: boolean;
+  continueHref: string | null;
+  viewHref: string;
+}) {
+  return (
+    <article
+      className={cn(
+        "flex h-full min-w-0 flex-col rounded-2xl border p-5 transition-colors",
+        soon
+          ? "border-divider bg-paper/70 opacity-80 dark:bg-elevated/50"
+          : "border-card-border bg-paper hover:border-xp-border hover:bg-xp-bg/30 dark:bg-elevated dark:hover:bg-elevated",
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-3.5">
+        <PathMarkRing
+          mark={mark}
+          slug={slug}
+          progress={progress}
+          gradientId={gradientId}
+          size="md"
+        />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <h3
+              className={cn(
+                "font-display text-lg font-extrabold tracking-tight sm:text-xl",
+                soon ? "text-ink-secondary" : "text-ink",
+              )}
+            >
+              {title}
+            </h3>
+            {soon ? (
+              <span className="rounded-md bg-xp-bg px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-xp-text">
+                Soon
+              </span>
+            ) : null}
+          </div>
+
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-fainter">
+            {typeLabel}
+            <span className="mx-1.5 text-divider">·</span>
+            {courseCountLabel}
+          </p>
+        </div>
+      </div>
+
       <p
         className={cn(
-          "line-clamp-3 text-[13.5px] leading-relaxed",
+          "mt-3 line-clamp-5 text-[13px] leading-relaxed",
           soon ? "text-ink-fainter" : "text-ink-secondary",
         )}
       >
         {body}
       </p>
-      <span className="mt-auto pt-2 font-mono text-[11px] text-ink-fainter">{meta}</span>
-    </Link>
-  );
-}
 
-/** Full-width role row — whole row is the hit target. */
-export function PathRoleRow({
-  title,
-  body,
-  href,
-  meta,
-  soon = false,
-}: {
-  title: string;
-  body: string;
-  href: string;
-  meta?: string;
-  soon?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group flex items-center gap-4 border-b border-divider py-6 transition-colors last:border-b-0",
-        "hover:bg-xp-bg/30 -mx-2 rounded-xl px-2 sm:-mx-3 sm:px-3",
-        soon && "opacity-55 hover:opacity-80",
-      )}
-    >
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h2
-            className={cn(
-              "font-display font-extrabold tracking-tight group-hover:text-xp-text",
-              soon
-                ? "text-xl text-ink-secondary sm:text-2xl"
-                : "text-2xl text-ink sm:text-[28px]",
-            )}
-          >
-            {title}
-          </h2>
-          {soon ? (
-            <span className="font-mono text-[11px] uppercase tracking-wide text-ink-fainter">
-              Coming soon
-            </span>
-          ) : (
-            <span className="font-mono text-[11px] uppercase tracking-wide text-brand-violet">
-              Live
-            </span>
-          )}
-        </div>
-        <p
-          className={cn(
-            "mt-1.5 max-w-[54ch] text-[14px] leading-relaxed line-clamp-2",
-            soon ? "text-ink-fainter" : "text-ink-secondary",
-          )}
-        >
-          {body}
-        </p>
-        {meta ? (
-          <p className="mt-1.5 font-mono text-[11px] text-ink-fainter">{meta}</p>
+      <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+        {continueHref ? (
+          <PathPrimaryButton
+            slug={slug}
+            engaged={engaged}
+            continueHref={continueHref}
+            size="sm"
+          />
         ) : null}
+        <Button href={viewHref} variant="secondary" size="sm">
+          View
+        </Button>
       </div>
-      <span
-        className={cn(
-          "flex h-9 w-9 flex-none items-center justify-center rounded-full border transition-colors",
-          soon
-            ? "border-divider text-ink-fainter"
-            : "border-card-border text-ink-faint group-hover:border-xp-border group-hover:text-xp-text",
-        )}
-        aria-hidden
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 12h14" />
-          <path d="m12 5 7 7-7 7" />
-        </svg>
-      </span>
-    </Link>
+    </article>
   );
 }

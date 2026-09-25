@@ -16,7 +16,6 @@ const LEARN = [
   { href: CURRICULUM_HREF, label: "Curriculum" },
   { href: PATHS_HREF, label: "Paths" },
   { href: "/practice", label: "Practice" },
-  { href: "/playground", label: "Playground" },
 ] as const;
 
 const COMMUNITY = [

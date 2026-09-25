@@ -97,7 +97,6 @@ export default async function CurriculumPage() {
     <main className={HUB_MAIN_CLASS}>
       <div className={HUB_CONTENT_CLASS}>
         <PageHeader
-          eyebrow="Learn / Curriculum"
           title="The path to the machine"
           description="Four levels, bottom-up — from single bits to real, working systems."
         />

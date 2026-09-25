@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useLayoutEffect, useState, useSyncExternalStore } from "react";
+import { useLayoutEffect, useSyncExternalStore } from "react";
 import {
   LayoutDashboard,
-  BookOpen,
+  Map,
   Swords,
-  Play,
   LineChart,
   UserRound,
   Trophy,
@@ -16,7 +15,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
-import { SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
+import { PATHS_HREF, SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
 import { useAuthUser } from "@/lib/auth/context";
 import { ThemeToggle } from "@/components/homepage/theme-toggle";
 import { PlaceholderAvatar } from "@/components/ui/placeholder-avatar";
@@ -71,10 +70,9 @@ function writeCollapsed(next: boolean) {
 }
 
 const LEARN_ITEMS = [
-  { href: "/curriculum", label: "Curriculum", icon: BookOpen },
   { href: "/dashboard", label: "Continue", icon: LayoutDashboard },
+  { href: PATHS_HREF, label: "Paths", icon: Map },
   { href: "/practice", label: "Practice", icon: Swords },
-  { href: "/playground", label: "Playground", icon: Play },
 ];
 
 const YOU_ITEMS = [
@@ -89,11 +87,25 @@ const MORE_ITEMS = [
 
 function isNavActive(pathname: string | null, href: string): boolean {
   if (!pathname) return false;
-  if (href === "/curriculum") {
-    return pathname === "/curriculum" || pathname.startsWith("/curriculum/") || pathname.startsWith("/projects/shellforge");
+  if (href === PATHS_HREF) {
+    return (
+      pathname === PATHS_HREF ||
+      pathname.startsWith(`${PATHS_HREF}/`) ||
+      pathname.startsWith("/lessons/") ||
+      pathname.startsWith("/curriculum") ||
+      pathname.startsWith("/projects/shellforge")
+    );
   }
   if (href === "/dashboard") {
     return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+  }
+  if (href === "/practice") {
+    return (
+      pathname === "/practice" ||
+      pathname.startsWith("/practice/") ||
+      pathname === "/practicev2" ||
+      pathname.startsWith("/practicev2/")
+    );
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -172,14 +184,19 @@ export function AppSidebar() {
     () => false,
   );
 
-  const [widthReady, setWidthReady] = useState(false);
+  // Client-only: defer width transitions until after hydration (avoids expand→collapse flash).
+  const widthReady = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+
   useLayoutEffect(() => {
     const stored = readCollapsed();
     document.documentElement.classList.toggle(
       "sidebar-collapsed",
       stored || forceCollapsedByRoute,
     );
-    setWidthReady(true);
   }, [forceCollapsedByRoute]);
 
   const collapsed = forceCollapsedByRoute || storedCollapsed;

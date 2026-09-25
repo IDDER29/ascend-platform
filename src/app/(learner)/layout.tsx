@@ -4,7 +4,7 @@ import { AppShell } from "@/components/ui/app-shell";
 
 /**
  * Single learner chrome for every signed-in/app route:
- * Continue, Curriculum, lessons, Practice, Playground, Progress, Profile, etc.
+ * Continue, Paths, lessons, Practice, Progress, Profile, etc.
  *
  * Keeping AppShell here (not per-segment) means the sidebar stays mounted
  * across soft navigations — collapse state doesn't remount/flicker.

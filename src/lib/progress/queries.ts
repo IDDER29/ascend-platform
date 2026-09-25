@@ -2,6 +2,7 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db/client";
 import { getAllLessons } from "@/lib/content/lessons";
+import { lessonHref } from "@/lib/paths/lesson-urls";
 import type {
   ContinueLesson,
   LessonCompletion,
@@ -80,7 +81,7 @@ export async function getContinueLesson(userId: string): Promise<ContinueLesson>
     level: next.meta.level,
     slug: next.meta.slug,
     title: next.meta.title,
-    href: `/curriculum/${next.meta.level}/${next.meta.slug}`,
+    href: lessonHref(next.meta.level, next.meta.slug),
     order: next.meta.order,
   };
 }
@@ -229,4 +230,28 @@ export async function updateProfileSettings(
   const updated = await getProfileSettings(userId);
   if (!updated) throw new ProgressError("Could not reload profile after save.");
   return updated;
+}
+
+/** Merge a patch onto current settings, then save (sectioned Settings). */
+export async function patchProfileSettings(
+  userId: string,
+  patch: import("./types").ProfileSettingsPatch,
+): Promise<ProfileSettings> {
+  const current = await getProfileSettings(userId);
+  if (!current) throw new ProgressError("Could not load your profile.");
+  return updateProfileSettings(userId, {
+    name: patch.name ?? current.name,
+    username: patch.username ?? current.username,
+    bio: patch.bio ?? current.bio,
+    pace: patch.pace ?? current.pace,
+    theme: patch.theme ?? current.theme,
+    accent: patch.accent ?? current.accent,
+    reminderTime: patch.reminderTime ?? current.reminderTime,
+    notifStreakReminders:
+      patch.notifStreakReminders ?? current.notifStreakReminders,
+    notifWeeklyRecap: patch.notifWeeklyRecap ?? current.notifWeeklyRecap,
+    notifPeerSolutions: patch.notifPeerSolutions ?? current.notifPeerSolutions,
+    notifProductUpdates:
+      patch.notifProductUpdates ?? current.notifProductUpdates,
+  });
 }

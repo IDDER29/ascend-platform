@@ -4,7 +4,7 @@ export const CURRICULUM_HREF = "/curriculum";
 export const PATHS_HREF = "/paths";
 
 export const FIRST_LESSON_HREF =
-  "/curriculum/level-00-bits-logic/what-is-a-bit";
+  "/lessons/foundations-bits-what-is-a-bit";
 
 /** Auth — one page; signup via query for deep links / analytics. */
 export const SIGNIN_HREF = "/signin";

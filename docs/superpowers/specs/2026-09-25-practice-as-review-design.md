@@ -1,7 +1,7 @@
 # Practice as Review (Playground teardown)
 
 **Date:** 2026-09-25  
-**Status:** Approved — awaiting implementation plan  
+**Status:** Implemented  
 **Route:** `/practice` (primary) · `/playground` → redirect to `/practice`
 
 ## Goal
@@ -105,12 +105,12 @@ v1: seed from current `POINTERS_DRILL` + map to real Foundations lesson slugs. E
 
 ## Success criteria
 
-- [ ] No Playground in primary Learn nav, footer, or ⌘K  
-- [ ] `/playground` lands on Practice  
-- [ ] Practice never claims lesson-tied or resurfacing behavior it doesn’t implement  
-- [ ] Completing a mapped Foundations lesson unlocks related items  
-- [ ] Guest / zero-progress empty state is clear and useful  
-- [ ] Results don’t invent streaks or badges  
+- [x] No Playground in primary Learn nav, footer, or ⌘K  
+- [x] `/playground` lands on Practice  
+- [x] Practice never claims lesson-tied or resurfacing behavior it doesn’t implement  
+- [x] Completing a mapped Foundations lesson unlocks related items  
+- [x] Guest / zero-progress empty state is clear and useful  
+- [x] Results don’t invent streaks or badges  
 
 ## Out of scope (later)
 

@@ -89,7 +89,6 @@ export default async function ProgressPage() {
     <main className={HUB_MAIN_CLASS}>
       <div className={HUB_CONTENT_CLASS}>
         <PageHeader
-          eyebrow="You / Progress"
           title="Your progress"
           description="Lessons you've marked complete — that's the climb we track."
         />

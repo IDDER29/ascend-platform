@@ -50,3 +50,6 @@ export type ProfileSettingsUpdate = {
   notifPeerSolutions: boolean;
   notifProductUpdates: boolean;
 };
+
+/** Partial update for sectioned Settings panes. */
+export type ProfileSettingsPatch = Partial<ProfileSettingsUpdate>;

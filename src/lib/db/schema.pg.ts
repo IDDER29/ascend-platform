@@ -3,6 +3,8 @@ import {
   text,
   integer,
   boolean,
+  doublePrecision,
+  index,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -93,3 +95,33 @@ export const shellforgeSubmissions = pgTable("shellforge_submissions", {
   attempt: integer("attempt").notNull().default(1),
   submittedAt: timestamp("submitted_at", { mode: "date" }).notNull().defaultNow(),
 });
+
+export const practiceSessions = pgTable("practice_sessions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  scopeType: text("scope_type").notNull(),
+  scopeLabel: text("scope_label").notNull(),
+  pathSlug: text("path_slug"),
+  correct: integer("correct").notNull(),
+  total: integer("total").notNull(),
+  missIds: text("miss_ids").notNull().default("[]"),
+  questionIds: text("question_ids").notNull().default("[]"),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const practiceCards = pgTable(
+  "practice_cards",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    questionId: text("question_id").notNull(),
+    state: text("state").notNull(),
+    reps: integer("reps").notNull().default(0),
+    ease: doublePrecision("ease").notNull().default(2.5),
+    intervalDays: integer("interval_days").notNull().default(0),
+    dueAt: text("due_at").notNull(),
+    lapses: integer("lapses").notNull().default(0),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [index("practice_cards_user_due_idx").on(t.userId, t.dueAt)],
+);

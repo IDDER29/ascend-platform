@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -86,3 +86,33 @@ export const shellforgeSubmissions = sqliteTable("shellforge_submissions", {
   attempt: integer("attempt").notNull().default(1),
   submittedAt: integer("submitted_at", { mode: "timestamp" }).notNull(),
 });
+
+export const practiceSessions = sqliteTable("practice_sessions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  scopeType: text("scope_type").notNull(),
+  scopeLabel: text("scope_label").notNull(),
+  pathSlug: text("path_slug"),
+  correct: integer("correct").notNull(),
+  total: integer("total").notNull(),
+  missIds: text("miss_ids").notNull().default("[]"),
+  questionIds: text("question_ids").notNull().default("[]"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+});
+
+export const practiceCards = sqliteTable(
+  "practice_cards",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    questionId: text("question_id").notNull(),
+    state: text("state").notNull(),
+    reps: integer("reps").notNull().default(0),
+    ease: real("ease").notNull().default(2.5),
+    intervalDays: integer("interval_days").notNull().default(0),
+    dueAt: text("due_at").notNull(),
+    lapses: integer("lapses").notNull().default(0),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [index("practice_cards_user_due_idx").on(t.userId, t.dueAt)],
+);

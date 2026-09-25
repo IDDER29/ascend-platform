@@ -86,4 +86,32 @@ CREATE TABLE IF NOT EXISTS shellforge_submissions (
   attempt INTEGER NOT NULL DEFAULT 1,
   submitted_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS practice_sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  scope_type TEXT NOT NULL,
+  scope_label TEXT NOT NULL,
+  path_slug TEXT,
+  correct INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  miss_ids TEXT NOT NULL DEFAULT '[]',
+  question_ids TEXT NOT NULL DEFAULT '[]',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS practice_sessions_user_created_idx ON practice_sessions(user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS practice_cards (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  question_id TEXT NOT NULL,
+  state TEXT NOT NULL,
+  reps INTEGER NOT NULL DEFAULT 0,
+  ease REAL NOT NULL DEFAULT 2.5,
+  interval_days INTEGER NOT NULL DEFAULT 0,
+  due_at TEXT NOT NULL,
+  lapses INTEGER NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS practice_cards_user_due_idx ON practice_cards(user_id, due_at);
 `;

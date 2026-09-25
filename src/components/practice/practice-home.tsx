@@ -39,6 +39,7 @@ import {
   PRACTICE_PATH_MARKS,
   PRACTICE_PATH_TITLES,
 } from "@/lib/practice/path-map";
+import { practiceSectionForPath } from "@/lib/practice/tree";
 import {
   formatSessionWhen,
   newSessionId,
@@ -103,6 +104,15 @@ function labelForScope(scope: PracticeScope): ActiveScope {
     return {
       scope,
       scopeLabel: PRACTICE_PATH_TITLES[scope.pathSlug] ?? scope.pathSlug,
+      pathSlug: scope.pathSlug,
+    };
+  }
+  if (scope.type === "section") {
+    return {
+      scope,
+      scopeLabel:
+        practiceSectionForPath(scope.pathSlug, scope.sectionId)?.title ??
+        scope.sectionId,
       pathSlug: scope.pathSlug,
     };
   }

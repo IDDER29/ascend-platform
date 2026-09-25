@@ -3,8 +3,43 @@ import { test } from "node:test";
 import {
   buildSession,
   coalesceAnsweredSnapshot,
+  questionsForScope,
   shuffleInPlace,
 } from "./session";
+
+test("questionsForScope returns only unlocked lessons in a section", () => {
+  const level = "level-02-the-c-language";
+  const completedKeys = new Set([
+    `${level}/what-a-pointer-really-is`,
+    `${level}/pointer-arithmetic`,
+    `${level}/double-pointers`,
+    `${level}/undefined-behaviour`,
+  ]);
+
+  const questions = questionsForScope(completedKeys, {
+    type: "section",
+    pathSlug: "systems-programmer",
+    sectionId: "pointers",
+  });
+
+  assert.ok(questions.length > 0);
+  assert.ok(
+    questions.every(
+      (question) =>
+        question.lessonLevel === level &&
+        [
+          "what-a-pointer-really-is",
+          "pointer-arithmetic",
+          "double-pointers",
+        ].includes(question.lessonSlug),
+    ),
+  );
+  assert.ok(
+    !questions.some(
+      (question) => question.lessonSlug === "undefined-behaviour",
+    ),
+  );
+});
 
 test("buildSession includes a priority flashcard in a mixed session", () => {
   const session = buildSession({

@@ -1,7 +1,7 @@
 # Practice tree + scope (dashboard slice 1)
 
 **Date:** 2026-09-25  
-**Status:** Draft  
+**Status:** Implementing
 **Routes:** `/practice` · `/practice/[pathSlug]` · `/practice/[pathSlug]/[sectionId]`  
 **Builds on:** Practice SM-2, flashcards/cloze/typed, study-desk polish  
 **Chosen approach:** Reuse path/course outlines as the Practice tree; drill-in pages; Due stays primary on home  

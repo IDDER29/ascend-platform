@@ -6,7 +6,12 @@ import {
 } from "@/lib/practice/path-map";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
 
-export type PracticeScopeType = "all" | "path" | "lessons" | "due";
+export type PracticeScopeType =
+  | "all"
+  | "path"
+  | "section"
+  | "lessons"
+  | "due";
 
 export type PracticeSessionRecord = {
   id: string;

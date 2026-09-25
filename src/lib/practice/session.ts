@@ -3,6 +3,7 @@ import {
   PRACTICE_PATH_TITLES,
   practicePathSlugForLevel,
 } from "./path-map";
+import { sectionLessonKeys } from "./tree";
 import type { PracticeItem } from "./types";
 
 /** Always available even with zero lesson completions (Foundations starter). */
@@ -11,6 +12,7 @@ export const DEFAULT_PRACTICE_LEVEL = "level-00-bits-logic";
 export type PracticeScope =
   | { type: "all" }
   | { type: "path"; pathSlug: string }
+  | { type: "section"; pathSlug: string; sectionId: string }
   | { type: "lessons"; keys: string[] }
   /** Miss queue only — Anki-style “due”, no random filler. */
   | { type: "due" };
@@ -48,7 +50,11 @@ export function questionsForScope(
       (q) => practicePathSlugForLevel(q.lessonLevel) === scope.pathSlug,
     );
   }
-  const want = new Set(scope.keys);
+  const keys =
+    scope.type === "section"
+      ? sectionLessonKeys(scope.pathSlug, scope.sectionId)
+      : scope.keys;
+  const want = new Set(keys);
   return unlocked.filter((q) =>
     want.has(completionKey(q.lessonLevel, q.lessonSlug)),
   );

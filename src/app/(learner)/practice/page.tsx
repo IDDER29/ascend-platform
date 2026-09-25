@@ -74,7 +74,7 @@ export default async function PracticePage({ searchParams }: PracticePageProps) 
           description={
             demoOn
               ? "Demo layouts with example questions — not real progress."
-              : "Review due cards. Study by path."
+              : "Retrieve it, then check — misses come back on a schedule."
           }
         />
         <Suspense fallback={null}>

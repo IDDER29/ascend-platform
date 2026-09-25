@@ -11,7 +11,7 @@ export const PRACTICE_DEMO_VIEWS = [
 
 export type PracticeDemoView = (typeof PRACTICE_DEMO_VIEWS)[number];
 
-const DEMO_LEARNING_IDS = ["bits-01", "bits-02"];
+const DEMO_LEARNING_IDS = ["bits-01", "bits-fc-01", "bits-02"];
 const DEMO_NEW_IDS = ["bool-01", "ptr-01", "ptr-03"];
 const DEMO_FUTURE_REVIEW_ID = "gates-01";
 

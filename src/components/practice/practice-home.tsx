@@ -50,7 +50,11 @@ import {
   savePracticeSessionAction,
   upsertPracticeCardsAction,
 } from "@/lib/practice/actions";
-import { localDayKey, type PracticeCard } from "@/lib/practice/sm2";
+import {
+  localDayKey,
+  type PracticeCard,
+  type PracticeGrade,
+} from "@/lib/practice/sm2";
 import type { PracticeItem } from "@/lib/practice/types";
 import { PATHS_HREF } from "@/lib/routes";
 
@@ -64,7 +68,7 @@ type PracticeHomeProps = {
 };
 
 type Phase = "ready" | "session" | "results";
-type Answered = { questionId: string; correct: boolean };
+type Answered = { questionId: string; grade: PracticeGrade };
 
 type ActiveScope = {
   scope: PracticeScope;
@@ -73,6 +77,10 @@ type ActiveScope = {
 };
 
 const DEMO_USER = "demo-preview";
+
+function gradeIsHit(grade: PracticeGrade): boolean {
+  return grade === "good" || grade === "easy";
+}
 
 function labelForScope(scope: PracticeScope): ActiveScope {
   if (scope.type === "due") {
@@ -102,12 +110,17 @@ function labelForScope(scope: PracticeScope): ActiveScope {
   };
 }
 function sampleSession(): PracticeItem[] {
-  const prefer = ["bits-01", "bits-02", "bool-01", "ptr-01", "ptr-03"];
+  const prefer = [
+    "bits-01",
+    "bits-fc-01",
+    "bits-02",
+    "bool-01",
+    "ptr-01",
+  ];
   const byId = new Map(PRACTICE_BANK.map((q) => [q.id, q]));
   const picked = prefer
     .map((id) => byId.get(id))
-    .filter((item): item is PracticeItem => Boolean(item))
-    .filter((item) => item.kind === "mcq");
+    .filter((item): item is PracticeItem => Boolean(item));
   return picked.length >= 3 ? picked.slice(0, 5) : PRACTICE_BANK.slice(0, 5);
 }
 
@@ -209,12 +222,13 @@ export function PracticeHome({
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [answered, setAnswered] = useState<Answered[]>(() => {
     if (demoView !== "results") return [];
     return sampleSession().map((q, i) => ({
       questionId: q.id,
-      correct: i < 3,
+      grade: i < 3 ? "good" : "again",
     }));
   });
   const [dueNow, setDueNow] = useState(0);
@@ -295,6 +309,7 @@ export function PracticeHome({
         setIndex(0);
         setSelected(null);
         setChecked(false);
+        setRevealed(false);
         setShowHint(false);
         setAnswered([]);
         return;
@@ -306,12 +321,16 @@ export function PracticeHome({
         setIndex(1);
         setSelected(null);
         setChecked(false);
+        setRevealed(false);
         setShowHint(false);
-        setAnswered([{ questionId: sample[0]!.id, correct: true }]);
+        setAnswered([{ questionId: sample[0]!.id, grade: "good" }]);
       } else {
         setPhase("results");
         setAnswered(
-          sample.map((q, i) => ({ questionId: q.id, correct: i < 3 })),
+          sample.map((q, i) => ({
+            questionId: q.id,
+            grade: i < 3 ? "good" : "again",
+          })),
         );
       }
     });
@@ -349,6 +368,7 @@ export function PracticeHome({
     setIndex(0);
     setSelected(null);
     setChecked(false);
+    setRevealed(false);
     setShowHint(false);
     setAnswered([]);
     setPhase("session");
@@ -361,24 +381,20 @@ export function PracticeHome({
     setChecked(true);
     setAnswered((prev) => [
       ...prev,
-      { questionId: q.id, correct: isCorrect },
+      { questionId: q.id, grade: gradeFromMcqCorrect(isCorrect) },
     ]);
   }
 
   function finishSession(nextAnswered: Answered[]) {
     const missIds = nextAnswered
-      .filter((a) => !a.correct)
+      .filter((a) => !gradeIsHit(a.grade))
       .map((a) => a.questionId);
     const correctIds = nextAnswered
-      .filter((a) => a.correct)
+      .filter((a) => gradeIsHit(a.grade))
       .map((a) => a.questionId);
     const questionIds = nextAnswered.map((a) => a.questionId);
     const answeredIds = new Set(questionIds);
-    const grades = nextAnswered.map(({ questionId, correct }) => ({
-      questionId,
-      grade: gradeFromMcqCorrect(correct),
-    }));
-    const updated = applyGrades(effectiveUserId, grades);
+    const updated = applyGrades(effectiveUserId, nextAnswered);
     refreshDueState();
 
     if (userId && !demo) {
@@ -418,15 +434,24 @@ export function PracticeHome({
     setPhase("results");
   }
 
-  function next() {
+  function next(nextAnswered = answered) {
     if (index + 1 >= questions.length) {
-      finishSession(answered);
+      finishSession(nextAnswered);
       return;
     }
     setIndex((i) => i + 1);
     setSelected(null);
     setChecked(false);
+    setRevealed(false);
     setShowHint(false);
+  }
+
+  function gradeFlashcard(grade: PracticeGrade) {
+    const q = questions[index];
+    if (!q || q.kind !== "flashcard" || !revealed) return;
+    const nextAnswered = [...answered, { questionId: q.id, grade }];
+    setAnswered(nextAnswered);
+    next(nextAnswered);
   }
 
   const showEmpty =
@@ -461,11 +486,14 @@ export function PracticeHome({
           index={index}
           selected={selected}
           checked={checked}
+          revealed={revealed}
           showHint={showHint}
           answered={answered}
           onSelect={setSelected}
           onCheck={checkAnswer}
           onNext={next}
+          onReveal={() => setRevealed(true)}
+          onFlashGrade={gradeFlashcard}
           onToggleHint={() => setShowHint((v) => !v)}
           onExit={() => setPhase("ready")}
         />
@@ -926,11 +954,14 @@ function SessionView({
   index,
   selected,
   checked,
+  revealed,
   showHint,
   answered,
   onSelect,
   onCheck,
   onNext,
+  onReveal,
+  onFlashGrade,
   onToggleHint,
   onExit,
 }: {
@@ -938,17 +969,19 @@ function SessionView({
   index: number;
   selected: number | null;
   checked: boolean;
+  revealed: boolean;
   showHint: boolean;
   answered: Answered[];
   onSelect: (i: number) => void;
   onCheck: () => void;
   onNext: () => void;
+  onReveal: () => void;
+  onFlashGrade: (grade: PracticeGrade) => void;
   onToggleHint: () => void;
   onExit: () => void;
 }) {
   const q = questions[index];
   if (!q) return null;
-  if (q.kind !== "mcq") return null;
 
   return (
     <div className="mx-auto w-full max-w-[640px]">
@@ -964,7 +997,7 @@ function SessionView({
           {questions.map((question, i) => {
             const prior = answered[i];
             const state = prior
-              ? prior.correct
+              ? gradeIsHit(prior.grade)
                 ? "correct"
                 : "wrong"
               : i === index
@@ -1002,121 +1035,229 @@ function SessionView({
 
       <Card hover={false}>
         <div className="p-6 sm:p-7">
-          <h2 className="mb-5 font-display text-[22px] font-extrabold leading-snug tracking-tight text-ink sm:text-[24px]">
-            {q.prompt}
-          </h2>
+          {q.kind === "flashcard" ? (
+            <>
+              <p className="mb-3 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-ink-fainter">
+                Recall first
+              </p>
+              <h2 className="font-display text-[22px] font-extrabold leading-snug tracking-tight text-ink sm:text-[24px]">
+                {q.front}
+              </h2>
 
-          {q.code ? (
-            <div className="mb-6 overflow-x-auto rounded-2xl bg-[#121816] px-5 py-4.5 font-mono text-[13.5px] leading-[1.95] text-[#D4E0D9]">
-              {q.code.map((line, i) => (
-                <div key={i} className="flex gap-3.5">
-                  <span className="w-[18px] flex-none select-none text-right text-[#55635c]">
-                    {i + 1}
-                  </span>
-                  <span>{line}</span>
+              {q.frontCode ? (
+                <PracticeCodeBlock lines={q.frontCode} className="mt-5" />
+              ) : null}
+
+              {showHint && !revealed ? (
+                <div className="mt-5 rounded-xl border border-divider bg-elevated px-4 py-3.5 text-sm leading-relaxed text-ink-secondary">
+                  <span className="font-semibold text-ink">Hint — </span>
+                  {q.hint}
                 </div>
-              ))}
-            </div>
-          ) : null}
+              ) : null}
 
-          <div className="flex flex-col gap-2.5">
-            {q.options.map((opt, i) => {
-              const isSelected = selected === i;
-              const isCorrectOpt = i === q.correct;
-
-              let stateClass =
-                "border-divider bg-paper hover:border-divider hover:bg-elevated/70";
-              let badgeClass = "bg-elevated text-ink-secondary";
-              let indicator = (
-                <span className="h-[22px] w-[22px] flex-none rounded-full border-2 border-divider bg-paper" />
-              );
-
-              if (checked) {
-                if (isCorrectOpt) {
-                  stateClass = "border-xp-border bg-xp-bg";
-                  badgeClass = "bg-xp-text text-white";
-                  indicator = (
-                    <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-xp-text">
-                      <Check size={12} className="text-white" strokeWidth={3} />
-                    </span>
-                  );
-                } else if (isSelected) {
-                  stateClass = "border-[#F0562F] bg-[#FEF4F1]";
-                  badgeClass = "bg-[#F0562F] text-white";
-                  indicator = (
-                    <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-[#F0562F]">
-                      <X size={12} className="text-white" strokeWidth={3} />
-                    </span>
-                  );
-                }
-              } else if (isSelected) {
-                stateClass = "border-xp-border bg-xp-bg";
-                badgeClass = "bg-brand-gradient text-white";
-                indicator = (
-                  <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-brand-violet">
-                    <Check size={12} className="text-white" strokeWidth={3} />
-                  </span>
-                );
-              }
-
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => {
-                    if (!checked) onSelect(i);
-                  }}
-                  disabled={checked}
-                  className={cn(
-                    "flex items-center gap-3.5 rounded-[14px] border-[1.5px] px-4 py-4 text-left transition-colors",
-                    stateClass,
-                    checked ? "cursor-default" : "cursor-pointer",
+              {!revealed ? (
+                <div className="mt-8 flex items-center justify-between border-t border-divider pt-5">
+                  {q.hint ? (
+                    <button
+                      type="button"
+                      onClick={onToggleHint}
+                      className="text-[13.5px] font-semibold text-ink-fainter hover:text-ink"
+                    >
+                      {showHint ? "Hide hint" : "Hint"}
+                    </button>
+                  ) : (
+                    <span />
                   )}
+                  <Button onClick={onReveal}>Reveal answer</Button>
+                </div>
+              ) : (
+                <section
+                  aria-live="polite"
+                  className="mt-8 border-t border-divider pt-6"
                 >
-                  <span
-                    className={cn(
-                      "flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] font-mono text-[13px] font-extrabold",
-                      badgeClass,
-                    )}
-                  >
-                    {String.fromCharCode(65 + i)}
-                  </span>
-                  <span className="flex-1 text-[15px] font-medium text-ink">
-                    {opt}
-                  </span>
-                  {indicator}
+                  <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-xp-text">
+                    Answer
+                  </p>
+                  <p className="mt-2 max-w-[60ch] text-[17px] font-medium leading-relaxed text-ink">
+                    {q.back}
+                  </p>
+                  <div className="mt-7 border-t border-divider pt-5">
+                    <p className="mb-3 text-[13px] text-ink-fainter">
+                      How well did you recall it?
+                    </p>
+                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                      {(
+                        [
+                          ["again", "Again"],
+                          ["hard", "Hard"],
+                          ["good", "Good"],
+                          ["easy", "Easy"],
+                        ] as const
+                      ).map(([grade, label]) => (
+                        <Button
+                          key={grade}
+                          variant={grade === "good" ? "primary" : "secondary"}
+                          size="sm"
+                          className={cn(
+                            "w-full",
+                            grade === "good" && "font-extrabold",
+                          )}
+                          onClick={() => onFlashGrade(grade)}
+                        >
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
+            </>
+          ) : (
+            <>
+              <h2 className="mb-5 font-display text-[22px] font-extrabold leading-snug tracking-tight text-ink sm:text-[24px]">
+                {q.prompt}
+              </h2>
+
+              {q.code ? <PracticeCodeBlock lines={q.code} /> : null}
+
+              <div className="flex flex-col gap-2.5">
+                {q.options.map((opt, i) => {
+                  const isSelected = selected === i;
+                  const isCorrectOpt = i === q.correct;
+
+                  let stateClass =
+                    "border-divider bg-paper hover:border-divider hover:bg-elevated/70";
+                  let badgeClass = "bg-elevated text-ink-secondary";
+                  let indicator = (
+                    <span className="h-[22px] w-[22px] flex-none rounded-full border-2 border-divider bg-paper" />
+                  );
+
+                  if (checked) {
+                    if (isCorrectOpt) {
+                      stateClass = "border-xp-border bg-xp-bg";
+                      badgeClass = "bg-xp-text text-white";
+                      indicator = (
+                        <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-xp-text">
+                          <Check
+                            size={12}
+                            className="text-white"
+                            strokeWidth={3}
+                          />
+                        </span>
+                      );
+                    } else if (isSelected) {
+                      stateClass = "border-[#F0562F] bg-[#FEF4F1]";
+                      badgeClass = "bg-[#F0562F] text-white";
+                      indicator = (
+                        <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-[#F0562F]">
+                          <X
+                            size={12}
+                            className="text-white"
+                            strokeWidth={3}
+                          />
+                        </span>
+                      );
+                    }
+                  } else if (isSelected) {
+                    stateClass = "border-xp-border bg-xp-bg";
+                    badgeClass = "bg-brand-gradient text-white";
+                    indicator = (
+                      <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-brand-violet">
+                        <Check
+                          size={12}
+                          className="text-white"
+                          strokeWidth={3}
+                        />
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        if (!checked) onSelect(i);
+                      }}
+                      disabled={checked}
+                      className={cn(
+                        "flex items-center gap-3.5 rounded-[14px] border-[1.5px] px-4 py-4 text-left transition-colors",
+                        stateClass,
+                        checked ? "cursor-default" : "cursor-pointer",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "flex h-[30px] w-[30px] flex-none items-center justify-center rounded-[9px] font-mono text-[13px] font-extrabold",
+                          badgeClass,
+                        )}
+                      >
+                        {String.fromCharCode(65 + i)}
+                      </span>
+                      <span className="flex-1 text-[15px] font-medium text-ink">
+                        {opt}
+                      </span>
+                      {indicator}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {showHint ? (
+                <div className="mt-4 rounded-xl border border-divider bg-elevated px-4 py-3.5 text-sm leading-relaxed text-ink-secondary">
+                  <span className="font-semibold text-ink">Hint — </span>
+                  {q.hint}
+                </div>
+              ) : null}
+
+              <div className="mt-6 flex items-center justify-between border-t border-divider pt-5">
+                <button
+                  type="button"
+                  onClick={onToggleHint}
+                  className="text-[13.5px] font-semibold text-ink-fainter hover:text-ink"
+                >
+                  Hint
                 </button>
-              );
-            })}
-          </div>
-
-          {showHint ? (
-            <div className="mt-4 rounded-xl border border-divider bg-elevated px-4 py-3.5 text-sm leading-relaxed text-ink-secondary">
-              <span className="font-semibold text-ink">Hint — </span>
-              {q.hint}
-            </div>
-          ) : null}
-
-          <div className="mt-6 flex items-center justify-between border-t border-divider pt-5">
-            <button
-              type="button"
-              onClick={onToggleHint}
-              className="text-[13.5px] font-semibold text-ink-fainter hover:text-ink"
-            >
-              Hint
-            </button>
-            {checked ? (
-              <Button onClick={onNext}>
-                {index + 1 >= questions.length ? "See results" : "Next"}
-              </Button>
-            ) : (
-              <Button onClick={onCheck} disabled={selected === null}>
-                Check answer
-              </Button>
-            )}
-          </div>
+                {checked ? (
+                  <Button onClick={onNext}>
+                    {index + 1 >= questions.length ? "See results" : "Next"}
+                  </Button>
+                ) : (
+                  <Button onClick={onCheck} disabled={selected === null}>
+                    Check answer
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </Card>
+    </div>
+  );
+}
+
+function PracticeCodeBlock({
+  lines,
+  className,
+}: {
+  lines: string[];
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "mb-6 overflow-x-auto rounded-2xl bg-[#121816] px-5 py-4.5 font-mono text-[13.5px] leading-[1.95] text-[#D4E0D9]",
+        className,
+      )}
+    >
+      {lines.map((line, i) => (
+        <div key={i} className="flex gap-3.5">
+          <span className="w-[18px] flex-none select-none text-right text-[#55635c]">
+            {i + 1}
+          </span>
+          <span>{line}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -1134,7 +1275,7 @@ function ResultsView({
   onAgain: () => void;
   onHub: () => void;
 }) {
-  const correctCount = answered.filter((a) => a.correct).length;
+  const correctCount = answered.filter((a) => gradeIsHit(a.grade)).length;
 
   return (
     <div className="mx-auto w-full max-w-[640px]">
@@ -1154,17 +1295,18 @@ function ResultsView({
             {answered.map((a, i) => {
               const question = questions[i];
               if (!question) return null;
+              const hit = gradeIsHit(a.grade);
               const row = (
                 <>
                   <span
                     className={cn(
                       "flex h-6 w-6 flex-none items-center justify-center rounded-full",
-                      a.correct
+                      hit
                         ? "bg-xp-bg text-xp-text"
                         : "bg-[#FEECEC] text-[#F0562F]",
                     )}
                   >
-                    {a.correct ? (
+                    {hit ? (
                       <Check size={12} strokeWidth={3} />
                     ) : (
                       <X size={12} strokeWidth={3} />
@@ -1173,7 +1315,7 @@ function ResultsView({
                   <span className="min-w-0 flex-1 text-[13.5px] text-ink">
                     Q{i + 1} · {question.reviewLabel}
                   </span>
-                  {!a.correct ? (
+                  {!hit ? (
                     <span className="text-xs font-bold text-brand-violet">
                       Review →
                     </span>
@@ -1181,7 +1323,7 @@ function ResultsView({
                 </>
               );
 
-              if (a.correct) {
+              if (hit) {
                 return (
                   <div
                     key={question.id}

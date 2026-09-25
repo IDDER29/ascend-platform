@@ -1,7 +1,7 @@
 # Practice v2 — functional review loop
 
 **Date:** 2026-09-25  
-**Status:** Approved  
+**Status:** Implemented
 **Route:** `/practicev2` (separate from live `/practice`)  
 **Builds on:** Coach screen ports; `practice-as-review`, retention home, SM-2 Phase C
 
@@ -69,11 +69,11 @@ Static markup modules may be adapted into data-bound Coach chrome; look stays Ph
 
 ## Success criteria
 
-- [ ] Start review on `/practicev2` runs real unlocked/due cards and writes SM-2 grades
-- [ ] Complete shows real score + miss → lesson links
-- [ ] Home due CTA matches engine due count
-- [ ] Coach visual language preserved on the live session path
-- [ ] `/practice` behavior unchanged
+- [x] Start review on `/practicev2` runs real unlocked/due cards and writes SM-2 grades
+- [x] Complete shows real score + miss → lesson links
+- [x] Home due CTA matches engine due count
+- [x] Coach visual language preserved on the live session path
+- [x] `/practice` behavior unchanged
 
 ## Rollout order
 

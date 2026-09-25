@@ -105,7 +105,7 @@ export const PRACTICE_COACH_V2_FOUNDATIONS_HTML = `<div class="coach-main coach-
 </div>
 <div class="coach-path-ctas" style="display: flex; gap: 12px; flex-shrink: 0">
 <a href="/practicev2/custom" style="display: flex; align-items: center; height: 56px; padding: 0 20px; border-radius: 16px; border: 2px solid #16181D; color: #16181D; font-weight: 600; font-size: 15px; text-decoration: none">Build a custom deck</a>
-<a href="/practicev2/session" style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 56px; padding: 0 24px; border-radius: 16px; background: #D7F26B; box-shadow: 0 5px 0 #9DB43A; color: #16181D; font-weight: 700; font-size: 16px; text-decoration: none">Review 8 due cards</a>
+<a href="/practicev2/session?scope=path&path=foundations" style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 56px; padding: 0 24px; border-radius: 16px; background: #D7F26B; box-shadow: 0 5px 0 #9DB43A; color: #16181D; font-weight: 700; font-size: 16px; text-decoration: none">Review 8 due cards</a>
 </div>
 </div>
 
@@ -116,14 +116,14 @@ export const PRACTICE_COACH_V2_FOUNDATIONS_HTML = `<div class="coach-main coach-
 <section aria-labelledby="b1" style="display: flex; flex-direction: column; gap: 12px">
 <div style="display: flex; justify-content: space-between; align-items: baseline">
 <h2 id="b1" style="margin: 0; font-family: var(--font-bricolage), sans-serif; font-weight: 700; font-size: 24px">Bits <span style="font-family: var(--font-hanken), system-ui, sans-serif; font-weight: 400; font-size: 14px; color: #5A5E66">· 3 lessons · 17 cards</span></h2>
-<a href="/practicev2/session" style="display: flex; align-items: center; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Practice this branch</a>
+<a href="/practicev2/session?scope=path&path=foundations" style="display: flex; align-items: center; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Practice this branch</a>
 </div>
 
 <div class="coach-lesson-row" style="display: flex; align-items: center; gap: 20px; padding: 18px 20px; border-radius: 16px; background: #FFFFFF; border: 2px solid #E2DED3">
 <span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: #16181D; color: #D7F26B; display: flex; align-items: center; justify-content: center; font-weight: 700">1</span>
 <div class="coach-lesson-copy" style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 17px; font-weight: 600">What is a bit?</span><span style="font-size: 13px; color: #4A4E57">6 cards · 1 due now</span></div>
 <div class="coach-lesson-strength" role="img" aria-label="Learning 1, Solid 3, Mastered 2" style="width: 180px; display: flex; gap: 2px; height: 10px"><span style="flex: 1 1 0; border-radius: 4px 0 0 4px; background: #7F95F0"></span><span style="flex: 3 1 0; background: #3F5BDE"></span><span style="flex: 2 1 0; border-radius: 0 4px 4px 0; background: #1A2F96"></span></div>
-<a href="/practicev2/session" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Practice</a>
+<a href="/practicev2/session?scope=path&path=foundations" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Practice</a>
 <a href="/practicev2" style="display: flex; align-items: center; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Open lesson</a>
 </div>
 
@@ -131,7 +131,7 @@ export const PRACTICE_COACH_V2_FOUNDATIONS_HTML = `<div class="coach-main coach-
 <span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: #16181D; color: #D7F26B; display: flex; align-items: center; justify-content: center; font-weight: 700">2</span>
 <div class="coach-lesson-copy" style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 17px; font-weight: 600">Counting in binary</span><span style="font-size: 13px; color: #4A4E57">5 cards · 2 due now</span></div>
 <div class="coach-lesson-strength" role="img" aria-label="Learning 3, Solid 2" style="width: 180px; display: flex; gap: 2px; height: 10px"><span style="flex: 3 1 0; border-radius: 4px 0 0 4px; background: #7F95F0"></span><span style="flex: 2 1 0; border-radius: 0 4px 4px 0; background: #3F5BDE"></span></div>
-<a href="/practicev2/session" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Practice</a>
+<a href="/practicev2/session?scope=path&path=foundations" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Practice</a>
 <a href="/practicev2" style="display: flex; align-items: center; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Open lesson</a>
 </div>
 
@@ -139,7 +139,7 @@ export const PRACTICE_COACH_V2_FOUNDATIONS_HTML = `<div class="coach-main coach-
 <span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: #16181D; color: #D7F26B; display: flex; align-items: center; justify-content: center; font-weight: 700">3</span>
 <div class="coach-lesson-copy" style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 17px; font-weight: 600">Bytes and hex</span><span style="font-size: 13px; color: #4A4E57">6 cards · 1 due now</span></div>
 <div class="coach-lesson-strength" role="img" aria-label="Learning 3, Solid 2, Mastered 1" style="width: 180px; display: flex; gap: 2px; height: 10px"><span style="flex: 3 1 0; border-radius: 4px 0 0 4px; background: #7F95F0"></span><span style="flex: 2 1 0; background: #3F5BDE"></span><span style="flex: 1 1 0; border-radius: 0 4px 4px 0; background: #1A2F96"></span></div>
-<a href="/practicev2/session" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Practice</a>
+<a href="/practicev2/session?scope=path&path=foundations" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Practice</a>
 <a href="/practicev2" style="display: flex; align-items: center; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Open lesson</a>
 </div>
 </section>
@@ -147,14 +147,14 @@ export const PRACTICE_COACH_V2_FOUNDATIONS_HTML = `<div class="coach-main coach-
 <section aria-labelledby="b2" style="display: flex; flex-direction: column; gap: 12px">
 <div style="display: flex; justify-content: space-between; align-items: baseline">
 <h2 id="b2" style="margin: 0; font-family: var(--font-bricolage), sans-serif; font-weight: 700; font-size: 24px">Logic <span style="font-family: var(--font-hanken), system-ui, sans-serif; font-weight: 400; font-size: 14px; color: #5A5E66">· 2 lessons · 11 cards</span></h2>
-<a href="/practicev2/session" style="display: flex; align-items: center; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Practice this branch</a>
+<a href="/practicev2/session?scope=path&path=foundations" style="display: flex; align-items: center; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Practice this branch</a>
 </div>
 
 <div class="coach-lesson-row" style="display: flex; align-items: center; gap: 20px; padding: 18px 20px; border-radius: 16px; background: #FFFFFF; border: 2px solid #E2DED3">
 <span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: #16181D; color: #D7F26B; display: flex; align-items: center; justify-content: center; font-weight: 700">4</span>
 <div class="coach-lesson-copy" style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px"><span class="coach-lesson-title" style="display: flex; align-items: center; gap: 10px"><span style="font-size: 17px; font-weight: 600">Boolean logic</span><span style="padding: 2px 8px; border-radius: 999px; background: #FDE7DA; color: #9A3412; font-size: 12px; font-weight: 600">Needs work</span></span><span style="font-size: 13px; color: #4A4E57">5 cards · 2 due now</span></div>
 <div class="coach-lesson-strength" role="img" aria-label="Learning 3, Solid 1, Mastered 1" style="width: 180px; display: flex; gap: 2px; height: 10px"><span style="flex: 3 1 0; border-radius: 4px 0 0 4px; background: #7F95F0"></span><span style="flex: 1 1 0; background: #3F5BDE"></span><span style="flex: 1 1 0; border-radius: 0 4px 4px 0; background: #1A2F96"></span></div>
-<a href="/practicev2/session" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Practice</a>
+<a href="/practicev2/session?scope=path&path=foundations" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Practice</a>
 <a href="/practicev2" style="display: flex; align-items: center; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Open lesson</a>
 </div>
 
@@ -162,7 +162,7 @@ export const PRACTICE_COACH_V2_FOUNDATIONS_HTML = `<div class="coach-main coach-
 <span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; background: #16181D; color: #D7F26B; display: flex; align-items: center; justify-content: center; font-weight: 700">5</span>
 <div class="coach-lesson-copy" style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px"><span class="coach-lesson-title" style="display: flex; align-items: center; gap: 10px"><span style="font-size: 17px; font-weight: 600">Logic gates</span><span style="padding: 2px 8px; border-radius: 999px; background: #FDE7DA; color: #9A3412; font-size: 12px; font-weight: 600">Needs work</span></span><span style="font-size: 13px; color: #4A4E57">6 cards · 2 due now</span></div>
 <div class="coach-lesson-strength" role="img" aria-label="Learning 3, Solid 3" style="width: 180px; display: flex; gap: 2px; height: 10px"><span style="flex: 3 1 0; border-radius: 4px 0 0 4px; background: #7F95F0"></span><span style="flex: 3 1 0; border-radius: 0 4px 4px 0; background: #3F5BDE"></span></div>
-<a href="/practicev2/session" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Practice</a>
+<a href="/practicev2/session?scope=path&path=foundations" style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 12px; border: 2px solid #D5D0C3; color: #16181D; font-size: 14px; font-weight: 600; text-decoration: none">Practice</a>
 <a href="/practicev2" style="display: flex; align-items: center; height: 44px; font-size: 14px; font-weight: 600; text-decoration: none">Open lesson</a>
 </div>
 </section>
@@ -175,7 +175,7 @@ export const PRACTICE_COACH_V2_FOUNDATIONS_HTML = `<div class="coach-main coach-
 <div class="coach-lesson-row" style="display: flex; align-items: center; gap: 20px; padding: 18px 20px; border-radius: 16px; background: #FFFFFF; border: 2px dashed #D5D0C3">
 <span style="width: 44px; height: 44px; flex-shrink: 0; box-sizing: border-box; border-radius: 50%; border: 2px solid #D5D0C3; color: #4A4E57; display: flex; align-items: center; justify-content: center; font-weight: 700">6</span>
 <div class="coach-lesson-copy" style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px"><span class="coach-lesson-title" style="display: flex; align-items: center; gap: 10px"><span style="font-size: 17px; font-weight: 600">Thinking from first principles</span><span style="padding: 2px 8px; border-radius: 999px; background: #ECE9E0; color: #4A4E57; font-size: 12px; font-weight: 600">Not started</span></span><span style="font-size: 13px; color: #4A4E57">4 cards · none seen yet</span></div>
-<a href="/practicev2/session" style="display: flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 12px; background: #16181D; color: #F6F4EE; font-size: 14px; font-weight: 600; text-decoration: none">Start lesson</a>
+<a href="/practicev2/session?scope=path&path=foundations" style="display: flex; align-items: center; height: 44px; padding: 0 18px; border-radius: 12px; background: #16181D; color: #F6F4EE; font-size: 14px; font-weight: 600; text-decoration: none">Start lesson</a>
 </div>
 </section>
 

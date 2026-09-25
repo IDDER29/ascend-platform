@@ -15,7 +15,7 @@
     "folder": "01-home",
     "bytes": 584230,
     "source_id": "ac413bb7-f141-4d3d-ab72-048414563521",
-    "status": "todo"
+    "status": "covered-by-desktop-or-responsive"
   },
   {
     "n": 3,
@@ -24,7 +24,7 @@
     "folder": "02-all-caught-up",
     "bytes": 570775,
     "source_id": "33500e33-7022-4f57-abd8-8447b8c08ce7",
-    "status": "todo"
+    "status": "covered-by-desktop-or-responsive"
   },
   {
     "n": 4,
@@ -33,7 +33,7 @@
     "folder": "02-all-caught-up",
     "bytes": 573611,
     "source_id": "b7256cde-7403-482b-b1c9-c4ddc98cb7ab",
-    "status": "todo"
+    "status": "shipped:/practicev2/caught-up"
   },
   {
     "n": 5,
@@ -51,7 +51,7 @@
     "folder": "03-foundations-path",
     "bytes": 579384,
     "source_id": "39b086c6-145c-4ba3-9834-e6e3a93cf3dd",
-    "status": "todo"
+    "status": "covered-by-desktop-or-responsive"
   },
   {
     "n": 7,
@@ -60,7 +60,7 @@
     "folder": "04-card-bank",
     "bytes": 586920,
     "source_id": "e6fd97a9-8be3-42cf-b1a4-1ab86b664fda",
-    "status": "todo"
+    "status": "shipped:/practicev2/bank"
   },
   {
     "n": 8,
@@ -69,7 +69,7 @@
     "folder": "04-card-bank",
     "bytes": 579146,
     "source_id": "100a5ca1-45e3-41f3-914e-147e239ecc3e",
-    "status": "todo"
+    "status": "covered-by-desktop-or-responsive"
   },
   {
     "n": 9,
@@ -78,7 +78,7 @@
     "folder": "05-custom-deck",
     "bytes": 579394,
     "source_id": "4dfda748-34e3-4b73-9723-f088a3a22a79",
-    "status": "todo"
+    "status": "shipped:/practicev2/custom"
   },
   {
     "n": 10,
@@ -87,7 +87,7 @@
     "folder": "05-custom-deck",
     "bytes": 572766,
     "source_id": "58978846-16f0-4943-906e-85ac5942cb39",
-    "status": "todo"
+    "status": "covered-by-desktop-or-responsive"
   },
   {
     "n": 11,
@@ -96,7 +96,7 @@
     "folder": "06-review-session",
     "bytes": 569460,
     "source_id": "a9c4e06e-7107-44fb-9b30-4d0d55a4e9fb",
-    "status": "todo"
+    "status": "shipped:/practicev2/session"
   },
   {
     "n": 12,
@@ -105,7 +105,7 @@
     "folder": "06-review-session",
     "bytes": 567646,
     "source_id": "67da866b-3a53-43b5-ad06-f0c58dcef9f9",
-    "status": "todo"
+    "status": "shipped:/practicev2/session/choices"
   },
   {
     "n": 13,
@@ -114,7 +114,7 @@
     "folder": "06-review-session",
     "bytes": 567165,
     "source_id": "fe9b22bf-6124-42df-9665-3f4938202cdd",
-    "status": "todo"
+    "status": "covered-by-desktop-or-responsive"
   },
   {
     "n": 14,
@@ -123,7 +123,7 @@
     "folder": "06-review-session",
     "bytes": 567986,
     "source_id": "c1f6e74f-a64c-4227-bf60-e159a1f8c36d",
-    "status": "todo"
+    "status": "shipped:/practicev2/session/flashcard"
   },
   {
     "n": 15,
@@ -132,7 +132,7 @@
     "folder": "06-review-session",
     "bytes": 566593,
     "source_id": "e9b52b1a-9b9c-4878-a6ed-c2e42008c1d8",
-    "status": "todo"
+    "status": "shipped:/practicev2/session/feedback"
   },
   {
     "n": 16,
@@ -141,7 +141,7 @@
     "folder": "06-review-session",
     "bytes": 567979,
     "source_id": "eb62afd8-487c-4342-94cf-b9806f7d7829",
-    "status": "todo"
+    "status": "shipped:/practicev2/session/correct"
   },
   {
     "n": 17,
@@ -150,7 +150,7 @@
     "folder": "06-review-session",
     "bytes": 567328,
     "source_id": "534abc23-32f0-4e2a-9027-fd5fc00ca1b4",
-    "status": "todo"
+    "status": "covered-by-desktop-or-responsive"
   },
   {
     "n": 18,
@@ -159,7 +159,7 @@
     "folder": "06-review-session",
     "bytes": 569634,
     "source_id": "ab8f7912-46c7-4d6d-ad1c-d85394c9a0f5",
-    "status": "todo"
+    "status": "shipped:/practicev2/session/wrong"
   },
   {
     "n": 19,
@@ -168,7 +168,7 @@
     "folder": "07-review-complete",
     "bytes": 568633,
     "source_id": "34ef0432-b032-49ac-8cbf-1d5e79762a05",
-    "status": "todo"
+    "status": "covered-by-desktop-or-responsive"
   },
   {
     "n": 20,
@@ -177,6 +177,6 @@
     "folder": "07-review-complete",
     "bytes": 571767,
     "source_id": "663415f1-8699-4f37-893b-363dc3817064",
-    "status": "todo"
+    "status": "shipped:/practicev2/complete"
   }
 ]

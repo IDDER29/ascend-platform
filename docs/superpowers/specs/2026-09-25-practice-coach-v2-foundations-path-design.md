@@ -1,7 +1,7 @@
 # Practice Coach v2 — Foundations path
 
 **Date:** 2026-09-25  
-**Status:** Implementing  
+**Status:** Done
 **Route:** `/practicev2/foundations`  
 **Builds on:** Coach home at `/practicev2` · source mock `Ascend Practice.html` → **Practice — Foundations path (desktop)**  
 **Chosen approach:** Mirror home — extract Coach `<main>` body into AppShell cream desk; static markup first; screenshot-until-fixed  

@@ -56,7 +56,12 @@ import {
   type PracticeCard,
   type PracticeGrade,
 } from "@/lib/practice/sm2";
-import type { PracticeItem } from "@/lib/practice/types";
+import { answersMatch, normalizeAnswer } from "@/lib/practice/normalize";
+import type {
+  ClozeItem,
+  PracticeItem,
+  TypedItem,
+} from "@/lib/practice/types";
 import { PATHS_HREF } from "@/lib/routes";
 
 type PracticeHomeProps = {
@@ -464,6 +469,14 @@ export function PracticeHome({
     next(nextAnswered);
   }
 
+  function gradeProduce(grade: "again" | "hard" | "good") {
+    const q = questions[index];
+    if (!q || (q.kind !== "typed" && q.kind !== "cloze")) return;
+    const nextAnswered = [...answered, { questionId: q.id, grade }];
+    setAnswered(nextAnswered);
+    next(nextAnswered);
+  }
+
   const showEmpty =
     demoView === "empty" || (!demo && unlocked.length === 0);
 
@@ -504,6 +517,7 @@ export function PracticeHome({
           onNext={() => next()}
           onReveal={() => setRevealed(true)}
           onFlashGrade={gradeFlashcard}
+          onProduceGrade={gradeProduce}
           onToggleHint={() => setShowHint((v) => !v)}
           onExit={() => setPhase("ready")}
         />
@@ -972,6 +986,7 @@ function SessionView({
   onNext,
   onReveal,
   onFlashGrade,
+  onProduceGrade,
   onToggleHint,
   onExit,
 }: {
@@ -987,6 +1002,7 @@ function SessionView({
   onNext: () => void;
   onReveal: () => void;
   onFlashGrade: (grade: PracticeGrade) => void;
+  onProduceGrade: (grade: "again" | "hard" | "good") => void;
   onToggleHint: () => void;
   onExit: () => void;
 }) {
@@ -1239,11 +1255,187 @@ function SessionView({
                 )}
               </div>
             </>
-          ) : null}
+          ) : q.kind === "typed" || q.kind === "cloze" ? (
+            <PracticeProducePanel
+              key={q.id}
+              item={q}
+              onGrade={onProduceGrade}
+            />
+          ) : (
+            assertNever(q)
+          )}
         </div>
       </Card>
     </div>
   );
+}
+
+function PracticeProducePanel({
+  item,
+  onGrade,
+}: {
+  item: TypedItem | ClozeItem;
+  onGrade: (grade: "again" | "hard" | "good") => void;
+}) {
+  const [input, setInput] = useState("");
+  const [missed, setMissed] = useState(false);
+  const empty = normalizeAnswer(input) === "";
+  const [primaryAnswer, ...otherAnswers] = item.answers;
+  const alternateAnswers = otherAnswers.filter(
+    (answer) => normalizeAnswer(answer) !== normalizeAnswer(primaryAnswer ?? ""),
+  );
+
+  function submitAnswer(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (missed || empty) return;
+    if (answersMatch(input, item.answers)) {
+      onGrade("good");
+      return;
+    }
+    setMissed(true);
+  }
+
+  const inputClass = cn(
+    "rounded-[10px] border bg-paper px-3 py-2 font-mono text-[15px] font-semibold text-ink outline-none transition-colors",
+    "placeholder:text-ink-fainter focus:border-brand-violet focus:ring-2 focus:ring-brand-violet/20",
+    item.kind === "typed" ? "w-full" : "w-[12rem] max-w-full",
+    missed ? "border-[#F0562F]" : "border-divider",
+  );
+
+  const answerInput = (
+    <input
+      id="practice-produce-answer"
+      value={input}
+      onChange={(event) => setInput(event.target.value)}
+      disabled={missed}
+      autoFocus
+      autoComplete="off"
+      autoCapitalize="none"
+      autoCorrect="off"
+      spellCheck={false}
+      aria-label={item.kind === "cloze" ? "Fill in the blank" : "Your answer"}
+      className={inputClass}
+    />
+  );
+
+  return (
+    <form onSubmit={submitAnswer}>
+      <p className="mb-3 font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-ink-fainter">
+        Type your answer
+      </p>
+
+      {item.kind === "typed" ? (
+        <>
+          <h2 className="font-display text-[22px] font-extrabold leading-snug tracking-tight text-ink sm:text-[24px]">
+            {item.prompt}
+          </h2>
+          {item.code ? (
+            <PracticeCodeBlock lines={item.code} className="mt-5" />
+          ) : null}
+          <label
+            htmlFor="practice-produce-answer"
+            className="mt-6 block text-[13px] font-semibold text-ink-secondary"
+          >
+            Your answer
+          </label>
+          <div className="mt-2">{answerInput}</div>
+        </>
+      ) : item.template ? (
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-3 text-[18px] font-medium leading-relaxed text-ink">
+          <span>{item.template.split("{{blank}}", 2)[0]}</span>
+          {answerInput}
+          <span>{item.template.split("{{blank}}", 2)[1]}</span>
+        </div>
+      ) : item.templateCode ? (
+        <ClozeCodeBlock lines={item.templateCode} input={answerInput} />
+      ) : (
+        <div className="rounded-xl border border-divider bg-elevated p-4 text-[14px] text-ink-secondary">
+          This cloze card has no template.
+        </div>
+      )}
+
+      {missed ? (
+        <section
+          aria-live="polite"
+          className="mt-7 border-t border-divider pt-6"
+        >
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-ink-fainter">
+            Answer
+          </p>
+          <p className="mt-2 font-mono text-[17px] font-bold text-ink">
+            {primaryAnswer}
+          </p>
+          {alternateAnswers.length > 0 ? (
+            <p className="mt-1.5 text-[13px] text-ink-fainter">
+              Also accepted: {alternateAnswers.join(", ")}
+            </p>
+          ) : null}
+          <div className="mt-6 grid grid-cols-2 gap-2.5">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              onClick={() => onGrade("again")}
+            >
+              Again
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="w-full"
+              onClick={() => onGrade("hard")}
+            >
+              Hard
+            </Button>
+          </div>
+        </section>
+      ) : (
+        <div className="mt-7 flex justify-end border-t border-divider pt-5">
+          <Button type="submit" disabled={empty}>
+            Check
+          </Button>
+        </div>
+      )}
+    </form>
+  );
+}
+
+function ClozeCodeBlock({
+  lines,
+  input,
+}: {
+  lines: string[];
+  input: React.ReactNode;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-2xl bg-[#121816] px-5 py-4.5 font-mono text-[13.5px] leading-[1.95] text-[#D4E0D9]">
+      {lines.map((line, i) => {
+        const [before, after] = line.split("{{blank}}", 2);
+        return (
+          <div key={i} className="flex min-w-max items-baseline gap-3.5">
+            <span className="w-[18px] flex-none select-none text-right text-[#55635c]">
+              {i + 1}
+            </span>
+            <span>
+              {before}
+              {after === undefined ? null : (
+                <>
+                  <span className="mx-1 inline-block align-middle">{input}</span>
+                  {after}
+                </>
+              )}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unsupported practice item: ${JSON.stringify(value)}`);
 }
 
 function PracticeCodeBlock({

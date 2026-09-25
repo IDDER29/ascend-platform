@@ -40,6 +40,21 @@ test("buildSession shuffles final order so formats are not fixed by bank order",
   assert.ok(session.some((q) => q.kind === "mcq"));
 });
 
+test("buildSession includes typed and cloze questions", () => {
+  const session = buildSession({
+    completedKeys: new Set(),
+    priorityIds: ["bits-typed-01", "bits-cloze-01"],
+    size: 2,
+    scope: { type: "due" },
+    rng: () => 0,
+  });
+
+  assert.deepEqual(
+    new Set(session.map((q) => q.kind)),
+    new Set(["typed", "cloze"]),
+  );
+});
+
 test("coalesceAnsweredSnapshot ignores non-array overrides (e.g. click events)", () => {
   const fallback = [{ questionId: "q1", grade: "good" as const }];
   assert.deepEqual(coalesceAnsweredSnapshot(null, fallback), fallback);

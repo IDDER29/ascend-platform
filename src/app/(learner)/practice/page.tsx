@@ -10,7 +10,7 @@ import { lessonHref } from "@/lib/paths/lesson-urls";
 import {
   listPracticeCardsForUser,
   listPracticeSessionsForUser,
-} from "@/lib/practice/actions";
+} from "@/lib/practice/queries";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
 import {
   isPracticeDemoView,

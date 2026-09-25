@@ -250,67 +250,91 @@ export function PracticeHome({
   ]);
 
   useEffect(() => {
-    if (demo) {
-      if (demoView === "ready") setHistory(sampleHistory());
-      setHistoryReady(true);
-      return;
-    }
-    const local = readLocalHistory(effectiveUserId);
-    if (local.length > 0) {
-      // Prefer richer of server seed vs local device history
+    let cancelled = false;
+    const commitHistory = (local: PracticeSessionRecord[]) => {
+      if (cancelled) return;
       setHistory((server) => {
         const byId = new Map<string, PracticeSessionRecord>();
-        for (const s of [...local, ...server]) byId.set(s.id, s);
+        for (const session of [...local, ...server]) {
+          byId.set(session.id, session);
+        }
         return [...byId.values()]
           .sort((a, b) => b.at.localeCompare(a.at))
           .slice(0, 40);
       });
+      setHistoryReady(true);
+    };
+
+    if (demo) {
+      queueMicrotask(() => {
+        if (cancelled) return;
+        if (demoView === "ready") setHistory(sampleHistory());
+        setHistoryReady(true);
+      });
+    } else {
+      const local = readLocalHistory(effectiveUserId);
+      queueMicrotask(() => commitHistory(local));
     }
-    setHistoryReady(true);
+
+    return () => {
+      cancelled = true;
+    };
   }, [demo, demoView, effectiveUserId]);
 
   useEffect(() => {
     if (!demoView) return;
     if (demoView === "empty") return;
-    if (demoView === "ready") {
-      setPhase("ready");
-      setQuestions([]);
-      setIndex(0);
-      setSelected(null);
-      setChecked(false);
-      setShowHint(false);
-      setAnswered([]);
-      return;
-    }
-    const sample = sampleSession();
-    setQuestions(sample);
-    if (demoView === "session") {
-      setPhase("session");
-      setIndex(1);
-      setSelected(null);
-      setChecked(false);
-      setShowHint(false);
-      setAnswered([{ questionId: sample[0]!.id, correct: true }]);
-    } else {
-      setPhase("results");
-      setAnswered(
-        sample.map((q, i) => ({ questionId: q.id, correct: i < 3 })),
-      );
-    }
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      if (demoView === "ready") {
+        setPhase("ready");
+        setQuestions([]);
+        setIndex(0);
+        setSelected(null);
+        setChecked(false);
+        setShowHint(false);
+        setAnswered([]);
+        return;
+      }
+      const sample = sampleSession();
+      setQuestions(sample);
+      if (demoView === "session") {
+        setPhase("session");
+        setIndex(1);
+        setSelected(null);
+        setChecked(false);
+        setShowHint(false);
+        setAnswered([{ questionId: sample[0]!.id, correct: true }]);
+      } else {
+        setPhase("results");
+        setAnswered(
+          sample.map((q, i) => ({ questionId: q.id, correct: i < 3 })),
+        );
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [demoView]);
 
   function startSession(scope: PracticeScope = { type: "all" }) {
     const labeled = labelForScope(scope);
     const cards = readCards(effectiveUserId);
     const meta = readNewDayMeta(effectiveUserId);
-    const dueIds = dueQueueIds(cards, meta, new Date(), 8);
-    const idsInScope = new Set(
-      questionsForScope(completed, scope).map((question) => question.id),
-    );
-    const priorityIds =
-      scope.type === "due"
-        ? dueIds
-        : dueIds.filter((id) => idsInScope.has(id));
+    const now = new Date();
+    let priorityIds: string[];
+    if (scope.type === "due") {
+      priorityIds = dueQueueIds(cards, meta, now, 8);
+    } else {
+      const idsInScope = new Set(
+        questionsForScope(completed, scope).map((question) => question.id),
+      );
+      const scopeCards = cards.filter((card) =>
+        idsInScope.has(card.questionId),
+      );
+      priorityIds = dueQueueIds(scopeCards, meta, now, 8);
+    }
     const next = buildSession({
       completedKeys: completed,
       priorityIds,

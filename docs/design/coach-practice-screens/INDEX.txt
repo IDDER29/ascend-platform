@@ -1,0 +1,93 @@
+Coach Practice screens — extracted from Ascend Practice.html
+Total: 20 HTML files
+
+Folders:
+  01-home            Practice home desk
+  02-all-caught-up   Empty due state
+  03-foundations-path Path drill-in (branches/lessons)
+  04-card-bank       Browse all cards
+  05-custom-deck     Build a custom deck
+  06-review-session  In-session question / feedback states
+  07-review-complete End-of-session results
+
+Files:
+  01. docs/design/coach-practice-screens/01-home/01-coach-desktop.html
+      title:  Practice — Coach
+      status: shipped:/practicev2
+
+  02. docs/design/coach-practice-screens/01-home/02-coach-mobile.html
+      title:  Practice — Coach (mobile)
+      status: todo
+
+  03. docs/design/coach-practice-screens/02-all-caught-up/03-all-caught-up.html
+      title:  Practice — all caught up
+      status: todo
+
+  04. docs/design/coach-practice-screens/02-all-caught-up/04-all-caught-up-desktop.html
+      title:  Practice — all caught up (desktop)
+      status: todo
+
+  05. docs/design/coach-practice-screens/03-foundations-path/05-foundations-path-desktop.html
+      title:  Practice — Foundations path (desktop)
+      status: shipped:/practicev2/foundations
+
+  06. docs/design/coach-practice-screens/03-foundations-path/06-foundations-path-mobile.html
+      title:  Practice — Foundations path (mobile)
+      status: todo
+
+  07. docs/design/coach-practice-screens/04-card-bank/07-card-bank-desktop.html
+      title:  Practice — card bank (desktop)
+      status: todo
+
+  08. docs/design/coach-practice-screens/04-card-bank/08-card-bank-mobile.html
+      title:  Practice — card bank (mobile)
+      status: todo
+
+  09. docs/design/coach-practice-screens/05-custom-deck/09-custom-deck-desktop.html
+      title:  Practice — build a custom deck (desktop)
+      status: todo
+
+  10. docs/design/coach-practice-screens/05-custom-deck/10-custom-deck-mobile.html
+      title:  Practice — build a custom deck (mobile)
+      status: todo
+
+  11. docs/design/coach-practice-screens/06-review-session/11-session-desktop.html
+      title:  Review session — desktop
+      status: todo
+
+  12. docs/design/coach-practice-screens/06-review-session/12-session-multiple-choice.html
+      title:  Review session — multiple choice
+      status: todo
+
+  13. docs/design/coach-practice-screens/06-review-session/13-session-flashcard.html
+      title:  Review session — flashcard
+      status: todo
+
+  14. docs/design/coach-practice-screens/06-review-session/14-session-flashcard-desktop.html
+      title:  Review session — flashcard (desktop)
+      status: todo
+
+  15. docs/design/coach-practice-screens/06-review-session/15-session-answer-feedback.html
+      title:  Review session — answer feedback
+      status: todo
+
+  16. docs/design/coach-practice-screens/06-review-session/16-session-correct-desktop.html
+      title:  Review session — correct (desktop)
+      status: todo
+
+  17. docs/design/coach-practice-screens/06-review-session/17-session-wrong-answer.html
+      title:  Review session — wrong answer
+      status: todo
+
+  18. docs/design/coach-practice-screens/06-review-session/18-session-wrong-answer-desktop.html
+      title:  Review session — wrong answer (desktop)
+      status: todo
+
+  19. docs/design/coach-practice-screens/07-review-complete/19-review-complete.html
+      title:  Review complete
+      status: todo
+
+  20. docs/design/coach-practice-screens/07-review-complete/20-review-complete-desktop.html
+      title:  Review complete (desktop)
+      status: todo
+

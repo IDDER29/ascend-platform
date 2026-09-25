@@ -1,7 +1,7 @@
 # Practice Phase C — SM-2 card schedule
 
 **Date:** 2026-09-25  
-**Status:** Draft  
+**Status:** Implementing  
 **Route:** `/practice`  
 **Builds on:** `2026-09-25-practice-retention-home-design.md` (Phase A+B Done)  
 **Chosen approach:** Per-card schedule store (DB + guest localStorage)

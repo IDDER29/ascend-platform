@@ -1,7 +1,7 @@
 # Practice active recall — cloze + typed (slice 2)
 
 **Date:** 2026-09-25  
-**Status:** Draft  
+**Status:** Implementing  
 **Route:** `/practice`  
 **Builds on:** `2026-09-25-practice-flashcards-active-recall-design.md`  
 **Chosen approach:** Shared produce shell + `kind: "cloze" | "typed"`; hybrid auto-check then Again/Hard on miss  

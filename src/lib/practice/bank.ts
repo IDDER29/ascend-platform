@@ -1,4 +1,6 @@
+import { CLOZE_BANK } from "./bank-cloze";
 import { FLASHCARD_BANK } from "./bank-flashcards";
+import { TYPED_BANK } from "./bank-typed";
 import type { McqItem, PracticeItem } from "./types";
 
 const L02 = "level-02-the-c-language";
@@ -228,4 +230,6 @@ const MCQ_BANK: McqItem[] = [
 export const PRACTICE_BANK: PracticeItem[] = [
   ...MCQ_BANK,
   ...FLASHCARD_BANK,
+  ...TYPED_BANK,
+  ...CLOZE_BANK,
 ];

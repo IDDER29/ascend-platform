@@ -1,0 +1,90 @@
+import type { ClozeItem } from "./types";
+
+const L00 = "level-00-bits-logic";
+
+export const CLOZE_BANK: ClozeItem[] = [
+  {
+    kind: "cloze",
+    id: "bits-cloze-01",
+    template: "A bit has exactly {{blank}} possible states.",
+    answers: ["2", "two"],
+    reviewLabel: "Possible states of a bit",
+    lessonLevel: L00,
+    lessonSlug: "what-is-a-bit",
+    conceptId: "bit-states",
+  },
+  {
+    kind: "cloze",
+    id: "binary-cloze-01",
+    template: "In binary, each place value is a power of {{blank}}.",
+    answers: ["2", "two"],
+    reviewLabel: "Binary place-value base",
+    lessonLevel: L00,
+    lessonSlug: "binary-and-number-bases",
+    conceptId: "binary-place-values",
+  },
+  {
+    kind: "cloze",
+    id: "binary-cloze-02",
+    template: "The binary value 1000 equals decimal {{blank}}.",
+    answers: ["8", "eight"],
+    reviewLabel: "Convert binary 1000",
+    lessonLevel: L00,
+    lessonSlug: "binary-and-number-bases",
+    conceptId: "binary-to-decimal",
+  },
+  {
+    kind: "cloze",
+    id: "boolean-cloze-01",
+    templateCode: ["1 AND 0 = {{blank}}"],
+    answers: ["0", "false"],
+    reviewLabel: "AND truth-table output",
+    lessonLevel: L00,
+    lessonSlug: "boolean-logic-and-truth-tables",
+    conceptId: "and-truth",
+  },
+  {
+    kind: "cloze",
+    id: "boolean-cloze-02",
+    templateCode: ["NOT 0 = {{blank}}"],
+    answers: ["1", "true"],
+    reviewLabel: "NOT truth-table output",
+    lessonLevel: L00,
+    lessonSlug: "boolean-logic-and-truth-tables",
+    conceptId: "not-truth",
+  },
+  {
+    kind: "cloze",
+    id: "gates-cloze-01",
+    template:
+      "A transistor can act as an electronically controlled {{blank}} in a logic circuit.",
+    answers: ["switch", "a switch"],
+    reviewLabel: "Transistor role in digital logic",
+    lessonLevel: L00,
+    lessonSlug: "logic-gates-from-switches-to-circuits",
+    conceptId: "transistor-switch",
+  },
+  {
+    kind: "cloze",
+    id: "cpu-cloze-01",
+    template:
+      "After fetching an instruction, the CPU must {{blank}} it before execution.",
+    answers: ["decode"],
+    reviewLabel: "Instruction stage after fetch",
+    lessonLevel: L00,
+    lessonSlug: "the-fetch-execute-loop",
+    conceptId: "instruction-cycle",
+  },
+  {
+    kind: "cloze",
+    id: "adder-cloze-01",
+    template:
+      "For a half adder, the {{blank}} output is 1 when both input bits are 1.",
+    answers: ["carry", "carry bit"],
+    reviewLabel: "Half-adder carry output",
+    lessonLevel: L00,
+    lessonSlug: "project-half-adder",
+    conceptId: "half-adder-carry",
+    hint: "This output records overflow into the next column.",
+  },
+];

@@ -23,7 +23,23 @@ export type FlashcardItem = PracticeItemBase & {
   back: string;
 };
 
-export type PracticeItem = McqItem | FlashcardItem;
+export type TypedItem = PracticeItemBase & {
+  kind: "typed";
+  prompt: string;
+  code?: string[];
+  answers: string[];
+};
+
+export type ClozeItem = PracticeItemBase & {
+  kind: "cloze";
+  /** Prose with a single `{{blank}}` placeholder. */
+  template?: string;
+  /** Code lines containing exactly one `{{blank}}` placeholder in total. */
+  templateCode?: string[];
+  answers: string[];
+};
+
+export type PracticeItem = McqItem | FlashcardItem | TypedItem | ClozeItem;
 
 /** @deprecated Use McqItem for MCQ-only code or PracticeItem for mixed sessions. */
 export type PracticeQuestion = McqItem;

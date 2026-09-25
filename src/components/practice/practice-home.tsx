@@ -1122,7 +1122,7 @@ function SessionView({
                 </section>
               )}
             </>
-          ) : (
+          ) : q.kind === "mcq" ? (
             <>
               <h2 className="mb-5 font-display text-[22px] font-extrabold leading-snug tracking-tight text-ink sm:text-[24px]">
                 {q.prompt}
@@ -1239,7 +1239,7 @@ function SessionView({
                 )}
               </div>
             </>
-          )}
+          ) : null}
         </div>
       </Card>
     </div>

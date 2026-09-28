@@ -21,6 +21,7 @@ import {
 import {
   labelCoachV2Scope,
   parseCoachV2Scope,
+  parseCoachV2Size,
 } from "@/lib/practice/coach-v2-flow";
 import {
   newSessionId,
@@ -272,7 +273,9 @@ function FeedbackBar({
   const expectedAnswer =
     question.kind === "mcq"
       ? question.options[question.correct]
-      : question.answers[0];
+      : question.kind === "flashcard"
+        ? question.back
+        : question.answers[0];
 
   return (
     <section
@@ -359,6 +362,7 @@ export function PracticeCoachV2SessionLive({
     () => parseCoachV2Scope(searchParams),
     [searchParams],
   );
+  const size = useMemo(() => parseCoachV2Size(searchParams), [searchParams]);
   const activeScope = useMemo(() => labelCoachV2Scope(scope), [scope]);
   const unlocked = useMemo(
     () => unlockedQuestions(completed),
@@ -392,7 +396,7 @@ export function PracticeCoachV2SessionLive({
     const now = new Date();
     let priorityIds: string[];
     if (scope.type === "due") {
-      priorityIds = dueQueueIds(cards, meta, now, 8);
+      priorityIds = dueQueueIds(cards, meta, now, size);
     } else {
       const idsInScope = new Set(
         questionsForScope(completed, scope).map((question) => question.id),
@@ -400,12 +404,12 @@ export function PracticeCoachV2SessionLive({
       const scopeCards = cards.filter((card) =>
         idsInScope.has(card.questionId),
       );
-      priorityIds = dueQueueIds(scopeCards, meta, now, 8);
+      priorityIds = dueQueueIds(scopeCards, meta, now, size);
     }
     const next = buildSession({
       completedKeys: completed,
       priorityIds,
-      size: 8,
+      size,
       scope,
     });
     if (next.length === 0) {
@@ -413,7 +417,7 @@ export function PracticeCoachV2SessionLive({
       return;
     }
     queueMicrotask(() => setQuestions(next));
-  }, [completed, initialCards, router, scope, unlocked, userId]);
+  }, [completed, initialCards, router, scope, size, unlocked, userId]);
 
   function resetPrompt() {
     setSelected(null);

@@ -37,6 +37,17 @@ export function parseCoachV2Scope(
   return { type: "due" };
 }
 
+export const COACH_V2_DEFAULT_SIZE = 8;
+const COACH_V2_MAX_SIZE = 20;
+
+export function parseCoachV2Size(
+  input: URLSearchParams | Record<string, string | string[] | undefined>,
+): number {
+  const raw = Number.parseInt(asParams(input).get("size") ?? "", 10);
+  if (!Number.isFinite(raw)) return COACH_V2_DEFAULT_SIZE;
+  return Math.min(COACH_V2_MAX_SIZE, Math.max(1, raw));
+}
+
 export function labelCoachV2Scope(scope: PracticeScope): {
   scope: PracticeScope;
   scopeLabel: string;

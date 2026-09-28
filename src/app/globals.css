@@ -892,6 +892,30 @@ html.sidebar-collapsed .app-sidebar-section {
   --coach-scale-3: #3f5bde;
   --coach-scale-4: #1a2f96;
   --coach-scale-empty: #ece9e0;
+
+  --coach-on-blue: #ffffff;
+  --coach-selected-bg: #f3f5ff;
+  --coach-flash-back: #f9f8f4;
+  --coach-code-bg: #16181d;
+  --coach-code-ink: #f6f4ee;
+  --coach-correct-bg: #eaf5be;
+  --coach-correct-border: #c5dd62;
+  --coach-correct-ink: #2a330a;
+  --coach-wrong-bg: #fde7da;
+  --coach-wrong-border: #f4b596;
+  --coach-wrong-ink: #4a1d0a;
+  --coach-wrong-title: #7c2d12;
+  --coach-wrong-strong: #9a3412;
+  --coach-wrong-shadow: #6b230b;
+  --coach-wrong-soft: #fff4ee;
+  --coach-wrong-kbd-bg: #7c2d12;
+  --coach-wrong-kbd-border: #c2410c;
+  --coach-on-wrong: #ffffff;
+  --coach-solid-btn-bg: #16181d;
+  --coach-solid-btn-ink: #f6f4ee;
+  --coach-solid-btn-shadow: #000000;
+  --coach-solid-btn-kbd-bg: #2c2f36;
+  --coach-solid-btn-kbd-border: #4a4e57;
 }
 
 .dark .practice-coach-v2 {
@@ -933,6 +957,25 @@ html.sidebar-collapsed .app-sidebar-section {
   --coach-scale-3: #6079e8;
   --coach-scale-4: #a9b8fa;
   --coach-scale-empty: #26282e;
+
+  --coach-selected-bg: rgba(111, 134, 242, 0.16);
+  --coach-flash-back: #1f2227;
+  --coach-code-bg: #0d0e11;
+  --coach-code-ink: #eceae3;
+  --coach-correct-bg: #232b12;
+  --coach-correct-border: #4d5e0e;
+  --coach-correct-ink: #d9e8a8;
+  --coach-wrong-bg: #2e1d15;
+  --coach-wrong-border: #6b3a22;
+  --coach-wrong-ink: #f1c7b0;
+  --coach-wrong-title: #f4a57a;
+  --coach-wrong-strong: #c2410c;
+  --coach-wrong-soft: rgba(217, 98, 43, 0.14);
+  --coach-solid-btn-bg: #eceae3;
+  --coach-solid-btn-ink: #16181d;
+  --coach-solid-btn-shadow: #8a8c90;
+  --coach-solid-btn-kbd-bg: #d5d3cc;
+  --coach-solid-btn-kbd-border: #9a9ea7;
 }
 
 .practice-coach-v2 a[href]:hover {

@@ -1,4 +1,5 @@
 import { SiteFooter } from "@/components/homepage/footer";
+import { ShellFooter } from "@/components/ui/shell-footer";
 import { AppSidebar } from "@/components/ui/sidebar";
 
 /**
@@ -12,7 +13,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex min-w-0 flex-1 flex-col">{children}</div>
-        <SiteFooter />
+        <ShellFooter>
+          <SiteFooter />
+        </ShellFooter>
       </div>
     </div>
   );

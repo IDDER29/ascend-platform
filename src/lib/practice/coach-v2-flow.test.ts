@@ -5,8 +5,32 @@ import {
   labelCoachV2Scope,
   parseCoachV2Scope,
   parseCoachV2Size,
+  sessionProgress,
 } from "./coach-v2-flow";
 import type { PracticeSessionRecord } from "./history";
+
+test("sessionProgress marks results, skips, current and upcoming cards", () => {
+  const ids = ["a", "b", "c", "d", "e"];
+  const answered = [
+    { questionId: "a", grade: "good" as const },
+    { questionId: "c", grade: "again" as const },
+  ];
+  assert.deepEqual(sessionProgress(ids, answered, 3), {
+    segments: ["correct", "skipped", "missed", "current", "upcoming"],
+    done: 3,
+    total: 5,
+  });
+});
+
+test("sessionProgress shows the current card's result during feedback", () => {
+  const progress = sessionProgress(
+    ["a", "b"],
+    [{ questionId: "a", grade: "hard" }],
+    0,
+  );
+  assert.deepEqual(progress.segments, ["missed", "upcoming"]);
+  assert.equal(progress.done, 1);
+});
 
 test("parseCoachV2Size defaults to 8 and clamps to 1–20", () => {
   assert.equal(parseCoachV2Size({}), 8);

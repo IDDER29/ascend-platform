@@ -1,5 +1,6 @@
 import type { PracticeSessionRecord } from "@/lib/practice/history";
 import type { PracticeScope } from "@/lib/practice/session";
+import type { PracticeGrade } from "@/lib/practice/sm2";
 import { PRACTICE_PATH_TITLES } from "@/lib/practice/path-map";
 
 function first(
@@ -46,6 +47,34 @@ export function parseCoachV2Size(
   const raw = Number.parseInt(asParams(input).get("size") ?? "", 10);
   if (!Number.isFinite(raw)) return COACH_V2_DEFAULT_SIZE;
   return Math.min(COACH_V2_MAX_SIZE, Math.max(1, raw));
+}
+
+export type SessionSegment =
+  | "correct"
+  | "missed"
+  | "skipped"
+  | "current"
+  | "upcoming";
+
+export function sessionProgress(
+  questionIds: string[],
+  answered: { questionId: string; grade: PracticeGrade }[],
+  index: number,
+): { segments: SessionSegment[]; done: number; total: number } {
+  const grades = new Map(answered.map((a) => [a.questionId, a.grade]));
+  let done = 0;
+  const segments = questionIds.map((id, i): SessionSegment => {
+    const grade = grades.get(id);
+    if (i > index) return "upcoming";
+    if (grade) {
+      done += 1;
+      return grade === "good" || grade === "easy" ? "correct" : "missed";
+    }
+    if (i === index) return "current";
+    done += 1;
+    return "skipped";
+  });
+  return { segments, done, total: questionIds.length };
 }
 
 export function labelCoachV2Scope(scope: PracticeScope): {

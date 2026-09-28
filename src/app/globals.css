@@ -841,3 +841,109 @@ html.sidebar-collapsed .app-sidebar-section {
   font-size: 0;
   line-height: 0;
 }
+
+/* Practice Coach (v2) — scoped palette. Coach keeps its own blue / lime identity. */
+.practice-coach-v2 {
+  --coach-bg: #f6f4ee;
+  --coach-surface: #ffffff;
+  --coach-ink: #16181d;
+  --coach-ink-secondary: #4a4e57;
+  --coach-ink-muted: #5a5e66;
+  --coach-border: #e2ded3;
+  --coach-border-strong: #d5d0c3;
+  --coach-divider: #ece9e0;
+  --coach-well: #f1eee6;
+  --coach-chip: #f6f4ee;
+  --coach-segment-active: #ffffff;
+  --coach-segment-shadow: 0 1px 3px rgba(22, 24, 29, 0.12);
+
+  --coach-hero-bg: #16181d;
+  --coach-hero-ink: #f6f4ee;
+  --coach-hero-muted: #b9bcc4;
+  --coach-hero-track: #3a3d45;
+  --coach-hero-card: #f6f4ee;
+  --coach-hero-card-ink: #16181d;
+  --coach-hero-card-muted: #5a5e66;
+
+  --coach-lime: #d7f26b;
+  --coach-lime-shadow: #9db43a;
+  --coach-lime-soft: #e8f7a6;
+  --coach-lime-ink: #16181d;
+
+  --coach-mark-bg: #16181d;
+  --coach-mark-ink: #d7f26b;
+
+  --coach-blue: #2e4bdb;
+  --coach-orange: #d9622b;
+  --coach-success: #4a5e0e;
+  --coach-focus: #5a74e6;
+
+  --coach-tint-orange-bg: #fde7da;
+  --coach-tint-orange-ink: #c2410c;
+  --coach-tint-orange-strong: #9a3412;
+  --coach-tint-lime-bg: #f0f8cf;
+  --coach-tint-lime-ink: #4d5e0e;
+  --coach-tint-blue-bg: #e3e8ff;
+  --coach-tint-blue-ink: #1f3bb8;
+  --coach-tint-neutral-bg: #ece9e0;
+
+  --coach-scale-1: #bac6fa;
+  --coach-scale-2: #7f95f0;
+  --coach-scale-3: #3f5bde;
+  --coach-scale-4: #1a2f96;
+  --coach-scale-empty: #ece9e0;
+}
+
+.dark .practice-coach-v2 {
+  --coach-bg: #121416;
+  --coach-surface: #1a1c21;
+  --coach-ink: #eceae3;
+  --coach-ink-secondary: #b4b7bf;
+  --coach-ink-muted: #9a9ea7;
+  --coach-border: #2e3138;
+  --coach-border-strong: #3a3d45;
+  --coach-divider: #26282e;
+  --coach-well: #23252b;
+  --coach-chip: #23252b;
+  --coach-segment-active: #34373f;
+  --coach-segment-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+
+  --coach-hero-bg: #1f2229;
+  --coach-hero-track: #3a3d45;
+
+  --coach-mark-bg: #d7f26b;
+  --coach-mark-ink: #16181d;
+
+  --coach-blue: #6f86f2;
+  --coach-orange: #e8804f;
+  --coach-success: #c5e35a;
+  --coach-focus: #8fa2f5;
+
+  --coach-tint-orange-bg: rgba(217, 98, 43, 0.18);
+  --coach-tint-orange-ink: #f4a57a;
+  --coach-tint-orange-strong: #f4a57a;
+  --coach-tint-lime-bg: rgba(215, 242, 107, 0.14);
+  --coach-tint-lime-ink: #d7f26b;
+  --coach-tint-blue-bg: rgba(111, 134, 242, 0.18);
+  --coach-tint-blue-ink: #a9b8fa;
+  --coach-tint-neutral-bg: #2a2d34;
+
+  --coach-scale-1: #2a3366;
+  --coach-scale-2: #3f52b0;
+  --coach-scale-3: #6079e8;
+  --coach-scale-4: #a9b8fa;
+  --coach-scale-empty: #26282e;
+}
+
+.practice-coach-v2 a[href]:hover {
+  filter: brightness(0.97);
+}
+.practice-coach-v2 a[href]:active,
+.practice-coach-v2 button:not(:disabled):active {
+  transform: translateY(2px);
+}
+.practice-coach-v2 a:focus-visible,
+.practice-coach-v2 button:focus-visible {
+  outline: 3px solid var(--coach-focus);
+  outline-offset: 3px;
+}

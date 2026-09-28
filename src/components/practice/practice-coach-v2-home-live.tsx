@@ -1,22 +1,38 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { CardStrength } from "@/components/practice/coach-home/card-strength";
+import { CoachHeader } from "@/components/practice/coach-home/coach-header";
+import { CoachHomeSkeleton } from "@/components/practice/coach-home/coach-home-skeleton";
+import { DueHero } from "@/components/practice/coach-home/due-hero";
+import { FoundationsPathCard } from "@/components/practice/coach-home/foundations-path-card";
+import { ModeGrid } from "@/components/practice/coach-home/mode-grid";
+import { PracticeDays } from "@/components/practice/coach-home/practice-days";
+import { TodaysSessions } from "@/components/practice/coach-home/todays-sessions";
+import { YourDayCard } from "@/components/practice/coach-home/your-day-card";
 import {
-  PRACTICE_COACH_V2_CSS,
-  PRACTICE_COACH_V2_HTML,
-} from "@/components/practice/practice-coach-v2-markup";
-import {
-  dueCount,
   ensureUnlockedCards,
   migrateMissQueueOnce,
   readCards,
   readNewDayMeta,
   writeCards,
+  type NewDayMeta,
 } from "@/lib/practice/cards";
-import type { PracticeSessionRecord } from "@/lib/practice/history";
+import { buildCoachHomeModel } from "@/lib/practice/coach-home-model";
+import {
+  readDailyGoal,
+  writeDailyGoal,
+  type DailyGoal,
+} from "@/lib/practice/daily-goal";
+import {
+  readLocalHistory,
+  type PracticeSessionRecord,
+} from "@/lib/practice/history";
 import { unlockedQuestions } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
-import { CURRICULUM_HREF } from "@/lib/routes";
+
+const MAX_HISTORY = 40;
 
 export type PracticeCoachV2HomeLiveProps = {
   userId: string | null;
@@ -25,83 +41,29 @@ export type PracticeCoachV2HomeLiveProps = {
   initialHistory: PracticeSessionRecord[];
 };
 
-export type CoachHomeAction = {
-  href: string;
-  label: string;
-  mode: "due" | "all" | "continue";
+type HomeData = {
+  cards: PracticeCard[];
+  history: PracticeSessionRecord[];
+  meta: NewDayMeta;
+  goal: DailyGoal;
+  now: Date;
 };
 
-export function selectCoachHomeAction(
-  dueNow: number,
-  unlockedCount: number,
-): CoachHomeAction {
-  if (dueNow > 0) {
-    return {
-      href: "/practicev2/session?scope=due",
-      label: `Start ${dueNow} due`,
-      mode: "due",
-    };
-  }
-  if (unlockedCount > 0) {
-    return {
-      href: "/practicev2/session?scope=all",
-      label: "Free study",
-      mode: "all",
-    };
-  }
-  return {
-    href: CURRICULUM_HREF,
-    label: "Continue learning",
-    mode: "continue",
-  };
+function mergeHistory(
+  local: PracticeSessionRecord[],
+  server: PracticeSessionRecord[],
+): PracticeSessionRecord[] {
+  const byId = new Map<string, PracticeSessionRecord>();
+  for (const session of [...local, ...server]) byId.set(session.id, session);
+  return [...byId.values()]
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .slice(0, MAX_HISTORY);
 }
 
-const DUE_COPY_SUFFIX =
-  "choices, flashcards, cloze and short answers, shuffled";
-
-function dueCopyLine(dueNow: number): string {
-  const cardWord = dueNow === 1 ? "card" : "cards";
-  return `${dueNow} ${cardWord} · ${DUE_COPY_SUFFIX}`;
-}
-
-function sessionHrefForLink(anchor: HTMLAnchorElement): string {
-  const text = anchor.textContent ?? "";
-  if (text.includes("Retry") || text.includes("Fix your misses")) {
-    return "/practicev2/session?scope=due";
-  }
-  return "/practicev2/session?scope=all";
-}
-
-export function patchCoachHomeDom(
-  root: HTMLElement,
-  dueNow: number,
-  action: CoachHomeAction,
-): void {
-  const dueSection = root.querySelector(".coach-due");
-  const dueParagraph = dueSection?.querySelector("#up-next + p");
-  if (dueParagraph) {
-    dueParagraph.textContent = dueCopyLine(dueNow);
-  }
-
-  const primaryCta = root.querySelector(
-    ".coach-due-cta a",
-  ) as HTMLAnchorElement | null;
-  if (primaryCta) {
-    primaryCta.setAttribute("href", action.href);
-    const kbd = primaryCta.querySelector("kbd");
-    primaryCta.textContent = "";
-    primaryCta.append(document.createTextNode(action.label));
-    if (kbd) {
-      primaryCta.append(document.createTextNode("\n"));
-      primaryCta.append(kbd);
-    }
-  }
-
-  root.querySelectorAll('a[href="/practicev2/session"]').forEach((node) => {
-    const anchor = node as HTMLAnchorElement;
-    if (anchor.closest(".coach-due-cta")) return;
-    anchor.setAttribute("href", sessionHrefForLink(anchor));
-  });
+function isTypingTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  return ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(target.tagName);
 }
 
 export function PracticeCoachV2HomeLive({
@@ -110,57 +72,94 @@ export function PracticeCoachV2HomeLive({
   initialCards,
   initialHistory,
 }: PracticeCoachV2HomeLiveProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
-  const unlocked = useMemo(() => unlockedQuestions(completed), [completed]);
   const unlockedIds = useMemo(
-    () => unlocked.map((question) => question.id),
-    [unlocked],
+    () => unlockedQuestions(completed).map((question) => question.id),
+    [completed],
   );
-  const [dueNow, setDueNow] = useState(0);
-  const [ready, setReady] = useState(false);
+
+  const [data, setData] = useState<HomeData | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-
-    if (initialCards.length > 0) {
-      writeCards(userId, initialCards);
-    }
+    if (initialCards.length > 0) writeCards(userId, initialCards);
     migrateMissQueueOnce(userId);
     ensureUnlockedCards(userId, unlockedIds);
 
-    const cards = readCards(userId);
-    const meta = readNewDayMeta(userId);
-    const nextDue = dueCount(cards, meta, new Date());
-
+    const next: HomeData = {
+      cards: readCards(userId),
+      history: mergeHistory(readLocalHistory(userId), initialHistory),
+      meta: readNewDayMeta(userId),
+      goal: readDailyGoal(userId),
+      now: new Date(),
+    };
     queueMicrotask(() => {
-      if (cancelled) return;
-      setDueNow(nextDue);
-      setReady(true);
+      if (!cancelled) setData(next);
     });
     return () => {
       cancelled = true;
     };
   }, [initialCards, initialHistory, unlockedIds, userId]);
 
-  const action = useMemo(
-    () => selectCoachHomeAction(dueNow, unlocked.length),
-    [dueNow, unlocked.length],
+  const model = useMemo(
+    () =>
+      data
+        ? buildCoachHomeModel({
+            cards: data.cards,
+            history: data.history,
+            meta: data.meta,
+            completedKeys: completed,
+            goal: data.goal,
+            now: data.now,
+          })
+        : null,
+    [completed, data],
   );
 
+  const primaryHref = model?.hero.action.href;
   useEffect(() => {
-    if (!ready || !rootRef.current) return;
-    patchCoachHomeDom(rootRef.current, dueNow, action);
-  }, [ready, dueNow, action]);
+    if (!primaryHref) return;
+    const href = primaryHref;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Enter" || event.repeat) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+      if (isTypingTarget(event.target)) return;
+      event.preventDefault();
+      router.push(href);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [primaryHref, router]);
+
+  function changeGoal(goal: DailyGoal) {
+    writeDailyGoal(userId, goal);
+    setData((current) => (current ? { ...current, goal } : current));
+  }
+
+  if (!model) return <CoachHomeSkeleton />;
 
   return (
-    <>
-      <style id="practice-coach-v2-css">{PRACTICE_COACH_V2_CSS}</style>
-      <div
-        ref={rootRef}
-        className="practice-coach-v2"
-        dangerouslySetInnerHTML={{ __html: PRACTICE_COACH_V2_HTML }}
-      />
-    </>
+    <div className="flex min-w-0 max-w-full flex-col gap-10">
+      <CoachHeader dateLabel={model.dateLabel} />
+
+      <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)]">
+        <DueHero hero={model.hero} />
+        <YourDayCard day={model.day} onGoalChange={changeGoal} />
+      </div>
+
+      <ModeGrid modes={model.modes} />
+
+      <div className="grid w-full min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)]">
+        <div className="flex min-w-0 flex-col gap-6">
+          <FoundationsPathCard path={model.path} />
+          <TodaysSessions sessions={model.sessions} isGuest={userId === null} />
+        </div>
+        <aside className="flex min-w-0 flex-col gap-6">
+          <CardStrength strength={model.strength} week={model.week} />
+          <PracticeDays days={model.days} />
+        </aside>
+      </div>
+    </div>
   );
 }

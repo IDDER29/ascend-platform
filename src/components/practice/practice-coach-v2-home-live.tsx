@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { CardStrength } from "@/components/practice/coach-home/card-strength";
 import { CoachHeader } from "@/components/practice/coach-home/coach-header";
@@ -11,6 +10,7 @@ import { ModeGrid } from "@/components/practice/coach-home/mode-grid";
 import { PracticeDays } from "@/components/practice/coach-home/practice-days";
 import { TodaysSessions } from "@/components/practice/coach-home/todays-sessions";
 import { YourDayCard } from "@/components/practice/coach-home/your-day-card";
+import { useEnterShortcut } from "@/components/practice/use-enter-shortcut";
 import {
   ensureUnlockedCards,
   migrateMissQueueOnce,
@@ -26,13 +26,12 @@ import {
   type DailyGoal,
 } from "@/lib/practice/daily-goal";
 import {
+  mergeSessionHistory,
   readLocalHistory,
   type PracticeSessionRecord,
 } from "@/lib/practice/history";
 import { unlockedQuestions } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
-
-const MAX_HISTORY = 40;
 
 export type PracticeCoachV2HomeLiveProps = {
   userId: string | null;
@@ -49,30 +48,12 @@ type HomeData = {
   now: Date;
 };
 
-function mergeHistory(
-  local: PracticeSessionRecord[],
-  server: PracticeSessionRecord[],
-): PracticeSessionRecord[] {
-  const byId = new Map<string, PracticeSessionRecord>();
-  for (const session of [...local, ...server]) byId.set(session.id, session);
-  return [...byId.values()]
-    .sort((a, b) => b.at.localeCompare(a.at))
-    .slice(0, MAX_HISTORY);
-}
-
-function isTypingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  if (target.isContentEditable) return true;
-  return ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(target.tagName);
-}
-
 export function PracticeCoachV2HomeLive({
   userId,
   completedKeys,
   initialCards,
   initialHistory,
 }: PracticeCoachV2HomeLiveProps) {
-  const router = useRouter();
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
   const unlockedIds = useMemo(
     () => unlockedQuestions(completed).map((question) => question.id),
@@ -89,7 +70,7 @@ export function PracticeCoachV2HomeLive({
 
     const next: HomeData = {
       cards: readCards(userId),
-      history: mergeHistory(readLocalHistory(userId), initialHistory),
+      history: mergeSessionHistory(readLocalHistory(userId), initialHistory),
       meta: readNewDayMeta(userId),
       goal: readDailyGoal(userId),
       now: new Date(),
@@ -117,20 +98,7 @@ export function PracticeCoachV2HomeLive({
     [completed, data],
   );
 
-  const primaryHref = model?.hero.action.href;
-  useEffect(() => {
-    if (!primaryHref) return;
-    const href = primaryHref;
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Enter" || event.repeat) return;
-      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
-      if (isTypingTarget(event.target)) return;
-      event.preventDefault();
-      router.push(href);
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [primaryHref, router]);
+  useEnterShortcut(model?.hero.action.href);
 
   function changeGoal(goal: DailyGoal) {
     writeDailyGoal(userId, goal);

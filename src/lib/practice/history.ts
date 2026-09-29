@@ -69,6 +69,18 @@ export function writeLocalHistory(
   }
 }
 
+/** Local and server rows deduped by id (server wins), newest first. */
+export function mergeSessionHistory(
+  local: PracticeSessionRecord[],
+  server: PracticeSessionRecord[],
+): PracticeSessionRecord[] {
+  const byId = new Map<string, PracticeSessionRecord>();
+  for (const session of [...local, ...server]) byId.set(session.id, session);
+  return [...byId.values()]
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .slice(0, MAX_SESSIONS);
+}
+
 export function prependLocalSession(
   userId: string | null,
   session: PracticeSessionRecord,

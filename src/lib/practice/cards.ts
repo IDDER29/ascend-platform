@@ -145,6 +145,16 @@ export function migrateMissQueueOnce(
   return next;
 }
 
+export function syncLocalCards(
+  userId: string | null,
+  serverCards: PracticeCard[],
+  unlockedIds: string[],
+): PracticeCard[] {
+  if (serverCards.length > 0) writeCards(userId, serverCards);
+  migrateMissQueueOnce(userId);
+  return ensureUnlockedCards(userId, unlockedIds);
+}
+
 export function applyGrades(
   userId: string | null,
   grades: { questionId: string; grade: PracticeGrade }[],

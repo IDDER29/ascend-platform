@@ -39,7 +39,7 @@ export function parseCoachV2Scope(
 }
 
 export const COACH_V2_DEFAULT_SIZE = 8;
-const COACH_V2_MAX_SIZE = 20;
+export const COACH_V2_MAX_SIZE = 20;
 
 export function parseCoachV2Size(
   input: URLSearchParams | Record<string, string | string[] | undefined>,
@@ -47,6 +47,20 @@ export function parseCoachV2Size(
   const raw = Number.parseInt(asParams(input).get("size") ?? "", 10);
   if (!Number.isFinite(raw)) return COACH_V2_DEFAULT_SIZE;
   return Math.min(COACH_V2_MAX_SIZE, Math.max(1, raw));
+}
+
+const CARD_ID_RE = /^[A-Za-z0-9_-]+$/;
+
+/** Hand-picked card ids from `?cards=a,b`, deduped and capped at the max session size. */
+export function parseCoachV2CardIds(
+  input: URLSearchParams | Record<string, string | string[] | undefined>,
+): string[] {
+  const raw = asParams(input).get("cards") ?? "";
+  const ids = raw
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => CARD_ID_RE.test(id));
+  return [...new Set(ids)].slice(0, COACH_V2_MAX_SIZE);
 }
 
 export type SessionSegment =

@@ -20,6 +20,7 @@ import {
 import {
   labelCoachV2Scope,
   parseCoachV2Scope,
+  parseCoachV2CardIds,
   parseCoachV2Size,
   sessionProgress,
   type SessionSegment,
@@ -440,7 +441,16 @@ export function PracticeCoachV2SessionLive({
     [searchParams],
   );
   const size = useMemo(() => parseCoachV2Size(searchParams), [searchParams]);
-  const activeScope = useMemo(() => labelCoachV2Scope(scope), [scope]);
+  const pickedIds = useMemo(
+    () => parseCoachV2CardIds(searchParams),
+    [searchParams],
+  );
+  const activeScope = useMemo(() => {
+    const labeled = labelCoachV2Scope(scope);
+    return pickedIds.length > 0
+      ? { ...labeled, scopeLabel: "Selected cards" }
+      : labeled;
+  }, [pickedIds, scope]);
   const unlocked = useMemo(
     () => unlockedQuestions(completed),
     [completed],
@@ -472,7 +482,12 @@ export function PracticeCoachV2SessionLive({
     const meta = readNewDayMeta(userId);
     const now = new Date();
     let priorityIds: string[];
-    if (scope.type === "due") {
+    let sessionSize = size;
+    if (pickedIds.length > 0) {
+      const unlockedIds = new Set(unlocked.map((question) => question.id));
+      priorityIds = pickedIds.filter((id) => unlockedIds.has(id));
+      sessionSize = priorityIds.length;
+    } else if (scope.type === "due") {
       priorityIds = dueQueueIds(cards, meta, now, size);
     } else {
       const idsInScope = new Set(
@@ -483,18 +498,21 @@ export function PracticeCoachV2SessionLive({
       );
       priorityIds = dueQueueIds(scopeCards, meta, now, size);
     }
-    const next = buildSession({
-      completedKeys: completed,
-      priorityIds,
-      size,
-      scope,
-    });
+    const next =
+      sessionSize > 0
+        ? buildSession({
+            completedKeys: completed,
+            priorityIds,
+            size: sessionSize,
+            scope,
+          })
+        : [];
     if (next.length === 0) {
       router.replace("/practicev2");
       return;
     }
     queueMicrotask(() => setQuestions(next));
-  }, [completed, initialCards, router, scope, size, unlocked, userId]);
+  }, [completed, initialCards, pickedIds, router, scope, size, unlocked, userId]);
 
   function resetPrompt() {
     setSelected(null);

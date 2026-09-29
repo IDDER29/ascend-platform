@@ -3,11 +3,22 @@ import { test } from "node:test";
 import {
   findCoachV2SessionRecord,
   labelCoachV2Scope,
+  parseCoachV2CardIds,
   parseCoachV2Scope,
   parseCoachV2Size,
   sessionProgress,
 } from "./coach-v2-flow";
 import type { PracticeSessionRecord } from "./history";
+
+test("parseCoachV2CardIds reads a deduped, capped comma list", () => {
+  assert.deepEqual(parseCoachV2CardIds({}), []);
+  assert.deepEqual(parseCoachV2CardIds({ cards: "" }), []);
+  assert.deepEqual(parseCoachV2CardIds({ cards: " a-1, b_2 ,a-1,," }), ["a-1", "b_2"]);
+  assert.deepEqual(parseCoachV2CardIds({ cards: "ok,<script>,x y" }), ["ok"]);
+  const many = Array.from({ length: 30 }, (_, i) => `c${i}`).join(",");
+  assert.equal(parseCoachV2CardIds({ cards: many }).length, 20);
+  assert.deepEqual(parseCoachV2CardIds(new URLSearchParams("cards=p,q")), ["p", "q"]);
+});
 
 test("sessionProgress marks results, skips, current and upcoming cards", () => {
   const ids = ["a", "b", "c", "d", "e"];

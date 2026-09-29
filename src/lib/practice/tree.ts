@@ -109,6 +109,19 @@ export function practiceTreeForPath(
   return PRACTICE_TREE.find((path) => path.pathSlug === pathSlug) ?? null;
 }
 
+const LESSON_TITLES = new Map(
+  PRACTICE_TREE.flatMap((path) =>
+    path.sections.flatMap((section) =>
+      section.lessons.map((lesson) => [lesson.key, lesson.title] as const),
+    ),
+  ),
+);
+
+/** Lesson title by `level/slug` completion key. */
+export function practiceLessonTitle(key: string): string | null {
+  return LESSON_TITLES.get(key) ?? null;
+}
+
 export function practiceSectionsForPath(
   pathSlug: string,
 ): PracticeTreeSection[] {

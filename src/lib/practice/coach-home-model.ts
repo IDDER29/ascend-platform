@@ -173,14 +173,19 @@ export function streakDays(
   return streak;
 }
 
+export type CardStrength = "new" | "learning" | "solid" | "mastered";
+
+export function cardStrength(card: Pick<PracticeCard, "state" | "intervalDays">): CardStrength {
+  if (card.state === "new") return "new";
+  if (card.state === "learning") return "learning";
+  return card.intervalDays >= MASTERED_INTERVAL_DAYS ? "mastered" : "solid";
+}
+
 export function strengthBuckets(cards: PracticeCard[]): StrengthBuckets {
   const buckets = { new: 0, learning: 0, solid: 0, mastered: 0, total: 0 };
   for (const card of cards) {
     buckets.total += 1;
-    if (card.state === "new") buckets.new += 1;
-    else if (card.state === "learning") buckets.learning += 1;
-    else if (card.intervalDays >= MASTERED_INTERVAL_DAYS) buckets.mastered += 1;
-    else buckets.solid += 1;
+    buckets[cardStrength(card)] += 1;
   }
   return buckets;
 }

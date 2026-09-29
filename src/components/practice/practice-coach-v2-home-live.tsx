@@ -12,11 +12,8 @@ import { TodaysSessions } from "@/components/practice/coach-home/todays-sessions
 import { YourDayCard } from "@/components/practice/coach-home/your-day-card";
 import { useEnterShortcut } from "@/components/practice/use-enter-shortcut";
 import {
-  ensureUnlockedCards,
-  migrateMissQueueOnce,
-  readCards,
   readNewDayMeta,
-  writeCards,
+  syncLocalCards,
   type NewDayMeta,
 } from "@/lib/practice/cards";
 import { buildCoachHomeModel } from "@/lib/practice/coach-home-model";
@@ -64,12 +61,8 @@ export function PracticeCoachV2HomeLive({
 
   useEffect(() => {
     let cancelled = false;
-    if (initialCards.length > 0) writeCards(userId, initialCards);
-    migrateMissQueueOnce(userId);
-    ensureUnlockedCards(userId, unlockedIds);
-
     const next: HomeData = {
-      cards: readCards(userId),
+      cards: syncLocalCards(userId, initialCards, unlockedIds),
       history: mergeSessionHistory(readLocalHistory(userId), initialHistory),
       meta: readNewDayMeta(userId),
       goal: readDailyGoal(userId),

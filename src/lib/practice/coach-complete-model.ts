@@ -3,20 +3,14 @@ import { streakDays } from "./coach-home-model";
 import type { DailyGoal } from "./daily-goal";
 import type { PracticeSessionRecord } from "./history";
 import { cardsClearedToday } from "./momentum";
-import { PRACTICE_TREE } from "./tree";
+import { completionKey } from "./session";
+import { practiceLessonTitle } from "./tree";
 import type { PracticeItem } from "./types";
 
 const FIX_HREF = "/practicev2/session?scope=due";
 const BACK: CoachCompleteLink = { label: "Back to practice", href: "/practicev2" };
 
 const questionsById = new Map(PRACTICE_BANK.map((q) => [q.id, q] as const));
-const lessonTitles = new Map(
-  PRACTICE_TREE.flatMap((path) =>
-    path.sections.flatMap((section) =>
-      section.lessons.map((lesson) => [lesson.key, lesson.title] as const),
-    ),
-  ),
-);
 
 export type CoachCompleteInput = {
   record: PracticeSessionRecord;
@@ -66,8 +60,9 @@ function toMiss(id: string): CoachCompleteMiss {
     id,
     label: question.reviewLabel,
     answer: correctAnswer(question),
-    lessonTitle:
-      lessonTitles.get(`${question.lessonLevel}/${question.lessonSlug}`) ?? null,
+    lessonTitle: practiceLessonTitle(
+      completionKey(question.lessonLevel, question.lessonSlug),
+    ),
   };
 }
 

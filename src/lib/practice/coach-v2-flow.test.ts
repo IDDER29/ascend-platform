@@ -4,11 +4,21 @@ import {
   findCoachV2SessionRecord,
   labelCoachV2Scope,
   parseCoachV2CardIds,
+  parseCoachV2Label,
   parseCoachV2Scope,
   parseCoachV2Size,
   sessionProgress,
 } from "./coach-v2-flow";
 import type { PracticeSessionRecord } from "./history";
+
+test("parseCoachV2Label reads a short, clean session label", () => {
+  assert.equal(parseCoachV2Label({}), null);
+  assert.equal(parseCoachV2Label({ label: "   " }), null);
+  assert.equal(parseCoachV2Label({ label: "  Logic  drills " }), "Logic drills");
+  assert.equal(parseCoachV2Label({ label: "a\u0000b\nc" }), "ab c");
+  assert.equal(parseCoachV2Label({ label: "x".repeat(60) }), "x".repeat(40));
+  assert.equal(parseCoachV2Label(new URLSearchParams("label=Custom+deck")), "Custom deck");
+});
 
 test("parseCoachV2CardIds reads a deduped, capped comma list", () => {
   assert.deepEqual(parseCoachV2CardIds({}), []);

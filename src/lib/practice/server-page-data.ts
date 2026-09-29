@@ -3,9 +3,11 @@ import "server-only";
 import { getCurrentUser } from "@/lib/auth/auth";
 import { lessonHref } from "@/lib/paths/lesson-urls";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
+import type { SavedDeck } from "@/lib/practice/deck-recipe";
 import type { PracticeSessionRecord } from "@/lib/practice/history";
 import {
   listPracticeCardsForUser,
+  listPracticeDecksForUser,
   listPracticeSessionsForUser,
 } from "@/lib/practice/queries";
 import { completionKey } from "@/lib/practice/session";
@@ -25,11 +27,13 @@ export async function loadPracticePageData(): Promise<{
   reviewHrefs: Record<string, string>;
   initialHistory: PracticeSessionRecord[];
   initialCards: PracticeCard[];
+  initialDecks: SavedDeck[];
 }> {
   const user = await getCurrentUser();
   let completedKeys: string[] = [];
   let initialHistory: PracticeSessionRecord[] = [];
   let initialCards: PracticeCard[] = [];
+  let initialDecks: SavedDeck[] = [];
 
   if (user) {
     try {
@@ -40,6 +44,7 @@ export async function loadPracticePageData(): Promise<{
     }
     initialHistory = await listPracticeSessionsForUser(user.id);
     initialCards = await listPracticeCardsForUser(user.id);
+    initialDecks = await listPracticeDecksForUser(user.id);
   }
 
   return {
@@ -48,5 +53,6 @@ export async function loadPracticePageData(): Promise<{
     reviewHrefs,
     initialHistory,
     initialCards,
+    initialDecks,
   };
 }

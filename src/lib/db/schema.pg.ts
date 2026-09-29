@@ -125,3 +125,18 @@ export const practiceCards = pgTable(
   },
   (t) => [index("practice_cards_user_due_idx").on(t.userId, t.dueAt)],
 );
+
+export const practiceDecks = pgTable(
+  "practice_decks",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    lessonKeys: text("lesson_keys").notNull().default("[]"),
+    filter: text("filter").notNull(),
+    formats: text("formats").notNull().default("[]"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("practice_decks_user_idx").on(t.userId)],
+);

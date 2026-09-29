@@ -16,7 +16,11 @@ import {
   syncLocalCards,
   type NewDayMeta,
 } from "@/lib/practice/cards";
+import { YourDecks } from "@/components/practice/coach-home/your-decks";
+import { buildCoachBankModel } from "@/lib/practice/coach-bank-model";
+import { savedDeckItems } from "@/lib/practice/coach-custom-model";
 import { buildCoachHomeModel } from "@/lib/practice/coach-home-model";
+import type { SavedDeck } from "@/lib/practice/deck-recipe";
 import {
   readDailyGoal,
   writeDailyGoal,
@@ -35,6 +39,7 @@ export type PracticeCoachV2HomeLiveProps = {
   completedKeys: string[];
   initialCards: PracticeCard[];
   initialHistory: PracticeSessionRecord[];
+  initialDecks: SavedDeck[];
 };
 
 type HomeData = {
@@ -50,6 +55,7 @@ export function PracticeCoachV2HomeLive({
   completedKeys,
   initialCards,
   initialHistory,
+  initialDecks,
 }: PracticeCoachV2HomeLiveProps) {
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
   const unlockedIds = useMemo(
@@ -91,6 +97,17 @@ export function PracticeCoachV2HomeLive({
     [completed, data],
   );
 
+  const deckItems = useMemo(() => {
+    if (!data || initialDecks.length === 0) return [];
+    const rows = buildCoachBankModel({
+      cards: data.cards,
+      history: data.history,
+      completedKeys: completed,
+      now: data.now,
+    }).rows;
+    return savedDeckItems(rows, initialDecks);
+  }, [completed, data, initialDecks]);
+
   useEnterShortcut(model?.hero.action.href);
 
   function changeGoal(goal: DailyGoal) {
@@ -118,6 +135,7 @@ export function PracticeCoachV2HomeLive({
         </div>
         <aside className="flex min-w-0 flex-col gap-5">
           <CardStrength strength={model.strength} week={model.week} />
+          {deckItems.length > 0 ? <YourDecks items={deckItems} /> : null}
           <PracticeDays days={model.days} />
         </aside>
       </div>

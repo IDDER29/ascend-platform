@@ -1,10 +1,18 @@
 "use server";
 
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/auth";
 import { db, schema } from "@/lib/db/client";
+import {
+  MAX_DECKS,
+  normalizeDeckInput,
+  type DeckInput,
+  type SavedDeck,
+} from "@/lib/practice/deck-recipe";
 import type { PracticeScopeType } from "@/lib/practice/history";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
+import { completionKey } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
 
 export type PracticeActionResult =
@@ -195,5 +203,84 @@ export async function upsertPracticeCardsAction(
       ok: false,
       error: "Could not sync Practice cards (table may need a migration).",
     };
+  }
+}
+
+const PRACTICE_LESSON_KEYS = new Set(
+  PRACTICE_BANK.map((q) => completionKey(q.lessonLevel, q.lessonSlug)),
+);
+
+function revalidateDecks() {
+  revalidatePath("/practicev2");
+  revalidatePath("/practicev2/custom");
+}
+
+export async function savePracticeDeckAction(
+  input: DeckInput & { id?: string },
+): Promise<{ ok: true; deck: SavedDeck } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "Sign in to save decks." };
+  if (!db) return { ok: false, error: "Database unavailable." };
+
+  const normalized = normalizeDeckInput(input, PRACTICE_LESSON_KEYS);
+  if (!normalized.ok) return normalized;
+  const { deck } = normalized;
+  const fields = {
+    name: deck.name,
+    lessonKeys: JSON.stringify(deck.lessonKeys),
+    filter: deck.filter,
+    formats: JSON.stringify(deck.formats),
+  };
+  const now = new Date();
+
+  try {
+    const owned = await db
+      .select({ id: schema.practiceDecks.id })
+      .from(schema.practiceDecks)
+      .where(eq(schema.practiceDecks.userId, user.id));
+
+    let id = typeof input.id === "string" ? input.id : null;
+    if (id) {
+      if (!owned.some((row) => row.id === id)) {
+        return { ok: false, error: "Deck not found." };
+      }
+      await db
+        .update(schema.practiceDecks)
+        .set({ ...fields, updatedAt: now })
+        .where(and(eq(schema.practiceDecks.id, id), eq(schema.practiceDecks.userId, user.id)));
+    } else {
+      if (owned.length >= MAX_DECKS) {
+        return { ok: false, error: `You can keep up to ${MAX_DECKS} decks. Delete one first.` };
+      }
+      id = crypto.randomUUID();
+      await db.insert(schema.practiceDecks).values({
+        id,
+        userId: user.id,
+        ...fields,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    revalidateDecks();
+    return { ok: true, deck: { id, ...deck, updatedAt: now.toISOString() } };
+  } catch {
+    return { ok: false, error: "Could not save the deck (table may need a migration)." };
+  }
+}
+
+export async function deletePracticeDeckAction(id: string): Promise<PracticeActionResult> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "Sign in to manage decks." };
+  if (!db) return { ok: false, error: "Database unavailable." };
+  if (typeof id !== "string" || id.length === 0) return { ok: false, error: "Deck not found." };
+
+  try {
+    await db
+      .delete(schema.practiceDecks)
+      .where(and(eq(schema.practiceDecks.id, id), eq(schema.practiceDecks.userId, user.id)));
+    revalidateDecks();
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Could not delete the deck." };
   }
 }

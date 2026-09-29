@@ -1,5 +1,13 @@
 import { desc, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db/client";
+import {
+  DECK_FILTERS,
+  DECK_FORMATS,
+  parseStoredList,
+  type DeckFilter,
+  type DeckFormat,
+  type SavedDeck,
+} from "@/lib/practice/deck-recipe";
 import type {
   PracticeScopeType,
   PracticeSessionRecord,
@@ -64,6 +72,45 @@ function rowToCard(row: {
     lapses: row.lapses,
     updatedAt: row.updatedAt,
   };
+}
+
+export function rowToDeck(row: {
+  id: string;
+  name: string;
+  lessonKeys: string;
+  filter: string;
+  formats: string;
+  updatedAt: Date | number;
+}): SavedDeck {
+  const filter = DECK_FILTERS.includes(row.filter as DeckFilter)
+    ? (row.filter as DeckFilter)
+    : "all";
+  const formats = parseStoredList(row.formats).filter((format): format is DeckFormat =>
+    DECK_FORMATS.includes(format as DeckFormat),
+  );
+  return {
+    id: row.id,
+    name: row.name,
+    lessonKeys: parseStoredList(row.lessonKeys),
+    filter,
+    formats: formats.length > 0 ? formats : [...DECK_FORMATS],
+    updatedAt: new Date(row.updatedAt).toISOString(),
+  };
+}
+
+export async function listPracticeDecksForUser(userId: string): Promise<SavedDeck[]> {
+  if (!db) return [];
+  try {
+    const rows = await db
+      .select()
+      .from(schema.practiceDecks)
+      .where(eq(schema.practiceDecks.userId, userId))
+      .orderBy(desc(schema.practiceDecks.updatedAt));
+    return rows.map(rowToDeck);
+  } catch {
+    // Table may not exist yet on Postgres until migrated.
+    return [];
+  }
 }
 
 export async function listPracticeSessionsForUser(

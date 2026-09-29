@@ -20,6 +20,7 @@ export default async function PracticeV2Page() {
           completedKeys={data.completedKeys}
           initialCards={data.initialCards}
           initialHistory={data.initialHistory}
+          initialDecks={data.initialDecks}
         />
       </div>
     </main>

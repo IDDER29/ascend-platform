@@ -21,6 +21,7 @@ import {
   labelCoachV2Scope,
   parseCoachV2Scope,
   parseCoachV2CardIds,
+  parseCoachV2Label,
   parseCoachV2Size,
   sessionProgress,
   type SessionSegment,
@@ -445,12 +446,16 @@ export function PracticeCoachV2SessionLive({
     () => parseCoachV2CardIds(searchParams),
     [searchParams],
   );
+  const pickedLabel = useMemo(
+    () => parseCoachV2Label(searchParams),
+    [searchParams],
+  );
   const activeScope = useMemo(() => {
     const labeled = labelCoachV2Scope(scope);
     return pickedIds.length > 0
-      ? { ...labeled, scopeLabel: "Selected cards" }
+      ? { ...labeled, scopeLabel: pickedLabel ?? "Selected cards" }
       : labeled;
-  }, [pickedIds, scope]);
+  }, [pickedIds, pickedLabel, scope]);
   const unlocked = useMemo(
     () => unlockedQuestions(completed),
     [completed],

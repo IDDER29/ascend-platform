@@ -1,3 +1,4 @@
+import { cleanDeckText, DECK_NAME_MAX } from "@/lib/practice/deck-recipe";
 import type { PracticeSessionRecord } from "@/lib/practice/history";
 import type { PracticeScope } from "@/lib/practice/session";
 import type { PracticeGrade } from "@/lib/practice/sm2";
@@ -61,6 +62,14 @@ export function parseCoachV2CardIds(
     .map((id) => id.trim())
     .filter((id) => CARD_ID_RE.test(id));
   return [...new Set(ids)].slice(0, COACH_V2_MAX_SIZE);
+}
+
+/** Session label from `?label=` (custom and saved decks), or null. */
+export function parseCoachV2Label(
+  input: URLSearchParams | Record<string, string | string[] | undefined>,
+): string | null {
+  const label = cleanDeckText(asParams(input).get("label") ?? "").slice(0, DECK_NAME_MAX).trim();
+  return label.length > 0 ? label : null;
 }
 
 export type SessionSegment =

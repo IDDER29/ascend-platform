@@ -6,17 +6,17 @@ const RING_CIRCUMFERENCE = 264;
 function StreakRow({ streak }: { streak: number }) {
   const active = streak > 0;
   return (
-    <div className="flex items-center gap-3.5">
+    <div className="flex items-center gap-3">
       <span
-        className={`flex size-[52px] shrink-0 items-center justify-center rounded-[14px] ${
+        className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
           active
             ? "bg-[var(--coach-tint-orange-bg)] text-[var(--coach-tint-orange-ink)]"
             : "bg-[var(--coach-tint-neutral-bg)] text-[var(--coach-ink-muted)]"
         }`}
       >
         <svg
-          width="26"
-          height="26"
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -29,10 +29,10 @@ function StreakRow({ streak }: { streak: number }) {
         </svg>
       </span>
       <div className="flex flex-col gap-0.5">
-        <span className="font-display text-[26px] font-extrabold leading-none">
+        <span className="font-display text-xl font-extrabold leading-tight">
           {active ? `${streak} day streak` : "No streak yet"}
         </span>
-        <span className="text-sm text-[var(--coach-ink-secondary)]">
+        <span className="text-[13px] text-[var(--coach-ink-secondary)]">
           {active
             ? `Practice tomorrow to make it ${streak + 1}.`
             : "Finish a session to start one."}
@@ -47,10 +47,10 @@ function GoalRing({ answered, goal }: { answered: number; goal: DailyGoal }) {
   const met = answered >= goal;
   const remaining = goal - answered;
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3.5">
       <svg
-        width="84"
-        height="84"
+        width="68"
+        height="68"
         viewBox="0 0 100 100"
         role="img"
         aria-label={`Daily goal: ${answered} of ${goal} cards`}
@@ -100,10 +100,10 @@ function GoalRing({ answered, goal }: { answered: number; goal: DailyGoal }) {
         </text>
       </svg>
       <div className="flex flex-col gap-0.5">
-        <span className="text-[17px] font-semibold">
+        <span className="text-[15px] font-semibold">
           {met ? "Daily goal met" : `${remaining} to go`}
         </span>
-        <span className="text-sm leading-[1.45] text-[var(--coach-ink-secondary)]">
+        <span className="text-[13px] leading-[1.45] text-[var(--coach-ink-secondary)]">
           {met
             ? "Anything more today is a bonus."
             : `Answer ${remaining} more ${remaining === 1 ? "card" : "cards"} to hit today's goal.`}
@@ -123,11 +123,11 @@ export function YourDayCard({
   return (
     <section
       aria-labelledby="status-title"
-      className="flex flex-col gap-[18px] rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6"
+      className="flex flex-col gap-4 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5"
     >
       <h2
         id="status-title"
-        className="m-0 font-mono text-xs font-medium uppercase tracking-[0.08em] text-[var(--coach-ink-muted)]"
+        className="m-0 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--coach-ink-muted)]"
       >
         Your day
       </h2>
@@ -147,7 +147,7 @@ export function YourDayCard({
               type="button"
               aria-pressed={active}
               onClick={() => onGoalChange(value)}
-              className={`h-11 cursor-pointer rounded-[9px] border-0 font-[inherit] text-[13px] ${
+              className={`h-9 cursor-pointer rounded-lg border-0 font-[inherit] text-xs ${
                 active
                   ? "bg-[var(--coach-segment-active)] font-semibold text-[var(--coach-ink)] shadow-[var(--coach-segment-shadow)]"
                   : "bg-transparent text-[var(--coach-ink-secondary)]"

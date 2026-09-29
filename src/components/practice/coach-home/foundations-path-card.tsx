@@ -14,25 +14,25 @@ export function FoundationsPathCard({
   return (
     <section
       aria-labelledby="path-title"
-      className="flex flex-col gap-6 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 sm:p-7"
+      className="flex flex-col gap-5 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5 sm:p-6"
     >
-      <div className="flex w-full flex-wrap items-start justify-between gap-4 sm:flex-nowrap sm:gap-6">
-        <div className="flex min-w-0 basis-full items-center gap-4 sm:flex-1 sm:basis-auto">
-          <span className="flex size-[52px] shrink-0 items-center justify-center rounded-[14px] bg-[var(--coach-mark-bg)] font-display text-2xl font-extrabold text-[var(--coach-mark-ink)]">
+      <div className="flex w-full flex-wrap items-start justify-between gap-4 sm:flex-nowrap sm:gap-5">
+        <div className="flex min-w-0 basis-full items-center gap-3.5 sm:flex-1 sm:basis-auto">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[var(--coach-mark-bg)] font-display text-xl font-extrabold text-[var(--coach-mark-ink)]">
             {path.mark}
           </span>
-          <div className="flex min-w-0 flex-col gap-1">
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-              <h2 id="path-title" className="m-0 text-xl font-semibold">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h2 id="path-title" className="m-0 text-[17px] font-semibold">
                 {path.title}
               </h2>
-              <span className="rounded-full bg-[var(--coach-tint-blue-bg)] px-2 py-[3px] text-xs font-semibold text-[var(--coach-tint-blue-ink)]">
+              <span className="rounded-full bg-[var(--coach-tint-blue-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--coach-tint-blue-ink)]">
                 Always open
               </span>
             </div>
-            <span className="text-sm text-[var(--coach-ink-secondary)]">
+            <span className="text-[13px] text-[var(--coach-ink-secondary)]">
               {path.blurb}{" "}
-              <span className="font-mono text-[13px] text-[var(--coach-ink-muted)]">
+              <span className="font-mono text-xs text-[var(--coach-ink-muted)]">
                 {path.cardCount} cards · {path.lessonCount} lessons
               </span>
             </span>
@@ -40,7 +40,7 @@ export function FoundationsPathCard({
         </div>
         <Link
           href={PATH_HREF}
-          className="flex h-11 w-full shrink-0 items-center justify-center rounded-xl border-2 border-[var(--coach-ink)] px-[18px] text-[15px] font-semibold text-[var(--coach-ink)] no-underline sm:w-auto"
+          className="flex h-10 w-full shrink-0 items-center justify-center rounded-xl border-2 border-[var(--coach-ink)] px-4 text-sm font-semibold text-[var(--coach-ink)] no-underline sm:w-auto"
         >
           Open path
         </Link>
@@ -55,21 +55,21 @@ export function FoundationsPathCard({
             {i > 0 ? (
               <li
                 aria-hidden="true"
-                className={`mt-5 h-[3px] min-w-5 flex-[1_1_20px] ${
+                className={`mt-[17px] h-[2px] min-w-4 flex-[1_1_16px] ${
                   step.done ? "bg-[var(--coach-mark-bg)]" : "bg-[var(--coach-border)]"
                 }`}
               />
             ) : null}
-            <li className="flex-[0_0_80px]">
+            <li className="flex-[0_0_72px]">
               <Link
                 href={PATH_HREF}
                 title={step.title}
-                className={`flex w-20 flex-col items-center gap-2 no-underline ${
+                className={`flex w-[72px] flex-col items-center gap-1.5 no-underline ${
                   step.done ? "text-[var(--coach-ink)]" : "text-[var(--coach-ink-secondary)]"
                 }`}
               >
                 <span
-                  className={`flex size-11 items-center justify-center rounded-full font-bold ${
+                  className={`flex size-9 items-center justify-center rounded-full text-sm font-bold ${
                     step.done
                       ? "bg-[var(--coach-mark-bg)] text-[var(--coach-mark-ink)]"
                       : "border-2 border-[var(--coach-border-strong)]"
@@ -79,7 +79,7 @@ export function FoundationsPathCard({
                   <span className="sr-only">{step.done ? " (practiced)" : ""}</span>
                 </span>
                 <span
-                  className={`line-clamp-3 min-h-[2.6em] text-center text-[13px] leading-[1.3] ${
+                  className={`line-clamp-3 min-h-[2.6em] text-center text-xs leading-[1.3] ${
                     step.done ? "font-semibold" : ""
                   }`}
                 >
@@ -92,13 +92,13 @@ export function FoundationsPathCard({
       </ol>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="w-[72px] text-sm text-[var(--coach-ink-secondary)]">
+        <span className="w-16 text-[13px] text-[var(--coach-ink-secondary)]">
           Hit rate
         </span>
         <div
           role="img"
           aria-label={hit ? `Hit rate ${hit.accuracy} percent` : "No sessions yet"}
-          className="h-2.5 min-w-[120px] grow overflow-hidden rounded-full bg-[var(--coach-divider)]"
+          className="h-2 min-w-[120px] grow overflow-hidden rounded-full bg-[var(--coach-divider)]"
         >
           {hit ? (
             <div
@@ -107,7 +107,7 @@ export function FoundationsPathCard({
             />
           ) : null}
         </div>
-        <span className="font-mono text-sm">
+        <span className="font-mono text-xs">
           {hit
             ? `${hit.accuracy}% · ${hit.correct}/${hit.total} correct · ${hit.sessions} ${
                 hit.sessions === 1 ? "session" : "sessions"

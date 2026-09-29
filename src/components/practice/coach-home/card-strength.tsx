@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
 
-const BAR_MAX_PX = 72;
+const BAR_MAX_PX = 56;
 
 const LEVELS = [
   { key: "new", label: "New", color: "bg-[var(--coach-scale-1)]" },
@@ -22,18 +22,18 @@ function DueThisWeek({ week }: { week: CoachHomeModel["week"] }) {
   return (
     <>
       <div className="flex items-baseline justify-between">
-        <h3 className="m-0 text-[15px] font-semibold">Due this week</h3>
-        <span className="text-[13px] text-[var(--coach-ink-muted)]">{cards(total)}</span>
+        <h3 className="m-0 text-sm font-semibold">Due this week</h3>
+        <span className="text-xs text-[var(--coach-ink-muted)]">{cards(total)}</span>
       </div>
       <div role="img" aria-label={`Cards due: ${summary}`} className="flex flex-col gap-1.5">
-        <div className="grid h-[92px] grid-cols-7 items-end gap-2 border-b border-[var(--coach-border)]">
+        <div className="grid h-[74px] grid-cols-7 items-end gap-1.5 border-b border-[var(--coach-border)]">
           {week.map((day) => (
             <span key={day.label} title={day.title} className="flex flex-col items-center gap-1">
               {day.count > 0 ? (
                 <>
-                  <span className="font-mono text-xs">{day.count}</span>
+                  <span className="font-mono text-[11px]">{day.count}</span>
                   <span
-                    className={`w-6 rounded-t ${
+                    className={`w-5 rounded-t ${
                       day.isToday ? "bg-[var(--coach-scale-4)]" : "bg-[var(--coach-scale-2)]"
                     }`}
                     style={{ height: Math.max(4, Math.round((day.count / max) * BAR_MAX_PX)) }}
@@ -43,7 +43,7 @@ function DueThisWeek({ week }: { week: CoachHomeModel["week"] }) {
             </span>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-2 text-center text-xs text-[var(--coach-ink-muted)]">
+        <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] text-[var(--coach-ink-muted)]">
           {week.map((day) => (
             <span
               key={day.label}
@@ -70,20 +70,20 @@ export function CardStrength({
   return (
     <section
       aria-labelledby="memory-title"
-      className="flex flex-col gap-[18px] rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6"
+      className="flex flex-col gap-4 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5"
     >
       <div className="flex items-baseline justify-between">
-        <h2 id="memory-title" className="m-0 text-lg font-semibold">
+        <h2 id="memory-title" className="m-0 text-base font-semibold">
           Card strength
         </h2>
-        <span className="text-[13px] text-[var(--coach-ink-muted)]">
+        <span className="text-xs text-[var(--coach-ink-muted)]">
           {strength.total} in your bank
         </span>
       </div>
       <div
         role="img"
         aria-label={label}
-        className="flex h-4 gap-0.5 overflow-hidden rounded bg-[var(--coach-scale-empty)]"
+        className="flex h-3 gap-0.5 overflow-hidden rounded bg-[var(--coach-scale-empty)]"
       >
         {LEVELS.filter((l) => strength[l.key] > 0).map((l) => (
           <span
@@ -94,7 +94,7 @@ export function CardStrength({
           />
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
         {LEVELS.map((l) => (
           <span key={l.key} className="flex items-center gap-2">
             <span className={`size-2.5 rounded-[3px] ${l.color}`} />
@@ -107,7 +107,7 @@ export function CardStrength({
       <DueThisWeek week={week} />
       <Link
         href="/practicev2/bank"
-        className="flex h-11 items-center gap-1.5 text-sm font-semibold text-[var(--coach-ink)] no-underline"
+        className="-my-1 flex h-9 items-center gap-1.5 text-[13px] font-semibold text-[var(--coach-ink)] no-underline"
       >
         {strength.total > 0 ? `Browse all ${strength.total} cards` : "Browse the card bank"}
         <svg

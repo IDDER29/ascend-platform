@@ -52,13 +52,13 @@ export function PracticeDays({ days }: { days: CoachHomeModel["days"] }) {
   return (
     <section
       aria-labelledby="days-title"
-      className="flex flex-col gap-4 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6"
+      className="flex flex-col gap-3.5 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5"
     >
       <div className="flex items-baseline justify-between">
-        <h2 id="days-title" className="m-0 text-lg font-semibold">
+        <h2 id="days-title" className="m-0 text-base font-semibold">
           Practice days
         </h2>
-        <span className="text-[13px] text-[var(--coach-ink-muted)]">Last 12 weeks</span>
+        <span className="text-xs text-[var(--coach-ink-muted)]">Last 12 weeks</span>
       </div>
       <div
         role="img"
@@ -67,7 +67,7 @@ export function PracticeDays({ days }: { days: CoachHomeModel["days"] }) {
         } in the last 12 weeks`}
         className="flex flex-col gap-1.5"
       >
-        <div className="grid grid-cols-[20px_repeat(12,16px)] gap-x-1 text-[11px] text-[var(--coach-ink-muted)]">
+        <div className="grid grid-cols-[18px_repeat(12,14px)] gap-x-1 text-[10px] text-[var(--coach-ink-muted)]">
           {monthLabels.map((month, i) => {
             const next = monthLabels[i + 1]?.column ?? 12;
             return (
@@ -83,26 +83,26 @@ export function PracticeDays({ days }: { days: CoachHomeModel["days"] }) {
           })}
         </div>
         <div className="flex gap-1">
-          <div className="grid w-5 grid-rows-[repeat(7,16px)] gap-y-1 text-[11px] text-[var(--coach-ink-muted)]">
+          <div className="grid w-[18px] grid-rows-[repeat(7,14px)] gap-y-1 text-[10px] text-[var(--coach-ink-muted)]">
             {WEEKDAY_LABELS.map((label, i) => (
-              <span key={i} className="leading-4">
+              <span key={i} className="leading-[14px]">
                 {label}
               </span>
             ))}
           </div>
-          <div className="grid grid-flow-col grid-rows-[repeat(7,16px)] auto-cols-[16px] gap-1">
+          <div className="grid grid-flow-col grid-rows-[repeat(7,14px)] auto-cols-[14px] gap-1">
             {days.cells.map((cell) => (
               <Cell key={cell.date} cell={cell} />
             ))}
           </div>
         </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[13px] text-[var(--coach-ink-secondary)]">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--coach-ink-secondary)]">
         <span>{footerLabel(days)}</span>
         <span className="flex items-center gap-1">
           Less
           {SCALE.map((color) => (
-            <span key={color} className={`size-3 rounded-[3px] ${color}`} />
+            <span key={color} className={`size-2.5 rounded-[3px] ${color}`} />
           ))}
           More
         </span>

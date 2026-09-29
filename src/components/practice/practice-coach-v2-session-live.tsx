@@ -79,7 +79,7 @@ function scopeSubtitle(scopeLabel: string, reviewLabel: string): string {
 function CodeBlock({ lines }: { lines?: string[] }) {
   if (!lines?.length) return null;
   return (
-    <pre className="mt-5 overflow-x-auto rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-code-bg)] p-8 font-[family-name:var(--font-plex-mono)] text-sm leading-7 text-[var(--coach-code-ink)]">
+    <pre className="mt-3 overflow-x-auto rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-code-bg)] p-5 font-[family-name:var(--font-plex-mono)] text-[13px] leading-6 text-[var(--coach-code-ink)]">
       <code>{lines.join("\n")}</code>
     </pre>
   );
@@ -96,11 +96,11 @@ function KindScopeRow({
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2.5">
-        <span className="rounded-full bg-[var(--coach-tint-blue-bg)] px-[11px] py-[5px] text-[13px] font-semibold text-[var(--coach-tint-blue-ink)]">
+      <div className="flex items-center gap-2">
+        <span className="rounded-full bg-[var(--coach-tint-blue-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--coach-tint-blue-ink)]">
           {kindPillLabel(kind)}
         </span>
-        <span className="text-sm text-[var(--coach-ink-muted)]">{subtitle}</span>
+        <span className="text-[13px] text-[var(--coach-ink-muted)]">{subtitle}</span>
       </div>
       {trailing}
     </div>
@@ -108,9 +108,9 @@ function KindScopeRow({
 }
 
 function flashcardFrontSize(front: string): string {
-  if (front.length <= 16) return "text-5xl leading-none sm:text-7xl";
-  if (front.length <= 40) return "text-4xl leading-[1.1] sm:text-5xl";
-  return "text-[28px] leading-[1.2] sm:text-[32px]";
+  if (front.length <= 16) return "text-4xl leading-none sm:text-5xl";
+  if (front.length <= 40) return "text-[28px] leading-[1.15] sm:text-[32px]";
+  return "text-[22px] leading-[1.25] sm:text-2xl";
 }
 
 const SEGMENT_CLASS: Record<SessionSegment, string> = {
@@ -140,11 +140,11 @@ function SessionTopBar({
         type="button"
         onClick={onExit}
         aria-label="End session"
-        className="flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-xl border-2 border-[var(--coach-border-strong)] bg-transparent px-3 text-sm font-semibold text-[var(--coach-ink-secondary)]"
+        className="flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-lg border-2 border-[var(--coach-border-strong)] bg-transparent px-2.5 text-[13px] font-semibold text-[var(--coach-ink-secondary)]"
       >
         <svg
-          width="16"
-          height="16"
+          width="14"
+          height="14"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -155,7 +155,7 @@ function SessionTopBar({
           <path d="M6 6l12 12M18 6L6 18" />
         </svg>
         <span className="hidden sm:inline">End session</span>
-        <kbd className="hidden h-6 items-center rounded-md border border-b-2 border-[var(--coach-border-strong)] bg-[var(--coach-bg)] px-1.5 font-[family-name:var(--font-plex-mono)] text-xs font-medium sm:inline-flex">
+        <kbd className="hidden h-5 items-center rounded-md border border-b-2 border-[var(--coach-border-strong)] bg-[var(--coach-bg)] px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium sm:inline-flex">
           Esc
         </kbd>
       </button>
@@ -169,10 +169,10 @@ function SessionTopBar({
         className="flex min-w-0 flex-1 gap-1.5"
       >
         {segments.map((segment, i) => (
-          <span key={i} className={`h-2.5 flex-1 rounded-full ${SEGMENT_CLASS[segment]}`} />
+          <span key={i} className={`h-2 flex-1 rounded-full ${SEGMENT_CLASS[segment]}`} />
         ))}
       </div>
-      <span className="shrink-0 font-[family-name:var(--font-plex-mono)] text-sm text-[var(--coach-ink-muted)]">
+      <span className="shrink-0 font-[family-name:var(--font-plex-mono)] text-[13px] text-[var(--coach-ink-muted)]">
         {current} of {total}
       </span>
     </div>
@@ -199,7 +199,7 @@ function McqChoice({
       aria-pressed={selected}
       disabled={disabled}
       data-coach-choice
-      className="flex h-[76px] items-center gap-4 rounded-2xl border-2 px-5 text-left font-[family-name:var(--font-plex-mono)] text-xl text-[var(--coach-ink)] transition disabled:cursor-default"
+      className="flex min-h-14 items-center gap-3 rounded-xl border-2 px-4 py-3 text-left font-[family-name:var(--font-plex-mono)] text-base text-[var(--coach-ink)] transition disabled:cursor-default"
       style={
         selected
           ? {
@@ -216,7 +216,7 @@ function McqChoice({
       onClick={onSelect}
     >
       <kbd
-        className="flex size-8 shrink-0 items-center justify-center rounded-lg font-[family-name:var(--font-plex-mono)] text-sm"
+        className="flex size-7 shrink-0 items-center justify-center rounded-md font-[family-name:var(--font-plex-mono)] text-xs"
         style={
           selected
             ? { background: "var(--coach-blue)", color: "var(--coach-on-blue)" }
@@ -240,8 +240,8 @@ function PromptFooter({
   children: ReactNode;
 }) {
   return (
-    <footer className={`${BOTTOM_BAR} border-[var(--coach-border)] bg-[var(--coach-surface)] py-4 sm:py-6`}>
-      <div className="flex w-full max-w-[760px] flex-wrap items-center justify-between gap-3 sm:gap-6">
+    <footer className={`${BOTTOM_BAR} border-[var(--coach-border)] bg-[var(--coach-surface)] py-3 sm:py-4`}>
+      <div className="flex w-full max-w-[680px] flex-wrap items-center justify-between gap-3 sm:gap-5">
         {children}
       </div>
     </footer>
@@ -252,11 +252,11 @@ function SkipButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
-      className="flex h-14 items-center gap-2.5 rounded-2xl border-2 border-[var(--coach-border-strong)] px-[22px] text-base font-semibold text-[var(--coach-ink-secondary)]"
+      className="flex h-11 items-center gap-2 rounded-xl border-2 border-[var(--coach-border-strong)] px-4 text-sm font-semibold text-[var(--coach-ink-secondary)]"
       onClick={onClick}
     >
       Skip
-      <kbd className="inline-flex min-h-6 min-w-6 items-center justify-center rounded-md border border-[var(--coach-border-strong)] border-b-2 bg-[var(--coach-bg)] px-1.5 font-[family-name:var(--font-plex-mono)] text-xs">
+      <kbd className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-md border border-[var(--coach-border-strong)] border-b-2 bg-[var(--coach-bg)] px-1 font-[family-name:var(--font-plex-mono)] text-[11px]">
         S
       </kbd>
     </button>
@@ -276,11 +276,11 @@ function LimeCheckButton({
     <button
       type="button"
       disabled={disabled}
-      className="mb-[5px] flex h-14 min-w-0 flex-1 items-center sm:w-60 sm:flex-none justify-center gap-3 rounded-2xl bg-[var(--coach-lime)] text-[17px] font-bold uppercase tracking-wide text-[var(--coach-lime-ink)] shadow-[0_5px_0_var(--coach-lime-shadow)] transition enabled:hover:brightness-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
+      className="mb-1 flex h-11 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-lime)] text-[14.5px] font-bold uppercase tracking-wide text-[var(--coach-lime-ink)] shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-52 sm:flex-none transition enabled:hover:brightness-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
       onClick={onClick}
     >
       {label}
-      <kbd className="inline-flex h-6 items-center rounded-md border border-[var(--coach-lime-shadow)] border-b-2 bg-[var(--coach-lime-soft)] px-[7px] font-[family-name:var(--font-plex-mono)] text-xs font-medium normal-case tracking-normal text-[var(--coach-lime-ink)]">
+      <kbd className="hidden h-[22px] items-center rounded-md border sm:inline-flex border-[var(--coach-lime-shadow)] border-b-2 bg-[var(--coach-lime-soft)] px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium normal-case tracking-normal text-[var(--coach-lime-ink)]">
         Enter
       </kbd>
     </button>
@@ -302,14 +302,14 @@ function FeedbackBar({
     return (
       <section
         aria-live="polite"
-        className={`${BOTTOM_BAR} border-[var(--coach-correct-border)] bg-[var(--coach-correct-bg)] py-5 sm:py-7`}
+        className={`${BOTTOM_BAR} border-[var(--coach-correct-border)] bg-[var(--coach-correct-bg)] py-4 sm:py-5`}
       >
-        <div className="flex w-full max-w-[760px] flex-wrap items-center justify-between gap-8">
-          <div className="flex items-start gap-4">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--coach-mark-bg)] text-[var(--coach-mark-ink)]">
+        <div className="flex w-full max-w-[680px] flex-wrap items-center justify-between gap-4 sm:gap-6">
+          <div className="flex min-w-[240px] flex-1 basis-0 items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--coach-mark-bg)] text-[var(--coach-mark-ink)]">
               <svg
-                width="22"
-                height="22"
+                width="18"
+                height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -321,12 +321,12 @@ function FeedbackBar({
                 <path d="M5 12l5 5 9-10" />
               </svg>
             </span>
-            <div className="flex flex-col gap-1.5">
-              <h2 className="m-0 font-[family-name:var(--font-bricolage)] text-[26px] font-extrabold">
+            <div className="flex flex-col gap-1">
+              <h2 className="m-0 font-[family-name:var(--font-bricolage)] text-xl font-extrabold">
                 Correct
               </h2>
               {question.hint ? (
-                <p className="m-0 max-w-[460px] text-[15px] leading-normal text-[var(--coach-correct-ink)]">
+                <p className="m-0 text-sm leading-normal text-[var(--coach-correct-ink)]">
                   {question.hint}
                 </p>
               ) : null}
@@ -334,11 +334,11 @@ function FeedbackBar({
           </div>
           <button
             type="button"
-            className="mb-[5px] flex h-14 w-full shrink-0 items-center sm:w-[220px] justify-center gap-3 rounded-2xl bg-[var(--coach-solid-btn-bg)] text-[17px] font-bold uppercase tracking-wide text-[var(--coach-solid-btn-ink)] shadow-[0_5px_0_var(--coach-solid-btn-shadow)]"
+            className="mb-1 flex h-11 w-full shrink-0 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-solid-btn-bg)] text-[14.5px] font-bold uppercase tracking-wide text-[var(--coach-solid-btn-ink)] shadow-[0_4px_0_var(--coach-solid-btn-shadow)] sm:w-48"
             onClick={onContinue}
           >
             Continue
-            <kbd className="inline-flex h-6 items-center rounded-md border border-[var(--coach-solid-btn-kbd-border)] border-b-2 bg-[var(--coach-solid-btn-kbd-bg)] px-[7px] font-[family-name:var(--font-plex-mono)] text-xs font-medium normal-case tracking-normal text-[var(--coach-solid-btn-ink)]">
+            <kbd className="hidden h-[22px] items-center rounded-md border sm:inline-flex border-[var(--coach-solid-btn-kbd-border)] border-b-2 bg-[var(--coach-solid-btn-kbd-bg)] px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium normal-case tracking-normal text-[var(--coach-solid-btn-ink)]">
               Enter
             </kbd>
           </button>
@@ -357,15 +357,15 @@ function FeedbackBar({
   return (
     <section
       aria-live="polite"
-      className={`${BOTTOM_BAR} border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-bg)] py-5 sm:py-7`}
+      className={`${BOTTOM_BAR} border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-bg)] py-4 sm:py-5`}
     >
-      <div className="flex w-full max-w-[760px] flex-col gap-5">
-        <div className="flex flex-wrap items-start gap-8">
-          <div className="flex min-w-0 flex-1 items-start gap-4">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--coach-wrong-strong)] text-[var(--coach-on-wrong)]">
+      <div className="flex w-full max-w-[680px] flex-col gap-4">
+        <div className="flex flex-wrap items-start gap-6">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--coach-wrong-strong)] text-[var(--coach-on-wrong)]">
               <svg
-                width="20"
-                height="20"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -376,8 +376,8 @@ function FeedbackBar({
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
             </span>
-            <div className="flex flex-col gap-2">
-              <h2 className="m-0 font-[family-name:var(--font-bricolage)] text-[26px] font-extrabold text-[var(--coach-wrong-title)]">
+            <div className="flex flex-col gap-1.5">
+              <h2 className="m-0 font-[family-name:var(--font-bricolage)] text-xl font-extrabold text-[var(--coach-wrong-title)]">
                 Not quite
                 {expectedAnswer ? (
                   <>
@@ -390,7 +390,7 @@ function FeedbackBar({
                 ) : null}
               </h2>
               {question.hint ? (
-                <p className="m-0 text-[15px] leading-normal text-[var(--coach-wrong-ink)]">
+                <p className="m-0 text-sm leading-normal text-[var(--coach-wrong-ink)]">
                   {question.hint}
                 </p>
               ) : null}
@@ -408,11 +408,11 @@ function FeedbackBar({
         <div className="flex justify-end">
           <button
             type="button"
-            className="mb-[5px] flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-[var(--coach-wrong-strong)] sm:w-[220px] text-[17px] font-bold uppercase tracking-wide text-[var(--coach-on-wrong)] shadow-[0_5px_0_var(--coach-wrong-shadow)]"
+            className="mb-1 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-wrong-strong)] text-[14.5px] font-bold uppercase tracking-wide text-[var(--coach-on-wrong)] shadow-[0_4px_0_var(--coach-wrong-shadow)] sm:w-48"
             onClick={onContinue}
           >
             Continue
-            <kbd className="inline-flex h-6 items-center rounded-md border border-[var(--coach-wrong-kbd-border)] border-b-2 bg-[var(--coach-wrong-kbd-bg)] px-[7px] font-[family-name:var(--font-plex-mono)] text-xs font-medium normal-case tracking-normal text-[var(--coach-on-wrong)]">
+            <kbd className="hidden h-[22px] items-center rounded-md border sm:inline-flex border-[var(--coach-wrong-kbd-border)] border-b-2 bg-[var(--coach-wrong-kbd-bg)] px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium normal-case tracking-normal text-[var(--coach-on-wrong)]">
               Enter
             </kbd>
           </button>
@@ -679,13 +679,13 @@ export function PracticeCoachV2SessionLive({
   );
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-8">
-      <div className="mx-auto flex w-full max-w-[760px] flex-col gap-7">
+    <div className="flex min-w-0 flex-1 flex-col gap-6">
+      <div className="mx-auto flex w-full max-w-[680px] flex-col gap-5">
         <SessionTopBar
           segments={progress.segments}
-              done={progress.done}
-              current={index + 1}
-              total={progress.total}
+          done={progress.done}
+          current={index + 1}
+          total={progress.total}
           onExit={exitSession}
         />
         {question.kind === "flashcard" ? (
@@ -694,7 +694,7 @@ export function PracticeCoachV2SessionLive({
             subtitle={subtitle}
             trailing={
               phase === "prompt" && !revealed ? (
-                <span className="text-sm text-[var(--coach-ink-secondary)]">
+                <span className="text-[13px] text-[var(--coach-ink-secondary)]">
                   Answer in your head first, then be honest with yourself.
                 </span>
               ) : null
@@ -706,14 +706,14 @@ export function PracticeCoachV2SessionLive({
 
         {question.kind === "mcq" ? (
           <>
-            <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-[32px] font-bold leading-[1.2] tracking-[-0.01em] text-pretty sm:text-[40px]">
+            <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] text-pretty sm:text-[28px]">
               {question.prompt}
             </h1>
             <CodeBlock lines={question.code} />
             <div
               role="group"
               aria-label="Answer choices"
-              className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+              className="grid grid-cols-1 gap-3 sm:grid-cols-2"
             >
               {question.options.map((option, optionIndex) => (
                 <McqChoice
@@ -733,30 +733,30 @@ export function PracticeCoachV2SessionLive({
           <div className="relative flex-grow">
             <div
               aria-hidden
-              className="absolute inset-x-5 top-4 -bottom-4 rounded-[26px] bg-[var(--coach-border)]"
+              className="absolute inset-x-4 top-3 -bottom-3 rounded-[20px] bg-[var(--coach-border)]"
             />
-            <div className="relative grid min-h-[280px] grid-cols-1 overflow-hidden rounded-[26px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] sm:grid-cols-2">
-                <div className="flex min-w-0 flex-col gap-3 border-[var(--coach-border)] p-8 sm:border-r-2 sm:border-dashed sm:p-10">
-                  <span className="font-[family-name:var(--font-plex-mono)] text-xs uppercase tracking-[0.08em] text-[var(--coach-ink-muted)]">
-                    Front
-                  </span>
-                  <h1
-                    className={`m-0 font-[family-name:var(--font-bricolage)] font-extrabold tracking-[-0.02em] text-pretty break-words ${flashcardFrontSize(question.front)}`}
-                  >
+            <div className="relative grid min-h-[220px] grid-cols-1 overflow-hidden rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] sm:grid-cols-2">
+              <div className="flex min-w-0 flex-col gap-2.5 border-[var(--coach-border)] p-6 sm:border-r-2 sm:border-dashed sm:p-8">
+                <span className="font-[family-name:var(--font-plex-mono)] text-[11px] uppercase tracking-[0.08em] text-[var(--coach-ink-muted)]">
+                  Front
+                </span>
+                <h1
+                  className={`m-0 font-[family-name:var(--font-bricolage)] font-extrabold tracking-[-0.02em] text-pretty break-words ${flashcardFrontSize(question.front)}`}
+                >
                   {question.front}
                 </h1>
                 {!revealed ? <CodeBlock lines={question.frontCode} /> : null}
               </div>
               <div
-                className={`flex min-w-0 flex-col gap-3 bg-[var(--coach-flash-back)] p-8 sm:rounded-r-[24px] sm:p-10 ${revealed ? "" : "opacity-60"}`}
+                className={`flex min-w-0 flex-col gap-2.5 bg-[var(--coach-flash-back)] p-6 sm:rounded-r-[18px] sm:p-8 ${revealed ? "" : "opacity-60"}`}
               >
-                <span className="font-[family-name:var(--font-plex-mono)] text-xs uppercase tracking-[0.08em] text-[var(--coach-tint-blue-ink)]">
+                <span className="font-[family-name:var(--font-plex-mono)] text-[11px] uppercase tracking-[0.08em] text-[var(--coach-tint-blue-ink)]">
                   Back
                 </span>
                 {revealed ? (
-                  <p className="m-0 text-2xl leading-normal">{question.back}</p>
+                  <p className="m-0 text-lg leading-normal">{question.back}</p>
                 ) : (
-                  <p className="m-0 text-sm text-[var(--coach-ink-muted)]">
+                  <p className="m-0 text-[13px] text-[var(--coach-ink-muted)]">
                     Reveal when you are ready to check yourself.
                   </p>
                 )}
@@ -767,13 +767,13 @@ export function PracticeCoachV2SessionLive({
 
         {question.kind === "typed" || question.kind === "cloze" ? (
           <>
-            <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-[32px] font-bold leading-[1.2] tracking-[-0.01em] sm:text-[40px]">
+            <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] sm:text-[28px]">
               {question.kind === "typed"
                 ? question.prompt
                 : (question.template?.replace("{{blank}}", "_____") ??
                   "Fill in the blank")}
             </h1>
-            <div className="flex flex-col gap-[22px] rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-8">
+            <div className="flex flex-col gap-4 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5 sm:p-6">
               <CodeBlock
                 lines={
                   question.kind === "typed"
@@ -783,7 +783,7 @@ export function PracticeCoachV2SessionLive({
                       )
                 }
               />
-              <label className="flex flex-col gap-2 text-sm text-[var(--coach-ink-secondary)]">
+              <label className="flex flex-col gap-2 text-[13px] text-[var(--coach-ink-secondary)]">
                 Your answer
                 <input
                   id="practice-answer"
@@ -795,7 +795,7 @@ export function PracticeCoachV2SessionLive({
                       ? true
                       : undefined
                   }
-                  className="box-border h-14 rounded-xl border-2 px-[18px] text-xl font-semibold outline-none focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[var(--coach-focus)] focus-visible:outline-offset-[3px]"
+                  className="box-border h-12 rounded-xl border-2 px-4 text-base font-semibold outline-none focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[var(--coach-focus)] focus-visible:outline-offset-[3px]"
                   style={
                     inFeedback && feedback
                       ? feedback.correct
@@ -865,32 +865,32 @@ export function PracticeCoachV2SessionLive({
             <>
               <span
                 id="grade-label"
-                className="text-base font-semibold"
+                className="text-[15px] font-semibold"
               >
                 Did you know it?
               </span>
               <div
                 role="group"
                 aria-labelledby="grade-label"
-                className="flex w-full gap-3 sm:ml-auto sm:w-auto sm:gap-4"
+                className="flex w-full gap-3 sm:ml-auto sm:w-auto"
               >
                 <button
                   type="button"
-                  className="mb-[5px] flex h-14 flex-1 items-center justify-center gap-2.5 rounded-2xl border-2 sm:w-[220px] sm:flex-none border-[var(--coach-wrong-border)] bg-[var(--coach-surface)] text-base font-bold text-[var(--coach-tint-orange-strong)] shadow-[0_5px_0_var(--coach-wrong-border)]"
+                  className="mb-1 flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[var(--coach-wrong-border)] bg-[var(--coach-surface)] text-sm font-bold text-[var(--coach-tint-orange-strong)] shadow-[0_4px_0_var(--coach-wrong-border)] sm:w-44 sm:flex-none"
                   onClick={() => recordGrade("again", false)}
                 >
                   Missed it
-                  <kbd className="inline-flex size-6 items-center justify-center rounded-md border border-[var(--coach-wrong-border)] border-b-2 bg-[var(--coach-wrong-soft)] font-[family-name:var(--font-plex-mono)] text-xs font-medium">
+                  <kbd className="hidden size-5 items-center justify-center rounded-md border border-[var(--coach-wrong-border)] border-b-2 bg-[var(--coach-wrong-soft)] font-[family-name:var(--font-plex-mono)] text-[11px] font-medium sm:inline-flex">
                     1
                   </kbd>
                 </button>
                 <button
                   type="button"
-                  className="mb-[5px] flex h-14 flex-1 items-center justify-center gap-2.5 rounded-2xl bg-[var(--coach-lime)] sm:w-[220px] sm:flex-none text-base font-bold text-[var(--coach-lime-ink)] shadow-[0_5px_0_var(--coach-lime-shadow)]"
+                  className="mb-1 flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--coach-lime)] text-sm font-bold text-[var(--coach-lime-ink)] shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-44 sm:flex-none"
                   onClick={() => recordGrade("good", true)}
                 >
                   Got it
-                  <kbd className="inline-flex size-6 items-center justify-center rounded-md border border-[var(--coach-lime-shadow)] border-b-2 bg-[var(--coach-lime-soft)] font-[family-name:var(--font-plex-mono)] text-xs font-medium">
+                  <kbd className="hidden size-5 items-center justify-center rounded-md border border-[var(--coach-lime-shadow)] border-b-2 bg-[var(--coach-lime-soft)] font-[family-name:var(--font-plex-mono)] text-[11px] font-medium sm:inline-flex">
                     2
                   </kbd>
                 </button>

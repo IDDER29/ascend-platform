@@ -26,8 +26,8 @@ const TONE: Record<Tone, { tile: string; badge: string }> = {
 function Icon({ children }: { children: ReactNode }) {
   return (
     <svg
-      width="22"
-      height="22"
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -59,23 +59,23 @@ function ModeCard({
   return (
     <Link
       href={href}
-      className="flex flex-col gap-3.5 rounded-[18px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-[22px] text-[var(--coach-ink)] no-underline shadow-[0_4px_0_var(--coach-border)]"
+      className="flex flex-col gap-3 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-[18px] text-[var(--coach-ink)] no-underline shadow-[0_3px_0_var(--coach-border)]"
     >
       <span className="flex items-start justify-between">
         <span
-          className={`flex size-12 items-center justify-center rounded-[14px] ${TONE[tone].tile}`}
+          className={`flex size-10 items-center justify-center rounded-xl ${TONE[tone].tile}`}
         >
           {icon}
         </span>
         <span
-          className={`rounded-full px-[9px] py-[3px] text-xs font-semibold ${TONE[tone].badge}`}
+          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${TONE[tone].badge}`}
         >
           {badge}
         </span>
       </span>
       <span className="flex flex-col gap-1">
-        <span className="text-lg font-semibold">{title}</span>
-        <span className="text-sm leading-normal text-[var(--coach-ink-secondary)]">
+        <span className="text-[15px] font-semibold">{title}</span>
+        <span className="text-[13px] leading-normal text-[var(--coach-ink-secondary)]">
           {body}
         </span>
       </span>
@@ -85,16 +85,16 @@ function ModeCard({
 
 export function ModeGrid({ modes }: { modes: CoachHomeModel["modes"] }) {
   return (
-    <section aria-labelledby="modes" className="flex flex-col gap-4">
+    <section aria-labelledby="modes" className="flex flex-col gap-3">
       <div className="flex w-full flex-wrap items-baseline justify-between gap-3">
-        <h2 id="modes" className="m-0 font-display text-[26px] font-bold">
+        <h2 id="modes" className="m-0 font-display text-xl font-bold">
           Or pick a mode
         </h2>
-        <span className="text-sm text-[var(--coach-ink-muted)]">
+        <span className="text-[13px] text-[var(--coach-ink-muted)]">
           Every mode counts toward your daily goal
         </span>
       </div>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <ModeCard
           href="/practicev2/session?scope=due"
           tone="orange"

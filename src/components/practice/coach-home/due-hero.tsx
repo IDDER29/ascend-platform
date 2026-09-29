@@ -42,24 +42,26 @@ export function DueHero({ hero }: { hero: CoachHomeModel["hero"] }) {
   return (
     <section
       aria-labelledby="up-next"
-      className="flex min-w-0 flex-col items-stretch gap-8 overflow-hidden rounded-[24px] bg-[var(--coach-hero-bg)] px-6 py-7 text-[var(--coach-hero-ink)] sm:px-10 sm:py-9 lg:flex-row lg:items-center"
+      className="flex min-w-0 flex-col items-stretch gap-6 overflow-hidden rounded-[20px] bg-[var(--coach-hero-bg)] px-6 py-6 text-[var(--coach-hero-ink)] sm:px-8 sm:py-7 lg:flex-row lg:items-center"
     >
-      <div className="flex min-w-0 grow flex-col gap-[18px]">
-        <div className="flex items-center gap-2.5">
-          <span className="rounded-full bg-[var(--coach-lime)] px-2.5 py-[5px] text-xs font-semibold uppercase tracking-[0.04em] text-[var(--coach-lime-ink)]">
+      <div className="flex min-w-0 grow flex-col gap-3.5">
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-[var(--coach-lime)] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--coach-lime-ink)]">
             Recommended
           </span>
-          <span className="font-mono text-[13px] text-[var(--coach-hero-muted)]">
+          <span className="font-mono text-xs text-[var(--coach-hero-muted)]">
             Up next
           </span>
         </div>
         <h2
           id="up-next"
-          className="m-0 font-display text-[44px] font-extrabold leading-none tracking-[-0.02em]"
+          className="m-0 font-display text-[28px] font-extrabold leading-none tracking-[-0.02em] sm:text-[30px]"
         >
           {title}
         </h2>
-        <p className="m-0 text-base text-[var(--coach-hero-muted)]">{subtitle}</p>
+        <p className="m-0 text-[14.5px] leading-relaxed text-[var(--coach-hero-muted)]">
+          {subtitle}
+        </p>
         {hero.sessionSize > 0 ? (
           <div
             role="img"
@@ -69,23 +71,23 @@ export function DueHero({ hero }: { hero: CoachHomeModel["hero"] }) {
             {Array.from({ length: hero.sessionSize }, (_, i) => (
               <span
                 key={i}
-                className="h-2.5 grow rounded-full bg-[var(--coach-hero-track)]"
+                className="h-2 grow rounded-full bg-[var(--coach-hero-track)]"
               />
             ))}
           </div>
         ) : null}
-        <div className="mt-1.5 flex w-full flex-wrap items-center gap-5">
+        <div className="mt-1 flex w-full flex-wrap items-center gap-5">
           <Link
             href={hero.action.href}
-            className="flex h-[60px] w-full max-w-full items-center justify-center gap-3.5 rounded-2xl bg-[var(--coach-lime)] text-lg font-bold uppercase tracking-[0.02em] text-[var(--coach-lime-ink)] no-underline shadow-[0_5px_0_var(--coach-lime-shadow)] sm:w-[272px]"
+            className="flex h-11 w-full max-w-full items-center justify-center gap-3 rounded-xl bg-[var(--coach-lime)] px-5 text-[14.5px] font-bold uppercase tracking-[0.02em] text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-auto"
           >
             {hero.action.label}
-            <kbd className="hidden h-[26px] items-center rounded-md border border-b-2 border-[var(--coach-lime-shadow)] bg-[var(--coach-lime-soft)] px-2 font-mono text-xs font-medium normal-case tracking-normal text-[var(--coach-lime-ink)] sm:inline-flex">
+            <kbd className="hidden h-[22px] items-center rounded-md border border-b-2 border-[var(--coach-lime-shadow)] bg-[var(--coach-lime-soft)] px-1.5 font-mono text-[11px] font-medium normal-case tracking-normal text-[var(--coach-lime-ink)] sm:inline-flex">
               Enter
             </kbd>
           </Link>
           {hero.lastScore || hero.nextReviewLabel || stillDue > 0 ? (
-            <div className="flex flex-col gap-0.5 text-sm leading-normal text-[var(--coach-hero-muted)]">
+            <div className="flex flex-col gap-0.5 text-[13px] leading-normal text-[var(--coach-hero-muted)]">
               {hero.lastScore ? (
                 <MetaLine
                   label="Last time"
@@ -104,17 +106,17 @@ export function DueHero({ hero }: { hero: CoachHomeModel["hero"] }) {
       </div>
       <div
         aria-hidden="true"
-        className="relative mx-auto hidden h-[200px] w-[240px] max-w-full shrink-0 sm:block lg:mx-0"
+        className="relative mx-auto hidden h-[160px] w-[196px] max-w-full shrink-0 sm:block lg:mx-0"
       >
-        <div className="absolute left-5 top-5 h-[150px] w-[200px] -rotate-9 rounded-[18px] bg-[var(--coach-blue)]" />
-        <div className="absolute left-6 top-4 h-[150px] w-[200px] rotate-5 rounded-[18px] bg-[var(--coach-hero-track)]" />
-        <div className="absolute left-5 top-6 flex h-[150px] w-[200px] flex-col justify-between rounded-[18px] bg-[var(--coach-hero-card)] p-[18px] text-[var(--coach-hero-card-ink)]">
-          <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--coach-hero-card-muted)]">
+        <div className="absolute left-4 top-4 h-[120px] w-[164px] -rotate-9 rounded-[14px] bg-[var(--coach-blue)]" />
+        <div className="absolute left-5 top-3 h-[120px] w-[164px] rotate-5 rounded-[14px] bg-[var(--coach-hero-track)]" />
+        <div className="absolute left-4 top-5 flex h-[120px] w-[164px] flex-col justify-between rounded-[14px] bg-[var(--coach-hero-card)] p-3.5 text-[var(--coach-hero-card-ink)]">
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--coach-hero-card-muted)]">
             Cloze
           </span>
-          <span className="font-display text-[19px] font-bold leading-[1.2]">
+          <span className="font-display text-base font-bold leading-[1.2]">
             A bit holds one of{" "}
-            <span className="inline-block h-[1.1em] w-12 border-b-[3px] border-[var(--coach-blue)] align-baseline" />{" "}
+            <span className="inline-block h-[1.1em] w-10 border-b-[3px] border-[var(--coach-blue)] align-baseline" />{" "}
             values.
           </span>
         </div>

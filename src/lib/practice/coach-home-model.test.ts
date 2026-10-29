@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { PRACTICE_BANK } from "./bank";
 import {
   buildCoachHomeModel,
   dueWeek,
@@ -12,6 +13,9 @@ import {
 import type { PracticeSessionRecord } from "./history";
 import { createNewCard, localDayKey, type PracticeCard } from "./sm2";
 
+const FOUNDATIONS_CARDS = PRACTICE_BANK.filter(
+  (q) => q.lessonLevel === "level-00-bits-logic",
+).length;
 const NOW = new Date(2026, 8, 29, 14, 0); // Tue Sep 29 2026, 2:00 PM local
 
 function at(daysAgo: number, hour = 10): string {
@@ -177,11 +181,11 @@ test("guest with no data gets honest empty values", () => {
   assert.equal(model.days.practicedDays, 0);
   assert.equal(model.path.hitRate, null);
   assert.equal(model.path.lessonCount, 6);
-  assert.equal(model.path.cardCount, 32);
+  assert.equal(model.path.cardCount, FOUNDATIONS_CARDS);
   assert.ok(model.path.steps.every((step) => !step.done));
   // Foundations is always unlocked, so a guest can free-study.
   assert.equal(model.hero.action.mode, "all");
-  assert.equal(model.modes.unlockedCount, 32);
+  assert.equal(model.modes.unlockedCount, FOUNDATIONS_CARDS);
 });
 
 test("today's sessions are newest first and exclude earlier days", () => {

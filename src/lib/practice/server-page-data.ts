@@ -3,9 +3,11 @@ import "server-only";
 import { getCurrentUser } from "@/lib/auth/auth";
 import { lessonHref } from "@/lib/paths/lesson-urls";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
+import type { DailyGoal } from "@/lib/practice/daily-goal";
 import type { SavedDeck } from "@/lib/practice/deck-recipe";
 import type { PracticeSessionRecord } from "@/lib/practice/history";
 import {
+  getPracticeDailyGoal,
   listPracticeCardsForUser,
   listPracticeDecksForUser,
   listPracticeSessionsForUser,
@@ -28,12 +30,15 @@ export async function loadPracticePageData(): Promise<{
   initialHistory: PracticeSessionRecord[];
   initialCards: PracticeCard[];
   initialDecks: SavedDeck[];
+  /** Server-stored daily goal; null for guests or when none is saved. */
+  initialGoal: DailyGoal | null;
 }> {
   const user = await getCurrentUser();
   let completedKeys: string[] = [];
   let initialHistory: PracticeSessionRecord[] = [];
   let initialCards: PracticeCard[] = [];
   let initialDecks: SavedDeck[] = [];
+  let initialGoal: DailyGoal | null = null;
 
   if (user) {
     try {
@@ -45,6 +50,7 @@ export async function loadPracticePageData(): Promise<{
     initialHistory = await listPracticeSessionsForUser(user.id);
     initialCards = await listPracticeCardsForUser(user.id);
     initialDecks = await listPracticeDecksForUser(user.id);
+    initialGoal = await getPracticeDailyGoal(user.id);
   }
 
   return {
@@ -54,5 +60,6 @@ export async function loadPracticePageData(): Promise<{
     initialHistory,
     initialCards,
     initialDecks,
+    initialGoal,
   };
 }

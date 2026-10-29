@@ -36,3 +36,19 @@ export function writeDailyGoal(userId: string | null, goal: DailyGoal): void {
     // Ignore quota and private-mode storage errors.
   }
 }
+
+/**
+ * Signed-in learners keep their goal on the server; the local copy is the
+ * guest store and an offline fallback. A server value wins and is mirrored
+ * locally so every Practice screen reads the same goal.
+ */
+export function resolveDailyGoal(
+  userId: string | null,
+  serverGoal: DailyGoal | null,
+): DailyGoal {
+  if (userId && serverGoal !== null) {
+    writeDailyGoal(userId, serverGoal);
+    return serverGoal;
+  }
+  return readDailyGoal(userId);
+}

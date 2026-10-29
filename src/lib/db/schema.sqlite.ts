@@ -131,3 +131,9 @@ export const practiceDecks = sqliteTable(
   },
   (t) => [index("practice_decks_user_idx").on(t.userId)],
 );
+
+export const practiceSettings = sqliteTable("practice_settings", {
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  dailyGoal: integer("daily_goal").notNull().default(20),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});

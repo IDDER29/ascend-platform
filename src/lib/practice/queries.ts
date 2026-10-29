@@ -1,5 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db/client";
+import { isDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
 import {
   DECK_FILTERS,
   DECK_FORMATS,
@@ -145,5 +146,22 @@ export async function listPracticeCardsForUser(
   } catch {
     // Table may not exist yet on Postgres until migrated.
     return [];
+  }
+}
+
+/** The signed-in learner's saved daily goal, or null when none is stored. */
+export async function getPracticeDailyGoal(userId: string): Promise<DailyGoal | null> {
+  if (!db) return null;
+  try {
+    const rows = await db
+      .select({ dailyGoal: schema.practiceSettings.dailyGoal })
+      .from(schema.practiceSettings)
+      .where(eq(schema.practiceSettings.userId, userId))
+      .limit(1);
+    const goal = rows[0]?.dailyGoal;
+    return isDailyGoal(goal) ? goal : null;
+  } catch {
+    // Table may not exist yet on Postgres until migrated.
+    return null;
   }
 }

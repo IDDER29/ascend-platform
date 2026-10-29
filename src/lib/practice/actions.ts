@@ -10,6 +10,7 @@ import {
   type DeckInput,
   type SavedDeck,
 } from "@/lib/practice/deck-recipe";
+import { isDailyGoal } from "@/lib/practice/daily-goal";
 import type { PracticeScopeType } from "@/lib/practice/history";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
 import { completionKey } from "@/lib/practice/session";
@@ -282,5 +283,31 @@ export async function deletePracticeDeckAction(id: string): Promise<PracticeActi
     return { ok: true };
   } catch {
     return { ok: false, error: "Could not delete the deck." };
+  }
+}
+
+export async function savePracticeDailyGoalAction(
+  goal: number,
+): Promise<PracticeActionResult> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "Sign in to sync your daily goal." };
+  if (!db) return { ok: false, error: "Database unavailable." };
+  if (!isDailyGoal(goal)) return { ok: false, error: "Invalid daily goal." };
+
+  const updatedAt = new Date();
+  try {
+    await db
+      .insert(schema.practiceSettings)
+      .values({ userId: user.id, dailyGoal: goal, updatedAt })
+      .onConflictDoUpdate({
+        target: schema.practiceSettings.userId,
+        set: { dailyGoal: goal, updatedAt },
+      });
+    return { ok: true };
+  } catch {
+    return {
+      ok: false,
+      error: "Could not save the daily goal (table may need a migration).",
+    };
   }
 }

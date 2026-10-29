@@ -140,3 +140,9 @@ export const practiceDecks = pgTable(
   },
   (t) => [index("practice_decks_user_idx").on(t.userId)],
 );
+
+export const practiceSettings = pgTable("practice_settings", {
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  dailyGoal: integer("daily_goal").notNull().default(20),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});

@@ -26,6 +26,7 @@ export default async function Page({ searchParams }: Props) {
           reviewHrefs={data.reviewHrefs}
           initialHistory={data.initialHistory}
           sessionId={sessionParam ?? null}
+          initialGoal={data.initialGoal}
         />
       </div>
     </main>

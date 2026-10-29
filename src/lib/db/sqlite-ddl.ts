@@ -126,4 +126,10 @@ CREATE TABLE IF NOT EXISTS practice_decks (
   updated_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS practice_decks_user_idx ON practice_decks(user_id);
+
+CREATE TABLE IF NOT EXISTS practice_settings (
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  daily_goal INTEGER NOT NULL DEFAULT 20,
+  updated_at INTEGER NOT NULL
+);
 `;

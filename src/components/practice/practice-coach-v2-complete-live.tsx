@@ -12,7 +12,7 @@ import { StrengthCard } from "@/components/practice/coach-complete/strength-card
 import { useEnterShortcut } from "@/components/practice/use-enter-shortcut";
 import { buildCoachCompleteModel } from "@/lib/practice/coach-complete-model";
 import { findCoachV2SessionRecord } from "@/lib/practice/coach-v2-flow";
-import { readDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
+import { resolveDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
 import {
   mergeSessionHistory,
   readLocalHistory,
@@ -24,6 +24,7 @@ export type PracticeCoachV2CompleteLiveProps = {
   reviewHrefs: Record<string, string>;
   initialHistory: PracticeSessionRecord[];
   sessionId: string | null;
+  initialGoal: DailyGoal | null;
 };
 
 type CompleteData = {
@@ -56,6 +57,7 @@ export function PracticeCoachV2CompleteLive({
   reviewHrefs,
   initialHistory,
   sessionId,
+  initialGoal,
 }: PracticeCoachV2CompleteLiveProps) {
   const [data, setData] = useState<CompleteData | null>(null);
 
@@ -63,7 +65,7 @@ export function PracticeCoachV2CompleteLive({
     let cancelled = false;
     const next: CompleteData = {
       history: mergeSessionHistory(readLocalHistory(userId), initialHistory),
-      goal: readDailyGoal(userId),
+      goal: resolveDailyGoal(userId, initialGoal),
       now: new Date(),
     };
     queueMicrotask(() => {
@@ -72,7 +74,7 @@ export function PracticeCoachV2CompleteLive({
     return () => {
       cancelled = true;
     };
-  }, [initialHistory, userId]);
+  }, [initialGoal, initialHistory, userId]);
 
   const model = useMemo(() => {
     if (!data) return null;

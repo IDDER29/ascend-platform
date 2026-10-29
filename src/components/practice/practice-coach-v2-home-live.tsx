@@ -21,8 +21,9 @@ import { buildCoachBankModel } from "@/lib/practice/coach-bank-model";
 import { savedDeckItems } from "@/lib/practice/coach-custom-model";
 import { buildCoachHomeModel } from "@/lib/practice/coach-home-model";
 import type { SavedDeck } from "@/lib/practice/deck-recipe";
+import { savePracticeDailyGoalAction } from "@/lib/practice/actions";
 import {
-  readDailyGoal,
+  resolveDailyGoal,
   writeDailyGoal,
   type DailyGoal,
 } from "@/lib/practice/daily-goal";
@@ -40,6 +41,7 @@ export type PracticeCoachV2HomeLiveProps = {
   initialCards: PracticeCard[];
   initialHistory: PracticeSessionRecord[];
   initialDecks: SavedDeck[];
+  initialGoal: DailyGoal | null;
 };
 
 type HomeData = {
@@ -56,6 +58,7 @@ export function PracticeCoachV2HomeLive({
   initialCards,
   initialHistory,
   initialDecks,
+  initialGoal,
 }: PracticeCoachV2HomeLiveProps) {
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
   const unlockedIds = useMemo(
@@ -71,7 +74,7 @@ export function PracticeCoachV2HomeLive({
       cards: syncLocalCards(userId, initialCards, unlockedIds),
       history: mergeSessionHistory(readLocalHistory(userId), initialHistory),
       meta: readNewDayMeta(userId),
-      goal: readDailyGoal(userId),
+      goal: resolveDailyGoal(userId, initialGoal),
       now: new Date(),
     };
     queueMicrotask(() => {
@@ -80,7 +83,7 @@ export function PracticeCoachV2HomeLive({
     return () => {
       cancelled = true;
     };
-  }, [initialCards, initialHistory, unlockedIds, userId]);
+  }, [initialCards, initialGoal, initialHistory, unlockedIds, userId]);
 
   const model = useMemo(
     () =>
@@ -112,6 +115,7 @@ export function PracticeCoachV2HomeLive({
 
   function changeGoal(goal: DailyGoal) {
     writeDailyGoal(userId, goal);
+    if (userId) void savePracticeDailyGoalAction(goal);
     setData((current) => (current ? { ...current, goal } : current));
   }
 

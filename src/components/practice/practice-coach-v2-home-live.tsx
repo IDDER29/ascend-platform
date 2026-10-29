@@ -5,7 +5,7 @@ import { CardStrength } from "@/components/practice/coach-home/card-strength";
 import { CoachHeader } from "@/components/practice/coach-home/coach-header";
 import { CoachHomeSkeleton } from "@/components/practice/coach-home/coach-home-skeleton";
 import { DueHero } from "@/components/practice/coach-home/due-hero";
-import { FoundationsPathCard } from "@/components/practice/coach-home/foundations-path-card";
+import { PathCard } from "@/components/practice/coach-home/path-card";
 import { ModeGrid } from "@/components/practice/coach-home/mode-grid";
 import { PracticeDays } from "@/components/practice/coach-home/practice-days";
 import { TodaysSessions } from "@/components/practice/coach-home/todays-sessions";
@@ -134,7 +134,9 @@ export function PracticeCoachV2HomeLive({
 
       <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(250px,280px)]">
         <div className="flex min-w-0 flex-col gap-5">
-          <FoundationsPathCard path={model.path} />
+          {model.paths.map((path) => (
+            <PathCard key={path.slug} path={path} />
+          ))}
           <TodaysSessions sessions={model.sessions} isGuest={userId === null} />
         </div>
         <aside className="flex min-w-0 flex-col gap-5">

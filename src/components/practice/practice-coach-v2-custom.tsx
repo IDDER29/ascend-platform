@@ -38,6 +38,7 @@ type PracticeCoachV2CustomProps = {
   initialCards: PracticeCard[];
   initialHistory: PracticeSessionRecord[];
   initialDecks: SavedDeck[];
+  initialLessonKeys?: string[];
 };
 
 const IDLE: DeckSaveState = { status: "idle" };
@@ -61,10 +62,11 @@ export function PracticeCoachV2Custom({
   initialCards,
   initialHistory,
   initialDecks,
+  initialLessonKeys = [],
 }: PracticeCoachV2CustomProps) {
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
   const [rows, setRows] = useState<BankRow[] | null>(null);
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(initialLessonKeys);
   const [filter, setFilter] = useState<DeckFilter>("all");
   const [formats, setFormats] = useState<DeckFormat[]>(DECK_FORMATS);
   const [decks, setDecks] = useState<SavedDeck[]>(initialDecks);

@@ -186,7 +186,7 @@ export function gradeFromMcqCorrect(correct: boolean): PracticeGrade {
   return correct ? "good" : "again";
 }
 
-function dueCards(
+export function dueCards(
   cards: PracticeCard[],
   meta: NewDayMeta,
   now: Date,

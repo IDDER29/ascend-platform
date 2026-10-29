@@ -179,10 +179,10 @@ test("guest with no data gets honest empty values", () => {
   assert.deepEqual(model.sessions.rows, []);
   assert.equal(model.strength.total, 0);
   assert.equal(model.days.practicedDays, 0);
-  assert.equal(model.path.hitRate, null);
-  assert.equal(model.path.lessonCount, 6);
-  assert.equal(model.path.cardCount, FOUNDATIONS_CARDS);
-  assert.ok(model.path.steps.every((step) => !step.done));
+  assert.equal(model.paths[0].hitRate, null);
+  assert.equal(model.paths[0].lessonCount, 6);
+  assert.equal(model.paths[0].cardCount, FOUNDATIONS_CARDS);
+  assert.ok(model.paths[0].steps.every((step) => !step.done));
   // Foundations is always unlocked, so a guest can free-study.
   assert.equal(model.hero.action.mode, "all");
   assert.equal(model.modes.unlockedCount, FOUNDATIONS_CARDS);
@@ -234,13 +234,26 @@ test("due cards drive the hero and misses badge", () => {
 
 test("a Foundations step is done once every card for that lesson has been seen", () => {
   const model = buildCoachHomeModel(input());
-  const first = model.path.steps[0];
-  const cardIds = model.path.stepQuestionIds[first.key];
+  const first = model.paths[0].steps[0];
+  const cardIds = model.paths[0].stepQuestionIds[first.key];
   const seen = buildCoachHomeModel(
     input({
       cards: cardIds.map((id) => card(id, { state: "review", intervalDays: 1 })),
     }),
   );
-  assert.equal(seen.path.steps[0].done, true);
-  assert.equal(seen.path.steps[1].done, false);
+  assert.equal(seen.paths[0].steps[0].done, true);
+  assert.equal(seen.paths[0].steps[1].done, false);
+});
+
+test("home lists a path card for each path with unlocked cards", () => {
+  assert.deepEqual(
+    buildCoachHomeModel(input()).paths.map((p) => p.slug),
+    ["foundations"],
+  );
+  const model = buildCoachHomeModel(
+    input({ completedKeys: new Set(["level-02-the-c-language/what-a-pointer-really-is"]) }),
+  );
+  assert.deepEqual(model.paths.map((p) => p.slug), ["foundations", "systems-programmer"]);
+  assert.equal(model.paths[0].alwaysOpen, true);
+  assert.equal(model.paths[1].alwaysOpen, false);
 });

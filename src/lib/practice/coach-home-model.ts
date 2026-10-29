@@ -18,6 +18,9 @@ import { localDayKey, type PracticeCard } from "./sm2";
 import { practiceTreeForPath } from "./tree";
 import { CURRICULUM_HREF } from "@/lib/routes";
 
+const DEFAULT_PRACTICE_PATH = "foundations";
+const PRACTICE_PATH_ORDER = Object.keys(PRACTICE_PATH_TITLES);
+
 export const COACH_SESSION_SIZE = 8;
 const MASTERED_INTERVAL_DAYS = 21;
 const HEATMAP_WEEKS = 12;
@@ -80,6 +83,19 @@ export type CoachSessionRow = {
 
 export type CoachPathStep = { key: string; title: string; done: boolean };
 
+export type CoachPathCard = {
+  slug: string;
+  title: string;
+  blurb: string;
+  mark: string;
+  alwaysOpen: boolean;
+  cardCount: number;
+  lessonCount: number;
+  steps: CoachPathStep[];
+  stepQuestionIds: Record<string, string[]>;
+  hitRate: PathProgressRow | null;
+};
+
 export type CoachHomeModel = {
   dateLabel: string;
   hero: {
@@ -91,17 +107,8 @@ export type CoachHomeModel = {
   };
   day: { streak: number; answeredToday: number; goal: DailyGoal };
   modes: { missesDue: number; unlockedCount: number };
-  path: {
-    slug: string;
-    title: string;
-    blurb: string;
-    mark: string;
-    cardCount: number;
-    lessonCount: number;
-    steps: CoachPathStep[];
-    stepQuestionIds: Record<string, string[]>;
-    hitRate: PathProgressRow | null;
-  };
+  /** Foundations plus every path the learner has unlocked cards in. */
+  paths: CoachPathCard[];
   sessions: {
     rows: CoachSessionRow[];
     answered: number;
@@ -270,12 +277,12 @@ export function practiceDaysGrid(
   };
 }
 
-function foundationsPath(
+function pathCard(
+  slug: string,
   cards: PracticeCard[],
   history: PracticeSessionRecord[],
   completedKeys: ReadonlySet<string>,
-): CoachHomeModel["path"] {
-  const slug = "foundations";
+): CoachPathCard {
   const tree = practiceTreeForPath(slug);
   const lessons = tree?.sections.flatMap((section) => section.lessons) ?? [];
   const cardState = new Map(cards.map((c) => [c.questionId, c.state]));
@@ -301,6 +308,7 @@ function foundationsPath(
     title: PRACTICE_PATH_TITLES[slug],
     blurb: PRACTICE_PATH_BLURBS[slug],
     mark: PRACTICE_PATH_MARKS[slug],
+    alwaysOpen: slug === DEFAULT_PRACTICE_PATH,
     cardCount: PRACTICE_BANK.filter(
       (q) => practicePathSlugForLevel(q.lessonLevel) === slug,
     ).length,
@@ -343,7 +351,8 @@ function todaysSessions(
 
 export function buildCoachHomeModel(input: CoachHomeInput): CoachHomeModel {
   const { cards, history, meta, completedKeys, goal, now } = input;
-  const unlockedCount = unlockedQuestions(new Set(completedKeys)).length;
+  const unlocked = unlockedQuestions(new Set(completedKeys));
+  const unlockedCount = unlocked.length;
   const dueNow = dueCount(cards, meta, now);
   const latest = [...history].sort((a, b) => b.at.localeCompare(a.at))[0];
   const nextIso = nextReviewAt(cards, now);
@@ -382,7 +391,11 @@ export function buildCoachHomeModel(input: CoachHomeInput): CoachHomeModel {
       ).length,
       unlockedCount,
     },
-    path: foundationsPath(cards, history, completedKeys),
+    paths: PRACTICE_PATH_ORDER.filter(
+      (slug) =>
+        slug === DEFAULT_PRACTICE_PATH ||
+        unlocked.some((q) => practicePathSlugForLevel(q.lessonLevel) === slug),
+    ).map((slug) => pathCard(slug, cards, history, completedKeys)),
     sessions: todaysSessions(history, now),
     strength: strengthBuckets(cards),
     week: dueWeek(cards, meta, now),

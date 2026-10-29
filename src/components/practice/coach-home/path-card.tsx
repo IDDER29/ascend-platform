@@ -1,19 +1,16 @@
 import Link from "next/link";
 import { Fragment } from "react";
-import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
+import type { CoachPathCard } from "@/lib/practice/coach-home-model";
+import { practicePathHref } from "@/lib/practice/routes";
 
-const PATH_HREF = "/practicev2/foundations";
-
-export function FoundationsPathCard({
-  path,
-}: {
-  path: CoachHomeModel["path"];
-}) {
+export function PathCard({ path }: { path: CoachPathCard }) {
   const hit = path.hitRate;
+  const href = practicePathHref(path.slug);
+  const titleId = `path-title-${path.slug}`;
 
   return (
     <section
-      aria-labelledby="path-title"
+      aria-labelledby={titleId}
       className="flex flex-col gap-5 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5 sm:p-6"
     >
       <div className="flex w-full flex-wrap items-start justify-between gap-4 sm:flex-nowrap sm:gap-5">
@@ -23,12 +20,14 @@ export function FoundationsPathCard({
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <h2 id="path-title" className="m-0 text-[17px] font-semibold">
+              <h2 id={titleId} className="m-0 text-[17px] font-semibold">
                 {path.title}
               </h2>
-              <span className="rounded-full bg-[var(--coach-tint-blue-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--coach-tint-blue-ink)]">
-                Always open
-              </span>
+              {path.alwaysOpen ? (
+                <span className="rounded-full bg-[var(--coach-tint-blue-bg)] px-2 py-0.5 text-[11px] font-semibold text-[var(--coach-tint-blue-ink)]">
+                  Always open
+                </span>
+              ) : null}
             </div>
             <span className="text-[13px] text-[var(--coach-ink-secondary)]">
               {path.blurb}{" "}
@@ -39,7 +38,7 @@ export function FoundationsPathCard({
           </div>
         </div>
         <Link
-          href={PATH_HREF}
+          href={href}
           className="flex h-10 w-full shrink-0 items-center justify-center rounded-xl border-2 border-[var(--coach-ink)] px-4 text-sm font-semibold text-[var(--coach-ink)] no-underline sm:w-auto"
         >
           Open path
@@ -62,7 +61,7 @@ export function FoundationsPathCard({
             ) : null}
             <li className="flex-[0_0_72px]">
               <Link
-                href={PATH_HREF}
+                href={href}
                 title={step.title}
                 className={`flex w-[72px] flex-col items-center gap-1.5 no-underline ${
                   step.done ? "text-[var(--coach-ink)]" : "text-[var(--coach-ink-secondary)]"

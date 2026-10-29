@@ -4,6 +4,7 @@ import { PRACTICE_BANK } from "./bank";
 import { buildCoachCompleteModel } from "./coach-complete-model";
 import type { PracticeSessionRecord } from "./history";
 import type { McqItem } from "./types";
+import { PRACTICE_ROUTES } from "./routes";
 
 const NOW = new Date(2026, 8, 29, 15, 0);
 
@@ -125,9 +126,9 @@ test("links: fix misses first, otherwise back to practice", () => {
   });
   assert.deepEqual(model.primary, {
     label: "Fix 2 misses now",
-    href: "/practicev2/session?scope=due",
+    href: `${PRACTICE_ROUTES.session}?scope=due`,
   });
-  assert.deepEqual(model.secondary, { label: "Back to practice", href: "/practicev2" });
+  assert.deepEqual(model.secondary, { label: "Back to practice", href: PRACTICE_ROUTES.home });
 
   const one = session({ missIds: ["a"] });
   assert.equal(
@@ -137,6 +138,6 @@ test("links: fix misses first, otherwise back to practice", () => {
 
   const perfect = session();
   const clean = buildCoachCompleteModel({ record: perfect, history: [perfect], goal: 20, now: NOW });
-  assert.deepEqual(clean.primary, { label: "Back to practice", href: "/practicev2" });
+  assert.deepEqual(clean.primary, { label: "Back to practice", href: PRACTICE_ROUTES.home });
   assert.equal(clean.secondary, null);
 });

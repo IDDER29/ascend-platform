@@ -4,7 +4,7 @@ import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
 import { loadPracticePageData } from "@/lib/practice/server-page-data";
 
 export const metadata: Metadata = {
-  title: "Card bank — Practice Coach (v2) — Ascend",
+  title: "Card bank — Practice — Ascend",
 };
 
 export default async function Page() {

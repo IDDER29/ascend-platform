@@ -64,7 +64,7 @@ Static markup modules may be adapted into data-bound Coach chrome; look stays Ph
 
 - Full card bank / custom deck as real editors
 - Foundations path heat as live analytics rewrite
-- Replacing or deleting `/practice`; cutting nav to v2
+- Replacing or deleting `/practice`; cutting nav to v2 — **done 2026-10-29** (see `2026-10-29-practicev2-complete-design.md`)
 - Hard/Easy grades, email reminders, Practice XP / streaks
 
 ## Success criteria

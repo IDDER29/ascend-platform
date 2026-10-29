@@ -12,9 +12,11 @@ repeated on every page.
 
 **Done**: design system, homepage, full 24-lesson curriculum (all real
 content, real navigation, no placeholders), `/curriculum` index,
-`/dashboard`, `/practice` (a genuinely interactive quiz — not a static
-mockup: real question state, scoring, streaks, a timer, and a results
-screen, all client-side), `/playground` (a real multi-file editable code
+`/dashboard`, `/practice` (Coach: spaced-repetition review over a 260-card bank
+covering all 25 lessons — SM-2 scheduling, due review, free study, a card
+bank, saved custom decks, and a desk per path at `/practice/paths/[slug]`;
+cards unlock as lessons are completed, and grades, sessions, decks and the
+daily goal persist to the database for signed-in learners), `/playground` (a real multi-file editable code
 scratchpad — genuine `<textarea>` editing across `main.c`/`scratch.c`/
 `bitwise_test.c`/`notes.md`, quick-start snippet loading, and an honest Run
 button: known snippets show their real compiled output, custom edits get

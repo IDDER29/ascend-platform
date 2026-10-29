@@ -9,6 +9,7 @@ import {
   type SavedDeck,
 } from "./deck-recipe";
 import { PRACTICE_TREE } from "./tree";
+import { PRACTICE_ROUTES } from "./routes";
 
 export const DECK_FORMAT_LABELS: Record<DeckFormat, string> = {
   mcq: "Choices",
@@ -174,7 +175,7 @@ export function defaultDeckName(titles: string[]): string {
 }
 
 export function deckSessionHref(ids: string[], label: string): string {
-  return `/practicev2/session?scope=all&cards=${ids.join(",")}&label=${encodeURIComponent(label)}`;
+  return `${PRACTICE_ROUTES.session}?scope=all&cards=${ids.join(",")}&label=${encodeURIComponent(label)}`;
 }
 
 export type SavedDeckItem = { deck: SavedDeck; summary: DeckSummary; href: string | null };

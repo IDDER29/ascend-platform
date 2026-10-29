@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
+import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 
 const BAR_MAX_PX = 56;
 
@@ -106,7 +107,7 @@ export function CardStrength({
       <div className="h-px bg-[var(--coach-divider)]" />
       <DueThisWeek week={week} />
       <Link
-        href="/practicev2/bank"
+        href={PRACTICE_ROUTES.bank}
         className="-my-1 flex h-9 items-center gap-1.5 text-[13px] font-semibold text-[var(--coach-ink)] no-underline"
       >
         {strength.total > 0 ? `Browse all ${strength.total} cards` : "Browse the card bank"}

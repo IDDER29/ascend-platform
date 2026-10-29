@@ -1,6 +1,6 @@
 /** Client-safe Practice URLs. Every Practice link goes through here. */
 
-const BASE = "/practicev2";
+const BASE = "/practice";
 
 export const PRACTICE_ROUTES = {
   home: BASE,

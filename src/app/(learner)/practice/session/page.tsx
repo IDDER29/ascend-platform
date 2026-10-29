@@ -3,7 +3,7 @@ import { PracticeCoachV2SessionLive } from "@/components/practice/practice-coach
 import { loadPracticePageData } from "@/lib/practice/server-page-data";
 
 export const metadata: Metadata = {
-  title: "Review session — Practice Coach (v2) — Ascend",
+  title: "Review session — Practice — Ascend",
 };
 
 type Props = {

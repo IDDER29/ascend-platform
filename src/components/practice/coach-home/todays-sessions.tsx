@@ -3,8 +3,9 @@ import type {
   CoachHomeModel,
   CoachSessionRow,
 } from "@/lib/practice/coach-home-model";
+import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 
-const RETRY_HREF = "/practicev2/session?scope=due";
+const RETRY_HREF = `${PRACTICE_ROUTES.session}?scope=due`;
 
 function ResultBars({ results }: { results: boolean[] }) {
   return (

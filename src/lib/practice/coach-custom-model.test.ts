@@ -10,6 +10,7 @@ import {
   summarizeDeck,
 } from "./coach-custom-model";
 import { DECK_FORMATS, type DeckFormat } from "./deck-recipe";
+import { PRACTICE_ROUTES } from "./routes";
 
 const A = "level-00-bits-logic/what-is-a-bit";
 const B = "level-00-bits-logic/binary-and-number-bases";
@@ -120,7 +121,7 @@ test("savedDeckItems summarizes each deck with a start link", () => {
     { id: "d2", name: "Gone", lessonKeys: ["nope/x"], filter: "all", formats: ALL_FORMATS, updatedAt: "" },
   ]);
   assert.equal(items[0]!.summary.total, 2);
-  assert.equal(items[0]!.href, "/practicev2/session?scope=all&cards=c1,c2&label=Logic");
+  assert.equal(items[0]!.href, `${PRACTICE_ROUTES.session}?scope=all&cards=c1,c2&label=Logic`);
   assert.equal(items[1]!.summary.total, 0);
   assert.equal(items[1]!.href, null);
 });
@@ -138,6 +139,6 @@ test("defaultDeckName and deckSessionHref", () => {
   assert.ok(long.endsWith("…"));
   assert.equal(
     deckSessionHref(["a", "b"], "Logic & gates"),
-    "/practicev2/session?scope=all&cards=a,b&label=Logic%20%26%20gates",
+    `${PRACTICE_ROUTES.session}?scope=all&cards=a,b&label=Logic%20%26%20gates`,
   );
 });

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
+import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 
 type Tone = "orange" | "lime" | "blue" | "neutral";
 
@@ -96,7 +97,7 @@ export function ModeGrid({ modes }: { modes: CoachHomeModel["modes"] }) {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <ModeCard
-          href="/practicev2/session?scope=due"
+          href={`${PRACTICE_ROUTES.session}?scope=due`}
           tone="orange"
           badge={modes.missesDue > 0 ? `${modes.missesDue} to fix` : "All clear"}
           title="Fix your misses"
@@ -109,7 +110,7 @@ export function ModeGrid({ modes }: { modes: CoachHomeModel["modes"] }) {
           }
         />
         <ModeCard
-          href="/practicev2/session?scope=all&size=5"
+          href={`${PRACTICE_ROUTES.session}?scope=all&size=5`}
           tone="lime"
           badge="5 cards"
           title="Quick 5"
@@ -121,7 +122,7 @@ export function ModeGrid({ modes }: { modes: CoachHomeModel["modes"] }) {
           }
         />
         <ModeCard
-          href="/practicev2/session?scope=all"
+          href={`${PRACTICE_ROUTES.session}?scope=all`}
           tone="blue"
           badge={`${modes.unlockedCount} cards`}
           title="Everything unlocked"
@@ -137,7 +138,7 @@ export function ModeGrid({ modes }: { modes: CoachHomeModel["modes"] }) {
           }
         />
         <ModeCard
-          href="/practicev2/custom"
+          href={PRACTICE_ROUTES.custom}
           tone="neutral"
           badge="Your pick"
           title="Custom deck"

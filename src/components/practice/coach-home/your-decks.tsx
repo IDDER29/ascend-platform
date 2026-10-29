@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { deckCountLabel } from "@/components/practice/coach-custom/saved-decks";
 import type { SavedDeckItem } from "@/lib/practice/coach-custom-model";
+import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 
 const MAX_SHOWN = 3;
 
@@ -15,7 +16,7 @@ export function YourDecks({ items }: { items: SavedDeckItem[] }) {
           Your decks
         </h2>
         <Link
-          href="/practicev2/custom"
+          href={PRACTICE_ROUTES.custom}
           className="text-[13px] font-semibold text-[var(--coach-ink)] no-underline"
         >
           {items.length > MAX_SHOWN ? `All ${items.length}` : "All decks"}

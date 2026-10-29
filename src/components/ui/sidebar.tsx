@@ -99,14 +99,6 @@ function isNavActive(pathname: string | null, href: string): boolean {
   if (href === "/dashboard") {
     return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   }
-  if (href === "/practice") {
-    return (
-      pathname === "/practice" ||
-      pathname.startsWith("/practice/") ||
-      pathname === "/practicev2" ||
-      pathname.startsWith("/practicev2/")
-    );
-  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

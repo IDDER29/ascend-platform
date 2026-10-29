@@ -6,9 +6,10 @@ import { cardsClearedToday } from "./momentum";
 import { completionKey } from "./session";
 import { practiceLessonTitle } from "./tree";
 import type { PracticeItem } from "./types";
+import { PRACTICE_ROUTES } from "./routes";
 
-const FIX_HREF = "/practicev2/session?scope=due";
-const BACK: CoachCompleteLink = { label: "Back to practice", href: "/practicev2" };
+const FIX_HREF = `${PRACTICE_ROUTES.session}?scope=due`;
+const BACK: CoachCompleteLink = { label: "Back to practice", href: PRACTICE_ROUTES.home };
 
 const questionsById = new Map(PRACTICE_BANK.map((q) => [q.id, q] as const));
 

@@ -15,6 +15,7 @@ import type { PracticeScopeType } from "@/lib/practice/history";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
 import { completionKey } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
+import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 
 export type PracticeActionResult =
   | { ok: true }
@@ -212,8 +213,8 @@ const PRACTICE_LESSON_KEYS = new Set(
 );
 
 function revalidateDecks() {
-  revalidatePath("/practicev2");
-  revalidatePath("/practicev2/custom");
+  revalidatePath(PRACTICE_ROUTES.home);
+  revalidatePath(PRACTICE_ROUTES.custom);
 }
 
 export async function savePracticeDeckAction(

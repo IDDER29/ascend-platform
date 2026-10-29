@@ -17,6 +17,7 @@ import { completionKey, unlockedQuestions } from "./session";
 import { localDayKey, type PracticeCard } from "./sm2";
 import { practiceTreeForPath } from "./tree";
 import { CURRICULUM_HREF } from "@/lib/routes";
+import { PRACTICE_ROUTES } from "./routes";
 
 const DEFAULT_PRACTICE_PATH = "foundations";
 const PRACTICE_PATH_ORDER = Object.keys(PRACTICE_PATH_TITLES);
@@ -126,14 +127,14 @@ export function selectCoachHomeAction(
 ): CoachHomeAction {
   if (dueNow > 0) {
     return {
-      href: "/practicev2/session?scope=due",
+      href: `${PRACTICE_ROUTES.session}?scope=due`,
       label: "Start review",
       mode: "due",
     };
   }
   if (unlockedCount > 0) {
     return {
-      href: "/practicev2/session?scope=all",
+      href: `${PRACTICE_ROUTES.session}?scope=all`,
       label: "Free study",
       mode: "all",
     };

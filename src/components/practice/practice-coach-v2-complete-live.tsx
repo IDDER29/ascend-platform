@@ -18,6 +18,7 @@ import {
   readLocalHistory,
   type PracticeSessionRecord,
 } from "@/lib/practice/history";
+import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 
 export type PracticeCoachV2CompleteLiveProps = {
   userId: string | null;
@@ -43,7 +44,7 @@ function NoSession() {
         Finish a review to see your results here.
       </p>
       <Link
-        href="/practicev2"
+        href={PRACTICE_ROUTES.home}
         className="mt-2 flex h-11 items-center justify-center rounded-xl border-2 border-[var(--coach-border-strong)] px-5 text-sm font-semibold text-[var(--coach-ink)] no-underline"
       >
         Back to practice

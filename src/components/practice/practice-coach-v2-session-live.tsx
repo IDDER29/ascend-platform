@@ -42,6 +42,7 @@ import type {
   PracticeGrade,
 } from "@/lib/practice/sm2";
 import type { PracticeItem } from "@/lib/practice/types";
+import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 
 export type PracticeCoachV2SessionLiveProps = {
   userId: string | null;
@@ -513,7 +514,7 @@ export function PracticeCoachV2SessionLive({
           })
         : [];
     if (next.length === 0) {
-      router.replace("/practicev2");
+      router.replace(PRACTICE_ROUTES.home);
       return;
     }
     queueMicrotask(() => setQuestions(next));
@@ -574,12 +575,12 @@ export function PracticeCoachV2SessionLive({
 
   function finishSession(nextAnswered: Answered[]) {
     const record = saveSession(nextAnswered);
-    router.push(`/practicev2/complete?session=${record.id}`);
+    router.push(`${PRACTICE_ROUTES.complete}?session=${record.id}`);
   }
 
   function exitSession() {
     if (answered.length > 0) saveSession(answered);
-    router.push("/practicev2");
+    router.push(PRACTICE_ROUTES.home);
   }
 
   function advance(nextAnswered = answered) {

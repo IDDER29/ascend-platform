@@ -23,6 +23,7 @@ import {
 } from "@/lib/practice/history";
 import { unlockedQuestions } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
+import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 
 type PracticeCoachV2BankProps = {
   userId: string | null;
@@ -103,7 +104,7 @@ export function PracticeCoachV2Bank({
     });
   };
 
-  const sessionHref = `/practicev2/session?scope=all&cards=${selected.join(",")}`;
+  const sessionHref = `${PRACTICE_ROUTES.session}?scope=all&cards=${selected.join(",")}`;
 
   return (
     <div className="flex flex-col gap-6">

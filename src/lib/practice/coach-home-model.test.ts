@@ -12,6 +12,7 @@ import {
 } from "./coach-home-model";
 import type { PracticeSessionRecord } from "./history";
 import { createNewCard, localDayKey, type PracticeCard } from "./sm2";
+import { PRACTICE_ROUTES } from "./routes";
 
 const FOUNDATIONS_CARDS = PRACTICE_BANK.filter(
   (q) => q.lessonLevel === "level-00-bits-logic",
@@ -63,12 +64,12 @@ function input(patch: Partial<CoachHomeInput> = {}): CoachHomeInput {
 
 test("primary action prefers due review, then free study, then curriculum", () => {
   assert.deepEqual(selectCoachHomeAction(3, 12), {
-    href: "/practicev2/session?scope=due",
+    href: `${PRACTICE_ROUTES.session}?scope=due`,
     label: "Start review",
     mode: "due",
   });
   assert.deepEqual(selectCoachHomeAction(0, 12), {
-    href: "/practicev2/session?scope=all",
+    href: `${PRACTICE_ROUTES.session}?scope=all`,
     label: "Free study",
     mode: "all",
   });

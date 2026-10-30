@@ -9,6 +9,7 @@ import { PRACTICE_BANK } from "@/lib/practice/bank";
 import { deckSessionHref } from "@/lib/practice/coach-custom-model";
 import { COACH_V2_MAX_SIZE } from "@/lib/practice/coach-v2-flow";
 import type { PracticeSessionRecord } from "@/lib/practice/history";
+import { practiceCardHref } from "@/lib/practice/routes";
 import { completionKey } from "@/lib/practice/session";
 
 const DAY_MS = 86_400_000;
@@ -36,6 +37,8 @@ export type RevisitItem =
       note: string;
       href: string | null;
       openLabel: string;
+      /** Saved Practice cards: their own memory curve. */
+      memoryHref: string | null;
     }
   | {
       source: "practice";
@@ -71,6 +74,7 @@ export function buildRevisit(input: RevisitInput): { items: RevisitItem[]; total
       note: b.note,
       href: b.href,
       openLabel: b.kind === "card" ? "Try the card again" : `Revisit ${KIND_WORD[b.kind].toLowerCase()}`,
+      memoryHref: b.kind === "card" && b.questionId ? practiceCardHref(b.questionId) : null,
     }));
 
   // Lessons already flagged as a whole aren't listed twice.

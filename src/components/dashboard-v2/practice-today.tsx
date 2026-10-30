@@ -85,7 +85,10 @@ function YourMemory({ cards }: { cards: PracticeCard[] }) {
       </p>
       <MemoryCurveChart curve={curve} />
       <p className="m-0 text-[12px] leading-snug text-[var(--coach-ink-muted)]">
-        An estimate from when you last reviewed each card, not a test.
+        An estimate from when you last reviewed each card, not a test.{" "}
+        <Link href={PRACTICE_ROUTES.bank} className="underline underline-offset-2">
+          See each card&apos;s own curve
+        </Link>
       </p>
     </div>
   );

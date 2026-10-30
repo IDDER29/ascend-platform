@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { practiceCardHref } from "@/lib/practice/routes";
 import { useEffect, useRef } from "react";
 import type { BankFormat, BankRow, BankStrength } from "@/lib/practice/coach-bank-model";
 
@@ -45,9 +46,7 @@ function StrengthMeter({ strength }: { strength: BankStrength }) {
         {[1, 2, 3, 4].map((step) => (
           <span
             key={step}
-            className={`w-1.5 rounded-sm ${
-              step <= level.filled ? level.color : "bg-[var(--coach-scale-empty)]"
-            }`}
+            className={`w-1.5 rounded-sm ${step <= level.filled ? level.color : "bg-[var(--coach-scale-empty)]"}`}
             style={{ height: 6 + step * 2 }}
           />
         ))}
@@ -87,7 +86,10 @@ function Score({ row }: { row: BankRow }) {
 
 function LessonLink({ row, href }: { row: BankRow; href: string | undefined }) {
   return href ? (
-    <Link href={href} className="text-[var(--coach-ink-secondary)] underline decoration-[var(--coach-border-strong)] underline-offset-2 hover:text-[var(--coach-ink)]">
+    <Link
+      href={href}
+      className="text-[var(--coach-ink-secondary)] underline decoration-[var(--coach-border-strong)] underline-offset-2 hover:text-[var(--coach-ink)]"
+    >
       {row.lessonTitle}
     </Link>
   ) : (
@@ -120,7 +122,12 @@ function TableRow(props: RowProps) {
         <RowCheckbox {...props} />
       </td>
       <td className="max-w-0 py-3 pr-4">
-        <span className="line-clamp-2 text-sm font-medium [overflow-wrap:anywhere]">{row.text}</span>
+        <Link
+          href={practiceCardHref(row.id)}
+          className="line-clamp-2 text-sm font-medium text-[var(--coach-ink)] no-underline [overflow-wrap:anywhere] hover:underline"
+        >
+          {row.text}
+        </Link>
         <span className="mt-0.5 block truncate text-[12.5px]">
           <LessonLink row={row} href={href} />
         </span>
@@ -153,7 +160,12 @@ function StackedRow(props: RowProps) {
         <RowCheckbox {...props} />
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <span className="text-sm font-medium [overflow-wrap:anywhere]">{row.text}</span>
+        <Link
+          href={practiceCardHref(row.id)}
+          className="text-sm font-medium text-[var(--coach-ink)] no-underline [overflow-wrap:anywhere] hover:underline"
+        >
+          {row.text}
+        </Link>
         <span className="truncate text-[12.5px]">
           <LessonLink row={row} href={href} />
         </span>

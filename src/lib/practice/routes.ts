@@ -11,6 +11,11 @@ export const PRACTICE_ROUTES = {
   paths: `${BASE}/paths`,
 } as const;
 
+/** One card: its question, answer, and memory over time. */
+export function practiceCardHref(questionId: string): string {
+  return `${BASE}/cards/${encodeURIComponent(questionId)}`;
+}
+
 export function practicePathHref(slug: string): string {
   return `${PRACTICE_ROUTES.paths}/${slug}`;
 }

@@ -34,6 +34,14 @@ function Item({ item }: { item: RevisitItem }) {
             >
               I get it now
             </button>
+            {item.memoryHref && (
+              <Link
+                href={item.memoryHref}
+                className="self-center text-[13px] text-[var(--coach-ink-muted)] underline-offset-2 hover:underline"
+              >
+                Its memory
+              </Link>
+            )}
           </>
         ) : (
           <>

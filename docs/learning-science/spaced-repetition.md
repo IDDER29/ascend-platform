@@ -145,7 +145,7 @@ Each piece starts at 100% and ends at exactly 90% where the next begins.
 ## 4. Open ideas (ranked by value for effort)
 
 1. **Use the curve elsewhere** — Progress (the long view) and Practice home; per topic ("Bits & Logic: 88%").
-1b. **Show one card's sawtooth** (§1.9) — open a card and see its own curve: each review resets it and stretches it. Teaches *why* reviews get further apart.
+1b. ~~Show one card's sawtooth~~ — **done (2026-10-30)**: `/practice/cards/<id>` (linked from the card bank, To revisit, and the dashboard curve). Rebuilt from Practice history by replaying the same SM-2 grades: each review restarts the clock; a right answer sets S to the new interval, a miss to half a day. Solid up to today, dashed prediction after, dotted "never reviewed again", a 90% "time to review" line, the next review marked. Answer hidden behind "Try to recall it" (testing effect). Model: `src/lib/practice/card-memory.ts` (tested).
 2. **Order due reviews by lowest R first**, not just due date, so the most-at-risk cards come first when a learner can't do them all.
 3. **"Explain it" prompts** — a short free-text recall after a lesson (expressing / testing effect), checked against the lesson's key points.
 4. **Interleaving** — mix topics in a review rather than one lesson's cards in a row (already shuffled within a deck; check across topics).

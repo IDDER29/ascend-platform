@@ -53,6 +53,9 @@ export type Criterion = {
   action: { label: string; href: string } | null;
 };
 
+/** A completed task: what it was, its rank and when. */
+export type Mission = { rank: MissionRank; at: string; label: string };
+
 export type BadgeView = {
   id: string;
   group: AchievementGroup;
@@ -93,6 +96,8 @@ export type AchievementsModel = {
   insignia: BadgeView[];
   /** How many tasks of each rank are done. */
   missionRecord: Record<MissionRank, number>;
+  /** Every completed task, newest first. */
+  missions: (Mission & { dateLabel: string })[];
 };
 
 function shortDate(iso: string): string {
@@ -132,16 +137,30 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
   // Ranked tasks. Each completed task counts once, at its own rank (see TASK_RANKS).
   const CLEAN_SESSION_CARDS = 10;
   const CLEAN_SESSION_SHARE = 0.8;
-  const tasks: { rank: MissionRank; at: string }[] = [
-    ...input.completions.map((c) => ({ rank: "D" as const, at: c.completedAt })),
+  const lessonTitle = new Map(lessons.map((l) => [l.key, l.title]));
+  const tasks: Mission[] = [
+    ...input.completions.map((c) => ({
+      rank: "D" as const,
+      at: c.completedAt,
+      label: `Finished ${lessonTitle.get(c.key) ?? "a lesson"}`,
+    })),
     ...sessions.map((s) => ({
       rank: s.total >= CLEAN_SESSION_CARDS && s.correct / s.total >= CLEAN_SESSION_SHARE ? ("C" as const) : ("D" as const),
       at: s.at,
+      label: `Review session, ${s.correct} of ${s.total} right`,
     })),
-    ...[...finished.values()].map((at) => ({ rank: "B" as const, at })),
+    ...[...finished.entries()].map(([level, at]) => ({
+      rank: "B" as const,
+      at,
+      label: `Finished every lesson in ${LEVELS[level as LevelId].name}`,
+    })),
     ...projects
       .filter((p) => p.shippedAt)
-      .map((p) => ({ rank: (p.project.id === "shellforge" ? "S" : "A") as MissionRank, at: p.shippedAt! })),
+      .map((p) => ({
+        rank: (p.project.id === "shellforge" ? "S" : "A") as MissionRank,
+        at: p.shippedAt!,
+        label: `Shipped ${p.project.id === "shellforge" ? p.project.title : `the ${p.project.inSentence}`}`,
+      })),
   ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
   const tasksOf = (rank: MissionRank) => tasks.filter((t) => t.rank === rank);
   const TASK_ACTION: Record<MissionRank, () => { label: string; href: string } | null> = {
@@ -430,6 +449,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
     title: [...titles].reverse().find((t) => t.earned) ?? null,
     nextTitle: titles.find((t) => !t.earned) ?? null,
     missionRecord,
+    missions: [...tasks].reverse().map((t) => ({ ...t, dateLabel: shortDate(t.at) })),
     insignia,
     total,
     earnedCount: earned.length,

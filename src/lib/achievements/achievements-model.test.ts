@@ -203,3 +203,22 @@ test("a title is never skipped: each one needs the title before it", () => {
     assert.ok(ids.includes(TITLES[i - 1].id), t.id);
   }
 });
+
+test("the mission log lists every task with its rank and a readable label, newest first", () => {
+  const m = model({
+    completions: done("what-is-a-bit", "project-half-adder"),
+    projectLinks: [{ projectId: "half-adder", repoUrl: "https://github.com/a/h", addedAt: daysAgo(3) }],
+    history: [session(daysAgo(2), 9, 10)],
+  });
+  assert.deepEqual(
+    m.missions.map((t) => [t.rank, t.label]),
+    [
+      ["C", "Review session, 9 of 10 right"],
+      ["A", "Shipped the half adder"],
+      ["B", "Finished every lesson in Bits & Logic"],
+      ["D", "Finished project-half-adder"],
+      ["D", "Finished what-is-a-bit"],
+    ],
+  );
+  assert.equal(m.missions.length, Object.values(m.missionRecord).reduce((a, b) => a + b, 0));
+});

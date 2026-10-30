@@ -183,3 +183,15 @@ not used.
   Wrangler, Systems Thinker). The headband and the four clans are a
   separate set of insignia (`INSIGNIA`) worn as emblems — finishing a
   topic earns its ribbon and, independently, its clan crest.
+
+## Mission log and promotion (2026-10-30)
+- **Mission log:** every completed task with its date, rank and a plain
+  label ("Review session, 9 of 10 right", "Finished every lesson in Bits &
+  Logic", "Shipped the half adder"), newest first; filter by rank, show 8
+  then all. Read top-to-bottom in two columns on desktop.
+- **Promotion:** when a new title is earned, a banner shows once —
+  "Promoted · You are now Chūnin", kanji and meaning, "Read the citation" /
+  "Done". Title citations read "…for becoming Genin, completing 15 D-rank
+  tasks and completing 5 C-rank tasks."
+- **New emblems glow:** a newly earned headband or clan crest glows like a
+  new ribbon until opened (same per-browser seen list).

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { SaveButton } from "@/components/bookmarks/save-button";
+import { CardFigureView } from "@/components/practice/card-figure";
 import { cardTarget } from "@/lib/bookmarks/model";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -525,6 +526,8 @@ export function PracticeCoachV2SessionLive({
   const [typedAnswer, setTypedAnswer] = useState("");
   const [answered, setAnswered] = useState<Answered[]>([]);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  // A graded flashcard on its way off screen (right: knew it, left: not yet).
+  const [leaving, setLeaving] = useState<"left" | "right" | null>(null);
 
   useEffect(() => {
     if (started.current) return;
@@ -682,8 +685,15 @@ export function PracticeCoachV2SessionLive({
 
   /** Flashcards are graded by the learner, who has just seen the back: no feedback bar, straight on. */
   function gradeFlashcard(knewIt: boolean) {
-    const next = recordGrade(knewIt ? "good" : "again", knewIt);
-    if (next) advance(next);
+    if (leaving) return;
+    const commit = () => {
+      setLeaving(null);
+      const next = recordGrade(knewIt ? "good" : "again", knewIt);
+      if (next) advance(next);
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return commit();
+    setLeaving(knewIt ? "right" : "left");
+    window.setTimeout(commit, 260);
   }
 
   /** "I was right": a typed answer the matcher refused (a typo, another wording) counts as a hit. */
@@ -718,7 +728,7 @@ export function PracticeCoachV2SessionLive({
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || leaving) return;
       const current = questions[index];
       if (!current) return;
       const target = event.target instanceof HTMLElement ? event.target : null;
@@ -824,6 +834,7 @@ export function PracticeCoachV2SessionLive({
         />
         <KindScopeRow question={question} subtitle={subtitle} />
 
+        <div key={question.id} className={`flex flex-col gap-5 ${leaving ? `card-leave-${leaving}` : "card-deal-in"}`}>
         {question.kind === "mcq" ? (
           <>
             <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] text-pretty sm:text-[28px]">
@@ -878,7 +889,12 @@ export function PracticeCoachV2SessionLive({
                   Back
                 </span>
                 <p className="m-0 text-[14px] font-semibold text-[var(--coach-ink-muted)]">{question.front}</p>
-                {revealed ? <p className="m-0 text-xl leading-normal sm:text-[22px]">{question.back}</p> : null}
+                {revealed ? (
+                  <>
+                    <p className="m-0 text-xl leading-normal sm:text-[22px]">{question.back}</p>
+                    {question.figure ? <CardFigureView figure={question.figure} /> : null}
+                  </>
+                ) : null}
               </div>
             </div>
           </div>
@@ -942,6 +958,7 @@ export function PracticeCoachV2SessionLive({
               );
             })()
           : null}
+        </div>
       </div>
 
       {inFeedback && feedback ? (

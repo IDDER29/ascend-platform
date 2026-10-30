@@ -551,6 +551,77 @@ html.sidebar-collapsed .app-sidebar-section {
   }
 }
 
+/* Practice session: each card is dealt in; a graded flashcard is sent off right (knew it) or left (not yet). */
+.card-deal-in {
+  animation: card-deal-in 300ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes card-deal-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+}
+.card-leave-right,
+.card-leave-left {
+  animation: card-leave 280ms cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+.card-leave-right {
+  --dir: 1;
+}
+.card-leave-left {
+  --dir: -1;
+}
+@keyframes card-leave {
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * 60%)) translateY(-10px) rotate(calc(var(--dir) * 7deg));
+  }
+}
+
+/* Flashcard diagrams: pieces appear one by one once the card has turned (--i = order). */
+.fig-in {
+  animation: fig-in 340ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(480ms + var(--i, 0) * 70ms);
+}
+@keyframes fig-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.94);
+  }
+}
+/* The instruction cycle lights each step in turn, forever. */
+.fig-cycle {
+  animation: fig-cycle calc(var(--n, 3) * 1s) linear infinite;
+  animation-delay: calc(900ms + var(--k, 0) * 1s);
+}
+@keyframes fig-cycle {
+  0%,
+  30% {
+    background: var(--coach-lime);
+    color: var(--coach-lime-ink);
+  }
+  34%,
+  100% {
+    background: transparent;
+  }
+}
+.fig-hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0 6px,
+    color-mix(in srgb, currentColor 14%, transparent) 6px 8px
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-deal-in,
+  .card-leave-right,
+  .card-leave-left,
+  .fig-in,
+  .fig-cycle {
+    animation: none;
+  }
+}
+
 .practice-coach-v2 a[href]:hover {
   filter: brightness(0.97);
 }

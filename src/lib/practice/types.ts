@@ -1,3 +1,5 @@
+import type { CardFigure } from "./figures";
+
 export type PracticeItemBase = {
   id: string;
   /** Curriculum level id, e.g. "level-02-the-c-language" */
@@ -21,6 +23,8 @@ export type FlashcardItem = PracticeItemBase & {
   front: string;
   frontCode?: string[];
   back: string;
+  /** A small diagram drawn under the answer on the back (see `figures.ts`). */
+  figure?: CardFigure;
 };
 
 export type TypedItem = PracticeItemBase & {

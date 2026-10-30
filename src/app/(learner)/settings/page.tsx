@@ -15,7 +15,7 @@ export default async function SettingsProfilePage() {
     <>
       <SettingsSectionHeader
         title="Public profile"
-        description="How you appear on Ascend. Learning stays on Continue."
+        description="How you appear on Ascend."
       />
       <ProfileSettingsForm
         initialName={profile?.name ?? ""}

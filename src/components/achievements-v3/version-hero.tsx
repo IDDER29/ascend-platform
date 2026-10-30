@@ -1,4 +1,5 @@
 import { RELEASES, type ChangelogModel } from "@/lib/achievements/changelog-model";
+import { BadgeShelf } from "./badge-shelf";
 
 /** The learner's version as the headline, with the release train underneath. */
 export function VersionHero({ log }: { log: ChangelogModel }) {
@@ -29,7 +30,10 @@ export function VersionHero({ log }: { log: ChangelogModel }) {
             return (
               <li key={r.version} className="flex items-center gap-1">
                 {i > 0 ? (
-                  <span aria-hidden="true" className={`h-[3px] w-4 sm:w-8 ${done ? "bg-[var(--coach-lime)]" : "bg-[var(--coach-hero-track)]"}`} />
+                  <span
+                    aria-hidden="true"
+                    className={`h-[3px] w-4 sm:w-8 ${done ? "bg-[var(--coach-lime)]" : "bg-[var(--coach-hero-track)]"}`}
+                  />
                 ) : null}
                 <a
                   href={done ? `#release-${r.version}` : "#roadmap"}
@@ -49,6 +53,8 @@ export function VersionHero({ log }: { log: ChangelogModel }) {
           })}
         </ol>
       </nav>
+
+      <BadgeShelf shelf={log.shelf} />
     </section>
   );
 }

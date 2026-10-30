@@ -1,14 +1,22 @@
 import Link from "next/link";
 import type { AchievementPart } from "@/lib/achievements/achievements-model";
-import type { ChangelogModel } from "@/lib/achievements/changelog-model";
-import { EntryRow } from "./entry-row";
+import { badgeAnchor, type ChangelogModel } from "@/lib/achievements/changelog-model";
+import { EntryRow, TARGET_RING } from "./entry-row";
+import { Medallion } from "./medallion";
 
 function Progress({ part }: { part: AchievementPart }) {
   const p = part.progress;
   if (!p || p.total <= 1) return null;
   return (
-    <span role="img" aria-label={`${p.done} of ${p.total}`} className="block h-1.5 w-full max-w-[220px] overflow-hidden rounded-full bg-[var(--coach-scale-empty)]">
-      <span className="block h-full rounded-full bg-[var(--coach-blue)]" style={{ width: `${Math.round((p.done / p.total) * 100)}%` }} />
+    <span
+      role="img"
+      aria-label={`${p.done} of ${p.total}`}
+      className="block h-1.5 w-full max-w-[220px] overflow-hidden rounded-full bg-[var(--coach-scale-empty)]"
+    >
+      <span
+        className="block h-full rounded-full bg-[var(--coach-blue)]"
+        style={{ width: `${Math.round((p.done / p.total) * 100)}%` }}
+      />
     </span>
   );
 }
@@ -43,20 +51,21 @@ export function UnreleasedCard({ log }: { log: ChangelogModel }) {
             {log.inProgress.map((part, i) => (
               <li
                 key={part.id}
-                className="flex flex-col gap-3 rounded-xl border-2 border-dashed border-[var(--coach-border-strong)] p-4 sm:flex-row sm:items-center sm:justify-between"
+                id={badgeAnchor(part.id)}
+                className={`flex flex-col gap-3 border-2 border-dashed border-[var(--coach-border-strong)] p-4 sm:flex-row sm:items-center sm:justify-between ${TARGET_RING}`}
               >
-                <div className="flex min-w-0 flex-col gap-1.5">
-                  <span className="text-[14.5px] font-semibold">
-                    <span aria-hidden="true" className="mr-1.5 text-[var(--coach-ink-muted)]">
-                      {part.glyph}
+                <div className="flex min-w-0 items-start gap-3">
+                  <Medallion glyph={part.glyph} earned={false} size="md" />
+                  <div className="flex min-w-0 flex-col gap-1.5">
+                    <span className="text-[15px] font-semibold">{part.label}</span>
+                    <span className="text-[13.5px] text-[var(--coach-ink-secondary)]">
+                      {part.how}
+                      {part.distance ? (
+                        <span className="font-semibold text-[var(--coach-blue)]"> — {part.distance}</span>
+                      ) : null}
                     </span>
-                    {part.label}
-                  </span>
-                  <span className="text-[13.5px] text-[var(--coach-ink-secondary)]">
-                    {part.how}
-                    {part.distance ? <span className="font-semibold text-[var(--coach-blue)]"> — {part.distance}</span> : null}
-                  </span>
-                  <Progress part={part} />
+                    <Progress part={part} />
+                  </div>
                 </div>
                 {part.action ? (
                   <Link

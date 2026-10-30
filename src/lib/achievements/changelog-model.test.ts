@@ -75,3 +75,26 @@ test("hashes are 7 hex digits and stable", () => {
   assert.match(a, /^[0-9a-f]{7}$/);
   assert.equal(changelog(opts).releases[0].hash, a);
 });
+
+test("the shelf holds every badge once, in catalog order, each pointing at one place on the page", () => {
+  const log = changelog({
+    completions: [
+      { key: `${L00}/what-is-a-bit`, completedAt: daysAgo(12) },
+      { key: `${L00}/project-half-adder`, completedAt: daysAgo(10) },
+    ],
+  });
+  assert.equal(log.shelf.length, 13);
+  assert.deepEqual(log.shelf.slice(0, 2).map((b) => [b.id, b.earned]), [["groundwork", true], ["machine-head", false]]);
+  assert.equal(log.shelf[0].href, "#badge-groundwork");
+  // Every badge has exactly one home: an entry, an in-progress row, a roadmap line or "also open".
+  const homes = [
+    ...log.releases.flatMap((r) => [RELEASE_ID[r.version], ...r.entries.map((e) => e.id)]),
+    ...log.unreleased.map((e) => e.id),
+    ...log.inProgressIds,
+    ...log.roadmap.flatMap((r) => [r.badgeId, ...r.alongside.map((a) => a.badgeId)]).filter((id) => !log.inProgressIds.includes(id)),
+    ...log.alsoOpen.map((a) => a.badgeId),
+  ];
+  assert.deepEqual([...homes].sort(), log.shelf.map((b) => b.id).sort());
+});
+
+const RELEASE_ID: Record<string, string> = { "0.1": "groundwork", "0.2": "machine-head", "0.3": "the-craft", "0.4": "systems-sage", "1.0": "core-complete" };

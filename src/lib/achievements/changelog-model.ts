@@ -52,12 +52,25 @@ export type Release = {
 
 export type RoadmapItem = {
   version: string;
+  badgeId: string;
+  glyph: string;
   label: string;
   how: string;
   distance: string | null;
   progress: { done: number; total: number } | null;
   /** Badges that ship alongside this release, like ShellForge with v0.4. */
-  alongside: { label: string; how: string }[];
+  alongside: { badgeId: string; glyph: string; label: string; how: string }[];
+};
+
+/** One badge on the shelf: every badge, earned or not, in catalog order. */
+export type ShelfBadge = {
+  id: string;
+  label: string;
+  glyph: string;
+  earned: boolean;
+  dateLabel: string | null;
+  /** Where this badge appears on the page: its entry, its in-progress row or its roadmap line. */
+  href: string;
 };
 
 export type ChangelogModel = {
@@ -71,8 +84,16 @@ export type ChangelogModel = {
   releases: Release[];
   roadmap: RoadmapItem[];
   /** Open badges that aren't tied to a release and aren't in progress. */
-  alsoOpen: { label: string; how: string }[];
+  alsoOpen: { badgeId: string; glyph: string; label: string; how: string }[];
+  shelf: ShelfBadge[];
+  /** Badges shown in "In progress"; the roadmap leaves their anchors to those rows. */
+  inProgressIds: string[];
 };
+
+/** The one element id each badge gets on the page. */
+export function badgeAnchor(id: string): string {
+  return `badge-${id}`;
+}
 
 /** FNV-1a, shown as 7 hex digits: stable per badge and date, looks like a commit id. */
 function shortHash(text: string): string {
@@ -137,9 +158,14 @@ export function buildChangelogModel(model: AchievementsModel): ChangelogModel {
   const roadmap: RoadmapItem[] = RELEASES.filter((r) => !partById.get(r.badgeId)!.earned).map((r) => {
     const part = partById.get(r.badgeId)!;
     const level = model.columns.find((c) => c.level.id === r.badgeId);
-    const alongside = level?.project && !level.project.earned ? [{ label: level.project.label, how: level.project.how }] : [];
+    const alongside =
+      level?.project && !level.project.earned
+        ? [{ badgeId: level.project.id, glyph: level.project.glyph, label: level.project.label, how: level.project.how }]
+        : [];
     return {
       version: r.version,
+      badgeId: part.id,
+      glyph: part.glyph,
       label: part.label,
       how: part.how,
       distance: part.distance,
@@ -155,7 +181,16 @@ export function buildChangelogModel(model: AchievementsModel): ChangelogModel {
   );
   const alsoOpen = model.parts
     .filter((p) => !p.earned && !inProgressIds.has(p.id) && !onRoadmap.has(p.id))
-    .map((p) => ({ label: p.label, how: p.how }));
+    .map((p) => ({ badgeId: p.id, glyph: p.glyph, label: p.label, how: p.how }));
+
+  const shelf: ShelfBadge[] = model.parts.map((p) => ({
+    id: p.id,
+    label: p.label,
+    glyph: p.glyph,
+    earned: p.earned,
+    dateLabel: p.earnedLabel,
+    href: `#${badgeAnchor(p.id)}`,
+  }));
 
   const next = roadmap[0];
   const nextLine = next ? ` Next release: v${next.version} ${next.label}${next.distance ? `, ${next.distance}` : ""}.` : "";
@@ -167,5 +202,5 @@ export function buildChangelogModel(model: AchievementsModel): ChangelogModel {
         (unreleased.length ? ` ${unreleased.length === 1 ? "One badge" : `${unreleased.length} badges`} since.` : "") +
         nextLine;
 
-  return { currentVersion, summary, unreleased, inProgress, releases, roadmap, alsoOpen };
+  return { currentVersion, summary, unreleased, inProgress, releases, roadmap, alsoOpen, shelf, inProgressIds: [...inProgressIds] };
 }

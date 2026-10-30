@@ -1,5 +1,6 @@
 import { ExternalLink } from "lucide-react";
-import type { ChangelogEntry } from "@/lib/achievements/changelog-model";
+import { badgeAnchor, type ChangelogEntry } from "@/lib/achievements/changelog-model";
+import { Medallion } from "./medallion";
 
 const VERB_STYLE: Record<string, string> = {
   Shipped: "bg-[var(--coach-tint-lime-bg)] text-[var(--coach-tint-lime-ink)]",
@@ -8,19 +9,31 @@ const VERB_STYLE: Record<string, string> = {
   Released: "bg-[var(--coach-hero-bg)] text-[var(--coach-lime)]",
 };
 
-/** One changelog line: what kind of change, the badge, what it means, when, and its id. */
-export function EntryRow({ entry }: { entry: Pick<ChangelogEntry, "verb" | "label" | "glyph" | "means" | "dateLabel" | "hash" | "repoUrl" | "repoLabel"> }) {
+/** Highlight for the row the badge shelf jumped to. */
+export const TARGET_RING =
+  "scroll-mt-6 rounded-xl target:bg-[var(--coach-tint-blue-bg)] target:ring-2 target:ring-[var(--coach-blue)]";
+
+type Entry = Pick<
+  ChangelogEntry,
+  "id" | "verb" | "label" | "glyph" | "means" | "dateLabel" | "hash" | "repoUrl" | "repoLabel"
+>;
+
+/** One changelog line, led by the badge it's about. */
+export function EntryRow({ entry }: { entry: Entry }) {
   return (
-    <li className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 gap-y-1 border-t border-[var(--coach-divider)] py-3 first:border-t-0 first:pt-0 last:pb-0 sm:grid-cols-[5.5rem_minmax(0,1fr)_auto]">
-      <span className={`h-fit w-fit rounded-md px-2 py-0.5 text-[12px] font-semibold ${VERB_STYLE[entry.verb] ?? VERB_STYLE["Kept up"]}`}>
-        {entry.verb}
-      </span>
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[14.5px] font-semibold">
-          <span aria-hidden="true" className="mr-1.5 text-[var(--coach-ink-muted)]">
-            {entry.glyph}
+    <li
+      id={badgeAnchor(entry.id)}
+      className={`grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-3 gap-y-1 border-t border-[var(--coach-divider)] px-1 py-3 first:border-t-0 sm:grid-cols-[2.75rem_minmax(0,1fr)_auto] ${TARGET_RING}`}
+    >
+      <Medallion glyph={entry.glyph} earned size="md" />
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-[15px] font-semibold">{entry.label}</span>
+          <span
+            className={`rounded-md px-1.5 py-0.5 text-[11.5px] font-semibold ${VERB_STYLE[entry.verb] ?? VERB_STYLE["Kept up"]}`}
+          >
+            {entry.verb}
           </span>
-          {entry.label}
         </span>
         <span className="text-[13.5px] leading-snug text-[var(--coach-ink-secondary)]">{entry.means}</span>
         {entry.repoUrl ? (
@@ -28,7 +41,7 @@ export function EntryRow({ entry }: { entry: Pick<ChangelogEntry, "verb" | "labe
             href={entry.repoUrl}
             target="_blank"
             rel="noopener noreferrer nofollow ugc"
-            className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[12.5px] text-[var(--coach-blue)] no-underline hover:underline"
+            className="flex min-w-0 items-center gap-1.5 text-[12.5px] text-[var(--coach-blue)] no-underline hover:underline"
           >
             <ExternalLink size={12} aria-hidden="true" className="shrink-0" />
             <span className="truncate font-mono">{entry.repoLabel}</span>

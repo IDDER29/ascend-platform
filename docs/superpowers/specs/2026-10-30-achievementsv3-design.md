@@ -25,10 +25,16 @@ release notes.
    since. Next release: v0.2 Machine Head, 4 lessons away."), and the
    release train v0.1 → v1.0 (released = lime with date, next = blue,
    later = dashed), each linking to its release or the roadmap.
+   Under the train, **Your badges**: the shelf with all 13 badges as
+   medallions in a fixed album order — earned = solid lime with its date,
+   not yet = dashed outline. Each links to the one place that badge lives
+   on the page (its entry, its in-progress row or its roadmap line), which
+   is highlighted when jumped to.
 3. Main column: **Unreleased** (entries since the last release + "In
    progress" = the same Up next goals as v2, first button lime), then one
    card per **release**, newest first, "Latest" on the top one.
-4. Aside (sticky on desktop): **Roadmap** — each unreleased version with
+   Every entry and in-progress row leads with its badge medallion.
+4. Aside (sticky on desktop): **Roadmap** (outlined medallions) — each unreleased version with
    what it needs, progress on the next one, what ships alongside (Ship It
    with v0.4), and "Also open" for the remaining badges.
 

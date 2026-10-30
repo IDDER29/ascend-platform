@@ -169,18 +169,6 @@ export function pathProgressFromHistory(
     });
 }
 
-export function formatSessionWhen(iso: string, now = new Date()): string {
-  const at = new Date(iso);
-  if (Number.isNaN(at.getTime())) return "";
-  const diffMs = now.getTime() - at.getTime();
-  const dayMs = 86_400_000;
-  if (diffMs < dayMs && now.getDate() === at.getDate()) {
-    return `Today · ${at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
-  }
-  if (diffMs < 2 * dayMs) return "Yesterday";
-  return at.toLocaleDateString([], { month: "short", day: "numeric" });
-}
-
 export function newSessionId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();

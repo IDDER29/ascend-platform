@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { ThemeToggle } from "@/components/homepage/theme-toggle";
+import { ThemeToggle } from "@/components/site/theme-toggle";
 import { FIRST_LESSON_HREF, SIGNIN_HREF } from "@/lib/routes";
 import { SITE_NAV, isCurrent } from "@/lib/site/site-nav";
 import { BrandMark, WRAP } from "./site-ui";

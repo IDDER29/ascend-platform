@@ -1,8 +1,5 @@
 import { PRACTICE_BANK } from "./bank";
-import {
-  PRACTICE_PATH_TITLES,
-  practicePathSlugForLevel,
-} from "./path-map";
+import { practicePathSlugForLevel } from "./path-map";
 import { sectionLessonKeys } from "./tree";
 import type { PracticeItem } from "./types";
 
@@ -67,43 +64,6 @@ export type PracticePathBucket = {
   lessonCount: number;
 };
 
-/** Paths that currently have at least one unlocked question. */
-export function unlockedPathBuckets(
-  completedKeys: Set<string>,
-): PracticePathBucket[] {
-  const unlocked = unlockedQuestions(completedKeys);
-  const byPath = new Map<
-    string,
-    { lessons: Set<string>; count: number }
-  >();
-
-  for (const q of unlocked) {
-    const slug = practicePathSlugForLevel(q.lessonLevel);
-    if (!slug) continue;
-    let bucket = byPath.get(slug);
-    if (!bucket) {
-      bucket = { lessons: new Set(), count: 0 };
-      byPath.set(slug, bucket);
-    }
-    bucket.count += 1;
-    bucket.lessons.add(completionKey(q.lessonLevel, q.lessonSlug));
-  }
-
-  return [...byPath.entries()]
-    .map(([pathSlug, data]) => ({
-      pathSlug,
-      title: PRACTICE_PATH_TITLES[pathSlug] ?? pathSlug,
-      questionCount: data.count,
-      lessonCount: data.lessons.size,
-    }))
-    .sort((a, b) => {
-      // Foundations first, then alpha
-      if (a.pathSlug === "foundations") return -1;
-      if (b.pathSlug === "foundations") return 1;
-      return a.title.localeCompare(b.title);
-    });
-}
-
 export type PracticeLessonOption = {
   key: string;
   pathSlug: string;
@@ -112,41 +72,6 @@ export type PracticeLessonOption = {
   label: string;
   questionCount: number;
 };
-
-/** Unique lessons in the unlocked pool, for the custom picker. */
-export function unlockedLessonOptions(
-  completedKeys: Set<string>,
-): PracticeLessonOption[] {
-  const unlocked = unlockedQuestions(completedKeys);
-  const map = new Map<string, PracticeLessonOption>();
-
-  for (const q of unlocked) {
-    const pathSlug = practicePathSlugForLevel(q.lessonLevel) ?? "unknown";
-    const key = completionKey(q.lessonLevel, q.lessonSlug);
-    const existing = map.get(key);
-    if (existing) {
-      existing.questionCount += 1;
-      continue;
-    }
-    map.set(key, {
-      key,
-      pathSlug,
-      pathTitle: PRACTICE_PATH_TITLES[pathSlug] ?? pathSlug,
-      lessonSlug: q.lessonSlug,
-      label: q.lessonSlug.replace(/-/g, " "),
-      questionCount: 1,
-    });
-  }
-
-  return [...map.values()].sort((a, b) => {
-    if (a.pathSlug !== b.pathSlug) {
-      if (a.pathSlug === "foundations") return -1;
-      if (b.pathSlug === "foundations") return 1;
-      return a.pathTitle.localeCompare(b.pathTitle);
-    }
-    return a.label.localeCompare(b.label);
-  });
-}
 
 /** Fisher–Yates; injectable rng for tests. */
 export function shuffleInPlace<T>(

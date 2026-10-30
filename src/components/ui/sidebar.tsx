@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { PATHS_HREF, SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
 import { useAuthUser } from "@/lib/auth/context";
-import { ThemeToggle } from "@/components/homepage/theme-toggle";
+import { ThemeToggle } from "@/components/site/theme-toggle";
 import { PlaceholderAvatar } from "@/components/ui/placeholder-avatar";
 import { cn } from "@/lib/cn";
 

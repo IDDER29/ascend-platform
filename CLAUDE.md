@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
-Ascend is a learning platform for how computers really work (bits → CPU → C → systems), built with Next.js 16 (App Router), React 19, Tailwind v4, Drizzle and MDX. `README.md` is partly out of date (it predates the `(learner)` route group, 25 lessons, and the Coach redesigns) — trust the code over it.
+Ascend is a learning platform for how computers really work (bits → CPU → C → systems), built with Next.js 16 (App Router), React 19, Tailwind v4, Drizzle and MDX. Trust the code over `README.md` where they disagree.
 
 ## Commands
 
 ```bash
 npm run dev                      # http://localhost:3000 (also rewrites the Next.js block in AGENTS.md)
 npm run build                    # next build --webpack
-npm run lint                     # eslint; 4 problems are pre-existing (1 error, 3 warnings) — don't count those as yours
+npm run lint                     # eslint; 2 warnings are pre-existing — don't count those as yours
 npx tsc --noEmit                 # type-check; ignore errors reported under .next/
 npx tsx --test $(git ls-files 'src/**/*.test.ts')   # all tests (node:test via tsx; @/ paths resolve)
 npx tsx --test src/lib/practice/sm2.test.ts          # one test file (add new untracked test files explicitly)
@@ -24,7 +24,9 @@ There is no `npm test` script and no Prettier config. Many existing files mix tw
 
 **Routes.** `src/app/(learner)/layout.tsx` wraps every app screen (dashboard, paths, lessons, practice, progress, profile, achievements, bookmarks, settings, projects, `/u/[username]`) in `AppShell` (sidebar + footer, no top bar) and is the only place that reads the session — that keeps the homepage and marketing pages static. Lessons live at `/lessons/[publicSlug]`; `src/lib/paths/lesson-urls.ts` maps `level/slug` ↔ public slug (server-only: it reads the lesson files), and old `/curriculum/[level]/[slug]` URLs redirect there.
 
-**Page versions.** Redesigns are built beside the original at `/<page>v2`, then promoted: v2 moves to `/<page>`, the old page is kept at `/<page>v1`, and `next.config.ts` redirects `/<page>v2` → `/<page>`. Don't delete old versions unless the user asks. `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` records each page's goal, user stories and decisions.
+**Public site.** Home, `/catalog` (+ `/catalog/[path]`, the public paths catalog, separate from the in-app `/paths`), `/how-it-works`, `/about`, `/open-source`, `/faq`, `/privacy`, `/terms`, `/signin`, `/reset/*` and the 404 sit outside `(learner)` in `SiteShell` (`src/components/site/`), so they stay static; their numbers come from the lesson files and card bank (`src/lib/site/site-data.ts`). Sign-up goes to `/onboarding` (pick a path and the daily goal). Account actions (change password, reset progress, delete account) live in `src/lib/auth/account-actions.ts`.
+
+**Page versions.** Redesigns are built beside the original at `/<page>v2`, then promoted: v2 moves to `/<page>` and `next.config.ts` redirects `/<page>v2` → `/<page>`. The v1 pages kept during the Coach redesigns were removed before launch (their URLs redirect to today's pages); `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` records each page's goal, user stories and decisions.
 
 **Content.** Lessons are `content/curriculum/<level-id>/<slug>.mdx`: Zod-validated frontmatter (`src/lib/content/schema.ts`) plus an MDX body rendered by `next-mdx-remote/rsc` with components from `src/lib/mdx-components.tsx`. MDX gotchas (see README): `prop={expr}` attributes arrive empty — pass JSON strings (`linesJson='[...]'`) or boolean shorthand; a literal `<` in prose breaks parsing — keep entities escaped and decode inside the component (`src/lib/content/entities.ts`).
 

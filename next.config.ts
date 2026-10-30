@@ -21,11 +21,28 @@ const nextConfig: NextConfig = {
       // Curriculum was replaced by Paths; lesson links under /curriculum/... still redirect to the lesson.
       { source: "/curriculum", destination: "/paths", permanent: true },
       { source: "/homev2", destination: "/", permanent: true },
-      // Retired: the Today card says when a streak ended. Old demo kept at /streak-lostv1.
+      // Retired: the Today card says when a streak ended.
       { source: "/streak-lost", destination: "/dashboard", permanent: true },
-      // ShellForge's demo submit/result moved beside the old brief; the real page explains shipping.
+      // ShellForge's demo submit/result is gone; the real page explains shipping.
       { source: "/projects/shellforge/submit", destination: "/projects/shellforge", permanent: true },
       { source: "/projects/shellforge/result", destination: "/projects/shellforge", permanent: true },
+      // The pages each redesign replaced, removed before launch: their URLs land on today's page.
+      { source: "/homev1", destination: "/", permanent: true },
+      { source: "/dashboardv1", destination: "/dashboard", permanent: true },
+      { source: "/pathsv1", destination: "/paths", permanent: true },
+      { source: "/pathsv1/:slug", destination: "/paths/:slug", permanent: true },
+      { source: "/lessonsv1/:slug", destination: "/lessons/:slug", permanent: true },
+      { source: "/bookmarksv1", destination: "/bookmarks", permanent: true },
+      { source: "/level-completev1/:level", destination: "/level-complete/:level", permanent: true },
+      { source: "/onboardingv1", destination: "/onboarding", permanent: true },
+      { source: "/signinv1", destination: "/signin", permanent: true },
+      { source: "/resetv1/:rest*", destination: "/reset/:rest*", permanent: true },
+      { source: "/curriculumv1", destination: "/paths", permanent: true },
+      { source: "/curriculum2", destination: "/paths", permanent: true },
+      { source: "/streak-lostv1", destination: "/dashboard", permanent: true },
+      { source: "/projects/shellforgev1/:rest*", destination: "/projects/shellforge", permanent: true },
+      { source: "/settingsv1/:rest*", destination: "/settings/:rest*", permanent: true },
+      { source: "/themes/:theme", destination: "/", permanent: true },
       // Earlier achievements explorations; the chest is the one page now.
       { source: "/achievementsv:n(\\d+)", destination: "/achievements", permanent: true },
       {

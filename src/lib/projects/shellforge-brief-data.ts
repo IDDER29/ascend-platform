@@ -18,14 +18,6 @@ export const MILESTONES = [
   { title: "Signals & polish", time: "~1 hr", detail: "Trap SIGINT, free everything, pass with no leaks under valgrind." },
 ];
 
-export const STARTER_FILES = [
-  { name: "Makefile", note: "build & clean" },
-  { name: "main.c", note: "the REPL loop" },
-  { name: "parser.c", note: "tokenize input" },
-  { name: "exec.c", note: "fork / execve" },
-  { name: "README.md", note: "your notes" },
-];
-
 export const RESOURCES = [
   {
     title: "fork(2) man page",

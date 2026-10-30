@@ -82,27 +82,6 @@ export async function getFollowingMap(): Promise<Record<string, Date>> {
   return out;
 }
 
-/** Most recently selected followed path (compat for catalog “selected”). */
-export async function getSelectedPathSlug(): Promise<string | null> {
-  const following = await getFollowingMap();
-  let best: { slug: string; at: number } | null = null;
-  for (const [slug, at] of Object.entries(following)) {
-    const t = at.getTime();
-    if (!best || t > best.at) best = { slug, at: t };
-  }
-  return best?.slug ?? null;
-}
-
-/** @deprecated Tenure uses first lesson completion — kept as empty for callers. */
-export async function getPathEnteredMap(): Promise<Record<string, Date>> {
-  return {};
-}
-
-/** @deprecated */
-export async function getPathEnteredAt(_slug: string): Promise<Date | null> {
-  return null;
-}
-
 /**
  * Follow a path (Select). Updates selectedAt; keeps legacy selected cookie in sync.
  * Server Actions only.

@@ -28,10 +28,6 @@ export function goalForPace(pace: string | null | undefined): DailyGoal | null {
   return pace ? (PACE_GOAL[pace] ?? null) : null;
 }
 
-export function paceForGoal(goal: DailyGoal): string {
-  return goal === 10 ? "casual" : goal === 20 ? "regular" : "intense";
-}
-
 export const DEFAULT_DAILY_GOAL: DailyGoal = 20;
 
 const PREFIX = "ascend_practice_daily_goal_v1";

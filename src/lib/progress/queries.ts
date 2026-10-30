@@ -1,15 +1,7 @@
 import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db/client";
-import { getAllLessons } from "@/lib/content/lessons";
-import { lessonHref } from "@/lib/paths/lesson-urls";
-import type {
-  ContinueLesson,
-  LessonCompletion,
-  ProfileSettings,
-  ProfileSettingsUpdate,
-  StreakInfo,
-} from "./types";
+import type { LessonCompletion, ProfileSettings, ProfileSettingsUpdate, StreakInfo } from "./types";
 
 export type {
   ContinueLesson,
@@ -69,29 +61,6 @@ export async function isLessonComplete(
     ),
   });
   return Boolean(row);
-}
-
-/** First incomplete lesson in curriculum order; if all done, last lesson. */
-export async function getContinueLesson(userId: string): Promise<ContinueLesson> {
-  const completed = await listCompletedLessons(userId);
-  const done = new Set(completed.map((c) => `${c.level}/${c.slug}`));
-  const all = getAllLessons();
-  const next = all.find((l) => !done.has(`${l.meta.level}/${l.meta.slug}`)) ?? all[all.length - 1];
-  if (!next) {
-    throw new ProgressError("No lessons found in the curriculum.");
-  }
-  return {
-    level: next.meta.level,
-    slug: next.meta.slug,
-    title: next.meta.title,
-    href: lessonHref(next.meta.level, next.meta.slug),
-    order: next.meta.order,
-  };
-}
-
-export async function countCompletedInLevel(userId: string, level: string): Promise<number> {
-  const completed = await listCompletedLessons(userId);
-  return completed.filter((c) => c.level === level).length;
 }
 
 export async function getStreak(userId: string): Promise<StreakInfo | null> {

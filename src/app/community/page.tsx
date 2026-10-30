@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { MessageSquare, CircleHelp, Rocket, BookOpen, Plus, ChevronDown } from "lucide-react";
-import { SiteHeader } from "@/components/homepage/header";
-import { SiteFooter } from "@/components/homepage/footer";
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader } from "@/components/site/site-header";
 import { cn } from "@/lib/cn";
 import { CATEGORIES, THREADS, type CommunityThread, type ThreadCategory } from "@/lib/community-data";
 
@@ -54,7 +54,9 @@ export default function CommunityPage() {
 
   return (
     <div className="flex flex-1 flex-col bg-radial-wash text-ink">
-      <SiteHeader />
+      <div className="practice-coach-v2 font-sans text-[var(--coach-ink)]">
+        <SiteHeader />
+      </div>
       <main className="mx-auto w-full max-w-[1080px] px-6 py-12 sm:px-8 sm:py-[52px]">
         <div className="mx-auto mb-10 max-w-[640px] text-center">
           <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand-violet/20 bg-brand-violet/[0.08] px-3.5 py-1.5 font-mono text-[11.5px] uppercase tracking-[0.1em] text-brand-violet">
@@ -268,7 +270,9 @@ export default function CommunityPage() {
           )}
         </div>
       </main>
-      <SiteFooter />
+      <div className="practice-coach-v2 font-sans text-[var(--coach-ink)]">
+        <SiteFooter />
+      </div>
     </div>
   );
 }

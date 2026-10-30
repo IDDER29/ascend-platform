@@ -152,23 +152,6 @@ export type FoundationsLiveSection = {
   items: Extract<FoundationsOutlineItem, { kind: "live" }>[];
 };
 
-export function foundationsLiveSlugs(): string[] {
-  return foundationsLiveItems().map((item) => item.slug);
-}
-
-/** Flat live rows (order preserved). */
-export function foundationsLiveItems(): Extract<
-  FoundationsOutlineItem,
-  { kind: "live" }
->[] {
-  return FOUNDATIONS_OUTLINE.flatMap((section) =>
-    section.items.filter(
-      (item): item is Extract<FoundationsOutlineItem, { kind: "live" }> =>
-        item.kind === "live",
-    ),
-  );
-}
-
 /** Topic cards with live lessons/projects only (skips empty / soon-only sections). */
 export function foundationsLiveSections(): FoundationsLiveSection[] {
   return FOUNDATIONS_OUTLINE.map((section) => ({
@@ -180,43 +163,4 @@ export function foundationsLiveSections(): FoundationsLiveSection[] {
         item.kind === "live",
     ),
   })).filter((section) => section.items.length > 0);
-}
-
-export function foundationsItemRole(
-  item: Pick<
-    Extract<FoundationsOutlineItem, { kind: "live" | "soon" }>,
-    "role" | "title"
-  > & { slug?: string; id?: string },
-): FoundationsItemRole {
-  if (item.role) return item.role;
-  const slug = item.slug ?? item.id ?? "";
-  if (slug.startsWith("project-")) return "project";
-  if (item.title?.toLowerCase().startsWith("project")) return "project";
-  return "lesson";
-}
-
-export function foundationsLessonHref(slug: string): string {
-  for (const section of FOUNDATIONS_OUTLINE) {
-    for (const item of section.items) {
-      if (item.kind === "live" && item.slug === slug) {
-        return `/lessons/foundations-${section.id}-${slug}`;
-      }
-    }
-  }
-  return `/lessons/foundations-foundations-course-${slug}`;
-}
-
-export function foundationsSectionMeta(
-  items: Extract<FoundationsOutlineItem, { kind: "live" }>[],
-): string {
-  const lessons = items.filter((i) => foundationsItemRole(i) === "lesson").length;
-  const projects = items.filter((i) => foundationsItemRole(i) === "project").length;
-  const parts: string[] = [];
-  if (lessons > 0) {
-    parts.push(`${lessons} lesson${lessons === 1 ? "" : "s"}`);
-  }
-  if (projects > 0) {
-    parts.push(`${projects} project${projects === 1 ? "" : "s"}`);
-  }
-  return parts.join(" · ") || "in order";
 }

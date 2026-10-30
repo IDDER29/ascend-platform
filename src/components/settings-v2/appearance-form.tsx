@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { Choice } from "@/components/forms/coach-fields";
-import { getThemePreference, setThemePreference, type ThemePreference } from "@/components/homepage/theme-toggle";
+import { getThemePreference, setThemePreference, type ThemePreference } from "@/components/site/theme-toggle";
 import { patchProfileSettingsAction } from "@/lib/progress/actions";
 
 const THEMES: { id: ThemePreference; label: string; hint: string; icon: typeof Sun }[] = [

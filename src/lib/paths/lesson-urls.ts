@@ -151,56 +151,8 @@ export function lessonHref(level: string, slug: string): string {
   return `/lessons/curriculum-${level}-${slug}`;
 }
 
-export function lessonHrefFromMeta(meta: {
-  level: string;
-  slug: string;
-}): string {
-  return lessonHref(meta.level, meta.slug);
-}
-
 export function resolveLessonPublicSlug(
   publicSlug: string,
 ): LessonPublicRef | null {
   return index().byPublic.get(publicSlug) ?? null;
-}
-
-export function getAllLessonPublicParams(): { publicSlug: string }[] {
-  return [...index().byPublic.keys()].map((publicSlug) => ({ publicSlug }));
-}
-
-export function lessonPublicRef(
-  level: string,
-  slug: string,
-): LessonPublicRef | null {
-  return index().byLevelSlug.get(levelSlugKey(level, slug)) ?? null;
-}
-
-interface LessonNavItem {
-  href: string;
-  title: string;
-}
-
-/** Prev/next across the curriculum using public `/lessons/...` hrefs. */
-export function getLessonNavigation(
-  level: LevelId,
-  order: number,
-): { prev: LessonNavItem | null; next: LessonNavItem | null } {
-  const all = getAllLessons();
-  const i = all.findIndex((l) => l.meta.level === level && l.meta.order === order);
-  if (i === -1) return { prev: null, next: null };
-
-  const toNavItem = (
-    lesson: (typeof all)[number] | undefined,
-  ): LessonNavItem | null =>
-    lesson
-      ? {
-          href: lessonHref(lesson.meta.level, lesson.meta.slug),
-          title: lesson.meta.title,
-        }
-      : null;
-
-  return {
-    prev: toNavItem(all[i - 1]),
-    next: toNavItem(all[i + 1]),
-  };
 }

@@ -1,0 +1,72 @@
+import { normalizeAnswer } from "./normalize";
+import type { PracticeItem } from "./types";
+
+/** What each card type is called on screen. */
+export const KIND_LABELS: Record<PracticeItem["kind"], string> = {
+  mcq: "Choices",
+  flashcard: "Flashcard",
+  typed: "Short answer",
+  cloze: "Fill in the blank",
+};
+
+const CODE_CHARS = /[`{}()[\];=<>*&|^~#%\\]/;
+const NUMBER_LIKE = /^[-+]?(0x[0-9a-f]+|0b[01]+|\d[\d_.,\s]*)$/i;
+const IDENTIFIER = /^[A-Za-z_][\w.]*$/;
+
+/**
+ * Whether a short answer reads as code (set in mono) or as plain words (set in the body face).
+ * "int *p", "0x1F", "argv[0]", "size_t" → code; "One byte of memory", "two" → words.
+ */
+export function looksLikeCode(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (CODE_CHARS.test(t) || NUMBER_LIKE.test(t)) return true;
+  // A single identifier counts only when it has a code-ish shape (snake_case, a dot, a digit).
+  return IDENTIFIER.test(t) && /[_.\d]/.test(t);
+}
+
+/** A fresh order for a card's options, so the answer isn't remembered by its position. */
+export function shuffledOrder(length: number, rng: () => number = Math.random): number[] {
+  const order = Array.from({ length }, (_, i) => i);
+  for (let i = order.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
+}
+
+const BLANK = "{{blank}}";
+
+/** A prose blank: the text before and after `{{blank}}`, or null when there is none. */
+export function splitBlank(template: string | undefined): { before: string; after: string } | null {
+  if (!template) return null;
+  const at = template.indexOf(BLANK);
+  if (at < 0) return null;
+  return { before: template.slice(0, at), after: template.slice(at + BLANK.length) };
+}
+
+/** A code blank: which line holds `{{blank}}`, and that line split around it. */
+export function splitCodeBlank(lines: string[] | undefined): { line: number; before: string; after: string } | null {
+  if (!lines) return null;
+  for (let line = 0; line < lines.length; line += 1) {
+    const parts = splitBlank(lines[line]);
+    if (parts) return { line, ...parts };
+  }
+  return null;
+}
+
+/** Width for a blank's input, in `ch`: room for the longest accepted answer, within limits. */
+export function blankWidth(answers: string[]): number {
+  const longest = Math.max(0, ...answers.map((a) => a.length));
+  return Math.min(24, Math.max(5, longest + 2));
+}
+
+/**
+ * After a right typed answer: the official wording, when it differs from what was typed
+ * ("two" → "2"), so the exact term sticks. Null when they already match.
+ */
+export function officialWording(input: string, answers: string[]): string | null {
+  const canonical = answers[0];
+  if (!canonical) return null;
+  return normalizeAnswer(input) === normalizeAnswer(canonical) ? null : canonical;
+}

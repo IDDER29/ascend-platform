@@ -5,6 +5,7 @@ import { SaveButton } from "@/components/bookmarks/save-button";
 import { cardTarget } from "@/lib/bookmarks/model";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Check, X } from "lucide-react";
 import {
   savePracticeSessionAction,
   upsertPracticeCardsAction,
@@ -45,6 +46,15 @@ import type {
 } from "@/lib/practice/sm2";
 import type { PracticeItem } from "@/lib/practice/types";
 import { PRACTICE_ROUTES } from "@/lib/practice/routes";
+import {
+  KIND_LABELS,
+  blankWidth,
+  looksLikeCode,
+  officialWording,
+  shuffledOrder,
+  splitBlank,
+  splitCodeBlank,
+} from "@/lib/practice/session-view";
 
 export type PracticeCoachV2SessionLiveProps = {
   userId: string | null;
@@ -58,60 +68,48 @@ const BOTTOM_BAR =
   "sticky bottom-0 z-10 -mx-5 mt-auto flex justify-center border-t-2 px-5 sm:-mx-10 sm:px-10";
 
 type Answered = { questionId: string; grade: PracticeGrade; ms?: number };
-type Feedback = { correct: boolean; grade: PracticeGrade };
+/** `overridden`: a typed answer marked wrong that the learner said was right ("I was right"). */
+type Feedback = { correct: boolean; grade: PracticeGrade; overridden?: boolean };
 
 function gradeIsHit(grade: PracticeGrade): boolean {
   return grade === "good" || grade === "easy";
-}
-
-function kindPillLabel(kind: PracticeItem["kind"]): string {
-  switch (kind) {
-    case "mcq":
-      return "Choices";
-    case "flashcard":
-      return "Flashcard";
-    case "typed":
-      return "Short answer";
-    case "cloze":
-      return "Cloze";
-  }
 }
 
 function scopeSubtitle(scopeLabel: string, reviewLabel: string): string {
   return reviewLabel ? `${scopeLabel} · ${reviewLabel}` : scopeLabel;
 }
 
-function CodeBlock({ lines }: { lines?: string[] }) {
-  if (!lines?.length) return null;
+/** Key hints are for keyboards: hidden on touch screens. */
+const KBD_TOUCH = "[@media(pointer:coarse)]:hidden!";
+
+/** An answer in the right face: mono for code, the body face for words. */
+function AnswerText({ text, className = "" }: { text: string; className?: string }) {
   return (
-    <pre className="mt-3 overflow-x-auto rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-code-bg)] p-5 font-[family-name:var(--font-plex-mono)] text-[13px] leading-6 text-[var(--coach-code-ink)]">
-      <code>{lines.join("\n")}</code>
+    <span className={`${looksLikeCode(text) ? "font-[family-name:var(--font-plex-mono)]" : ""} ${className}`}>
+      {text}
+    </span>
+  );
+}
+
+function CodeBlock({ lines, children }: { lines?: string[]; children?: ReactNode }) {
+  if (!lines?.length && !children) return null;
+  return (
+    <pre className="m-0 overflow-x-auto rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-code-bg)] p-5 font-[family-name:var(--font-plex-mono)] text-[13px] leading-7 text-[var(--coach-code-ink)]">
+      <code>{children ?? lines?.join("\n")}</code>
     </pre>
   );
 }
 
-function KindScopeRow({
-  question,
-  subtitle,
-  trailing,
-}: {
-  question: PracticeItem;
-  subtitle: string;
-  trailing?: ReactNode;
-}) {
-  const kind = question.kind;
+function KindScopeRow({ question, subtitle }: { question: PracticeItem; subtitle: string }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2">
-        <span className="rounded-full bg-[var(--coach-tint-blue-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--coach-tint-blue-ink)]">
-          {kindPillLabel(kind)}
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="shrink-0 rounded-full bg-[var(--coach-tint-blue-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--coach-tint-blue-ink)]">
+          {KIND_LABELS[question.kind]}
         </span>
-        <span className="text-[13px] text-[var(--coach-ink-muted)]">{subtitle}</span>
+        <span className="min-w-0 truncate text-[13px] text-[var(--coach-ink-muted)]">{subtitle}</span>
       </div>
-      <div className="flex flex-wrap items-center gap-3">
-        {trailing}
-        <SaveButton target={cardTarget(question)} look="coach" label="Save card" />
-      </div>
+      <SaveButton target={cardTarget(question)} look="coach" className="shrink-0" />
     </div>
   );
 }
@@ -151,20 +149,11 @@ function SessionTopBar({
         aria-label="End session"
         className="flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-lg border-2 border-[var(--coach-border-strong)] bg-transparent px-2.5 text-[13px] font-semibold text-[var(--coach-ink-secondary)]"
       >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          aria-hidden
-        >
-          <path d="M6 6l12 12M18 6L6 18" />
-        </svg>
+        <X size={14} strokeWidth={2.5} aria-hidden />
         <span className="hidden sm:inline">End session</span>
-        <kbd className="hidden h-5 items-center rounded-md border border-b-2 border-[var(--coach-border-strong)] bg-[var(--coach-bg)] px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium sm:inline-flex">
+        <kbd
+          className={`hidden h-5 items-center rounded-md border border-b-2 border-[var(--coach-border-strong)] bg-[var(--coach-bg)] px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium sm:inline-flex ${KBD_TOUCH}`}
+        >
           Esc
         </kbd>
       </button>
@@ -188,71 +177,127 @@ function SessionTopBar({
   );
 }
 
+type ChoiceState = "idle" | "selected" | "right" | "wrong" | "faded";
+
+const CHOICE_LOOK: Record<ChoiceState, { box: string; key: string }> = {
+  idle: {
+    box: "border-[var(--coach-border)] bg-[var(--coach-surface)] shadow-[0_4px_0_var(--coach-border)]",
+    key: "border-2 border-[var(--coach-border-strong)] text-[var(--coach-ink-muted)]",
+  },
+  selected: {
+    box: "border-[var(--coach-ink)] bg-[var(--coach-surface)] shadow-[0_4px_0_var(--coach-ink)]",
+    key: "bg-[var(--coach-ink)] text-[var(--coach-bg)]",
+  },
+  right: {
+    box: "border-[var(--coach-correct-border)] bg-[var(--coach-correct-bg)] text-[var(--coach-correct-ink)] shadow-[0_4px_0_var(--coach-correct-border)]",
+    key: "bg-[var(--coach-correct-ink)] text-[var(--coach-correct-bg)]",
+  },
+  wrong: {
+    box: "border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-bg)] text-[var(--coach-wrong-ink)] shadow-[0_4px_0_var(--coach-wrong-border)]",
+    key: "bg-[var(--coach-wrong-strong)] text-[var(--coach-on-wrong)]",
+  },
+  faded: {
+    box: "border-[var(--coach-border)] bg-[var(--coach-surface)] opacity-55",
+    key: "border-2 border-[var(--coach-border)] text-[var(--coach-ink-muted)]",
+  },
+};
+
 function McqChoice({
-  index,
+  position,
   label,
-  selected,
+  state,
   onSelect,
-  disabled,
 }: {
-  index: number;
+  position: number;
   label: string;
-  selected: boolean;
+  state: ChoiceState;
   onSelect: () => void;
-  disabled?: boolean;
 }) {
-  const n = index + 1;
+  const locked = state === "right" || state === "wrong" || state === "faded";
+  const look = CHOICE_LOOK[state];
   return (
     <button
       type="button"
-      aria-pressed={selected}
-      disabled={disabled}
+      aria-pressed={state === "selected"}
+      disabled={locked}
       data-coach-choice
-      className="flex min-h-14 items-center gap-3 rounded-xl border-2 px-4 py-3 text-left font-[family-name:var(--font-plex-mono)] text-base text-[var(--coach-ink)] transition disabled:cursor-default"
-      style={
-        selected
-          ? {
-              borderColor: "var(--coach-blue)",
-              boxShadow: "0 4px 0 var(--coach-blue)",
-              background: "var(--coach-selected-bg)",
-            }
-          : {
-              borderColor: "var(--coach-border)",
-              boxShadow: "0 4px 0 var(--coach-border)",
-              background: "var(--coach-surface)",
-            }
-      }
+      className={`flex min-h-14 items-center gap-3 rounded-xl border-2 px-4 py-3 text-left text-base text-[var(--coach-ink)] transition disabled:cursor-default ${look.box}`}
       onClick={onSelect}
     >
       <kbd
-        className="flex size-7 shrink-0 items-center justify-center rounded-md font-[family-name:var(--font-plex-mono)] text-xs"
-        style={
-          selected
-            ? { background: "var(--coach-blue)", color: "var(--coach-on-blue)" }
-            : {
-                boxSizing: "border-box",
-                border: "2px solid var(--coach-border-strong)",
-                color: "var(--coach-ink-muted)",
-              }
-        }
+        className={`flex size-7 shrink-0 items-center justify-center rounded-md font-[family-name:var(--font-plex-mono)] text-xs ${look.key}`}
       >
-        {n}
+        {state === "right" ? <Check size={15} strokeWidth={3} aria-hidden /> : state === "wrong" ? <X size={15} strokeWidth={3} aria-hidden /> : position}
       </kbd>
-      {label}
+      <AnswerText text={label} className="min-w-0 [overflow-wrap:anywhere]" />
+      {state === "right" && <span className="sr-only">(correct answer)</span>}
+      {state === "wrong" && <span className="sr-only">(your answer, not right)</span>}
     </button>
   );
 }
 
-function PromptFooter({
-  children,
+type FieldState = "idle" | "right" | "wrong";
+
+/** The typing field, for short answers and for blanks (inline, inside the sentence or the code line). */
+function AnswerInput({
+  value,
+  onChange,
+  state,
+  label,
+  inline,
+  code,
+  widthCh,
+  onDark,
 }: {
-  children: ReactNode;
+  value: string;
+  onChange: (value: string) => void;
+  state: FieldState;
+  label: string;
+  inline?: boolean;
+  code?: boolean;
+  widthCh?: number;
+  onDark?: boolean;
 }) {
+  const look =
+    state === "right"
+      ? "border-[var(--coach-correct-border)] bg-[var(--coach-correct-bg)] text-[var(--coach-correct-ink)]"
+      : state === "wrong"
+        ? "border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-soft)] text-[var(--coach-wrong-ink)] line-through"
+        : onDark
+          ? "border-[var(--coach-lime)] bg-[var(--coach-surface)] text-[var(--coach-ink)]"
+          : "border-[var(--coach-border-strong)] bg-[var(--coach-surface)] text-[var(--coach-ink)]";
+  return (
+    <input
+      id="practice-answer"
+      aria-label={label}
+      value={value}
+      readOnly={state !== "idle"}
+      aria-invalid={state === "wrong" || undefined}
+      onChange={(event) => onChange(event.target.value)}
+      autoComplete="off"
+      autoCapitalize="off"
+      autoCorrect="off"
+      spellCheck={false}
+      placeholder={inline ? undefined : "Type your answer"}
+      autoFocus
+      style={widthCh ? { width: `${widthCh}ch` } : undefined}
+      className={`box-border border-2 outline-none focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[var(--coach-focus)] ${look} ${
+        code ? "font-[family-name:var(--font-plex-mono)]" : ""
+      } ${
+        inline
+          ? onDark
+            ? "mx-0.5 inline-block h-7 rounded-md px-1.5 align-middle text-[13px] font-semibold"
+            : "mx-1 inline-block h-[1.45em] max-w-full rounded-lg px-2 align-baseline text-[0.85em] font-semibold"
+          : "h-12 w-full rounded-xl px-4 text-base font-semibold"
+      }`}
+    />
+  );
+}
+
+function PromptFooter({ children }: { children: ReactNode }) {
   return (
     <footer className={`${BOTTOM_BAR} border-[var(--coach-border)] bg-[var(--coach-surface)] py-3 sm:py-4`}>
-      <div className="flex w-full max-w-[680px] flex-wrap items-center justify-between gap-3 sm:gap-5">
-        {children}
-      </div>
+      <div className="flex w-full max-w-[680px] flex-wrap items-center justify-between gap-3 sm:gap-5">{children}</div>
     </footer>
   );
 }
@@ -265,7 +310,9 @@ function SkipButton({ onClick }: { onClick: () => void }) {
       onClick={onClick}
     >
       Skip
-      <kbd className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-md border border-[var(--coach-border-strong)] border-b-2 bg-[var(--coach-bg)] px-1 font-[family-name:var(--font-plex-mono)] text-[11px]">
+      <kbd
+        className={`hidden min-h-5 min-w-5 items-center justify-center rounded-md border border-b-2 border-[var(--coach-border-strong)] bg-[var(--coach-bg)] px-1 font-[family-name:var(--font-plex-mono)] text-[11px] sm:inline-flex ${KBD_TOUCH}`}
+      >
         S
       </kbd>
     </button>
@@ -285,143 +332,132 @@ function LimeCheckButton({
     <button
       type="button"
       disabled={disabled}
-      className="mb-1 flex h-11 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-lime)] text-[14.5px] font-bold text-[var(--coach-lime-ink)] shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-52 sm:flex-none transition enabled:hover:brightness-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
+      className="mb-1 flex h-11 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-lime)] text-[14.5px] font-bold text-[var(--coach-lime-ink)] shadow-[0_4px_0_var(--coach-lime-shadow)] transition enabled:hover:brightness-[0.97] disabled:cursor-not-allowed disabled:opacity-40 sm:w-52 sm:flex-none"
       onClick={onClick}
     >
       {label}
-      <kbd className="hidden h-[22px] items-center rounded-md border sm:inline-flex border-[var(--coach-lime-shadow)] border-b-2 bg-[var(--coach-lime-soft)] px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium normal-case tracking-normal text-[var(--coach-lime-ink)]">
+      <kbd
+        className={`hidden h-[22px] items-center rounded-md border border-b-2 border-[var(--coach-lime-shadow)] bg-[var(--coach-lime-soft)] px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium text-[var(--coach-lime-ink)] sm:inline-flex ${KBD_TOUCH}`}
+      >
         Enter
       </kbd>
     </button>
   );
 }
 
+/**
+ * The answer to spell out in the feedback bar. Choices already light up the right option on the card,
+ * and flashcards never get here (the back is the answer), so only typed answers need it.
+ */
+function expectedAnswer(question: PracticeItem): string | null {
+  if (question.kind === "typed" || question.kind === "cloze") return question.answers[0] ?? null;
+  return null;
+}
+
 function FeedbackBar({
   feedback,
   question,
+  typed,
   reviewHref,
   onContinue,
+  onOverride,
 }: {
   feedback: Feedback;
   question: PracticeItem;
+  typed: string;
   reviewHref?: string;
   onContinue: () => void;
+  onOverride?: () => void;
 }) {
-  if (feedback.correct) {
-    return (
-      <section
-        aria-live="polite"
-        className={`${BOTTOM_BAR} border-[var(--coach-correct-border)] bg-[var(--coach-correct-bg)] py-4 sm:py-5`}
-      >
-        <div className="flex w-full max-w-[680px] flex-wrap items-center justify-between gap-4 sm:gap-6">
-          <div className="flex min-w-[240px] flex-1 basis-0 items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--coach-mark-bg)] text-[var(--coach-mark-ink)]">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <path d="M5 12l5 5 9-10" />
-              </svg>
-            </span>
-            <div className="flex flex-col gap-1">
-              <h2 className="m-0 font-[family-name:var(--font-bricolage)] text-xl font-extrabold">
-                Correct
-              </h2>
-              {question.hint ? (
-                <p className="m-0 text-sm leading-normal text-[var(--coach-correct-ink)]">
-                  {question.hint}
-                </p>
-              ) : null}
-            </div>
-          </div>
-          <button
-            type="button"
-            className="mb-1 flex h-11 w-full shrink-0 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-solid-btn-bg)] text-[14.5px] font-bold text-[var(--coach-solid-btn-ink)] shadow-[0_4px_0_var(--coach-solid-btn-shadow)] sm:w-48"
-            onClick={onContinue}
-          >
-            Continue
-            <kbd className="hidden h-[22px] items-center rounded-md border sm:inline-flex border-[var(--coach-solid-btn-kbd-border)] border-b-2 bg-[var(--coach-solid-btn-kbd-bg)] px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium normal-case tracking-normal text-[var(--coach-solid-btn-ink)]">
-              Enter
-            </kbd>
-          </button>
-        </div>
-      </section>
-    );
-  }
-
-  const expectedAnswer =
-    question.kind === "mcq"
-      ? question.options[question.correct]
-      : question.kind === "flashcard"
-        ? question.back
-        : question.answers[0];
+  const right = feedback.correct;
+  const accepted = question.kind === "typed" || question.kind === "cloze" ? question.answers : null;
+  // After a right typed answer, show the official wording only when it differs from what was typed.
+  const shownAnswer = right
+    ? accepted && !feedback.overridden
+      ? officialWording(typed, accepted)
+      : null
+    : expectedAnswer(question);
 
   return (
     <section
       aria-live="polite"
-      className={`${BOTTOM_BAR} border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-bg)] py-4 sm:py-5`}
+      className={`${BOTTOM_BAR} py-4 sm:py-5 ${
+        right
+          ? "border-[var(--coach-correct-border)] bg-[var(--coach-correct-bg)]"
+          : "border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-bg)]"
+      }`}
     >
-      <div className="flex w-full max-w-[680px] flex-col gap-4">
-        <div className="flex flex-wrap items-start gap-6">
-          <div className="flex min-w-0 flex-1 items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--coach-wrong-strong)] text-[var(--coach-on-wrong)]">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                aria-hidden
+      <div className="flex w-full max-w-[680px] flex-wrap items-end justify-between gap-4 sm:gap-6">
+        <div className="flex min-w-[240px] flex-1 basis-0 items-start gap-3">
+          <span
+            className={`flex size-10 shrink-0 items-center justify-center rounded-full ${
+              right
+                ? "bg-[var(--coach-mark-bg)] text-[var(--coach-mark-ink)]"
+                : "bg-[var(--coach-wrong-strong)] text-[var(--coach-on-wrong)]"
+            }`}
+          >
+            {right ? <Check size={18} strokeWidth={3} aria-hidden /> : <X size={16} strokeWidth={3} aria-hidden />}
+          </span>
+          <div className="flex min-w-0 flex-col gap-1">
+            <h2
+              className={`m-0 font-[family-name:var(--font-bricolage)] text-xl font-extrabold ${
+                right ? "" : "text-[var(--coach-wrong-title)]"
+              }`}
+            >
+              {right ? (feedback.overridden ? "Counted as right" : "Correct") : "Not quite"}
+            </h2>
+            {shownAnswer ? (
+              <p
+                className={`m-0 text-[15px] leading-snug ${right ? "text-[var(--coach-correct-ink)]" : "text-[var(--coach-wrong-ink)]"}`}
               >
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
-            </span>
-            <div className="flex flex-col gap-1.5">
-              <h2 className="m-0 font-[family-name:var(--font-bricolage)] text-xl font-extrabold text-[var(--coach-wrong-title)]">
-                Not quite
-                {expectedAnswer ? (
-                  <>
-                    {" "}
-                    — the answer is{" "}
-                    <span className="font-[family-name:var(--font-plex-mono)] font-medium text-[var(--coach-ink)]">
-                      {expectedAnswer}
-                    </span>
-                  </>
-                ) : null}
-              </h2>
-              {question.hint ? (
-                <p className="m-0 text-sm leading-normal text-[var(--coach-wrong-ink)]">
-                  {question.hint}
-                </p>
-              ) : null}
-              {reviewHref ? (
-                <Link
-                  href={reviewHref}
-                  className="text-sm font-semibold text-[var(--coach-wrong-title)] underline underline-offset-4"
-                >
-                  Review the lesson
-                </Link>
-              ) : null}
-            </div>
+                {right ? "Exact wording: " : "Answer: "}
+                <AnswerText text={shownAnswer} className="font-semibold text-[var(--coach-ink)]" />
+              </p>
+            ) : null}
+            {question.hint ? (
+              <p
+                className={`m-0 text-sm leading-normal ${right ? "text-[var(--coach-correct-ink)]" : "text-[var(--coach-wrong-ink)]"}`}
+              >
+                {question.hint}
+              </p>
+            ) : null}
+            {!right && reviewHref ? (
+              <Link
+                href={reviewHref}
+                className="text-sm font-semibold text-[var(--coach-wrong-title)] underline underline-offset-4"
+              >
+                Review the lesson
+              </Link>
+            ) : null}
           </div>
         </div>
-        <div className="flex justify-end">
+        <div className="flex w-full gap-3 sm:w-auto">
+          {!right && onOverride ? (
+            <button
+              type="button"
+              onClick={onOverride}
+              className="mb-1 flex h-11 flex-1 items-center justify-center rounded-xl border-2 border-[var(--coach-wrong-border)] bg-[var(--coach-surface)] px-4 text-sm font-semibold text-[var(--coach-wrong-title)] shadow-[0_4px_0_var(--coach-wrong-border)] sm:flex-none"
+            >
+              I was right
+            </button>
+          ) : null}
           <button
             type="button"
-            className="mb-1 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-wrong-strong)] text-[14.5px] font-bold text-[var(--coach-on-wrong)] shadow-[0_4px_0_var(--coach-wrong-shadow)] sm:w-48"
+            className={`mb-1 flex h-11 flex-1 shrink-0 items-center justify-center gap-2.5 rounded-xl text-[14.5px] font-bold sm:w-44 sm:flex-none ${
+              right
+                ? "bg-[var(--coach-solid-btn-bg)] text-[var(--coach-solid-btn-ink)] shadow-[0_4px_0_var(--coach-solid-btn-shadow)]"
+                : "bg-[var(--coach-wrong-strong)] text-[var(--coach-on-wrong)] shadow-[0_4px_0_var(--coach-wrong-shadow)]"
+            }`}
             onClick={onContinue}
           >
             Continue
-            <kbd className="hidden h-[22px] items-center rounded-md border sm:inline-flex border-[var(--coach-wrong-kbd-border)] border-b-2 bg-[var(--coach-wrong-kbd-bg)] px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium normal-case tracking-normal text-[var(--coach-on-wrong)]">
+            <kbd
+              className={`hidden h-[22px] items-center rounded-md border border-b-2 px-1.5 font-[family-name:var(--font-plex-mono)] text-[11px] font-medium sm:inline-flex ${KBD_TOUCH} ${
+                right
+                  ? "border-[var(--coach-solid-btn-kbd-border)] bg-[var(--coach-solid-btn-kbd-bg)] text-[var(--coach-solid-btn-ink)]"
+                  : "border-[var(--coach-wrong-kbd-border)] bg-[var(--coach-wrong-kbd-bg)] text-[var(--coach-on-wrong)]"
+              }`}
+            >
               Enter
             </kbd>
           </button>
@@ -469,6 +505,8 @@ export function PracticeCoachV2SessionLive({
   );
 
   const [questions, setQuestions] = useState<PracticeItem[]>([]);
+  // A fresh option order per multiple-choice card, so answers aren't remembered by position.
+  const [orders, setOrders] = useState<Record<string, number[]>>({});
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<"prompt" | "feedback">("prompt");
   const [selected, setSelected] = useState<number | null>(null);
@@ -534,7 +572,13 @@ export function PracticeCoachV2SessionLive({
       router.replace(PRACTICE_ROUTES.home);
       return;
     }
-    queueMicrotask(() => setQuestions(next));
+    const nextOrders = Object.fromEntries(
+      next.flatMap((q) => (q.kind === "mcq" ? [[q.id, shuffledOrder(q.options.length)] as const] : [])),
+    );
+    queueMicrotask(() => {
+      setOrders(nextOrders);
+      setQuestions(next);
+    });
   }, [completed, initialCards, pickedIds, router, scope, size, unlocked, userId]);
 
   function resetPrompt() {
@@ -615,9 +659,9 @@ export function PracticeCoachV2SessionLive({
     resetPrompt();
   }
 
-  function recordGrade(grade: PracticeGrade, correct: boolean) {
+  function recordGrade(grade: PracticeGrade, correct: boolean): Answered[] | null {
     const question = questions[index];
-    if (!question || phase === "feedback") return;
+    if (!question || phase === "feedback") return null;
     const endAt =
       question.kind === "flashcard"
         ? (revealedAt.current ?? Date.now())
@@ -633,6 +677,23 @@ export function PracticeCoachV2SessionLive({
     setAnswered(nextAnswered);
     setFeedback({ correct, grade });
     setPhase("feedback");
+    return nextAnswered;
+  }
+
+  /** Flashcards are graded by the learner, who has just seen the back: no feedback bar, straight on. */
+  function gradeFlashcard(knewIt: boolean) {
+    const next = recordGrade(knewIt ? "good" : "again", knewIt);
+    if (next) advance(next);
+  }
+
+  /** "I was right": a typed answer the matcher refused (a typo, another wording) counts as a hit. */
+  function overrideLast() {
+    const question = questions[index];
+    if (!question || !feedback || feedback.correct) return;
+    setAnswered((prev) =>
+      prev.map((a, i) => (i === prev.length - 1 && a.questionId === question.id ? { ...a, grade: "good" } : a)),
+    );
+    setFeedback({ correct: true, grade: "good", overridden: true });
   }
 
   function checkMcq() {
@@ -699,11 +760,11 @@ export function PracticeCoachV2SessionLive({
       if (!Number.isInteger(digit) || digit < 1) return;
       if (current.kind === "mcq" && digit <= current.options.length) {
         event.preventDefault();
-        setSelected(digit - 1);
+        const order = orders[current.id] ?? current.options.map((_, i) => i);
+        setSelected(order[digit - 1]);
       } else if (current.kind === "flashcard" && revealed && digit <= 2) {
         event.preventDefault();
-        if (digit === 1) recordGrade("again", false);
-        else recordGrade("good", true);
+        gradeFlashcard(digit === 2);
       }
     }
 
@@ -714,24 +775,42 @@ export function PracticeCoachV2SessionLive({
   const question = questions[index];
 
   if (!question) {
-    return (
-      <p className="text-center text-[var(--coach-ink)]">Preparing your review…</p>
-    );
+    return <p className="text-center text-[var(--coach-ink)]">Preparing your review…</p>;
   }
 
-  const subtitle = scopeSubtitle(
-    activeScope.scopeLabel,
-    question.reviewLabel,
-  );
-  const reviewHref =
-    feedback && !feedback.correct ? reviewHrefs[question.id] : undefined;
+  const subtitle = scopeSubtitle(activeScope.scopeLabel, question.reviewLabel);
+  const reviewHref = feedback && !feedback.correct ? reviewHrefs[question.id] : undefined;
   const inFeedback = phase === "feedback" && feedback;
+  const fieldState: FieldState = inFeedback ? (feedback.correct ? "right" : "wrong") : "idle";
 
   const progress = sessionProgress(
     questions.map((q) => q.id),
     answered,
     index,
   );
+
+  const choiceState = (original: number): ChoiceState => {
+    if (question.kind !== "mcq") return "idle";
+    if (!inFeedback) return selected === original ? "selected" : "idle";
+    if (original === question.correct) return "right";
+    if (original === selected) return "wrong";
+    return "faded";
+  };
+
+  const answerField = (inline: boolean, onDark = false) =>
+    question.kind === "typed" || question.kind === "cloze" ? (
+      <AnswerInput
+        key={question.id}
+        value={typedAnswer}
+        onChange={setTypedAnswer}
+        state={fieldState}
+        label={question.kind === "cloze" ? "The missing part" : "Your answer"}
+        inline={inline}
+        onDark={onDark}
+        code={question.answers.some(looksLikeCode)}
+        widthCh={inline ? blankWidth(question.answers) : undefined}
+      />
+    ) : null;
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-6">
@@ -743,21 +822,7 @@ export function PracticeCoachV2SessionLive({
           total={progress.total}
           onExit={exitSession}
         />
-        {question.kind === "flashcard" ? (
-          <KindScopeRow
-            question={question}
-            subtitle={subtitle}
-            trailing={
-              phase === "prompt" && !revealed ? (
-                <span className="text-[13px] text-[var(--coach-ink-secondary)]">
-                  Answer in your head first, then be honest with yourself.
-                </span>
-              ) : null
-            }
-          />
-        ) : (
-          <KindScopeRow question={question} subtitle={subtitle} />
-        )}
+        <KindScopeRow question={question} subtitle={subtitle} />
 
         {question.kind === "mcq" ? (
           <>
@@ -765,19 +830,14 @@ export function PracticeCoachV2SessionLive({
               {question.prompt}
             </h1>
             <CodeBlock lines={question.code} />
-            <div
-              role="group"
-              aria-label="Answer choices"
-              className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-            >
-              {question.options.map((option, optionIndex) => (
+            <div role="group" aria-label="Answer choices" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {(orders[question.id] ?? question.options.map((_, i) => i)).map((original, position) => (
                 <McqChoice
-                  key={option}
-                  index={optionIndex}
-                  label={option}
-                  selected={selected === optionIndex}
-                  disabled={Boolean(inFeedback)}
-                  onSelect={() => setSelected(optionIndex)}
+                  key={original}
+                  position={position + 1}
+                  label={question.options[original]}
+                  state={choiceState(original)}
+                  onSelect={() => setSelected(original)}
                 />
               ))}
             </div>
@@ -786,10 +846,7 @@ export function PracticeCoachV2SessionLive({
 
         {question.kind === "flashcard" ? (
           <div className="relative flex-grow">
-            <div
-              aria-hidden
-              className="absolute inset-x-4 top-3 -bottom-3 rounded-[20px] bg-[var(--coach-border)]"
-            />
+            <div aria-hidden className="absolute inset-x-4 top-3 -bottom-3 rounded-[20px] bg-[var(--coach-border)]" />
             <div className="relative grid min-h-[220px] grid-cols-1 overflow-hidden rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] sm:grid-cols-2">
               <div className="flex min-w-0 flex-col gap-2.5 border-[var(--coach-border)] p-6 sm:border-r-2 sm:border-dashed sm:p-8">
                 <span className="font-[family-name:var(--font-plex-mono)] text-[11px] uppercase tracking-[0.08em] text-[var(--coach-ink-muted)]">
@@ -803,7 +860,7 @@ export function PracticeCoachV2SessionLive({
                 {!revealed ? <CodeBlock lines={question.frontCode} /> : null}
               </div>
               <div
-                className={`flex min-w-0 flex-col gap-2.5 bg-[var(--coach-flash-back)] p-6 sm:rounded-r-[18px] sm:p-8 ${revealed ? "" : "opacity-60"}`}
+                className="flex min-w-0 flex-col gap-2.5 bg-[var(--coach-flash-back)] p-6 sm:rounded-r-[18px] sm:p-8"
               >
                 <span className="font-[family-name:var(--font-plex-mono)] text-[11px] uppercase tracking-[0.08em] text-[var(--coach-tint-blue-ink)]">
                   Back
@@ -811,8 +868,8 @@ export function PracticeCoachV2SessionLive({
                 {revealed ? (
                   <p className="m-0 text-lg leading-normal">{question.back}</p>
                 ) : (
-                  <p className="m-0 text-[13px] text-[var(--coach-ink-muted)]">
-                    Reveal when you are ready to check yourself.
+                  <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
+                    Answer in your head first, then reveal it and be honest with yourself.
                   </p>
                 )}
               </div>
@@ -820,132 +877,117 @@ export function PracticeCoachV2SessionLive({
           </div>
         ) : null}
 
-        {question.kind === "typed" || question.kind === "cloze" ? (
+        {question.kind === "typed" ? (
           <>
-            <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] sm:text-[28px]">
-              {question.kind === "typed"
-                ? question.prompt
-                : (question.template?.replace("{{blank}}", "_____") ??
-                  "Fill in the blank")}
+            <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] text-pretty sm:text-[28px]">
+              {question.prompt}
             </h1>
-            <div className="flex flex-col gap-4 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5 sm:p-6">
-              <CodeBlock
-                lines={
-                  question.kind === "typed"
-                    ? question.code
-                    : question.templateCode?.map((line) =>
-                        line.replace("{{blank}}", "_____"),
-                      )
-                }
-              />
-              <label className="flex flex-col gap-2 text-[13px] text-[var(--coach-ink-secondary)]">
-                Your answer
-                <input
-                  id="practice-answer"
-                  value={typedAnswer}
-                  readOnly={Boolean(inFeedback)}
-                  onChange={(event) => setTypedAnswer(event.target.value)}
-                  aria-invalid={
-                    inFeedback && feedback && !feedback.correct
-                      ? true
-                      : undefined
-                  }
-                  className="box-border h-12 rounded-xl border-2 px-4 text-base font-semibold outline-none focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[var(--coach-focus)] focus-visible:outline-offset-[3px]"
-                  style={
-                    inFeedback && feedback
-                      ? feedback.correct
-                        ? {
-                            borderColor: "var(--coach-blue)",
-                            background: "var(--coach-selected-bg)",
-                          }
-                        : {
-                            borderColor: "var(--coach-tint-orange-ink)",
-                            background: "var(--coach-wrong-soft)",
-                            textDecoration: "line-through",
-                            fontFamily: "var(--font-plex-mono)",
-                          }
-                      : {
-                          borderColor: "var(--coach-border)",
-                          background: "var(--coach-surface)",
-                        }
-                  }
-                  autoComplete="off"
-                  autoFocus
-                />
-              </label>
-              {inFeedback &&
-              !feedback.correct &&
-              question.answers[0] ? (
-                <p className="m-0 text-sm text-[var(--coach-ink-secondary)]">
-                  Expected:{" "}
-                  <span className="font-[family-name:var(--font-plex-mono)] font-semibold text-[var(--coach-ink)]">
-                    {question.answers[0]}
-                  </span>
-                </p>
-              ) : null}
-            </div>
+            <CodeBlock lines={question.code} />
+            {answerField(false)}
           </>
         ) : null}
+
+        {question.kind === "cloze"
+          ? (() => {
+              const prose = splitBlank(question.template);
+              const code = splitCodeBlank(question.templateCode);
+              const heading = "m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.5] tracking-[-0.01em] text-pretty sm:text-[28px]";
+              if (prose) {
+                return (
+                  <>
+                    <h1 className={heading}>
+                      {prose.before}
+                      {answerField(true)}
+                      {prose.after}
+                    </h1>
+                    <CodeBlock lines={question.templateCode} />
+                  </>
+                );
+              }
+              if (code && question.templateCode) {
+                return (
+                  <>
+                    <h1 className={heading}>{question.template ?? "Complete the code."}</h1>
+                    <CodeBlock>
+                      {question.templateCode.map((line, i) => (
+                        <span key={i} className="block">
+                          {i === code.line ? (
+                            <>
+                              {code.before}
+                              {answerField(true, true)}
+                              {code.after}
+                            </>
+                          ) : (
+                            line || " "
+                          )}
+                        </span>
+                      ))}
+                    </CodeBlock>
+                  </>
+                );
+              }
+              // No blank marker: fall back to a plain answer field.
+              return (
+                <>
+                  <h1 className={heading}>{question.template ?? "Fill in the blank."}</h1>
+                  {answerField(false)}
+                </>
+              );
+            })()
+          : null}
       </div>
 
       {inFeedback && feedback ? (
         <FeedbackBar
           feedback={feedback}
           question={question}
+          typed={typedAnswer}
           reviewHref={reviewHref}
           onContinue={() => advance(answered)}
+          onOverride={question.kind === "typed" || question.kind === "cloze" ? overrideLast : undefined}
         />
       ) : question.kind === "mcq" ? (
         <PromptFooter>
           <SkipButton onClick={() => advance()} />
-          <span className="hidden text-[13px] text-[var(--coach-ink-muted)] sm:inline">
-            Press 1–4 to choose
+          <span className={`hidden text-[13px] text-[var(--coach-ink-muted)] sm:inline ${KBD_TOUCH}`}>
+            Press 1–{question.options.length} to choose
           </span>
-          <LimeCheckButton
-            disabled={selected === null}
-            onClick={checkMcq}
-          />
+          <LimeCheckButton disabled={selected === null} onClick={checkMcq} />
         </PromptFooter>
       ) : question.kind === "flashcard" ? (
         <PromptFooter>
           {!revealed ? (
             <>
               <SkipButton onClick={() => advance()} />
-              <LimeCheckButton
-                label="Reveal"
-                onClick={() => setRevealed(true)}
-              />
+              <LimeCheckButton label="Reveal" onClick={() => setRevealed(true)} />
             </>
           ) : (
             <>
-              <span
-                id="grade-label"
-                className="text-[15px] font-semibold"
-              >
+              <span id="grade-label" className="text-[15px] font-semibold">
                 Did you know it?
               </span>
-              <div
-                role="group"
-                aria-labelledby="grade-label"
-                className="flex w-full gap-3 sm:ml-auto sm:w-auto"
-              >
+              <div role="group" aria-labelledby="grade-label" className="flex w-full gap-3 sm:ml-auto sm:w-auto">
                 <button
                   type="button"
                   className="mb-1 flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-[var(--coach-wrong-border)] bg-[var(--coach-surface)] text-sm font-bold text-[var(--coach-tint-orange-strong)] shadow-[0_4px_0_var(--coach-wrong-border)] sm:w-44 sm:flex-none"
-                  onClick={() => recordGrade("again", false)}
+                  onClick={() => gradeFlashcard(false)}
                 >
-                  Missed it
-                  <kbd className="hidden size-5 items-center justify-center rounded-md border border-[var(--coach-wrong-border)] border-b-2 bg-[var(--coach-wrong-soft)] font-[family-name:var(--font-plex-mono)] text-[11px] font-medium sm:inline-flex">
+                  Not yet
+                  <kbd
+                    className={`hidden size-5 items-center justify-center rounded-md border border-b-2 border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-soft)] font-[family-name:var(--font-plex-mono)] text-[11px] font-medium sm:inline-flex ${KBD_TOUCH}`}
+                  >
                     1
                   </kbd>
                 </button>
                 <button
                   type="button"
                   className="mb-1 flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--coach-lime)] text-sm font-bold text-[var(--coach-lime-ink)] shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-44 sm:flex-none"
-                  onClick={() => recordGrade("good", true)}
+                  onClick={() => gradeFlashcard(true)}
                 >
-                  Got it
-                  <kbd className="hidden size-5 items-center justify-center rounded-md border border-[var(--coach-lime-shadow)] border-b-2 bg-[var(--coach-lime-soft)] font-[family-name:var(--font-plex-mono)] text-[11px] font-medium sm:inline-flex">
+                  Knew it
+                  <kbd
+                    className={`hidden size-5 items-center justify-center rounded-md border border-b-2 border-[var(--coach-lime-shadow)] bg-[var(--coach-lime-soft)] font-[family-name:var(--font-plex-mono)] text-[11px] font-medium sm:inline-flex ${KBD_TOUCH}`}
+                  >
                     2
                   </kbd>
                 </button>
@@ -953,15 +995,12 @@ export function PracticeCoachV2SessionLive({
             </>
           )}
         </PromptFooter>
-      ) : question.kind === "typed" || question.kind === "cloze" ? (
+      ) : (
         <PromptFooter>
           <SkipButton onClick={() => advance()} />
-          <LimeCheckButton
-            disabled={typedAnswer.trim().length === 0}
-            onClick={gradeTyped}
-          />
+          <LimeCheckButton disabled={typedAnswer.trim().length === 0} onClick={gradeTyped} />
         </PromptFooter>
-      ) : null}
+      )}
     </div>
   );
 }

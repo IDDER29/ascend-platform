@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useLayoutEffect, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
 import { useAuthUser } from "@/lib/auth/context";
@@ -116,11 +116,44 @@ function Row({
   );
 }
 
+type Edges = { top: boolean; bottom: boolean };
+
+/** Whether there is more to scroll above / below, so the cut edge can fade out. */
+function useScrollEdges(ref: React.RefObject<HTMLElement | null>): Edges {
+  const [edges, setEdges] = useState<Edges>({ top: false, bottom: false });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const top = el.scrollTop > 1;
+      const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+      setEdges((prev) => (prev.top === top && prev.bottom === bottom ? prev : { top, bottom }));
+    };
+    queueMicrotask(measure);
+    el.addEventListener("scroll", measure, { passive: true });
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", measure);
+      observer.disconnect();
+    };
+  }, [ref]);
+  return edges;
+}
+
+function fadeMask({ top, bottom }: Edges): React.CSSProperties | undefined {
+  if (!top && !bottom) return undefined;
+  const mask = `linear-gradient(to bottom, ${top ? "transparent" : "#000"} 0, #000 28px, #000 calc(100% - 28px), ${bottom ? "transparent" : "#000"} 100%)`;
+  return { maskImage: mask, WebkitMaskImage: mask };
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
   const user = useAuthUser();
   const displayName = user?.name?.trim() || null;
   const due = useDueCount(user?.id ?? null);
+  const navRef = useRef<HTMLElement>(null);
+  const edges = useScrollEdges(navRef);
 
   const collapsed = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => false);
 
@@ -171,7 +204,7 @@ export function AppSidebar() {
           href="/"
           aria-label="Ascend home"
           className={cn(
-            "mb-6 flex items-center gap-2.5 rounded-lg text-[var(--coach-ink)] no-underline",
+            "mb-5 flex flex-none items-center gap-2.5 rounded-lg text-[var(--coach-ink)] no-underline",
             collapsed ? "justify-center pt-1" : "px-2 pt-1",
           )}
         >
@@ -181,35 +214,38 @@ export function AppSidebar() {
           </span>
         </Link>
 
-        {/* Scrolls on short screens; the collapse button stays outside so it isn't clipped. */}
-        <div
+        {/* Only the links scroll, and only on very short screens: no bar, a soft fade at the cut edge. */}
+        <nav
+          ref={navRef}
+          aria-label="Main"
+          style={fadeMask(edges)}
           className={cn(
-            "-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 [scrollbar-width:thin]",
-            collapsed && "items-center",
+            "-mx-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            collapsed ? "items-center gap-4" : "gap-4",
           )}
         >
-          <nav aria-label="Main" className={cn("flex flex-col", collapsed ? "items-center gap-4" : "gap-5")}>
-            {SIDEBAR_GROUPS.map((group) => (
-              <div key={group.label} className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
-                <div className="app-sidebar-section mb-1 px-3 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">
-                  {group.label}
-                </div>
-                {group.items.map((item) => (
-                  <Row
-                    key={item.id}
-                    item={item}
-                    collapsed={collapsed}
-                    active={isNavActive(pathname, item.href)}
-                    count={item.id === "practice" ? due : 0}
-                  />
-                ))}
+          {SIDEBAR_GROUPS.map((group) => (
+            <div key={group.label} className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
+              <div className="app-sidebar-section mb-1 px-3 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">
+                {group.label}
               </div>
-            ))}
-          </nav>
+              {group.items.map((item) => (
+                <Row
+                  key={item.id}
+                  item={item}
+                  collapsed={collapsed}
+                  active={isNavActive(pathname, item.href)}
+                  count={item.id === "practice" ? due : 0}
+                />
+              ))}
+            </div>
+          ))}
+        </nav>
 
-          <div className={cn("mt-auto flex flex-col", collapsed ? "items-center gap-3" : "gap-3 pt-5")}>
-            <ThemeToggle className={collapsed ? undefined : "self-start"} />
-            {collapsed ? (
+        <div className={cn("flex flex-none flex-col pt-3", collapsed ? "items-center gap-3" : "gap-2")}>
+          {collapsed ? (
+            <>
+              <ThemeToggle />
               <Link
                 href={user ? "/profile" : signInHref}
                 aria-label={user ? `${displayName || "Your"} profile` : "Sign in"}
@@ -218,50 +254,56 @@ export function AppSidebar() {
               >
                 <PlaceholderAvatar name={user ? displayName : null} size="sm" />
               </Link>
-            ) : user ? (
-              <div className="app-sidebar-expanded-only flex items-center gap-2.5 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-2.5">
-                <Link
-                  href="/profile"
-                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-[var(--coach-ink)] no-underline"
+            </>
+          ) : user ? (
+            <div className="app-sidebar-expanded-only flex items-center gap-1.5 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-2">
+              <Link
+                href="/profile"
+                className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-[var(--coach-ink)] no-underline"
+              >
+                <PlaceholderAvatar name={displayName} size="sm" className="bg-[var(--coach-bg)]" />
+                <span className="min-w-0">
+                  <span className="block truncate text-[14px] font-bold">{displayName || "Learner"}</span>
+                  <span className="block truncate text-[12.5px] text-[var(--coach-ink-muted)]">@{user.username}</span>
+                </span>
+              </Link>
+              <ThemeToggle className="shrink-0" />
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  aria-label="Sign out"
+                  title="Sign out"
+                  className="flex size-9 items-center justify-center rounded-full text-[var(--coach-ink-muted)] hover:bg-[var(--coach-tint-neutral-bg)] hover:text-[var(--coach-ink)]"
                 >
-                  <PlaceholderAvatar name={displayName} size="sm" className="bg-[var(--coach-bg)]" />
-                  <span className="min-w-0">
-                    <span className="block truncate text-[14px] font-bold">{displayName || "Learner"}</span>
-                    <span className="block truncate text-[12.5px] text-[var(--coach-ink-muted)]">@{user.username}</span>
-                  </span>
-                </Link>
-                <form action={signOutAction}>
-                  <button
-                    type="submit"
-                    aria-label="Sign out"
-                    title="Sign out"
-                    className="flex size-9 items-center justify-center rounded-lg text-[var(--coach-ink-muted)] hover:bg-[var(--coach-tint-neutral-bg)] hover:text-[var(--coach-ink)]"
-                  >
-                    <LogOut size={17} strokeWidth={2.1} aria-hidden />
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <div className="app-sidebar-expanded-only rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-4">
+                  <LogOut size={17} strokeWidth={2.1} aria-hidden />
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="app-sidebar-expanded-only rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-3.5">
+              <div className="flex items-center justify-between gap-2">
                 <p className="m-0 text-[14px] font-bold">Learning as a guest</p>
-                <p className="m-0 mt-1 text-[13px] leading-relaxed text-[var(--coach-ink-secondary)]">
-                  Lessons are free. An account keeps your progress on every device.
-                </p>
+                <ThemeToggle className="shrink-0" />
+              </div>
+              <p className="m-0 mt-1 text-[13px] leading-relaxed text-[var(--coach-ink-secondary)] [@media(max-height:760px)]:hidden">
+                An account keeps your progress on every device.
+              </p>
+              <div className="mt-3 flex gap-2">
                 <Link
                   href={SIGNUP_HREF}
-                  className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-full bg-[var(--coach-lime)] px-3 text-[13.5px] font-bold text-[var(--coach-lime-ink)] no-underline shadow-[0_2px_0_var(--coach-lime-shadow)]"
+                  className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full bg-[var(--coach-lime)] px-3 text-[13.5px] font-bold text-[var(--coach-lime-ink)] no-underline shadow-[0_2px_0_var(--coach-lime-shadow)]"
                 >
-                  Create free account
+                  Sign up
                 </Link>
                 <Link
                   href={signInHref}
-                  className="mt-1.5 inline-flex min-h-9 w-full items-center justify-center text-[13px] font-semibold text-[var(--coach-ink)] underline underline-offset-2"
+                  className="inline-flex min-h-10 flex-1 items-center justify-center rounded-full border-2 border-[var(--coach-border)] px-3 text-[13.5px] font-semibold text-[var(--coach-ink)] no-underline hover:border-[var(--coach-border-strong)]"
                 >
                   Sign in
                 </Link>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </aside>
     </>

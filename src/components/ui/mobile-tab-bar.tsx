@@ -175,7 +175,7 @@ export function MobileTabBar() {
                 onClick={close}
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--coach-lime)] px-6 text-[15px] font-bold text-[var(--coach-lime-ink)] no-underline shadow-[0_3px_0_var(--coach-lime-shadow)]"
               >
-                Create free account
+                Sign up
               </Link>
               <Link
                 href={signInHref}

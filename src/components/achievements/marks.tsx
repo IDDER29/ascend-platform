@@ -11,11 +11,11 @@ const RANK_STYLE: Record<MissionRank, string> = {
   D: "bg-[var(--coach-chip)] text-[var(--coach-ink-secondary)]",
 };
 
-/** How hard the mission was: "B-rank". Grades the task, not the person. */
+/** A task's rank: "B-rank". Ranks grade tasks only — never decorations or people. */
 export function RankChip({ rank }: { rank: MissionRank }) {
   return (
     <span
-      title={`${rank}-rank mission`}
+      title={`${rank}-rank task`}
       className={`inline-flex h-5 shrink-0 items-center rounded-md px-1.5 font-mono text-[11px] font-bold ${RANK_STYLE[rank]}`}
     >
       {rank}-rank

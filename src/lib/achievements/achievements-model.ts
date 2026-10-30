@@ -18,6 +18,7 @@ import {
   ACHIEVEMENTS,
   achievementById,
   GROUP_TITLES,
+  INSIGNIA,
   MISSION_RANKS,
   TITLES,
   type Achievement,
@@ -55,7 +56,6 @@ export type Criterion = {
 export type BadgeView = {
   id: string;
   group: AchievementGroup;
-  rank: MissionRank;
   insignia: Achievement["insignia"] | null;
   label: string;
   glyph: string;
@@ -89,7 +89,9 @@ export type AchievementsModel = {
   title: BadgeView | null;
   /** The next title to earn, or null once every title is earned. */
   nextTitle: BadgeView | null;
-  /** How many earned decorations of each mission rank. */
+  /** The headband and the four clans, worn as emblems. */
+  insignia: BadgeView[];
+  /** How many tasks of each rank are done. */
   missionRecord: Record<MissionRank, number>;
 };
 
@@ -126,6 +128,35 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
   const lastSession = sessions.at(-1);
   const awayDays = lastSession ? Math.floor((now.getTime() - Date.parse(lastSession.at)) / DAY_MS) : null;
   const practice = { label: "Review in Practice", href: PRACTICE_ROUTES.home };
+
+  // Ranked tasks. Each completed task counts once, at its own rank (see TASK_RANKS).
+  const CLEAN_SESSION_CARDS = 10;
+  const CLEAN_SESSION_SHARE = 0.8;
+  const tasks: { rank: MissionRank; at: string }[] = [
+    ...input.completions.map((c) => ({ rank: "D" as const, at: c.completedAt })),
+    ...sessions.map((s) => ({
+      rank: s.total >= CLEAN_SESSION_CARDS && s.correct / s.total >= CLEAN_SESSION_SHARE ? ("C" as const) : ("D" as const),
+      at: s.at,
+    })),
+    ...[...finished.values()].map((at) => ({ rank: "B" as const, at })),
+    ...projects
+      .filter((p) => p.shippedAt)
+      .map((p) => ({ rank: (p.project.id === "shellforge" ? "S" : "A") as MissionRank, at: p.shippedAt! })),
+  ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const tasksOf = (rank: MissionRank) => tasks.filter((t) => t.rank === rank);
+  const TASK_ACTION: Record<MissionRank, () => { label: string; href: string } | null> = {
+    D: () => continueLesson(firstOpen) ?? practice,
+    C: () => ({ label: "Start a review", href: PRACTICE_ROUTES.home }),
+    B: () => continueLesson(firstOpen),
+    A: () => {
+      const half = projects.find((p) => p.project.id === "half-adder");
+      return half?.metAt ? { label: "Add your repo on your profile", href: PROFILE_ROUTES.owner } : continueLesson(firstOpen);
+    },
+    S: () => {
+      const shell = projects.find((p) => p.project.id === "shellforge");
+      return shell?.metAt ? { label: "Add your repo on your profile", href: PROFILE_ROUTES.owner } : continueLesson(firstOpen);
+    },
+  };
 
   const cache = new Map<string, BadgeView>();
 
@@ -296,6 +327,19 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             action: part.action,
           });
         });
+      case "tasks": {
+        const done = tasksOf(rule.rank);
+        const reached = done.length >= rule.count ? done[rule.count - 1].at : null;
+        return [
+          criterion({
+            text: `Complete ${rule.count} ${rule.rank}-rank ${rule.count === 1 ? "task" : "tasks"}`,
+            done: Boolean(reached),
+            at: reached,
+            progress: rule.count > 1 || !reached ? { done: Math.min(done.length, rule.count), total: rule.count } : null,
+            action: reached ? null : TASK_ACTION[rule.rank](),
+          }),
+        ];
+      }
       case "anyOf": {
         const parts = rule.ids.map((id) => view(achievementById(id)!));
         const earnedParts = parts.filter((p) => p.earned).sort((a, b) => Date.parse(a.earnedAt!) - Date.parse(b.earnedAt!));
@@ -328,7 +372,6 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
     const result: BadgeView = {
       id: a.id,
       group: a.group,
-      rank: a.rank,
       insignia: a.insignia ?? null,
       label: a.label,
       glyph: a.glyph,
@@ -376,7 +419,8 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
   }));
 
   const titles = TITLES.map(view);
-  const missionRecord = Object.fromEntries(MISSION_RANKS.map((r) => [r, earned.filter((p) => p.rank === r).length])) as Record<
+  const insignia = INSIGNIA.map(view);
+  const missionRecord = Object.fromEntries(MISSION_RANKS.map((r) => [r, tasksOf(r).length])) as Record<
     MissionRank,
     number
   >;
@@ -386,6 +430,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
     title: [...titles].reverse().find((t) => t.earned) ?? null,
     nextTitle: titles.find((t) => !t.earned) ?? null,
     missionRecord,
+    insignia,
     total,
     earnedCount: earned.length,
     headline,

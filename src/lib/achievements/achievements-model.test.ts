@@ -5,7 +5,7 @@ import type { PracticeCard } from "@/lib/practice/sm2";
 import { curriculumProject } from "@/lib/profile/projects";
 import type { ProfileLesson } from "@/lib/profile/profile-model";
 import { buildAchievementsModel, type AchievementsInput } from "./achievements-model";
-import { ACHIEVEMENTS, TITLES } from "./catalog";
+import { ACHIEVEMENTS, INSIGNIA, TITLES } from "./catalog";
 
 const NOW = new Date(2026, 9, 30, 12, 0);
 const BITS = "level-00-bits-logic";
@@ -134,45 +134,66 @@ test("a learner away two weeks is offered Comeback first", () => {
   assert.equal(m.closest[0].id, "comeback");
 });
 
-test("every decoration and title has a mission rank; title rules point at real badges", () => {
-  const ids = new Set([...ACHIEVEMENTS, ...TITLES].map((a) => a.id));
-  for (const a of [...ACHIEVEMENTS, ...TITLES]) {
-    assert.ok(["D", "C", "B", "A", "S"].includes(a.rank), a.id);
+test("decorations carry no rank; insignia and title rules point at real badges", () => {
+  const ids = new Set([...ACHIEVEMENTS, ...INSIGNIA, ...TITLES].map((a) => a.id));
+  for (const a of ACHIEVEMENTS) assert.equal("rank" in a, false, a.id);
+  for (const a of [...INSIGNIA, ...TITLES]) {
     for (const rule of a.rules) {
       if (rule.kind === "badges" || rule.kind === "anyOf") for (const id of rule.ids) assert.ok(ids.has(id), `${a.id} → ${id}`);
     }
   }
+  // Topic ribbons and clan crests are separate: both exist, with the same topic rule.
+  assert.ok(ACHIEVEMENTS.some((a) => a.id === "gatekeeper" && !a.insignia));
+  assert.ok(INSIGNIA.some((a) => a.id === "gate-clan" && a.insignia?.kind === "crest"));
 });
 
 test("the headband is earned by the first topic finished, whichever it is", () => {
   const none = model();
-  assert.equal(badge(none, "headband").earned, false);
+  assert.equal(none.insignia.find((b) => b.id === "headband")!.earned, false);
   assert.equal(none.title, null);
   assert.equal(none.nextTitle?.label, "Genin");
 
   // Machine & Memory has one lesson in this curriculum; finishing it graduates.
   const m = model({ completions: done("inside-the-cpu") });
-  assert.equal(badge(m, "headband").earned, true);
-  assert.equal(badge(m, "headband").earnedAt, daysAgo(20));
+  const headband = m.insignia.find((b) => b.id === "headband")!;
+  assert.equal(headband.earned, true);
+  assert.equal(headband.earnedAt, daysAgo(20));
   assert.equal(m.title?.label, "Genin");
-  assert.equal(m.nextTitle?.label, "Chūnin");
+  // Finishing the topic earns both its ribbon and its clan crest.
+  assert.equal(badge(m, "machinist").earned, true);
+  assert.equal(m.insignia.find((b) => b.id === "core-clan")!.earned, true);
 });
 
-test("titles climb by real work, and 'any N of' counts crests", () => {
-  const cards = Array.from({ length: 30 }, (_, i) => solid(i));
-  const history = [...[9, 8, 7, 6, 5, 4, 3].map((d) => session(daysAgo(d)))];
-  const chunin = model({
+test("tasks are ranked: lessons and sessions D, a strong 10+ card session C, a topic B, projects A and S", () => {
+  const m = model({
     completions: done("what-is-a-bit", "project-half-adder"),
     projectLinks: [{ projectId: "half-adder", repoUrl: "https://github.com/a/h", addedAt: daysAgo(3) }],
-    cards,
-    history,
+    history: [session(daysAgo(5), 4, 5), session(daysAgo(4), 9, 10), session(daysAgo(3), 7, 10)],
   });
-  assert.equal(chunin.title?.label, "Chūnin");
-  const jonin = chunin.titles.find((t) => t.id === "title-jonin")!;
-  const crests = jonin.criteria.find((c) => c.text.startsWith("Earn 2 of the 4 clan crests"))!;
-  assert.deepEqual(crests.progress, { done: 1, total: 2 });
-  assert.equal(chunin.missionRecord.B, 3); // headband, Gate Clan, Gate Builder
-  assert.equal(chunin.missionRecord.D, 2); // First Bit, Week of Practice
+  // D: 2 lessons + 2 sessions (a 4/5 session is short; 7/10 is under 80%). C: the 9/10 session.
+  assert.deepEqual(m.missionRecord, { S: 0, A: 1, B: 1, C: 1, D: 4 });
+});
+
+test("titles climb by completing ranked tasks", () => {
+  const lessons = done("what-is-a-bit", "project-half-adder");
+  const history = [
+    ...Array.from({ length: 13 }, (_, i) => session(daysAgo(30 - i), 3, 5)),
+    ...Array.from({ length: 5 }, (_, i) => session(daysAgo(10 - i), 10, 10)),
+  ];
+  const m = model({ completions: lessons, history });
+  // 2 lessons + 13 short sessions = 15 D; 5 strong sessions = 5 C; the headband makes them Genin first.
+  assert.equal(m.title?.label, "Chūnin");
+  const jonin = m.titles.find((t) => t.id === "title-jonin")!;
+  assert.deepEqual(
+    jonin.criteria.map((c) => [c.text, c.progress?.done ?? null]),
+    [
+      ["Become Chūnin", null],
+      ["Complete 40 D-rank tasks", 15],
+      ["Complete 15 C-rank tasks", 5],
+      ["Complete 2 B-rank tasks", 1],
+      ["Complete 1 A-rank task", 0],
+    ],
+  );
 });
 
 test("a title is never skipped: each one needs the title before it", () => {

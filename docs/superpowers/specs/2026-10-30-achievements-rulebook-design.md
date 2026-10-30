@@ -167,3 +167,19 @@ not used.
   on the profile; "Your title" shows the path and the next title's rule.
 - The user is fine with this ladder because it's framed as fun motivation,
   not levels: no XP, nothing taken away, nothing locked.
+
+## Ranks belong to tasks (2026-10-30, user's correction)
+- **Decorations are never ranked** — an earned decoration is an honour,
+  not a grade. Rank chips are gone from citations, cards and rows.
+- **Ranks grade tasks** (`TASK_RANKS`): D — finish a lesson or do a
+  review session · C — a review session of 10+ cards with 80%+ right ·
+  B — finish a whole topic · A — ship the half adder · S — ship
+  ShellForge. Each task counts once, at its own rank. The mission record
+  counts tasks; "Your title" explains each rank with how many are done.
+- **Titles come from ranked tasks**: Genin — the headband; Chūnin — 15 D
+  + 5 C; Jōnin — 40 D + 15 C + 2 B + 1 A; Sōke — 4 B + 1 A; Ascended —
+  the S-rank task. Each still includes the title before it.
+- **Topic ribbons are back** on the rack (Gatekeeper, Machinist, Pointer
+  Wrangler, Systems Thinker). The headband and the four clans are a
+  separate set of insignia (`INSIGNIA`) worn as emblems — finishing a
+  topic earns its ribbon and, independently, its clan crest.

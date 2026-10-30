@@ -8,6 +8,7 @@ import {
   CREST_IDS,
   GROUP_TITLES,
   MISSION_RANKS,
+  TASK_RANKS,
   TITLES,
   type AchievementGroup,
   type Title,
@@ -87,7 +88,6 @@ function Citation({
         <Medal id={badge.id} group={badge.group} glyph={badge.glyph} earned={badge.earned} />
       )}
       <div className="flex flex-col items-center gap-1">
-        <RankChip rank={badge.rank} />
         <h2
           id="citation-title"
           className="m-0 font-display text-[26px] font-extrabold leading-tight tracking-[-0.03em]"
@@ -355,8 +355,8 @@ function Uniform({
   isNew: (id: string) => boolean;
   onSelect: Select;
 }) {
-  const headband = model.parts.find((p) => p.insignia?.kind === "headband")!;
-  const crests = CREST_IDS.map((id) => model.parts.find((p) => p.id === id)!);
+  const headband = model.insignia.find((p) => p.insignia?.kind === "headband")!;
+  const crests = CREST_IDS.map((id) => model.insignia.find((p) => p.id === id)!);
   return (
     <section
       aria-labelledby="chest-title"
@@ -464,7 +464,6 @@ function NextUpCard({
       >
         <BadgeMark badge={badge} />
         <span className="min-w-0 flex-1 text-[15px] font-semibold">{badge.label}</span>
-        <RankChip rank={badge.rank} />
         {badge.criteria.length > 1 ? (
           <span className="shrink-0 text-[12px] text-[var(--coach-ink-muted)]">
             {met} of {badge.criteria.length} met
@@ -516,7 +515,6 @@ function RestRow({ badge, selected, onSelect }: { badge: BadgeView; selected: bo
         <span className="min-w-0">
           <span className="flex items-center gap-2 text-[14.5px] font-semibold">
             {badge.label}
-            <RankChip rank={badge.rank} />
           </span>
           <span className="block text-[13px] leading-snug text-[var(--coach-ink-secondary)]">
             {ruleSentence(badge)}
@@ -677,8 +675,22 @@ function TitleSection({
           ))}
         </ol>
         <p className="m-0 text-[13px] leading-relaxed text-[var(--coach-ink-muted)]">
-          Titles are earned by real work, kept for good, and never lock anything.
+          Titles are earned by completing ranked tasks, kept for good, and never lock anything.
         </p>
+        <div className="flex flex-col gap-2 border-t border-[var(--coach-divider)] pt-4">
+          <h3 className="m-0 text-[13px] font-semibold text-[var(--coach-ink-muted)]">What each task rank means</h3>
+          <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+            {[...MISSION_RANKS].reverse().map((rank) => (
+              <li key={rank} className="flex items-start gap-2.5 text-[13px] leading-snug text-[var(--coach-ink-secondary)]">
+                <RankChip rank={rank} />
+                <span className="min-w-0 flex-1">{TASK_RANKS[rank]}</span>
+                <span className="shrink-0 font-mono text-[12px] text-[var(--coach-ink-muted)]">
+                  {model.missionRecord[rank]} done
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       {nextTitle ? (
@@ -719,8 +731,7 @@ function TitleSection({
 /** The learner's decorations worn on a uniform, with a citation for each, and the ones still to earn. */
 export function Chest({ model, name }: { model: AchievementsModel; name: string }) {
   const worn = byPrecedence(model.parts.filter((p) => p.earned));
-  const ribbons = worn.filter((p) => !p.insignia);
-  const everything = [...model.parts, ...model.titles];
+  const everything = [...model.parts, ...model.insignia, ...model.titles];
   const toEarn = [...model.parts.filter((p) => !p.earned)].sort(
     (a, b) => b.ratio - a.ratio || model.parts.indexOf(a) - model.parts.indexOf(b),
   );
@@ -744,7 +755,7 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
       <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
         <Uniform
           model={model}
-          worn={ribbons}
+          worn={worn}
           firstToEarn={toEarn[0]}
           name={name}
           title={model.title?.label ?? null}

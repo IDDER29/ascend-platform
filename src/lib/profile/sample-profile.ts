@@ -86,17 +86,22 @@ export function sampleAchievementsInput(lessons: ProfileLesson[], now: Date): Ac
       updatedAt: daysAgo(now, 5),
     };
   });
-  // Eight days in a row ending last week, plus two recent sessions.
-  const history: PracticeSessionRecord[] = [14, 13, 12, 11, 10, 9, 8, 7, 3, 1].map((d) => ({
-    id: `sample-session-${d}`,
-    at: daysAgo(now, d),
-    scopeType: "due",
-    scopeLabel: "Due review",
-    pathSlug: null,
-    correct: 7,
-    total: 8,
-    missIds: [],
-    questionIds: [],
-  }));
+  // A few early sessions, eight days in a row ending last week, then two recent ones.
+  // The last five are strong 10-card sessions (C-rank tasks); the rest are everyday (D-rank).
+  const days = [22, 21, 20, 19, 14, 13, 12, 11, 10, 9, 8, 7, 3, 1];
+  const history: PracticeSessionRecord[] = days.map((d, i) => {
+    const strong = i >= days.length - 5;
+    return {
+      id: `sample-session-${d}`,
+      at: daysAgo(now, d),
+      scopeType: "due",
+      scopeLabel: "Due review",
+      pathSlug: null,
+      correct: strong ? 9 : 7,
+      total: strong ? 10 : 8,
+      missIds: [],
+      questionIds: [],
+    };
+  });
   return { lessons, completions, projectLinks, cards, history, now };
 }

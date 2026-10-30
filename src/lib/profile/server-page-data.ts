@@ -43,9 +43,9 @@ function withEarnedBadges(model: ProfileModel, achievements: AchievementsModel):
         earnedLabel: part.earnedLabel ?? "",
       })),
     insignia: {
-      headband: achievements.parts.some((p) => p.insignia?.kind === "headband" && p.earned),
+      headband: achievements.insignia.some((p) => p.insignia?.kind === "headband" && p.earned),
       title: title ? { label: title.label, kanji: title.kanji, gloss: title.gloss } : null,
-      crests: CREST_IDS.map((id) => byId.get(id)!).map((p) => ({
+      crests: CREST_IDS.map((id) => achievements.insignia.find((p) => p.id === id)!).map((p) => ({
         crest: p.insignia?.kind === "crest" ? p.insignia.crest : "gate",
         label: p.label,
         earned: p.earned,

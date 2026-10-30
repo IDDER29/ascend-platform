@@ -81,7 +81,19 @@ function YourMemory({ cards }: { cards: PracticeCard[] }) {
       <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
         You&apos;d recall about{" "}
         <span className="font-semibold text-[var(--coach-ink)]">{Math.round(curve.today * 100)}%</span> of your{" "}
-        {curve.cards} {curve.cards === 1 ? "card" : "cards"} today.
+        {curve.cards} {curve.cards === 1 ? "card" : "cards"} now
+        {curve.points[0].kept - curve.today > 0.005 ? (
+          <>
+            {" "}
+            — about{" "}
+            <span className="font-semibold text-[var(--coach-ink)]">
+              {Math.round(curve.points[0].kept * 100)}%
+            </span>{" "}
+            once you&apos;ve done today&apos;s reviews.
+          </>
+        ) : (
+          "."
+        )}
       </p>
       <MemoryCurveChart curve={curve} />
       <p className="m-0 text-[12px] leading-snug text-[var(--coach-ink-muted)]">

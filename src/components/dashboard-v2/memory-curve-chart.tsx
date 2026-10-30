@@ -27,6 +27,11 @@ export function MemoryCurveChart({ curve }: { curve: MemoryCurve }) {
   const y = (r: number) => PAD.top + (1 - r) * (H - PAD.top - PAD.bottom);
   const line = (key: "kept" | "stopped") =>
     curve.points.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.day).toFixed(1)},${y(p[key]).toFixed(1)}`).join(" ");
+  // Both lines start where you are now; reviewing what's due today jumps the solid one up.
+  const today = curve.today;
+  const afterToday = curve.points[0].kept;
+  const reviewsToday = afterToday - today > 0.005;
+  const keptPath = `M${x(0).toFixed(1)},${y(today).toFixed(1)} ${line("kept").replace(/^M/, "L")}`;
   const end = curve.points[last];
   const shown = hover === null ? null : curve.points[hover];
 
@@ -79,7 +84,7 @@ export function MemoryCurveChart({ curve }: { curve: MemoryCurve }) {
           viewBox={`0 0 ${W} ${H}`}
           className="block h-auto w-full touch-none"
           role="img"
-          aria-label={`Estimated recall of your ${curve.cards} cards: ${pct(curve.today)} today. Reviewing when due keeps it near ${pct(end.kept)}; if you stop, about ${pct(end.stopped)} in 30 days.`}
+          aria-label={`Estimated recall of your ${curve.cards} cards: ${pct(today)} now${reviewsToday ? `, ${pct(afterToday)} after today's reviews` : ""}. Reviewing when due keeps it near ${pct(end.kept)}; if you stop, about ${pct(end.stopped)} in 30 days.`}
           onPointerMove={onMove}
           onPointerLeave={() => setHover(null)}
         >
@@ -126,13 +131,26 @@ export function MemoryCurveChart({ curve }: { curve: MemoryCurve }) {
             strokeLinejoin="round"
           />
           <path
-            d={line("kept")}
+            d={keptPath}
             fill="none"
             stroke="var(--coach-chart-kept)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
+
+          <circle cx={x(0)} cy={y(today)} r="4" fill="var(--coach-ink)" stroke="var(--coach-surface)" strokeWidth="2" />
+          <text
+            x={x(0) + 7}
+            y={y(today)}
+            dy="-0.7em"
+            stroke="var(--coach-surface)"
+            strokeWidth="3"
+            paintOrder="stroke"
+            className="fill-[var(--coach-ink)] text-[10px] font-semibold tabular-nums"
+          >
+            Now {pct(today)}
+          </text>
 
           {/* Direct labels at the line ends. */}
           <text
@@ -193,7 +211,12 @@ export function MemoryCurveChart({ curve }: { curve: MemoryCurve }) {
             <div className="font-semibold">
               {shown.day === 0 ? "Today" : `In ${shown.day} ${shown.day === 1 ? "day" : "days"}`}
             </div>
-            <div className="tabular-nums">Reviewing: {pct(shown.kept)}</div>
+            <div className="tabular-nums">
+              Reviewing:{" "}
+              {shown.day === 0 && reviewsToday
+                ? `${pct(today)} now, ${pct(shown.kept)} after today's reviews`
+                : pct(shown.kept)}
+            </div>
             <div className="tabular-nums">If you stop: {pct(shown.stopped)}</div>
           </div>
         )}
@@ -214,7 +237,11 @@ export function MemoryCurveChart({ curve }: { curve: MemoryCurve }) {
             .map((p) => (
               <tr key={p.day}>
                 <th scope="row">{p.day === 0 ? "Today" : `Day ${p.day}`}</th>
-                <td>{pct(p.kept)}</td>
+                <td>
+                  {p.day === 0 && reviewsToday
+                    ? `${pct(today)} now, ${pct(p.kept)} after today's reviews`
+                    : pct(p.kept)}
+                </td>
                 <td>{pct(p.stopped)}</td>
               </tr>
             ))}

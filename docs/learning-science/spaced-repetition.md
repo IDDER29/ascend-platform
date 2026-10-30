@@ -130,6 +130,7 @@ Each piece starts at 100% and ends at exactly 90% where the next begins.
   - **If you stop** (dashed orange): no more reviews; each card's recall falls on its own curve.
 - Hover/tap: the day and both values. Screen readers get a table (weekly points).
 - Footnote: "An estimate from when you last reviewed each card, not a test."
+- **Fix (2026-10-30):** the first version started "Reviewing when due" at 100% today while the sentence said 35% — it silently assumed today's due reviews were done. Now both lines start at the real recall ("Now 35%"), the solid line jumps up at today to show what doing today's reviews gives, and the sentence says it: "about 35% now — about 100% once you've done today's reviews". The wobble in the solid line is real: it's the average of many sawtooths.
 
 **The model** (`memoryCurve` in `src/lib/practice/memory-curve.ts`):
 - Per card: stability `S = intervalDays` (min 1) for review cards — SM-2 sets the interval so the card comes due about when it's worth reviewing, which is FSRS's definition of S at 90%. Last review = `dueAt − intervalDays`. Cards just missed ("learning") get `S = 0.5` days from `updatedAt`.

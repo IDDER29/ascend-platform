@@ -102,3 +102,17 @@ export function deckMemory(history: PracticeSessionRecord[], now: Date): DeckMem
     to: FUTURE_DAYS,
   };
 }
+
+/** The memory of just these cards: their reviews only, as `deckMemory`. Null when none were reviewed. */
+export function setMemory(history: PracticeSessionRecord[], ids: string[], now: Date): DeckMemory | null {
+  if (ids.length === 0) return null;
+  const keep = new Set(ids);
+  const only = history
+    .map((s) => ({
+      ...s,
+      questionIds: s.questionIds.filter((id) => keep.has(id)),
+      missIds: s.missIds.filter((id) => keep.has(id)),
+    }))
+    .filter((s) => s.questionIds.length > 0);
+  return deckMemory(only, now);
+}

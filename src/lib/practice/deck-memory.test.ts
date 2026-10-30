@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { deckMemory } from "./deck-memory";
+import { deckMemory, setMemory } from "./deck-memory";
 import type { PracticeSessionRecord } from "./history";
 
 const NOW = new Date(2026, 9, 30, 12);
@@ -55,4 +55,13 @@ test("the window reaches back to the last review, even weeks ago", () => {
   const m = deckMemory([session(30, ["a"]), session(20, ["a"])], NOW)!;
   assert.ok(m.from <= -21);
   assert.ok(m.lastReview!.day >= m.from);
+});
+
+test("a set's memory counts only its own cards", () => {
+  const history = [session(10, ["a", "b"]), session(1, ["b"])];
+  const a = setMemory(history, ["a"], NOW)!;
+  assert.equal(a.cards, 1);
+  assert.ok(Math.abs(a.lastReview!.day + 10) < 1e-9);
+  assert.equal(setMemory(history, ["zzz"], NOW), null);
+  assert.equal(setMemory(history, [], NOW), null);
 });

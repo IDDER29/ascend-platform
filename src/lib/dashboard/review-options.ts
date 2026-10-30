@@ -5,8 +5,17 @@
  * paths with cards due, your saved decks, and what you saved as "Didn't get
  * it". Each says how much is waiting.
  */
+export type ReviewIcon = "misses" | "shaky" | "path" | "deck" | "flagged";
+
 export type ReviewOption = {
   id: string;
+  icon: ReviewIcon;
+  /** For path rows: which path, so the row wears that path's own icon. */
+  pathSlug: string | null;
+  /** The cards this set covers: its own memory curve is drawn from them. */
+  cardIds: string[];
+  /** Cards a review of it takes now (for "about N min"); 0 when nothing's waiting. */
+  toDo: number;
   title: string;
   detail: string;
   /** "3 to fix", "12 due", "All clear". */
@@ -17,10 +26,13 @@ export type ReviewOption = {
 };
 
 export type ReviewOptionsInput = {
-  missesDue: number;
+  /** Cards you missed that are due again now. */
+  misses: string[];
   missesHref: string;
   /** Cards you got right but slowly, or just after missing them. */
-  shaky: { count: number; slow: number; href: string | null };
+  shaky: { ids: string[]; slow: number; href: string | null };
+  /** Each path's cards you've unlocked, by Practice path slug. */
+  pathCards: Record<string, string[]>;
   /** Cards due now, by Practice path slug. */
   dueByPath: Record<string, number>;
   /** The path you're on (from Your paths); its review sits first after misses. */
@@ -28,8 +40,9 @@ export type ReviewOptionsInput = {
   /** Your other joined paths. */
   otherPaths: { slug: string; title: string }[];
   pathHref: (slug: string, due: number) => string;
-  decks: { id: string; name: string; due: number; total: number; href: string | null }[];
-  flagged: number;
+  decks: { id: string; name: string; due: number; total: number; href: string | null; cardIds: string[] }[];
+  /** "Didn't get it" bookmarks, and the Practice cards among them. */
+  flagged: { count: number; cardIds: string[] };
 };
 
 const due = (n: number) => `${n} due`;
@@ -38,23 +51,31 @@ export function buildReviewOptions(input: ReviewOptionsInput): ReviewOption[] {
   const options: ReviewOption[] = [
     {
       id: "misses",
+      icon: "misses",
+      pathSlug: null,
+      cardIds: input.misses,
+      toDo: input.misses.length,
       title: "Fix your misses",
       detail: "The cards you got wrong, while they're fresh.",
-      badge: input.missesDue > 0 ? `${input.missesDue} to fix` : "All clear",
-      waiting: input.missesDue > 0,
+      badge: input.misses.length > 0 ? `${input.misses.length} to fix` : "All clear",
+      waiting: input.misses.length > 0,
       href: input.missesHref,
     },
   ];
 
-  if (input.shaky.count > 0 && input.shaky.href) {
+  if (input.shaky.ids.length > 0 && input.shaky.href) {
     options.push({
       id: "shaky",
+      icon: "shaky",
+      pathSlug: null,
+      cardIds: input.shaky.ids,
+      toDo: input.shaky.ids.length,
       title: "Right, but shaky",
       detail:
         input.shaky.slow > 0
           ? "Cards you got right, but slowly or just after missing them."
           : "Cards you got right just after missing them.",
-      badge: `${input.shaky.count} ${input.shaky.count === 1 ? "card" : "cards"}`,
+      badge: `${input.shaky.ids.length} ${input.shaky.ids.length === 1 ? "card" : "cards"}`,
       waiting: true,
       href: input.shaky.href,
     });
@@ -64,6 +85,10 @@ export function buildReviewOptions(input: ReviewOptionsInput): ReviewOption[] {
     const n = input.dueByPath[input.activePath.slug] ?? 0;
     options.push({
       id: `path:${input.activePath.slug}`,
+      icon: "path",
+      pathSlug: input.activePath.slug,
+      cardIds: input.pathCards[input.activePath.slug] ?? [],
+      toDo: n,
       title: `Review ${input.activePath.title}`,
       detail: "Your current path: review what you've learned on it before you continue.",
       badge: n > 0 ? due(n) : "All clear",
@@ -77,6 +102,10 @@ export function buildReviewOptions(input: ReviewOptionsInput): ReviewOption[] {
     if (n === 0) continue;
     options.push({
       id: `path:${path.slug}`,
+      icon: "path",
+      pathSlug: path.slug,
+      cardIds: input.pathCards[path.slug] ?? [],
+      toDo: n,
       title: path.title,
       detail: "Another path you follow, with cards waiting.",
       badge: due(n),
@@ -89,6 +118,10 @@ export function buildReviewOptions(input: ReviewOptionsInput): ReviewOption[] {
     if (!deck.href) continue;
     options.push({
       id: `deck:${deck.id}`,
+      icon: "deck",
+      pathSlug: null,
+      cardIds: deck.cardIds,
+      toDo: deck.due,
       title: deck.name,
       detail: "Your custom deck.",
       badge: deck.due > 0 ? due(deck.due) : `${deck.total} ${deck.total === 1 ? "card" : "cards"}`,
@@ -97,12 +130,16 @@ export function buildReviewOptions(input: ReviewOptionsInput): ReviewOption[] {
     });
   }
 
-  if (input.flagged > 0) {
+  if (input.flagged.count > 0) {
     options.push({
       id: "flagged",
+      icon: "flagged",
+      pathSlug: null,
+      cardIds: input.flagged.cardIds,
+      toDo: 0,
       title: "Didn't get it",
       detail: "What you saved in Bookmarks to come back to.",
-      badge: `${input.flagged} saved`,
+      badge: `${input.flagged.count} saved`,
       waiting: true,
       href: "/bookmarks",
     });

@@ -52,3 +52,7 @@
 
 ## Ways to review replaces To revisit (2026-10-30)
 - The user's call: To revisit had no role next to Practice; instead, the review options worth doing now, each with how much is waiting — Fix your misses (N to fix), Review <current path> (before you continue; all clear when nothing's due), other joined paths with cards due, your saved custom decks (N due / N cards), and "Didn't get it" bookmarks (N saved, links to Bookmarks). Misses and the current path always show; the rest only when there's something there. Model: `src/lib/dashboard/review-options.ts` (tested). `revisit-model.ts` and its card were removed.
+
+## Ways to review: icons and each set's own curve (2026-10-30)
+- Each row has its own icon in the dark tile used for paths: ↺ misses, pulse line for shaky, the path's own icon for path rows, stacked layers for a custom deck, a bookmark for Didn't get it.
+- Under the title, the set's own memory curve (only its cards; `setMemory` in `deck-memory.ts`), from its last review to today, with a dashed rise to where a review today would take it; then "N% now → about M% if you review" (or "· holding"), and "Last reviewed <when> · about N min" (30 s a card). No curve for a set nobody has reviewed. No streaks or points per row — the slope and the date do the nudging.

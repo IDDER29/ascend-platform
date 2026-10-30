@@ -4,15 +4,16 @@ import { buildReviewOptions, type ReviewOptionsInput } from "./review-options";
 
 function options(patch: Partial<ReviewOptionsInput>) {
   return buildReviewOptions({
-    missesDue: 3,
+    misses: ["m1", "m2", "m3"],
     missesHref: "/practice/session?scope=due",
-    shaky: { count: 0, slow: 0, href: null },
+    shaky: { ids: [], slow: 0, href: null },
+    pathCards: {},
     dueByPath: { "systems-programmer": 4, foundations: 12 },
     activePath: { slug: "systems-programmer", title: "Systems Programmer" },
     otherPaths: [{ slug: "foundations", title: "Foundations" }],
     pathHref: (slug, n) => (n > 0 ? `/session?path=${slug}` : `/practice/paths/${slug}`),
     decks: [],
-    flagged: 0,
+    flagged: { count: 0, cardIds: [] },
     ...patch,
   });
 }
@@ -29,7 +30,7 @@ test("misses, then the current path, then other paths with cards due", () => {
 });
 
 test("nothing waiting: misses and the current path say all clear; other paths drop out", () => {
-  const o = options({ missesDue: 0, dueByPath: {} });
+  const o = options({ misses: [], dueByPath: {} });
   assert.deepEqual(
     o.map((x) => [x.title, x.badge, x.waiting]),
     [
@@ -44,11 +45,11 @@ test("decks with cards come in, waiting ones before the rest; flagged bookmarks 
   const o = options({
     dueByPath: {},
     decks: [
-      { id: "a", name: "Pointers", due: 0, total: 9, href: "/d/a" },
-      { id: "b", name: "Gates", due: 2, total: 6, href: "/d/b" },
-      { id: "c", name: "Empty", due: 0, total: 0, href: null },
+      { id: "a", name: "Pointers", due: 0, total: 9, href: "/d/a", cardIds: [] },
+      { id: "b", name: "Gates", due: 2, total: 6, href: "/d/b", cardIds: [] },
+      { id: "c", name: "Empty", due: 0, total: 0, href: null, cardIds: [] },
     ],
-    flagged: 2,
+    flagged: { count: 2, cardIds: [] },
   });
   assert.deepEqual(
     o.map((x) => [x.title, x.badge]),
@@ -63,7 +64,7 @@ test("decks with cards come in, waiting ones before the rest; flagged bookmarks 
 });
 
 test("shaky cards come right after misses", () => {
-  const o = options({ shaky: { count: 4, slow: 3, href: "/deck/shaky" } });
+  const o = options({ shaky: { ids: ["a", "b", "c", "d"], slow: 3, href: "/deck/shaky" } });
   assert.deepEqual(
     o.slice(0, 3).map((x) => [x.title, x.badge]),
     [
@@ -73,4 +74,16 @@ test("shaky cards come right after misses", () => {
     ],
   );
   assert.equal(o[1].href, "/deck/shaky");
+});
+
+test("each row knows its icon, its cards, and how many a review takes", () => {
+  const o = options({ pathCards: { "systems-programmer": ["x", "y"] } });
+  assert.deepEqual(
+    o.map((x) => [x.icon, x.pathSlug, x.cardIds.length, x.toDo]),
+    [
+      ["misses", null, 3, 3],
+      ["path", "systems-programmer", 2, 4],
+      ["path", "foundations", 0, 12],
+    ],
+  );
 });

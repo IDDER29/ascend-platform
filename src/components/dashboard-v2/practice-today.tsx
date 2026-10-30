@@ -52,7 +52,9 @@ function usePracticeToday({
   history: PracticeSessionRecord[] | null;
   cards: PracticeCard[];
   dueByPath: Record<string, number> | null;
-  decks: { id: string; name: string; due: number; total: number; href: string | null }[];
+  pathCards: Record<string, string[]>;
+  misses: string[];
+  decks: { id: string; name: string; due: number; total: number; href: string | null; cardIds: string[] }[];
 } {
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
   const unlockedIds = useMemo(() => unlockedQuestions(completed).map((q) => q.id), [completed]);
@@ -61,7 +63,9 @@ function usePracticeToday({
     history: PracticeSessionRecord[];
     cards: PracticeCard[];
     dueByPath: Record<string, number>;
-    decks: { id: string; name: string; due: number; total: number; href: string | null }[];
+    pathCards: Record<string, string[]>;
+    misses: string[];
+    decks: { id: string; name: string; due: number; total: number; href: string | null; cardIds: string[] }[];
   } | null>(null);
 
   useEffect(() => {
@@ -85,7 +89,19 @@ function usePracticeToday({
       if (slug) dueByPath[slug] = (dueByPath[slug] ?? 0) + 1;
     }
     const rows = buildCoachBankModel({ cards, history, completedKeys: completed, now }).rows;
+    // Each path's cards you've started, and your misses due again: for each set's own curve.
+    const pathCards: Record<string, string[]> = {};
+    for (const card of cards) {
+      if (card.state === "new") continue;
+      const q = QUESTION_BY_ID.get(card.questionId);
+      const slug = q ? practicePathSlugForLevel(q.lessonLevel) : null;
+      if (slug) (pathCards[slug] ??= []).push(card.questionId);
+    }
+    const misses = cards
+      .filter((c) => c.state === "learning" && Date.parse(c.dueAt) <= now.getTime())
+      .map((c) => c.questionId);
     const decks = savedDeckItems(rows, initialDecks).map(({ deck, summary, href }) => ({
+      cardIds: summary.pickedIds,
       id: deck.id,
       name: deck.name,
       due: summary.counts.due,
@@ -93,7 +109,7 @@ function usePracticeToday({
       href,
     }));
     queueMicrotask(() => {
-      if (!cancelled) setState({ model: next, history, cards, dueByPath, decks });
+      if (!cancelled) setState({ model: next, history, cards, dueByPath, pathCards, misses, decks });
     });
     return () => {
       cancelled = true;
@@ -105,6 +121,8 @@ function usePracticeToday({
     history: state?.history ?? null,
     cards: state?.cards ?? [],
     dueByPath: state?.dueByPath ?? null,
+    pathCards: state?.pathCards ?? {},
+    misses: state?.misses ?? [],
     decks: state?.decks ?? [],
   };
 }
@@ -197,9 +215,10 @@ function PracticeDueCard({
   );
 }
 
-/** What you flagged in Bookmarks, counted in this browser. */
-function useFlaggedCount(): number {
-  return (useBookmarks() ?? []).filter((b) => b.reason === "revisit").length;
+/** What you flagged in Bookmarks ("Didn't get it"), in this browser, and the Practice cards among them. */
+function useFlagged(): { count: number; cardIds: string[] } {
+  const flagged = (useBookmarks() ?? []).filter((b) => b.reason === "revisit");
+  return { count: flagged.length, cardIds: flagged.flatMap((b) => (b.questionId ? [b.questionId] : [])) };
 }
 
 /** The top of the dashboard: the next lesson beside today's checklist, then Practice and the ways to review. */
@@ -219,16 +238,16 @@ export function TodayGrid({
   activePath: { slug: string; title: string } | null;
   otherPaths: { slug: string; title: string }[];
 }) {
-  const { model, history, dueByPath, decks } = usePracticeToday(practice);
-  const flagged = useFlaggedCount();
+  const { model, history, dueByPath, pathCards, misses, decks } = usePracticeToday(practice);
+  const flagged = useFlagged();
   const shaky = history ? shakyCards(history) : [];
   const options =
     model && dueByPath
       ? buildReviewOptions({
-          missesDue: model.modes.missesDue,
+          misses,
           missesHref: `${PRACTICE_ROUTES.session}?scope=due`,
           shaky: {
-            count: shaky.length,
+            ids: shaky.map((c) => c.id),
             slow: shaky.filter((c) => c.reason === "slow").length,
             href:
               shaky.length > 0
@@ -239,6 +258,7 @@ export function TodayGrid({
                 : null,
           },
           dueByPath,
+          pathCards,
           activePath,
           otherPaths,
           pathHref: (slug, n) =>
@@ -255,7 +275,7 @@ export function TodayGrid({
       </div>
       <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2">
         <PracticeDueCard model={model} history={history} />
-        <ReviewOptionsCard options={options} />
+        <ReviewOptionsCard options={options} history={history} />
       </div>
     </>
   );

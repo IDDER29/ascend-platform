@@ -323,6 +323,13 @@ html.sidebar-collapsed .app-sidebar-section {
   line-height: 0;
 }
 
+/* Phone tab bar height, for anything pinned to the bottom of the screen above it. */
+@media (max-width: 767px) {
+  html:has(.app-tabbar) {
+    --app-tabbar-h: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
 /* Practice Coach (v2) — scoped palette. Coach keeps its own blue / lime identity. */
 .practice-coach-v2 {
   --coach-bg: #f6f4ee;

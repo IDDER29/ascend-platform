@@ -1,9 +1,10 @@
 import { SiteFooter } from "@/components/site/site-footer";
 import { ShellFooter } from "@/components/ui/shell-footer";
+import { MobileTabBar } from "@/components/ui/mobile-tab-bar";
 import { AppSidebar } from "@/components/ui/sidebar";
 
 /**
- * Universal learner chrome — sidebar + site footer (no topbar).
+ * Universal learner chrome — sidebar (a bottom tab bar on phones) + site footer (no topbar).
  * Mount once from route layouts; pages only render main content.
  * Sidebar collapse state is shared via localStorage across all shells.
  */
@@ -18,6 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <SiteFooter />
           </div>
         </ShellFooter>
+        <MobileTabBar />
       </div>
     </div>
   );

@@ -3,21 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect, useSyncExternalStore } from "react";
-import {
-  LayoutDashboard,
-  Map,
-  Swords,
-  LineChart,
-  UserRound,
-  Trophy,
-  Bookmark,
-  ChevronRight,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from "lucide-react";
-import { PATHS_HREF, SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
+import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
 import { useAuthUser } from "@/lib/auth/context";
+import { signOutAction } from "@/lib/auth/actions";
+import { SIDEBAR_GROUPS, dueBadge, isNavActive, navAccessibleName, type AppNavItem } from "@/lib/nav/app-nav";
+import { useDueCount } from "@/lib/nav/use-due-count";
+import { BrandMark } from "@/components/site/site-ui";
 import { ThemeToggle } from "@/components/site/theme-toggle";
+import { NAV_ICONS } from "@/components/ui/nav-icons";
 import { PlaceholderAvatar } from "@/components/ui/placeholder-avatar";
 import { cn } from "@/lib/cn";
 
@@ -69,112 +63,66 @@ function writeCollapsed(next: boolean) {
   notifyCollapsedChange();
 }
 
-const LEARN_ITEMS = [
-  { href: "/dashboard", label: "Today", icon: LayoutDashboard },
-  { href: PATHS_HREF, label: "Paths", icon: Map },
-  { href: "/practice", label: "Practice", icon: Swords },
-];
-
-const YOU_ITEMS = [
-  { href: "/progress", label: "Progress", icon: LineChart },
-  { href: "/profile", label: "Profile", icon: UserRound },
-];
-
-const MORE_ITEMS = [
-  { href: "/achievements", label: "Achievements", icon: Trophy },
-  { href: "/bookmarks", label: "Bookmarks", icon: Bookmark },
-];
-
-function isNavActive(pathname: string | null, href: string): boolean {
-  if (!pathname) return false;
-  if (href === PATHS_HREF) {
-    return (
-      pathname === PATHS_HREF ||
-      pathname.startsWith(`${PATHS_HREF}/`) ||
-      pathname.startsWith("/lessons/") ||
-      pathname.startsWith("/curriculum") ||
-      pathname.startsWith("/projects/shellforge")
-    );
-  }
-  if (href === "/dashboard") {
-    return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
-  }
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function Row({
-  href,
-  label,
-  icon: Icon,
-  active,
-  collapsed,
-  muted,
-}: {
-  href: string;
-  label: string;
-  icon: typeof LayoutDashboard;
-  active?: boolean;
-  collapsed: boolean;
-  muted?: boolean;
-}) {
+/** Lime count pill; in the collapsed rail it sits on the icon's corner. */
+export function DueBadge({ count, corner }: { count: number; corner?: boolean }) {
+  const text = dueBadge(count);
+  if (!text) return null;
   return (
-    <Link
-      href={href}
-      title={collapsed ? label : undefined}
+    <span
+      aria-hidden
       className={cn(
-        "relative mb-0.5 flex items-center gap-3 rounded-xl text-[14.5px] font-medium transition-colors",
-        collapsed ? "h-11 w-11 justify-center" : "px-3 py-2.5",
-        active
-          ? "bg-xp-bg font-bold text-xp-text"
-          : muted
-            ? "text-ink-faint hover:bg-[#F3F1FB] hover:text-ink-secondary"
-            : "text-ink-secondary hover:bg-[#F3F1FB]",
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--coach-lime)] px-1.5 text-[11.5px] font-bold tabular-nums leading-none text-[var(--coach-lime-ink)]",
+        corner && "absolute -right-1.5 -top-1.5 h-[18px] min-w-[18px] px-1 text-[10.5px] ring-2 ring-[var(--coach-bg)]",
       )}
     >
-      {active && (
-        <span
-          className={cn(
-            "absolute rounded-full bg-brand-gradient",
-            collapsed
-              ? "-left-[15px] top-1/2 h-[22px] w-[3px] -translate-y-1/2"
-              : "-left-4 top-1/2 h-[22px] w-[3px] -translate-y-1/2",
-          )}
-        />
-      )}
-      <span
-        className={cn(
-          "flex h-5 w-5 flex-none items-center justify-center",
-          active ? "text-brand-violet" : "text-ink-faint",
-        )}
-      >
-        <Icon size={collapsed ? 18 : 17} strokeWidth={2.1} />
-      </span>
-      <span className="app-sidebar-label">{label}</span>
-    </Link>
+      {text}
+    </span>
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function Row({
+  item,
+  active,
+  collapsed,
+  count,
+}: {
+  item: AppNavItem;
+  active: boolean;
+  collapsed: boolean;
+  count: number;
+}) {
+  const Icon = NAV_ICONS[item.id];
   return (
-    <div className="app-sidebar-section mb-2 mt-1 px-3 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-fainter">
-      {children}
-    </div>
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      aria-label={collapsed || count > 0 ? navAccessibleName(item.label, count) : undefined}
+      title={collapsed ? item.label : undefined}
+      className={cn(
+        "relative flex items-center gap-3 rounded-xl text-[14.5px] no-underline",
+        collapsed ? "size-11 justify-center" : "min-h-10 px-3",
+        active
+          ? "bg-[var(--coach-ink)] font-semibold text-[var(--coach-bg)]"
+          : "font-medium text-[var(--coach-ink-secondary)] hover:bg-[var(--coach-tint-neutral-bg)] hover:text-[var(--coach-ink)]",
+      )}
+    >
+      <span className="relative flex size-5 flex-none items-center justify-center">
+        <Icon size={18} strokeWidth={2.1} aria-hidden />
+        {collapsed && <DueBadge count={count} corner />}
+      </span>
+      <span className="app-sidebar-label flex-1">{item.label}</span>
+      {!collapsed && <DueBadge count={count} />}
+    </Link>
   );
 }
 
 export function AppSidebar() {
   const pathname = usePathname();
   const user = useAuthUser();
-  const signedIn = Boolean(user);
   const displayName = user?.name?.trim() || null;
+  const due = useDueCount(user?.id ?? null);
 
-  const forceCollapsedByRoute = Boolean(pathname?.startsWith("/curriculum2"));
-
-  const storedCollapsed = useSyncExternalStore(
-    subscribeCollapsed,
-    readCollapsed,
-    () => false,
-  );
+  const collapsed = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => false);
 
   // Client-only: defer width transitions until after hydration (avoids expand→collapse flash).
   const widthReady = useSyncExternalStore(
@@ -184,22 +132,11 @@ export function AppSidebar() {
   );
 
   useLayoutEffect(() => {
-    const stored = readCollapsed();
-    document.documentElement.classList.toggle(
-      "sidebar-collapsed",
-      stored || forceCollapsedByRoute,
-    );
-  }, [forceCollapsedByRoute]);
-
-  const collapsed = forceCollapsedByRoute || storedCollapsed;
-
-  function toggle() {
-    if (forceCollapsedByRoute) return;
-    writeCollapsed(!storedCollapsed);
-  }
+    document.documentElement.classList.toggle("sidebar-collapsed", readCollapsed());
+  }, []);
 
   const width = collapsed ? "w-[78px]" : "w-[260px]";
-  const profileHref = signedIn ? "/profile" : SIGNIN_HREF;
+  const signInHref = pathname ? `${SIGNIN_HREF}?next=${encodeURIComponent(pathname)}` : SIGNIN_HREF;
 
   return (
     <>
@@ -212,8 +149,9 @@ export function AppSidebar() {
         aria-hidden="true"
       />
       <aside
+        aria-label="App"
         className={cn(
-          "app-sidebar fixed inset-y-0 left-0 z-20 hidden flex-col border-r border-divider bg-bg md:flex",
+          "app-sidebar practice-coach-v2 fixed inset-y-0 left-0 z-20 hidden flex-col border-r-2 border-[var(--coach-border)] bg-[var(--coach-bg)] font-sans text-[var(--coach-ink)] md:flex",
           collapsed ? "items-center py-5" : "p-4",
           width,
           widthReady && "transition-[width] duration-150",
@@ -221,120 +159,112 @@ export function AppSidebar() {
       >
         <button
           type="button"
-          onClick={toggle}
-          disabled={forceCollapsedByRoute}
-          title={
-            forceCollapsedByRoute
-              ? "Sidebar stays collapsed on the map view"
-              : collapsed
-                ? "Expand sidebar"
-                : "Collapse sidebar"
-          }
-          className={cn(
-            "absolute -right-3 top-[22px] flex h-6 w-6 flex-none items-center justify-center rounded-full border border-divider bg-elevated text-ink-faint shadow-[0_2px_6px_rgba(28,18,64,.08)] transition-colors hover:text-ink-secondary",
-            forceCollapsedByRoute && "cursor-not-allowed opacity-50",
-          )}
+          onClick={() => writeCollapsed(!collapsed)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="absolute -right-3.5 top-[22px] flex size-7 items-center justify-center rounded-full border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] text-[var(--coach-ink-muted)] hover:text-[var(--coach-ink)]"
         >
-          {collapsed ? <PanelLeftOpen size={13} strokeWidth={2.2} /> : <PanelLeftClose size={13} strokeWidth={2.2} />}
+          {collapsed ? <PanelLeftOpen size={14} strokeWidth={2.2} /> : <PanelLeftClose size={14} strokeWidth={2.2} />}
         </button>
 
         <Link
           href="/"
+          aria-label="Ascend home"
           className={cn(
-            "mb-[26px] flex items-center gap-2.5",
-            collapsed ? "justify-center px-0 pt-1" : "px-2 pt-1",
+            "mb-6 flex items-center gap-2.5 rounded-lg text-[var(--coach-ink)] no-underline",
+            collapsed ? "justify-center pt-1" : "px-2 pt-1",
           )}
         >
-          <div className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[11px] bg-brand-gradient shadow-glow">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m6 15 6-6 6 6" />
-              <path d="m6 9 6-6 6 6" opacity=".55" />
-            </svg>
-          </div>
-          <span className="app-sidebar-brand-text font-display text-[19px] font-extrabold tracking-tight text-ink">
+          <BrandMark size={34} />
+          <span className="app-sidebar-brand-text font-display text-[20px] font-extrabold tracking-[-0.02em]">
             Ascend
           </span>
         </Link>
 
-        <SectionLabel>Learn</SectionLabel>
-        {LEARN_ITEMS.map((item) => (
-          <Row
-            key={item.label}
-            {...item}
-            collapsed={collapsed}
-            active={isNavActive(pathname, item.href)}
-          />
-        ))}
-        <SectionLabel>You</SectionLabel>
-        {YOU_ITEMS.map((item) => (
-          <Row
-            key={item.label}
-            {...item}
-            collapsed={collapsed}
-            active={isNavActive(pathname, item.href)}
-          />
-        ))}
-        <SectionLabel>More</SectionLabel>
-        {MORE_ITEMS.map((item) => (
-          <Row
-            key={item.label}
-            {...item}
-            collapsed={collapsed}
-            muted
-            active={isNavActive(pathname, item.href)}
-          />
-        ))}
-
-        <div className={cn("mt-auto flex flex-col", collapsed ? "items-center gap-2" : "gap-3 pt-[18px]")}>
-          <ThemeToggle
-            className={cn(collapsed ? "shrink-0" : "self-start")}
-          />
-          {collapsed ? (
-            <Link
-              href={profileHref}
-              title={signedIn ? displayName || "Profile" : "Sign in"}
-              className="rounded-full"
-            >
-              <PlaceholderAvatar
-                name={signedIn ? displayName : null}
-                size="sm"
-                className="h-10 w-10 rounded-full"
-              />
-            </Link>
-          ) : signedIn ? (
-            <Link
-              href="/settings"
-              className="app-sidebar-expanded-only relative block overflow-hidden rounded-2xl border border-card-border bg-elevated p-[15px] text-ink"
-            >
-              <div className="relative flex items-center gap-2.5">
-                <PlaceholderAvatar name={displayName} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13.5px] font-bold">{displayName || "Learner"}</div>
-                  <div className="font-mono text-[11px] text-ink-faint">Settings</div>
+        {/* Scrolls on short screens; the collapse button stays outside so it isn't clipped. */}
+        <div className={cn("-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto px-1", collapsed && "items-center")}>
+          <nav aria-label="Main" className={cn("flex flex-col", collapsed ? "items-center gap-4" : "gap-5")}>
+            {SIDEBAR_GROUPS.map((group) => (
+              <div key={group.label} className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
+                <div className="app-sidebar-section mb-1 px-3 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">
+                  {group.label}
                 </div>
-                <ChevronRight size={16} className="text-ink-fainter" />
+                {group.items.map((item) => (
+                  <Row
+                    key={item.id}
+                    item={item}
+                    collapsed={collapsed}
+                    active={isNavActive(pathname, item.href)}
+                    count={item.id === "practice" ? due : 0}
+                  />
+                ))}
               </div>
-            </Link>
-          ) : (
-            <div className="app-sidebar-expanded-only rounded-2xl border border-card-border bg-paper p-4 dark:bg-elevated">
-              <div className="mb-1 text-[13.5px] font-bold text-ink">Learning as a guest</div>
-              <p className="mb-3 text-[12.5px] leading-relaxed text-ink-secondary">
-                Lessons are free to read. Sign in when you want progress saved.
-              </p>
+            ))}
+          </nav>
+
+          <div className={cn("mt-auto flex flex-col", collapsed ? "items-center gap-3" : "gap-3 pt-5")}>
+            <ThemeToggle className={collapsed ? undefined : "self-start"} />
+            {collapsed ? (
               <Link
-                href={SIGNIN_HREF}
-                className="inline-flex w-full items-center justify-center rounded-xl bg-ink px-3 py-2.5 text-[13px] font-bold text-bg"
+                href={user ? "/profile" : signInHref}
+                aria-label={user ? `${displayName || "Your"} profile` : "Sign in"}
+                title={user ? displayName || "Profile" : "Sign in"}
+                className="rounded-xl no-underline"
               >
-                Sign in to save
+                <PlaceholderAvatar
+                  name={user ? displayName : null}
+                  size="sm"
+                  className="border-2 border-[color:var(--coach-border)] bg-[color:var(--coach-surface)]"
+                />
               </Link>
-              <Link
-                href={SIGNUP_HREF}
-                className="mt-2 inline-flex w-full items-center justify-center text-[12.5px] font-semibold text-brand-violet hover:underline"
-              >
-                New here? Create account
-              </Link>
-            </div>
-          )}
+            ) : user ? (
+              <div className="app-sidebar-expanded-only flex items-center gap-2.5 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-2.5">
+                <Link
+                  href="/profile"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-[var(--coach-ink)] no-underline"
+                >
+                  <PlaceholderAvatar
+                    name={displayName}
+                    size="sm"
+                    className="border-2 border-[color:var(--coach-border)] bg-[color:var(--coach-bg)]"
+                  />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[14px] font-bold">{displayName || "Learner"}</span>
+                    <span className="block truncate text-[12.5px] text-[var(--coach-ink-muted)]">@{user.username}</span>
+                  </span>
+                </Link>
+                <form action={signOutAction}>
+                  <button
+                    type="submit"
+                    aria-label="Sign out"
+                    title="Sign out"
+                    className="flex size-9 items-center justify-center rounded-lg text-[var(--coach-ink-muted)] hover:bg-[var(--coach-tint-neutral-bg)] hover:text-[var(--coach-ink)]"
+                  >
+                    <LogOut size={17} strokeWidth={2.1} aria-hidden />
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="app-sidebar-expanded-only rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-4">
+                <p className="m-0 text-[14px] font-bold">Learning as a guest</p>
+                <p className="m-0 mt-1 text-[13px] leading-relaxed text-[var(--coach-ink-secondary)]">
+                  Lessons are free. An account keeps your progress on every device.
+                </p>
+                <Link
+                  href={SIGNUP_HREF}
+                  className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-full bg-[var(--coach-lime)] px-3 text-[13.5px] font-bold text-[var(--coach-lime-ink)] no-underline shadow-[0_2px_0_var(--coach-lime-shadow)]"
+                >
+                  Create free account
+                </Link>
+                <Link
+                  href={signInHref}
+                  className="mt-1.5 inline-flex min-h-9 w-full items-center justify-center text-[13px] font-semibold text-[var(--coach-ink)] underline underline-offset-2"
+                >
+                  Sign in
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </aside>
     </>

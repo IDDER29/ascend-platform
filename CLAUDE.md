@@ -51,4 +51,4 @@ Two layers, both in `src/app/globals.css`:
 - **Phosphor** (base theme; rules in AGENTS.md and `.cursor/rules/`): no purple (`--brand-violet` is a legacy name for green), tokens instead of hex, light and dark both correct.
 - **Coach** — the look of every rebuilt page: wrap the page in `practice-coach-v2` and use `--coach-*` tokens (`--coach-hero-bg` dark cards with `--coach-lime` buttons, `--coach-surface` cards with 2px `--coach-border`). Chart series colours are `--coach-chart-kept` / `--coach-chart-stopped` (validated for colour-blind contrast in both modes).
 
-Learner chrome (`.cursor/rules/app-shell-chrome.mdc`): no top bar, no fake search, theme toggle in the sidebar, `PlaceholderAvatar` for faces.
+Learner chrome (`.cursor/rules/app-shell-chrome.mdc`): no top bar, no fake search, theme toggle in the sidebar, `PlaceholderAvatar` for faces. The sidebar (desktop) and the bottom tab bar + "More" sheet (phones, `mobile-tab-bar.tsx`) share one nav model, `src/lib/nav/app-nav.ts`; Practice shows a due-card badge read from this browser's deck.

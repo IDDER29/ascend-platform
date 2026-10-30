@@ -91,6 +91,7 @@ const emptySubscribe = () => () => {};
 
 /**
  * Light / dark toggle — persists in localStorage, syncs the `dark` class on <html>.
+ * Coach tokens: render it inside a `practice-coach-v2` scope (site header, sidebar, phone menu).
  */
 export function ThemeToggle({ className }: { className?: string }) {
   const mode = useSyncExternalStore(subscribeTheme, readTheme, () => "light");
@@ -105,7 +106,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       type="button"
       onClick={toggle}
       className={cn(
-        "inline-flex h-9 w-9 items-center justify-center rounded-full border border-card-border bg-bg text-ink-secondary transition-colors hover:border-xp-border hover:bg-xp-bg hover:text-xp-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-violet/35 focus-visible:ring-offset-2",
+        "inline-flex size-9 items-center justify-center rounded-full border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] text-[var(--coach-ink-secondary)] hover:border-[var(--coach-border-strong)] hover:text-[var(--coach-ink)]",
         !ready && "opacity-0",
         className,
       )}

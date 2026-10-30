@@ -14,7 +14,7 @@ export function SelectionBar({
   onClear: () => void;
 }) {
   return (
-    <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl bg-[var(--coach-hero-bg)] px-5 py-3.5 text-[var(--coach-hero-ink)] shadow-[0_12px_32px_rgba(22,24,29,0.24)]">
+    <div className="sticky bottom-[calc(var(--app-tabbar-h,0px)+1rem)] z-10 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl bg-[var(--coach-hero-bg)] px-5 py-3.5 text-[var(--coach-hero-ink)] shadow-[0_12px_32px_rgba(22,24,29,0.24)]">
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="text-[14.5px] font-semibold whitespace-nowrap" aria-live="polite">
           {count} selected

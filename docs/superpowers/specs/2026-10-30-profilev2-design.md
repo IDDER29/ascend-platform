@@ -58,6 +58,14 @@ Phone: one column in reading order; project pills sit under the layer
 text. New learner: hero complete, the stack with Level 00 as "about to
 start" and the first project as next, "Joined" journey line.
 
+## Development preview (temporary)
+While the app is in development, signed-out visitors to `/profile` see a
+sample learner (made-up data, owner view, under a "Development preview"
+banner) instead of the sign-in prompt, so the page can be reviewed without
+an account. Edits fail with "Sign in to edit your profile.".
+**Before launch:** set `SHOW_SAMPLE_PROFILE_TO_GUESTS` to false in
+`src/lib/profile/sample-profile.ts` and delete that file.
+
 ## Data
 New tables (Postgres + SQLite DDL): `profile_settings` (is_public),
 `profile_links`, `project_links` (user, project, repo_url, added_at),

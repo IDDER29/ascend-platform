@@ -10,7 +10,7 @@ import { StackSection } from "./stack-section";
 import { TWO_COLUMNS } from "./styles";
 
 /** The whole profile. Owner and visitor share it; `model.owner` turns the editing on. */
-export function ProfileView({ model }: { model: ProfileModel }) {
+export function ProfileView({ model, signedIn = true }: { model: ProfileModel; signedIn?: boolean }) {
   const { owner } = model;
   const showOwn = owner || model.ownProjects.length > 0;
 
@@ -28,7 +28,7 @@ export function ProfileView({ model }: { model: ProfileModel }) {
         <aside className="flex min-w-0 flex-col gap-5">
           <AchievementsCard achievements={model.achievements} owner={owner} />
           <JourneyCard journey={model.journey} />
-          {owner ? (
+          {owner && signedIn ? (
             <form action={signOutAction} className="self-start">
               <button
                 type="submit"

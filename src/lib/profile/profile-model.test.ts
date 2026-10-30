@@ -150,3 +150,15 @@ test("practice milestones join the journey, newest first", () => {
   assert.ok(texts.includes("First review session in Practice"));
   assert.equal(texts.at(-1), "Joined Ascend");
 });
+
+test("the development sample builds a believable mid-Level-01 profile", async () => {
+  const { sampleProfileInput } = await import("./sample-profile");
+  const lessons: ProfileLesson[] = [
+    ...["what-is-a-bit", "project-half-adder"].map((slug) => [L00, slug]),
+    ...["inside-the-cpu", "assembly-a-first-look", "endianness"].map((slug) => [L01, slug]),
+  ].map(([level, slug]) => ({ key: `${level}/${slug}`, level, slug, title: slug, href: `/lessons/${slug}` }));
+  const model = buildProfileModel({ viewer: "owner", ...sampleProfileInput(lessons, new Date(2026, 9, 30)) });
+  assert.equal(model.hero.levelLabel, "Level 01 · Machine & Memory");
+  assert.equal(model.curriculumProjects.find((p) => p.id === "half-adder")?.state, "shipped");
+  assert.equal(model.skills[1].state, "current");
+});

@@ -4,7 +4,8 @@ import { ProfileView } from "@/components/profile-v2/profile-view";
 import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
 import { getCurrentUser } from "@/lib/auth/auth";
 import { getProfileOwner } from "@/lib/profile/queries";
-import { loadProfileModel } from "@/lib/profile/server-page-data";
+import { SHOW_SAMPLE_PROFILE_TO_GUESTS } from "@/lib/profile/sample-profile";
+import { loadProfileModel, loadSampleProfileModel } from "@/lib/profile/server-page-data";
 import { SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
 
 export const metadata: Metadata = {
@@ -18,6 +19,25 @@ const MAIN =
 export default async function ProfilePage() {
   const user = await getCurrentUser();
   const owner = user ? await getProfileOwner(user.id) : null;
+
+  // DEVELOPMENT PREVIEW: guests see a sample profile. Turn off before launch (sample-profile.ts).
+  if (!owner && SHOW_SAMPLE_PROFILE_TO_GUESTS) {
+    return (
+      <main className={MAIN}>
+        <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-5`}>
+          <p className="m-0 rounded-xl border-2 border-dashed border-[var(--coach-border-strong)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--coach-ink-secondary)]">
+            <strong className="font-semibold text-[var(--coach-ink)]">Development preview.</strong> You&apos;re not
+            signed in, so this is a sample profile with made-up data. Editing needs an account:{" "}
+            <Link href={SIGNIN_HREF} className="font-semibold text-[var(--coach-ink)] underline underline-offset-2">
+              sign in
+            </Link>{" "}
+            to see yours.
+          </p>
+          <ProfileView model={loadSampleProfileModel()} signedIn={false} />
+        </div>
+      </main>
+    );
+  }
 
   if (!owner) {
     return (

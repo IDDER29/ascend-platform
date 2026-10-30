@@ -5,6 +5,7 @@ import { getAllLessons } from "@/lib/content/lessons";
 import { LEVELS } from "@/lib/content/schema";
 import { CommandPalette, type PaletteLesson } from "@/components/command-palette";
 import { lessonHref } from "@/lib/paths/lesson-urls";
+import { SITE_URL } from "@/lib/site/site-nav";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -25,6 +26,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Ascend — Learn how computers really work",
   description:
     "A free, open-source, bottom-up computer-science curriculum. Bits, logic, the CPU, memory, C, and operating systems — from a single bit up.",

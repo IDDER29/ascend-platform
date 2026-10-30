@@ -1,4 +1,4 @@
-import { SiteFooter } from "@/components/homepage/footer";
+import { SiteFooter } from "@/components/site/site-footer";
 import { ShellFooter } from "@/components/ui/shell-footer";
 import { AppSidebar } from "@/components/ui/sidebar";
 
@@ -14,7 +14,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex min-w-0 flex-1 flex-col">{children}</div>
         <ShellFooter>
-          <SiteFooter />
+          <div className="practice-coach-v2 font-sans text-[var(--coach-ink)]">
+            <SiteFooter />
+          </div>
         </ShellFooter>
       </div>
     </div>

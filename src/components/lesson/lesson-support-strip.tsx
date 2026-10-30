@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 /**
- * Quiet end-of-lesson support strip — points at the landing open-source section.
+ * Quiet end-of-lesson support strip — points at the Open source page.
  * Not a donate card; Phosphor-quiet, one job.
  */
 export function LessonSupportStrip() {
@@ -12,7 +12,7 @@ export function LessonSupportStrip() {
         see how to support the project.
       </p>
       <Link
-        href="/#open"
+        href="/open-source"
         className="mt-3 inline-flex min-h-9 items-center text-[13.5px] font-semibold text-brand-violet transition-colors hover:text-xp-text"
       >
         Support us

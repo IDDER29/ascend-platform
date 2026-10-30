@@ -65,7 +65,7 @@ function pathInput(p: PathDef, lessons: PathLessonInfo[]): PathInput {
   return {
     slug: p.slug,
     title: p.title,
-    pitch: firstSentence(p.body),
+    pitch: p.pitch ?? firstSentence(p.body),
     body: p.body,
     status: p.status,
     href: `${PATHS_INDEX_HREF}/${p.slug}`,
@@ -91,15 +91,64 @@ export type PathsV2Data = {
   signedIn: boolean;
 };
 
-export async function loadPathsV2(): Promise<PathsV2Data> {
-  const [loaded, following] = await Promise.all([loadAchievementsInput({ sampleForGuests: false }), getFollowingMap()]);
-  const lessons: PathLessonInfo[] = getAllLessons().map(({ meta }) => ({
+function lessonInfos(): PathLessonInfo[] {
+  return getAllLessons().map(({ meta }) => ({
     key: completionKey(meta.level, meta.slug),
     title: meta.title,
     href: lessonHref(meta.level, meta.slug),
     timeMin: meta.timeMin,
     project: meta.slug.startsWith("project-"),
   }));
+}
+
+const topicOf = (a: { rules: { kind: string; topic?: string }[] }) => a.rules.find((r) => r.kind === "topic")?.topic;
+
+/** The badge ids finishing each path earns: its clans, topic badges and project badges. */
+function earnIds(lessons: PathLessonInfo[]): Record<string, string[]> {
+  return Object.fromEntries(
+    PATHS.map((p) => {
+      const ids = p.courses.flatMap((c) => {
+        if (c.levelId) {
+          const clan = INSIGNIA.find((a) => topicOf(a) === c.levelId)?.id;
+          const topicBadge = ACHIEVEMENTS.find((a) => topicOf(a) === c.levelId)?.id;
+          const projects = lessons
+            .filter((l) => l.project && l.key.startsWith(`${c.levelId}/`))
+            .map((l) => PROJECT_BADGE[l.key]);
+          return [clan, topicBadge, ...projects];
+        }
+        return [c.href ? PROJECT_BADGE[c.href] : undefined];
+      });
+      return [p.slug, ids.filter((x): x is string => Boolean(x))];
+    }),
+  );
+}
+
+/** A badge from the catalog, not earned: what guests and the public site see. */
+function unearned(id: string): BadgeView | null {
+  const def = [...ACHIEVEMENTS, ...INSIGNIA].find((a) => a.id === id);
+  if (!def) return null;
+  return {
+    id: def.id,
+    group: def.group,
+    insignia: def.insignia ?? null,
+    label: def.label,
+    glyph: def.glyph,
+    means: def.means,
+    criteria: [],
+    earned: false,
+    earnedAt: null,
+    earnedLabel: null,
+    ratio: 0,
+    action: null,
+    repoUrl: null,
+    repoLabel: null,
+    missions: [],
+  };
+}
+
+export async function loadPathsV2(): Promise<PathsV2Data> {
+  const [loaded, following] = await Promise.all([loadAchievementsInput({ sampleForGuests: false }), getFollowingMap()]);
+  const lessons = lessonInfos();
   const model = loaded ? buildAchievementsModel(loaded.input) : null;
   const badge = (id: string): BadgeView | null =>
     [...(model?.parts ?? []), ...(model?.insignia ?? [])].find((b) => b.id === id) ?? null;
@@ -113,52 +162,34 @@ export async function loadPathsV2(): Promise<PathsV2Data> {
   });
 
   // Earned-or-not badges per path, from the full catalog so guests see them too.
-  const asView = (id: string): BadgeView | null => {
-    const found = badge(id);
-    if (found) return found;
-    const def = [...ACHIEVEMENTS, ...INSIGNIA].find((a) => a.id === id);
-    if (!def) return null;
-    return {
-      id: def.id,
-      group: def.group,
-      insignia: def.insignia ?? null,
-      label: def.label,
-      glyph: def.glyph,
-      means: def.means,
-      criteria: [],
-      earned: false,
-      earnedAt: null,
-      earnedLabel: null,
-      ratio: 0,
-      action: null,
-      repoUrl: null,
-      repoLabel: null,
-      missions: [],
-    };
-  };
-  const topicOf = (a: { rules: { kind: string; topic?: string }[] }) => a.rules.find((r) => r.kind === "topic")?.topic;
   const earns = Object.fromEntries(
-    PATHS.map((p) => {
-      const ids = p.courses.flatMap((c) => {
-        if (c.levelId) {
-          const clan = INSIGNIA.find((a) => topicOf(a) === c.levelId)?.id;
-          const topicBadge = ACHIEVEMENTS.find((a) => topicOf(a) === c.levelId)?.id;
-          const projects = lessons
-            .filter((l) => l.project && l.key.startsWith(`${c.levelId}/`))
-            .map((l) => PROJECT_BADGE[l.key]);
-          return [clan, topicBadge, ...projects];
-        }
-        return [c.href ? PROJECT_BADGE[c.href] : undefined];
-      });
-      return [
-        p.slug,
-        ids
-          .filter((x): x is string => Boolean(x))
-          .map(asView)
-          .filter((b): b is BadgeView => b !== null),
-      ];
-    }),
+    Object.entries(earnIds(lessons)).map(([slug, ids]) => [
+      slug,
+      ids.map((id) => badge(id) ?? unearned(id)).filter((b): b is BadgeView => b !== null),
+    ]),
   );
 
   return { views, earns, signedIn: Boolean(loaded) };
+}
+
+/**
+ * Every path for the public site: no session, no progress, so the pages stay static.
+ * Each path's own page there lives under `base` (the in-app pages stay at /paths).
+ */
+export function loadPublicPaths(base: string): Omit<PathsV2Data, "signedIn"> {
+  const lessons = lessonInfos();
+  const views = buildPathViews({
+    paths: PATHS.map((p) => ({ ...pathInput(p, lessons), href: `${base}/${p.slug}` })),
+    lessons,
+    completions: [],
+    following: {},
+    shipped: new Set(),
+  });
+  const earns = Object.fromEntries(
+    Object.entries(earnIds(lessons)).map(([slug, ids]) => [
+      slug,
+      ids.map(unearned).filter((b): b is BadgeView => b !== null),
+    ]),
+  );
+  return { views, earns };
 }

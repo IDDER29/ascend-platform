@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
       { source: "/projects/shellforgev2", destination: "/projects/shellforge", permanent: true },
       // Curriculum was replaced by Paths; lesson links under /curriculum/... still redirect to the lesson.
       { source: "/curriculum", destination: "/paths", permanent: true },
+      { source: "/homev2", destination: "/", permanent: true },
       // Retired: the Today card says when a streak ended. Old demo kept at /streak-lostv1.
       { source: "/streak-lost", destination: "/dashboard", permanent: true },
       // ShellForge's demo submit/result moved beside the old brief; the real page explains shipping.

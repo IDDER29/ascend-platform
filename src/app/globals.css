@@ -1051,3 +1051,18 @@ html.sidebar-collapsed .app-sidebar-section {
   background: var(--coach-tint-neutral-bg);
   color: var(--coach-ink);
 }
+
+/* Public site: the shell prompt's caret blinks unless motion is reduced. */
+@keyframes site-caret {
+  50% {
+    opacity: 0;
+  }
+}
+.site-caret {
+  animation: site-caret 1.1s steps(1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-caret {
+    animation: none;
+  }
+}

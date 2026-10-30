@@ -41,6 +41,10 @@ export type PathCard = {
   done: number;
   total: number;
   finished: boolean;
+  /** Groups (topics and the capstone) finished, out of all. */
+  sections: { done: number; total: number };
+  /** The path the learner is on now: the one worked on last that isn't finished. */
+  active: boolean;
   groups: PathGroup[];
   next: { title: string; href: string } | null;
   /** When the learner last finished a lesson on it, or joined it. */
@@ -120,6 +124,8 @@ export function buildPathCards(input: PathsInput): PathCard[] {
         done,
         total: topicLessons.length,
         finished: topicsDone && capstones.every((g) => g.finished),
+        sections: { done: groups.filter((g) => g.finished).length, total: groups.length },
+        active: false,
         groups,
         next: open
           ? { title: open.title, href: open.href }
@@ -131,7 +137,8 @@ export function buildPathCards(input: PathsInput): PathCard[] {
     });
 
   // The path worked on last first; finished paths after the ones still going.
-  return cards.sort(
+  const sorted = cards.sort(
     (a, b) => Number(a.finished) - Number(b.finished) || Date.parse(b.lastActive) - Date.parse(a.lastActive),
   );
+  return sorted.map((c, i) => ({ ...c, active: i === 0 && !c.finished }));
 }

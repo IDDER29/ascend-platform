@@ -1,155 +1,81 @@
 import Link from "next/link";
-import { Check } from "lucide-react";
-import { CrestPatch } from "@/components/achievements/emblems";
-import type { PathCard, PathGroup } from "@/lib/dashboard/paths-model";
+import { Route } from "lucide-react";
+import { PATH_ICONS } from "@/components/paths/path-catalog";
+import type { PathCard } from "@/lib/dashboard/paths-model";
 
-const CARD = "rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)]";
+const CARD =
+  "flex min-w-0 flex-col gap-4 rounded-[20px] border-2 bg-[var(--coach-surface)] p-5 text-[var(--coach-ink)]";
 
-const CAPSTONE: Record<NonNullable<PathGroup["capstone"]>, string> = {
-  "not-started": "Capstone · after the lessons above",
-  ready: "Capstone · ready to build",
-  shipped: "Capstone · shipped",
-};
-
-function Dots({ marks, current }: { marks: boolean[]; current: boolean }) {
+/** One joined path: its mark, progress, sections finished, and a way in. */
+function PathTile({ path }: { path: PathCard }) {
+  const Icon = PATH_ICONS[path.slug] ?? Route;
+  const share = path.total > 0 ? path.done / path.total : 0;
   return (
-    <span aria-hidden className="flex flex-wrap gap-1">
-      {marks.map((done, i) => (
+    <section
+      aria-labelledby={`path-${path.slug}`}
+      className={`${CARD} ${path.active ? "border-[var(--coach-ink)]" : "border-[var(--coach-border)]"}`}
+    >
+      <div className="flex items-start gap-3">
         <span
-          key={i}
-          className={`size-2.5 rounded-full ${
-            done
-              ? "bg-[var(--coach-ink)]"
-              : current
-                ? "border-2 border-[var(--coach-ink)]"
-                : "border-2 border-[var(--coach-border-strong)]"
-          }`}
-        />
-      ))}
-    </span>
-  );
-}
-
-function GroupRow({ g }: { g: PathGroup }) {
-  return (
-    <li>
-      <Link
-        href={g.href}
-        className={`-mx-2 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1 rounded-xl px-2 py-2 no-underline hover:bg-[var(--coach-tint-neutral-bg)] sm:grid-cols-[auto_minmax(0,1fr)_auto_auto] ${
-          g.current ? "bg-[var(--coach-tint-lime-bg)] hover:bg-[var(--coach-tint-lime-bg)]" : ""
-        }`}
-      >
-        <span className="flex size-6 items-center justify-center">
-          {g.finished && g.crest ? (
-            <CrestPatch crest={g.crest} earned size="sm" onDark={false} />
-          ) : g.finished ? (
-            <Check size={16} strokeWidth={3} className="text-[var(--coach-ink)]" aria-hidden />
-          ) : g.kind === "capstone" ? (
-            <span aria-hidden className="size-3 rotate-45 border-2 border-[var(--coach-border-strong)]" />
-          ) : (
-            <span
-              aria-hidden
-              className={`size-3 rounded-full border-2 ${g.current ? "border-[var(--coach-ink)]" : "border-[var(--coach-border-strong)]"}`}
-            />
-          )}
+          aria-hidden
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[var(--coach-hero-bg)] text-[var(--coach-lime)]"
+        >
+          <Icon size={20} strokeWidth={2.2} />
         </span>
-        <span className="min-w-0 truncate text-[14.5px] font-semibold text-[var(--coach-ink)]">
-          {g.title}
-          {g.current && (
-            <span className="ml-2 text-[12.5px] font-medium text-[var(--coach-ink-secondary)]">You&apos;re here</span>
-          )}
-        </span>
-        {g.kind === "topic" ? (
-          <>
-            <span className="col-start-2 sm:col-start-auto">
-              <Dots marks={g.lessons} current={g.current} />
-            </span>
-            <span className="col-start-2 text-[12.5px] tabular-nums text-[var(--coach-ink-muted)] sm:col-start-auto sm:w-14 sm:text-right">
-              {g.done} of {g.total}
-            </span>
-          </>
-        ) : (
-          <span className="col-start-2 text-[12.5px] text-[var(--coach-ink-muted)] sm:col-span-2 sm:col-start-auto sm:text-right">
-            {CAPSTONE[g.capstone ?? "not-started"]}
+        <div className="min-w-0 flex-1">
+          <h3 id={`path-${path.slug}`} className="m-0 text-[16px] font-bold leading-tight [text-wrap:balance]">
+            {path.title}
+          </h3>
+          <p className="m-0 mt-0.5 text-[13px] text-[var(--coach-ink-muted)]">
+            {path.finished
+              ? "Finished"
+              : `${path.sections.done} of ${path.sections.total} ${path.sections.total === 1 ? "section" : "sections"} done`}
+          </p>
+        </div>
+        {path.active && (
+          <span className="shrink-0 rounded-full bg-[var(--coach-lime)] px-2.5 py-0.5 text-[12px] font-semibold text-[var(--coach-lime-ink)]">
+            Active
           </span>
         )}
-      </Link>
-    </li>
-  );
-}
+      </div>
 
-/** One bar for the whole path, a segment per lesson, gaps between groups. */
-function PathBar({ path }: { path: PathCard }) {
-  const topics = path.groups.filter((g) => g.kind === "topic");
-  return (
-    <div role="img" aria-label={`${path.done} of ${path.total} lessons done`} className="flex gap-2">
-      {topics.map((g) => (
-        <span key={g.id} className="flex gap-[3px]" style={{ flexGrow: g.total, flexBasis: 0 }}>
-          {g.lessons.map((done, i) => (
-            <span
-              key={i}
-              className={`h-2 grow rounded-full ${done ? "bg-[var(--coach-lime)]" : "bg-[var(--coach-scale-empty)]"}`}
-            />
-          ))}
+      <div className="flex flex-col gap-1.5">
+        <span
+          role="img"
+          aria-label={`${path.done} of ${path.total} lessons done`}
+          className="block h-2 overflow-hidden rounded-full bg-[var(--coach-scale-empty)]"
+        >
+          <span
+            className="block h-full rounded-full bg-[var(--coach-ink)]"
+            style={{ width: `${Math.round(share * 100)}%` }}
+          />
         </span>
-      ))}
-    </div>
-  );
-}
-
-function OpenPath({ path }: { path: PathCard }) {
-  return (
-    <section aria-labelledby={`path-${path.slug}`} className={`${CARD} flex flex-col gap-4 p-5 sm:p-6`}>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 id={`path-${path.slug}`} className="m-0 font-display text-[20px] font-extrabold tracking-[-0.02em]">
-          <Link href={path.href} className="text-[var(--coach-ink)] no-underline hover:underline">
-            {path.title}
-          </Link>
-        </h3>
-        <span className="text-[13.5px] tabular-nums text-[var(--coach-ink-secondary)]">
+        <span className="text-[12.5px] tabular-nums text-[var(--coach-ink-secondary)]">
           {path.done} of {path.total} lessons
         </span>
       </div>
-      <PathBar path={path} />
-      <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
-        {path.groups.map((g) => (
-          <GroupRow key={g.id} g={g} />
-        ))}
-      </ul>
-      {path.next && (
+
+      <div className="mt-auto flex flex-wrap gap-2">
+        {path.next && !path.finished && (
+          <Link
+            href={path.next.href}
+            className="inline-flex h-10 items-center rounded-xl bg-[var(--coach-solid-btn-bg)] px-4 text-[14px] font-bold text-[var(--coach-solid-btn-ink)] no-underline"
+          >
+            Continue
+          </Link>
+        )}
         <Link
-          href={path.next.href}
-          className="inline-flex h-11 w-fit max-w-full items-center self-end rounded-xl border-2 border-[var(--coach-border)] px-4 text-[14px] font-bold text-[var(--coach-ink)] no-underline hover:border-[var(--coach-border-strong)]"
+          href={path.href}
+          className="inline-flex h-10 items-center rounded-xl border-2 border-[var(--coach-border)] px-4 text-[14px] font-semibold text-[var(--coach-ink)] no-underline hover:border-[var(--coach-border-strong)]"
         >
-          <span className="truncate">Continue: {path.next.title}</span>
+          View path
         </Link>
-      )}
+      </div>
     </section>
   );
 }
 
-function FinishedPath({ path }: { path: PathCard }) {
-  const crests = path.groups.filter((g) => g.crest);
-  return (
-    <Link
-      href={path.href}
-      className={`${CARD} flex items-center gap-3 px-5 py-3.5 no-underline text-[var(--coach-ink)] hover:border-[var(--coach-border-strong)]`}
-    >
-      <Check size={18} strokeWidth={3} aria-hidden />
-      <span className="min-w-0 flex-1">
-        <span className="font-bold">{path.title}</span>
-        <span className="ml-2 text-[13px] text-[var(--coach-ink-muted)]">
-          Finished · {path.done} of {path.total} lessons
-        </span>
-      </span>
-      {crests.map((g) => (
-        <CrestPatch key={g.id} crest={g.crest!} earned size="sm" onDark={false} />
-      ))}
-    </Link>
-  );
-}
-
-/** Every path the learner joined: the one worked on last first, each split into its groups. */
+/** Every path the learner joined, as a grid: the active one first. */
 export function YourPaths({ paths }: { paths: PathCard[] }) {
   return (
     <section aria-labelledby="paths-title" className="flex flex-col gap-3">
@@ -164,14 +90,18 @@ export function YourPaths({ paths }: { paths: PathCard[] }) {
       {paths.length === 0 ? (
         <Link
           href="/paths"
-          className={`${CARD} block border-dashed p-5 text-[14.5px] text-[var(--coach-ink-secondary)] no-underline hover:border-[var(--coach-border-strong)]`}
+          className="block rounded-[20px] border-2 border-dashed border-[var(--coach-border)] p-5 text-[14.5px] text-[var(--coach-ink-secondary)] no-underline hover:border-[var(--coach-border-strong)]"
         >
           You haven&apos;t joined a path yet.{" "}
           <span className="font-semibold text-[var(--coach-ink)]">Pick one to follow</span> and your next lesson will
           come from it.
         </Link>
       ) : (
-        paths.map((p) => (p.finished ? <FinishedPath key={p.slug} path={p} /> : <OpenPath key={p.slug} path={p} />))
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {paths.map((p) => (
+            <PathTile key={p.slug} path={p} />
+          ))}
+        </div>
       )}
     </section>
   );

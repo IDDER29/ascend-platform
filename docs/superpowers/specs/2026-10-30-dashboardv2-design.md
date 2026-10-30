@@ -29,8 +29,8 @@
 - **Still read from the `streaks` table** (same rule, lessons only, but stored rather than worked out): the old `/dashboard`, the lesson footer, `/streak-lost`, the curriculum pages. To move when those pages get their pass.
 
 ## Your paths (2026-10-30)
-- A section under Today/Practice: one card per joined path (joined paths are the `ascend_following` cookie). The path worked on last leads (its last finished lesson, else when it was joined); finished paths fold into one line with their clan crests, after the ones still going.
-- Each open path: "N of M lessons", one bar with a segment per lesson split by group, then a row per group — topics with a dot per lesson and "You're here" on the first unfinished one, the capstone with its state (after the lessons / ready to build / shipped). "Continue" opens the path's next lesson.
+- A section under Today/Practice: one card per joined path (joined paths are the `ascend_following` cookie). The path worked on last leads (its last finished lesson, else when it was joined); finished paths come after the ones still going.
+- Kept light (the user's call): a grid of small cards, one per joined path — its icon, name, "Active" on the one you're on, "N of M sections done" (or Finished), a bar with "N of M lessons", and Continue / View path. The per-group detail lives on the path's own page.
 - The top card's next lesson now comes from that leading path (its topics, then its capstone), labelled with the path's name; with no path joined it's the first open lesson in the curriculum, as before.
 - No path joined: a one-line prompt to pick one.
 - Model: `src/lib/dashboard/paths-model.ts` (tested).

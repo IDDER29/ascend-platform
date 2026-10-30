@@ -77,6 +77,8 @@ test("groups: lessons per topic, the current topic, and the capstone's state", (
     ],
   );
   assert.deepEqual(sys.next, { title: "memory", href: "/lessons/memory" });
+  assert.deepEqual(sys.sections, { done: 0, total: 3 });
+  assert.equal(sys.active, true);
   assert.equal(sys.groups[0].href, "/lessons/memory");
 });
 
@@ -103,6 +105,11 @@ test("the path worked on last leads; a finished path goes after the rest", () =>
     ],
   );
   assert.equal(done[1].groups[0].crest, "gate");
+  assert.deepEqual(done[1].sections, { done: 1, total: 1 });
+  assert.deepEqual(
+    done.map((c) => c.active),
+    [true, false],
+  );
 });
 
 test("capstone: ready once every topic is done, shipped when its project is", () => {

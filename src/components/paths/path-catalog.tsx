@@ -11,7 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-const PATH_ICONS: Record<string, LucideIcon> = {
+export const PATH_ICONS: Record<string, LucideIcon> = {
   foundations: Binary,
   "python-foundations": Code2,
   "systems-programmer": Terminal,

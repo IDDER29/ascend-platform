@@ -329,7 +329,7 @@ export function buildProgressV2Model(input: ProgressV2Input): ProgressV2Model {
       .map((l) => doneAt.get(l.key) ?? "")
       .sort()
       .pop();
-    if (at) milestones.push({ at, label: `Finished Level ${level.number} · ${level.name}` });
+    if (at) milestones.push({ at, label: `Finished ${level.name}` });
   }
   const sessionsByDate = [...history].sort((a, b) => a.at.localeCompare(b.at));
   if (sessionsByDate[0]) {

@@ -21,7 +21,7 @@ function daysAgo(now: Date, days: number): string {
   return new Date(now.getTime() - days * DAY_MS).toISOString();
 }
 
-/** A learner partway through Level 01 who shipped the half adder. */
+/** A learner partway through Machine & Memory who shipped the half adder. */
 export function sampleProfileInput(lessons: ProfileLesson[], now: Date): Omit<ProfileInput, "viewer"> {
   const level00 = lessons.filter((l) => l.level === "level-00-bits-logic");
   const level01 = lessons.filter((l) => l.level === "level-01-machine-memory").slice(0, 2);
@@ -65,7 +65,7 @@ export function sampleProfileInput(lessons: ProfileLesson[], now: Date): Omit<Pr
   };
 }
 
-/** The same sample learner for /achievements: Level 00 cards all solid, a week-long practice run. */
+/** The same sample learner for /achievements: Bits & Logic cards all solid, a week-long practice run. */
 export function sampleAchievementsInput(lessons: ProfileLesson[], now: Date): AchievementsInput {
   const { completions, projectLinks } = sampleProfileInput(lessons, now);
   const level01Done = new Set(completions.map((c) => c.key));

@@ -29,7 +29,7 @@ export function MotivationBanner() {
           </div>
           <div className="rounded-[20px] border border-white/10 bg-white/[0.04] p-5">
             <div className="mb-3 flex items-center justify-between font-mono text-[11px] text-white/50">
-              <span>Level 00</span>
+              <span>Bits &amp; Logic</span>
               <span>2 / 6</span>
             </div>
             <div className="mb-4 h-2 overflow-hidden rounded-full bg-white/10">

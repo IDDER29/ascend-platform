@@ -15,7 +15,7 @@ export function FinalCta() {
           Ready to see how it all really works?
         </h2>
         <p className="mb-7 w-full max-w-md text-[15px] leading-relaxed text-white/90 text-pretty sm:text-[17px]">
-          Begin at Level 00 — bits, logic, and the ground everything else stands on.
+          Begin with Bits &amp; Logic — the ground everything else stands on.
         </p>
         <Button href={CURRICULUM_HREF} size="lg" variant="invert" className="w-full max-w-xs sm:w-auto sm:max-w-none">
           View full curriculum

@@ -1001,45 +1001,6 @@ html.sidebar-collapsed .app-sidebar-section {
   }
 }
 
-/* Achievements board: the lit trace powers up along the path once on load.
-   Horizontal on wide screens, bottom-up when the board stands upright. */
-@keyframes achv-trace-x {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: none;
-  }
-}
-
-@keyframes achv-trace-y {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: none;
-  }
-}
-
-.achv-trace-lit {
-  transform-origin: bottom;
-  animation: achv-trace-y 260ms linear both;
-  animation-delay: var(--trace-delay, 0ms);
-}
-
-@media (min-width: 768px) {
-  .achv-trace-lit {
-    transform-origin: left;
-    animation-name: achv-trace-x;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .achv-trace-lit {
-    animation: none;
-  }
-}
-
 .practice-coach-v2 a[href]:hover {
   filter: brightness(0.97);
 }

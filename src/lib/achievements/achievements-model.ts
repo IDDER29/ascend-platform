@@ -1,26 +1,24 @@
 /**
- * Client-safe model for /achievements: every badge worked out from real
- * records — lesson completions, project links, Practice cards and sessions.
- * Nothing is stored; a badge is earned when the records say so.
+ * Client-safe model for the achievements page: every badge's rule turned
+ * into a checklist of criteria, each checked from real records — lesson
+ * completions, project links, Practice cards and sessions, other badges.
+ * Nothing is stored; a badge is earned when every criterion holds.
  */
-import { LEVELS, levelIds, type LevelId } from "@/lib/content/schema";
-import { PRACTICE_BANK } from "@/lib/practice/bank";
+import { LEVELS, type LevelId } from "@/lib/content/schema";
 import type { PracticeSessionRecord } from "@/lib/practice/history";
-import { practiceCustomHref, PRACTICE_ROUTES } from "@/lib/practice/routes";
-import { completionKey, unlockedQuestions } from "@/lib/practice/session";
+import { PRACTICE_ROUTES } from "@/lib/practice/routes";
+import { completionKey } from "@/lib/practice/session";
 import { localDayKey, type PracticeCard } from "@/lib/practice/sm2";
 import { latestIso, levelFinishedAt, projectStatuses } from "@/lib/profile/curriculum-records";
 import { displayUrl } from "@/lib/profile/links";
 import type { ProfileLesson } from "@/lib/profile/profile-model";
+import { curriculumProject } from "@/lib/profile/projects";
 import { PROFILE_ROUTES } from "@/lib/profile/routes";
-import { ACHIEVEMENTS, type Achievement, type AchievementGroup } from "./catalog";
+import { ACHIEVEMENTS, GROUP_TITLES, type Achievement, type AchievementGroup, type BadgeRule } from "./catalog";
 
 const LOCALE = "en-US";
 const DAY_MS = 24 * 60 * 60 * 1000;
-const WEEK_RUN = 7;
-const COMEBACK_GAP_DAYS = 14;
-const UP_NEXT_MAX = 3;
-const CORE_CLOSE_LESSONS = 5;
+const CLOSEST_MAX = 3;
 
 export type AchievementsInput = {
   /** Every lesson, in curriculum order. */
@@ -32,47 +30,45 @@ export type AchievementsInput = {
   now: Date;
 };
 
-export type AchievementPart = {
+export type Criterion = {
+  /** The condition in plain words: "Finish 10 lessons". */
+  text: string;
+  done: boolean;
+  /** When it was met; null while open. */
+  at: string | null;
+  progress: { done: number; total: number } | null;
+  /** For combination badges: the badge this criterion asks for. */
+  badgeId: string | null;
+  action: { label: string; href: string } | null;
+};
+
+export type BadgeView = {
   id: string;
   group: AchievementGroup;
   label: string;
   glyph: string;
-  how: string;
   means: string;
+  criteria: Criterion[];
   earned: boolean;
   earnedAt: string | null;
   earnedLabel: string | null;
-  /** Steps toward it, when it can be counted. */
-  progress: { done: number; total: number } | null;
-  /** Short distance to earning it: "2 lessons away". Null once earned. */
-  distance: string | null;
-  /** Not reachable yet (e.g. its cards are still locked). */
-  locked: boolean;
+  /** 0–1 across all criteria, counting partial progress. */
+  ratio: number;
+  /** The next step: the first open criterion's action. */
   action: { label: string; href: string } | null;
   repoUrl: string | null;
   repoLabel: string | null;
-};
-
-export type BoardColumn = {
-  levelNumber: string;
-  levelName: string;
-  level: AchievementPart;
-  memory: AchievementPart;
-  project: AchievementPart | null;
 };
 
 export type AchievementsModel = {
   total: number;
   earnedCount: number;
   headline: string;
-  upNext: AchievementPart[];
+  /** Up to 3 open badges with a next step, closest first. */
+  closest: BadgeView[];
+  groups: { id: AchievementGroup; title: string; badges: BadgeView[] }[];
   /** Every badge, in catalog order. */
-  parts: AchievementPart[];
-  columns: BoardColumn[];
-  habits: AchievementPart[];
-  core: AchievementPart;
-  /** Index of the last column on the unbroken earned path from the start; -1 for none. */
-  litThrough: number;
+  parts: BadgeView[];
   /** Earned badge ids, newest first. */
   earnedNewestFirst: string[];
 };
@@ -81,22 +77,13 @@ function shortDate(iso: string): string {
   return new Date(iso).toLocaleDateString(LOCALE, { month: "short", day: "numeric" });
 }
 
-function plural(n: number, one: string, many = `${one}s`): string {
-  return `${n} ${n === 1 ? one : many}`;
-}
-
-function levelNumber(id: string): string {
-  return id.match(/level-(\d+)/)?.[1] ?? "";
-}
-
-/** Day keys (local) with at least one session, ascending and unique. */
-function practiceDays(history: PracticeSessionRecord[]): string[] {
-  return [...new Set(history.map((s) => localDayKey(new Date(s.at))))].sort();
-}
-
 function dayIndex(key: string): number {
   const [y, m, d] = key.split("-").map(Number);
   return Math.round(Date.UTC(y, m - 1, d) / DAY_MS);
+}
+
+function criterion(partial: Partial<Criterion> & Pick<Criterion, "text" | "done">): Criterion {
+  return { at: null, progress: null, badgeId: null, action: null, ...partial };
 }
 
 export function buildAchievementsModel(input: AchievementsInput): AchievementsModel {
@@ -105,214 +92,234 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
   const isDone = (l: ProfileLesson) => completedAt.has(l.key);
   const finished = levelFinishedAt(lessons, completedAt);
   const projects = projectStatuses(completedAt, finished, input.projectLinks);
-  const unlocked = new Set(unlockedQuestions(new Set(completedAt.keys())).map((q) => q.id));
-  const cardFor = new Map(input.cards.map((c) => [c.questionId, c]));
-  const nextLessonIn = (level: string) => lessons.find((l) => l.level === level && !isDone(l)) ?? null;
   const firstOpen = lessons.find((l) => !isDone(l)) ?? null;
+  const doneInOrder = [...input.completions].sort((a, b) => Date.parse(a.completedAt) - Date.parse(b.completedAt));
+  const continueLesson = (lesson: ProfileLesson | null) =>
+    lesson ? { label: doneInOrder.length === 0 ? "Start your first lesson" : "Continue lesson", href: lesson.href } : null;
 
-  // Practice days and runs
-  const days = practiceDays(input.history);
-  let run = 0;
-  let weekEarnedAt: string | null = null;
-  for (let i = 0; i < days.length; i++) {
-    run = i > 0 && dayIndex(days[i]) - dayIndex(days[i - 1]) === 1 ? run + 1 : 1;
-    if (run >= WEEK_RUN && !weekEarnedAt) weekEarnedAt = days[i];
-  }
-  const todayIndex = dayIndex(localDayKey(now));
-  const lastDay = days.at(-1);
-  // The current run only counts if it reaches today or yesterday.
-  const currentRun = lastDay && todayIndex - dayIndex(lastDay) <= 1 ? run : 0;
-  const sessionsByTime = [...input.history].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
-  const comebackAt =
-    sessionsByTime.find((s, i) => i > 0 && Date.parse(s.at) - Date.parse(sessionsByTime[i - 1].at) >= COMEBACK_GAP_DAYS * DAY_MS)
-      ?.at ?? null;
-  const lastSession = sessionsByTime.at(-1);
-  const awayNow = Boolean(lastSession && now.getTime() - Date.parse(lastSession.at) >= COMEBACK_GAP_DAYS * DAY_MS);
+  // Practice records
+  const solidCards = input.cards
+    .filter((c) => c.state === "review")
+    .sort((a, b) => Date.parse(a.updatedAt) - Date.parse(b.updatedAt));
+  const sessions = [...input.history].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const days = [...new Set(sessions.map((s) => localDayKey(new Date(s.at))))].sort();
+  const lastSession = sessions.at(-1);
+  const awayDays = lastSession ? Math.floor((now.getTime() - Date.parse(lastSession.at)) / DAY_MS) : null;
+  const practice = { label: "Review in Practice", href: PRACTICE_ROUTES.home };
 
-  const evaluate = (a: Achievement): Omit<AchievementPart, "id" | "group" | "label" | "glyph" | "how" | "means" | "earnedLabel"> => {
-    const base = { progress: null, distance: null, locked: false, action: null, repoUrl: null, repoLabel: null };
-    switch (a.group) {
-      case "level": {
-        const level = a.level!;
-        const levelLessons = lessons.filter((l) => l.level === level);
-        const doneCount = levelLessons.filter(isDone).length;
-        const earnedAt = levelLessons.length > 0 ? (finished.get(level) ?? null) : null;
-        const next = nextLessonIn(level);
-        const left = levelLessons.length - doneCount;
-        return {
-          ...base,
-          earned: Boolean(earnedAt),
-          earnedAt,
-          progress: { done: doneCount, total: levelLessons.length },
-          distance: earnedAt ? null : `${plural(left, "lesson")} away`,
-          action: !earnedAt && next ? { label: doneCount === 0 ? "Start the level" : "Continue lesson", href: next.href } : null,
-        };
+  const cache = new Map<string, BadgeView>();
+
+  const criteriaFor = (rule: BadgeRule): Criterion[] => {
+    switch (rule.kind) {
+      case "lessons": {
+        const reached = doneInOrder[rule.count - 1]?.completedAt ?? null;
+        return [
+          criterion({
+            text: rule.count === 1 ? "Finish a lesson" : `Finish ${rule.count} lessons`,
+            done: Boolean(reached),
+            at: reached,
+            progress: rule.count > 1 ? { done: Math.min(doneInOrder.length, rule.count), total: rule.count } : null,
+            action: reached ? null : continueLesson(firstOpen),
+          }),
+        ];
+      }
+      case "topic": {
+        const topicLessons = lessons.filter((l) => l.level === rule.topic);
+        const at = topicLessons.length > 0 ? (finished.get(rule.topic) ?? null) : null;
+        return [
+          criterion({
+            text: `Finish every lesson in ${LEVELS[rule.topic].name}`,
+            done: Boolean(at),
+            at,
+            progress: { done: topicLessons.filter(isDone).length, total: topicLessons.length },
+            action: at ? null : continueLesson(topicLessons.find((l) => !isDone(l)) ?? null),
+          }),
+        ];
+      }
+      case "allLessons": {
+        const done = lessons.length > 0 && !firstOpen;
+        return [
+          criterion({
+            text: "Finish every lesson in the curriculum",
+            done,
+            at: done ? latestIso(lessons.map((l) => completedAt.get(l.key)!)) : null,
+            progress: { done: lessons.filter(isDone).length, total: lessons.length },
+            action: done ? null : continueLesson(firstOpen),
+          }),
+        ];
       }
       case "project": {
-        const status = projects.find((p) => p.project.id === a.projectId)!;
-        if (status.shippedAt) {
-          return {
-            ...base,
-            earned: true,
-            earnedAt: status.shippedAt,
-            repoUrl: status.link!.repoUrl,
-            repoLabel: displayUrl(status.link!.repoUrl),
-          };
-        }
-        if (status.metAt) {
-          return {
-            ...base,
-            earned: false,
-            earnedAt: null,
-            distance: "one repo link away",
-            action: { label: "Add your repo on your profile", href: PROFILE_ROUTES.owner },
-          };
-        }
-        const { requires } = status.project;
+        const status = projects.find((p) => p.project.id === rule.projectId)!;
+        const project = curriculumProject(rule.projectId)!;
+        const { requires } = project;
         const required =
           requires.kind === "lesson"
             ? lessons.filter((l) => l.key === completionKey(requires.level, requires.slug))
             : lessons.filter((l) => l.level === requires.level);
-        const doneCount = required.filter(isDone).length;
-        const next = required.find((l) => !isDone(l)) ?? null;
-        return {
-          ...base,
-          earned: false,
-          earnedAt: null,
-          progress: required.length > 1 ? { done: doneCount, total: required.length } : null,
-          distance: required.length > 1 ? `${plural(required.length - doneCount, "lesson")} away` : "one lesson away",
-          action: next ? { label: "Open the project lesson", href: next.href } : null,
-        };
+        return [
+          criterion({
+            text:
+              requires.kind === "lesson"
+                ? `Finish the ${project.inSentence} lesson`
+                : `Finish every lesson in ${LEVELS[requires.level as LevelId].name}`,
+            done: Boolean(status.metAt),
+            at: status.metAt,
+            progress: required.length > 1 ? { done: required.filter(isDone).length, total: required.length } : null,
+            action: status.metAt ? null : continueLesson(required.find((l) => !isDone(l)) ?? null),
+          }),
+          criterion({
+            text: `Link your ${project.inSentence} repo on your profile`,
+            done: Boolean(status.link),
+            at: status.link?.addedAt ?? null,
+            action: status.link ? null : { label: "Add your repo on your profile", href: PROFILE_ROUTES.owner },
+          }),
+        ];
       }
-      case "memory": {
-        const level = a.level!;
-        const ids = PRACTICE_BANK.filter((q) => q.lessonLevel === level).map((q) => q.id);
-        const solidCards = ids.map((id) => cardFor.get(id)).filter((c): c is PracticeCard => c?.state === "review");
-        const earnedAt =
-          ids.length > 0 && solidCards.length === ids.length ? latestIso(solidCards.map((c) => c.updatedAt)) : null;
-        const open = ids.some((id) => unlocked.has(id));
-        const lessonKeys = [...new Set(PRACTICE_BANK.filter((q) => q.lessonLevel === level && unlocked.has(q.id)).map((q) => completionKey(q.lessonLevel, q.lessonSlug)))];
-        return {
-          ...base,
-          earned: Boolean(earnedAt),
-          earnedAt,
-          locked: !earnedAt && !open,
-          progress: { done: solidCards.length, total: ids.length },
-          distance: earnedAt ? null : open ? `${plural(ids.length - solidCards.length, "card")} to go` : `unlocks with Level ${levelNumber(level)} lessons`,
-          action: !earnedAt && open ? { label: "Review these cards", href: practiceCustomHref(lessonKeys) } : null,
-        };
+      case "solidCards": {
+        const reached = solidCards.length >= rule.count ? solidCards[rule.count - 1].updatedAt : null;
+        return [
+          criterion({
+            text: `Hold ${rule.count} Practice cards solid`,
+            done: Boolean(reached),
+            at: reached,
+            progress: { done: Math.min(solidCards.length, rule.count), total: rule.count },
+            action: reached ? null : practice,
+          }),
+        ];
       }
-      case "habit": {
-        if (a.id === "week-of-practice") {
-          return {
-            ...base,
-            earned: Boolean(weekEarnedAt),
-            earnedAt: weekEarnedAt ? new Date(`${weekEarnedAt}T12:00:00`).toISOString() : null,
-            progress: weekEarnedAt ? null : { done: Math.min(currentRun, WEEK_RUN), total: WEEK_RUN },
-            distance: weekEarnedAt ? null : `${plural(WEEK_RUN - Math.min(currentRun, WEEK_RUN), "more day")} in a row`,
-            action: weekEarnedAt ? null : { label: "Practice today", href: PRACTICE_ROUTES.home },
-          };
+      case "cleanRun": {
+        const run = sessions.find((s) => s.total >= rule.minCards && s.correct === s.total);
+        return [
+          criterion({
+            text: `Get every card right in one review session of ${rule.minCards} or more cards`,
+            done: Boolean(run),
+            at: run?.at ?? null,
+            action: run ? null : { label: "Start a review", href: PRACTICE_ROUTES.home },
+          }),
+        ];
+      }
+      case "streak": {
+        let run = 0;
+        let reachedDay: string | null = null;
+        for (let i = 0; i < days.length; i++) {
+          run = i > 0 && dayIndex(days[i]) - dayIndex(days[i - 1]) === 1 ? run + 1 : 1;
+          if (run >= rule.days && !reachedDay) reachedDay = days[i];
         }
-        return {
-          ...base,
-          earned: Boolean(comebackAt),
-          earnedAt: comebackAt,
-          distance: comebackAt ? null : awayNow ? "one review session away" : "only after a break",
-          action: !comebackAt && awayNow ? { label: "Do one review session", href: PRACTICE_ROUTES.home } : null,
-        };
+        const lastDay = days.at(-1);
+        const current = lastDay && dayIndex(localDayKey(now)) - dayIndex(lastDay) <= 1 ? run : 0;
+        return [
+          criterion({
+            text: `Practice ${rule.days} days in a row`,
+            done: Boolean(reachedDay),
+            at: reachedDay ? new Date(`${reachedDay}T12:00:00`).toISOString() : null,
+            progress: reachedDay ? null : { done: Math.min(current, rule.days), total: rule.days },
+            action: reachedDay ? null : { label: "Practice today", href: PRACTICE_ROUTES.home },
+          }),
+        ];
       }
-      case "core": {
-        const allLessons = lessons.length > 0 && !firstOpen;
-        const allShipped = projects.every((p) => p.shippedAt);
-        const earnedAt = allLessons && allShipped
-          ? latestIso([...lessons.map((l) => completedAt.get(l.key)!), ...projects.map((p) => p.shippedAt!)])
-          : null;
-        const left = lessons.filter((l) => !isDone(l)).length;
-        return {
-          ...base,
-          earned: Boolean(earnedAt),
-          earnedAt,
-          progress: { done: lessons.length - left, total: lessons.length },
-          distance: earnedAt ? null : left > 0 ? `${plural(left, "lesson")} away` : "ship both projects to finish",
-          action: !earnedAt && firstOpen ? { label: "Continue lesson", href: firstOpen.href } : null,
-        };
+      case "sessions": {
+        const reached = sessions[rule.count - 1]?.at ?? null;
+        return [
+          criterion({
+            text: `Finish ${rule.count} review sessions`,
+            done: Boolean(reached),
+            at: reached,
+            progress: { done: Math.min(sessions.length, rule.count), total: rule.count },
+            action: reached ? null : practice,
+          }),
+        ];
       }
+      case "comeback": {
+        const back = sessions.find(
+          (s, i) => i > 0 && Date.parse(s.at) - Date.parse(sessions[i - 1].at) >= rule.gapDays * DAY_MS,
+        );
+        const away = awayDays !== null && awayDays >= rule.gapDays;
+        return [
+          criterion({
+            text: `Come back to Practice after ${rule.gapDays} or more days away`,
+            done: Boolean(back),
+            at: back?.at ?? null,
+            action: !back && away ? { label: "Do one review session", href: PRACTICE_ROUTES.home } : null,
+          }),
+        ];
+      }
+      case "badges":
+        return rule.ids.map((id) => {
+          const part = view(ACHIEVEMENTS.find((a) => a.id === id)!);
+          return criterion({ text: `Earn ${part.label}`, done: part.earned, at: part.earnedAt, badgeId: id });
+        });
     }
   };
 
-  const parts: AchievementPart[] = ACHIEVEMENTS.map((a) => {
-    const result = evaluate(a);
-    return {
+  function view(a: Achievement): BadgeView {
+    const cached = cache.get(a.id);
+    if (cached) return cached;
+    const criteria = a.rules.flatMap(criteriaFor);
+    const earned = criteria.every((c) => c.done);
+    const dated = criteria.map((c) => c.at).filter((at): at is string => Boolean(at));
+    const earnedAt = earned && dated.length > 0 ? latestIso(dated) : null;
+    const ratio =
+      criteria.reduce((sum, c) => sum + (c.done ? 1 : c.progress ? c.progress.done / c.progress.total : 0), 0) /
+      criteria.length;
+    const projectRule = a.rules.find((r): r is Extract<BadgeRule, { kind: "project" }> => r.kind === "project");
+    const link = projectRule ? input.projectLinks.find((p) => p.projectId === projectRule.projectId) : undefined;
+    const result: BadgeView = {
       id: a.id,
       group: a.group,
       label: a.label,
       glyph: a.glyph,
-      how: a.how,
       means: a.means,
-      earnedLabel: result.earnedAt ? shortDate(result.earnedAt) : null,
-      ...result,
+      criteria,
+      earned,
+      earnedAt,
+      earnedLabel: earnedAt ? shortDate(earnedAt) : null,
+      ratio: earned ? 1 : ratio,
+      action: earned ? null : (criteria.find((c) => !c.done && c.action)?.action ?? null),
+      repoUrl: earned && link ? link.repoUrl : null,
+      repoLabel: earned && link ? displayUrl(link.repoUrl) : null,
     };
-  });
-  const byId = (id: string) => parts.find((p) => p.id === id)!;
-
-  const columns: BoardColumn[] = levelIds.map((id) => ({
-    levelNumber: levelNumber(id),
-    levelName: LEVELS[id].name,
-    level: partFor(parts, "level", id)!,
-    memory: partFor(parts, "memory", id)!,
-    project: partFor(parts, "project", id) ?? null,
-  }));
-
-  let litThrough = -1;
-  for (const column of columns) {
-    if (!column.level.earned) break;
-    litThrough += 1;
+    cache.set(a.id, result);
+    return result;
   }
 
-  // Up next: what's closest and actionable, most urgent first.
-  const candidates: AchievementPart[] = [];
-  const add = (p: AchievementPart | undefined) => {
-    if (p && !p.earned && !candidates.includes(p)) candidates.push(p);
-  };
-  if (awayNow) add(byId("comeback"));
-  for (const p of parts) if (p.group === "project" && p.distance === "one repo link away") add(p);
-  add(columns.map((c) => c.level).find((p) => !p.earned && (p.progress?.total ?? 0) > 0));
-  add(columns.map((c) => c.memory).find((p) => !p.earned && !p.locked));
-  add(byId("week-of-practice"));
-  // Core Complete only once it's genuinely close; a far-off goal isn't a next step.
-  const core = byId("core-complete");
-  if (core.progress && core.progress.total - core.progress.done <= CORE_CLOSE_LESSONS) add(core);
-  const upNext = candidates.filter((p) => p.action).slice(0, UP_NEXT_MAX);
-
+  const parts = ACHIEVEMENTS.map(view);
   const earned = parts.filter((p) => p.earned);
+
+  // Closest: a returning learner is offered Comeback first; then the open badges furthest along.
+  const open = parts.filter((p) => !p.earned && p.action);
+  const comeback = open.find((p) => p.id === "comeback");
+  const ranked = open
+    .filter((p) => p !== comeback)
+    .sort((a, b) => b.ratio - a.ratio || parts.indexOf(a) - parts.indexOf(b));
+  const closest = [...(comeback ? [comeback] : []), ...ranked].slice(0, CLOSEST_MAX);
+
   const total = parts.length;
-  const closest = upNext[0];
+  const next = closest[0];
+  const nextStep = next?.criteria.find((c) => !c.done);
+  const nextLine =
+    next && nextStep
+      ? `Closest next: ${next.label}. ${nextStep.text}${nextStep.progress ? ` (${nextStep.progress.done} of ${nextStep.progress.total})` : ""}.`
+      : "";
   const headline =
     earned.length === total
-      ? `All ${total} earned. Keep your Memory badges solid in Practice.`
-      : earned.length === 0
-        ? closest
-          ? `Your first badge is ${closest.distance}: ${closest.label}.`
-          : `${total} badges to earn.`
-        : closest
-          ? `${earned.length} of ${total} earned. Closest next: ${closest.label}, ${closest.distance}.`
-          : `${earned.length} of ${total} earned.`;
+      ? `All ${total} earned.`
+      : `${earned.length === 0 ? "No badges yet." : `${earned.length} of ${total} earned.`} ${nextLine}`.trim();
+
+  const groups = (Object.keys(GROUP_TITLES) as AchievementGroup[]).map((id) => ({
+    id,
+    title: GROUP_TITLES[id],
+    badges: parts.filter((p) => p.group === id),
+  }));
 
   return {
     total,
     earnedCount: earned.length,
     headline,
-    upNext,
+    closest,
+    groups,
     parts,
-    columns,
-    habits: parts.filter((p) => p.group === "habit"),
-    core: byId("core-complete"),
-    litThrough,
-    earnedNewestFirst: [...earned].sort((a, b) => Date.parse(b.earnedAt!) - Date.parse(a.earnedAt!)).map((p) => p.id),
+    earnedNewestFirst: [...earned]
+      .sort((a, b) => Date.parse(b.earnedAt ?? "") - Date.parse(a.earnedAt ?? ""))
+      .map((p) => p.id),
   };
-}
-
-function partFor(parts: AchievementPart[], group: AchievementGroup, level: LevelId): AchievementPart | undefined {
-  const a = ACHIEVEMENTS.find((x) => x.group === group && x.level === level);
-  return a ? parts.find((p) => p.id === a.id) : undefined;
 }

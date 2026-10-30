@@ -1,0 +1,66 @@
+# Achievements: the rule book — design (2026-10-30)
+
+## Decisions (from the user)
+- **No levels on the platform.** The four lesson groups stay as named
+  **topics** (Bits & Logic, Machine & Memory, The C Language, Systems &
+  Software) — never "Level 00", numbers or level-ups. Internal ids
+  (`level-00-…`) stay as they are; only what people see changes.
+- **Each badge has its own exact rule.** Badges aren't chained to levels
+  or to each other — except **combination badges**, whose rule *is* the
+  list of badges they need, shown openly.
+
+Earlier explorations built on levels (`/achievementsv2` board,
+`/achievementsv3` changelog) were removed; they're in git history.
+
+## Badges (17) — `src/lib/achievements/catalog.ts`
+Every rule is data (`BadgeRule`), checked from real records only.
+
+| Badge | Group | Rule (all must hold) |
+|---|---|---|
+| First Bit | Learning | Finish a lesson |
+| Ten Down | Learning | Finish 10 lessons |
+| Gatekeeper | Learning | Finish every lesson in Bits & Logic |
+| Machinist | Learning | Finish every lesson in Machine & Memory |
+| Pointer Wrangler | Learning | Finish every lesson in The C Language |
+| Systems Thinker | Learning | Finish every lesson in Systems & Software |
+| Gate Builder | Building | Finish the half adder lesson · Link your half adder repo on your profile |
+| Shell Smith | Building | Finish every lesson in Systems & Software · Link your ShellForge repo on your profile |
+| Steady Hands | Remembering | Hold 25 Practice cards solid |
+| Deep Memory | Remembering | Hold 100 Practice cards solid |
+| Clean Run | Remembering | Get every card right in one review session of 10 or more cards |
+| Week of Practice | Habits | Practice 7 days in a row |
+| Regular | Habits | Finish 25 review sessions |
+| Comeback | Habits | Come back to Practice after 14 or more days away |
+| Builder | Combination | Earn Gate Builder · Earn Shell Smith |
+| Sharp Mind | Combination | Earn Deep Memory · Earn Clean Run · Earn Week of Practice |
+| The Whole Machine | Combination | Finish every lesson in the curriculum · Earn Builder |
+
+"Solid" = a card in Practice's review state; card badges are held while
+the cards stay solid. A badge's date is when its last condition was met.
+Ids `gate-builder` and `ship-it` (Shell Smith) are kept so stored
+`badges_earned` rows still match.
+
+## Page (`/achievementsv4`, beside the old `/achievements`)
+1. Header + one sentence ("5 of 17 earned. Closest next: Ten Down. Finish
+   10 lessons (8 of 10).").
+2. **Collection (dark hero):** the earned count and every badge as a
+   medallion in catalog order — earned solid lime with its date, the rest
+   dashed outlines; each jumps to its card.
+3. **Closest:** up to 3 open badges furthest along (Comeback first for a
+   returning learner), each with its next condition, progress and one
+   button (first lime).
+4. **Groups** — Learning, Building, Remembering, Habits, Combinations —
+   of **badge cards**. Each card: medallion, name, status ("Earned Oct 19"
+   / "1 of 2 conditions met"), and the rule as a checklist: ticked +
+   dated when met, progress bar + "8 of 10" when open. Combination
+   conditions show the needed badge's medallion and link to its card.
+   Earned cards add what it means (and the repo for projects); open cards
+   get one button for the next step.
+
+Guests (development): the sample learner, as on the profile.
+
+## Elsewhere
+Progress, Profile, the lesson list, homepage, ShellForge, the command
+palette and notifications use topic names instead of levels. The topic-
+complete page lost its fake XP level-up; its other made-up numbers
+(quiz score, streak) still need their own pass.

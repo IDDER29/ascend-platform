@@ -1,25 +1,22 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { PRACTICE_BANK } from "@/lib/practice/bank";
 import type { PracticeSessionRecord } from "@/lib/practice/history";
 import type { PracticeCard } from "@/lib/practice/sm2";
+import { curriculumProject } from "@/lib/profile/projects";
 import type { ProfileLesson } from "@/lib/profile/profile-model";
 import { buildAchievementsModel, type AchievementsInput } from "./achievements-model";
 import { ACHIEVEMENTS } from "./catalog";
 
 const NOW = new Date(2026, 9, 30, 12, 0);
-const L00 = "level-00-bits-logic";
-const L01 = "level-01-machine-memory";
-const L02 = "level-02-the-c-language";
-const L03 = "level-03-systems-software";
+const BITS = "level-00-bits-logic";
+const MACHINE = "level-01-machine-memory";
+const SYSTEMS = "level-03-systems-software";
 
 const LESSONS: ProfileLesson[] = [
-  [L00, "what-is-a-bit"],
-  [L00, "project-half-adder"],
-  [L01, "inside-the-cpu"],
-  [L01, "endianness"],
-  [L02, "what-a-pointer-really-is"],
-  [L03, "signals"],
+  [BITS, "what-is-a-bit"],
+  [BITS, "project-half-adder"],
+  [MACHINE, "inside-the-cpu"],
+  [SYSTEMS, "signals"],
 ].map(([level, slug]) => ({ key: `${level}/${slug}`, level, slug, title: slug, href: `/lessons/${slug}` }));
 
 function daysAgo(n: number, hour = 10): string {
@@ -30,94 +27,106 @@ function done(...slugs: string[]) {
   return slugs.map((slug, i) => ({ key: LESSONS.find((l) => l.slug === slug)!.key, completedAt: daysAgo(20 - i) }));
 }
 
-function solid(questionId: string, updatedDaysAgo = 1): PracticeCard {
-  return { questionId, state: "review", reps: 3, ease: 2.5, intervalDays: 8, dueAt: daysAgo(-5), lapses: 0, updatedAt: daysAgo(updatedDaysAgo) };
+function solid(i: number): PracticeCard {
+  return { questionId: `q${i}`, state: "review", reps: 3, ease: 2.5, intervalDays: 8, dueAt: daysAgo(-5), lapses: 0, updatedAt: daysAgo(30 - i / 10) };
 }
 
-function session(at: string): PracticeSessionRecord {
-  return { id: at, at, scopeType: "due", scopeLabel: "Due", pathSlug: null, correct: 4, total: 5, missIds: [], questionIds: [] };
+function session(at: string, correct = 4, total = 5): PracticeSessionRecord {
+  return { id: at, at, scopeType: "due", scopeLabel: "Due", pathSlug: null, correct, total, missIds: [], questionIds: [] };
 }
 
-function input(patch: Partial<AchievementsInput> = {}): AchievementsInput {
-  return { lessons: LESSONS, completions: [], projectLinks: [], cards: [], history: [], now: NOW, ...patch };
+function model(patch: Partial<AchievementsInput> = {}) {
+  return buildAchievementsModel({ lessons: LESSONS, completions: [], projectLinks: [], cards: [], history: [], now: NOW, ...patch });
 }
 
-const part = (model: ReturnType<typeof buildAchievementsModel>, id: string) => model.parts.find((p) => p.id === id)!;
+const badge = (m: ReturnType<typeof model>, id: string) => m.parts.find((p) => p.id === id)!;
 
-test("new learner: nothing earned, Groundwork and Solid Bits come first", () => {
-  const model = buildAchievementsModel(input());
-  assert.equal(model.earnedCount, 0);
-  assert.equal(model.total, ACHIEVEMENTS.length);
-  assert.deepEqual(model.upNext.map((p) => p.id).slice(0, 2), ["groundwork", "solid-00"]);
-  assert.match(model.headline, /Your first badge/);
-  assert.equal(model.litThrough, -1);
+test("every badge has at least one rule; combinations only point at real badges; projects exist", () => {
+  const ids = new Set(ACHIEVEMENTS.map((a) => a.id));
+  assert.equal(ids.size, ACHIEVEMENTS.length);
+  for (const a of ACHIEVEMENTS) {
+    assert.ok(a.rules.length > 0, a.id);
+    for (const rule of a.rules) {
+      if (rule.kind === "badges") for (const id of rule.ids) assert.ok(ids.has(id) && id !== a.id, `${a.id} → ${id}`);
+      if (rule.kind === "project") assert.ok(curriculumProject(rule.projectId), rule.projectId);
+    }
+  }
 });
 
-test("finishing a level earns its badge, dated by the last lesson, and lights the trace", () => {
-  const model = buildAchievementsModel(input({ completions: done("what-is-a-bit", "project-half-adder") }));
-  const groundwork = part(model, "groundwork");
-  assert.equal(groundwork.earned, true);
-  assert.equal(groundwork.earnedAt, daysAgo(19));
-  assert.equal(model.litThrough, 0);
-  assert.equal(part(model, "machine-head").progress?.done, 0);
+test("new learner: nothing earned, every rule shown as an open criterion, First Bit starts them off", () => {
+  const m = model();
+  assert.equal(m.earnedCount, 0);
+  assert.equal(m.total, ACHIEVEMENTS.length);
+  assert.ok(m.parts.every((p) => p.criteria.length > 0 && p.criteria.every((c) => !c.done)));
+  assert.match(m.headline, /^No badges yet\./);
+  assert.equal(badge(m, "first-bit").action?.label, "Start your first lesson");
 });
 
-test("a project ready to ship is the top goal and points at the profile", () => {
-  const model = buildAchievementsModel(input({ completions: done("what-is-a-bit", "project-half-adder") }));
-  assert.equal(model.upNext[0].id, "gate-builder");
-  assert.equal(model.upNext[0].action?.href, "/profile");
-  const shipped = buildAchievementsModel(
-    input({
-      completions: done("what-is-a-bit", "project-half-adder"),
-      projectLinks: [{ projectId: "half-adder", repoUrl: "https://github.com/a/h", addedAt: daysAgo(3) }],
-    }),
-  );
-  assert.equal(part(shipped, "gate-builder").earned, true);
-  assert.equal(part(shipped, "gate-builder").repoUrl, "https://github.com/a/h");
+test("lesson-count and topic badges are dated by the lesson that met them", () => {
+  const m = model({ completions: done("what-is-a-bit", "project-half-adder") });
+  assert.equal(badge(m, "first-bit").earnedAt, daysAgo(20));
+  assert.equal(badge(m, "gatekeeper").earned, true);
+  assert.equal(badge(m, "gatekeeper").earnedAt, daysAgo(19));
+  assert.deepEqual(badge(m, "machinist").criteria[0].progress, { done: 0, total: 1 });
+  assert.deepEqual(badge(m, "ten-down").criteria[0].progress, { done: 2, total: 10 });
 });
 
-test("Memory badges need every card of the level solid", () => {
-  const l00 = PRACTICE_BANK.filter((q) => q.lessonLevel === L00).map((q) => q.id);
-  const almost = buildAchievementsModel(input({ cards: l00.slice(1).map((id) => solid(id)) }));
-  assert.equal(part(almost, "solid-00").earned, false);
-  assert.deepEqual(part(almost, "solid-00").progress, { done: l00.length - 1, total: l00.length });
+test("a project badge is two criteria: the lessons, then the repo link", () => {
+  const ready = model({ completions: done("what-is-a-bit", "project-half-adder") });
+  const gate = badge(ready, "gate-builder");
+  assert.deepEqual(gate.criteria.map((c) => c.done), [true, false]);
+  assert.equal(gate.action?.href, "/profile");
 
-  const all = buildAchievementsModel(input({ cards: l00.map((id, i) => solid(id, i === 0 ? 2 : 4)) }));
-  assert.equal(part(all, "solid-00").earned, true);
-  assert.equal(part(all, "solid-00").earnedAt, daysAgo(2));
+  const shipped = model({
+    completions: done("what-is-a-bit", "project-half-adder"),
+    projectLinks: [{ projectId: "half-adder", repoUrl: "https://github.com/a/h", addedAt: daysAgo(3) }],
+  });
+  assert.equal(badge(shipped, "gate-builder").earned, true);
+  assert.equal(badge(shipped, "gate-builder").earnedAt, daysAgo(3));
+  assert.equal(badge(shipped, "gate-builder").repoUrl, "https://github.com/a/h");
 });
 
-test("Week of Practice needs 7 days in a row; Comeback needs a two-week gap", () => {
-  const sixDays = buildAchievementsModel(input({ history: [1, 2, 3, 4, 5, 6].map((d) => session(daysAgo(d))) }));
-  assert.equal(part(sixDays, "week-of-practice").earned, false);
-  assert.equal(part(sixDays, "week-of-practice").progress?.done, 6);
-
-  const week = buildAchievementsModel(input({ history: [1, 2, 3, 4, 5, 6, 7].map((d) => session(daysAgo(d))) }));
-  assert.equal(part(week, "week-of-practice").earned, true);
-  assert.equal(part(week, "week-of-practice").earnedAt?.slice(0, 10), daysAgo(1).slice(0, 10));
-
-  const back = buildAchievementsModel(input({ history: [session(daysAgo(40)), session(daysAgo(10))] }));
-  assert.equal(part(back, "comeback").earned, true);
+test("card counts, a clean run, a week in a row and a comeback each have their own rule", () => {
+  const cards = Array.from({ length: 30 }, (_, i) => solid(i));
+  const m = model({
+    cards,
+    history: [
+      session(daysAgo(40)),
+      ...[9, 8, 7, 6, 5, 4, 3].map((d) => session(daysAgo(d))),
+      session(daysAgo(2), 12, 12),
+    ],
+  });
+  assert.equal(badge(m, "steady-hands").earned, true);
+  assert.deepEqual(badge(m, "deep-memory").criteria[0].progress, { done: 30, total: 100 });
+  assert.equal(badge(m, "clean-run").earned, true);
+  assert.equal(badge(m, "week-of-practice").earned, true);
+  assert.equal(badge(m, "comeback").earned, true);
+  assert.deepEqual(badge(m, "regular").criteria[0].progress, { done: 9, total: 25 });
 });
 
-test("a learner away for two weeks is offered Comeback first", () => {
-  const model = buildAchievementsModel(input({ history: [session(daysAgo(30))] }));
-  assert.equal(model.upNext[0].id, "comeback");
+test("a clean run needs at least 10 cards", () => {
+  assert.equal(badge(model({ history: [session(daysAgo(1), 8, 8)] }), "clean-run").earned, false);
 });
 
-test("Core Complete needs every lesson and both projects", () => {
+test("combination badges list their parts and are earned when the last part is", () => {
   const all = done(...LESSONS.map((l) => l.slug));
-  const lessonsOnly = buildAchievementsModel(input({ completions: all }));
-  assert.equal(part(lessonsOnly, "core-complete").earned, false);
-  const everything = buildAchievementsModel(
-    input({
-      completions: all,
-      projectLinks: [
-        { projectId: "half-adder", repoUrl: "https://github.com/a/h", addedAt: daysAgo(2) },
-        { projectId: "shellforge", repoUrl: "https://github.com/a/s", addedAt: daysAgo(1) },
-      ],
-    }),
-  );
-  assert.equal(part(everything, "core-complete").earned, true);
-  assert.equal(everything.litThrough, everything.columns.length - 1);
+  const links = [
+    { projectId: "half-adder", repoUrl: "https://github.com/a/h", addedAt: daysAgo(4) },
+    { projectId: "shellforge", repoUrl: "https://github.com/a/s", addedAt: daysAgo(2) },
+  ];
+  const m = model({ completions: all, projectLinks: links });
+  const builder = badge(m, "builder");
+  assert.deepEqual(builder.criteria.map((c) => c.badgeId), ["gate-builder", "ship-it"]);
+  assert.equal(builder.earned, true);
+  assert.equal(builder.earnedAt, daysAgo(2));
+  assert.equal(badge(m, "whole-machine").earned, true);
+
+  const half = model({ completions: all, projectLinks: links.slice(0, 1) });
+  assert.deepEqual(badge(half, "builder").criteria.map((c) => c.done), [true, false]);
+  assert.equal(badge(half, "whole-machine").earned, false);
+});
+
+test("a learner away two weeks is offered Comeback first", () => {
+  const m = model({ history: [session(daysAgo(30))] });
+  assert.equal(m.closest[0].id, "comeback");
 });

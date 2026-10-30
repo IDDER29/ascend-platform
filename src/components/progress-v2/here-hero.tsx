@@ -5,7 +5,7 @@ function heroCopy(model: ProgressV2Model): { eyebrow: string; title: string; sub
   const { hero } = model;
   if (hero.allDone) {
     return {
-      eyebrow: "All levels done",
+      eyebrow: "Every topic done",
       title: "You finished the curriculum",
       subtitle: `${hero.total} of ${hero.total} lessons. Keep your cards solid in Practice.`,
     };
@@ -14,12 +14,12 @@ function heroCopy(model: ProgressV2Model): { eyebrow: string; title: string; sub
     return {
       eyebrow: "You are here",
       title: "You're at the start",
-      subtitle: `${hero.total} lessons across four levels, from a single bit to a working shell.`,
+      subtitle: `${hero.total} lessons across four topics, from a single bit to a working shell.`,
     };
   }
   return {
     eyebrow: "You are here",
-    title: `Level ${hero.levelNumber} · ${hero.levelName}`,
+    title: hero.levelName,
     subtitle: `${hero.done} of ${hero.total} lessons done.`,
   };
 }
@@ -51,14 +51,13 @@ export function HereHero({ model }: { model: ProgressV2Model }) {
           return (
             <li key={level.id} className="flex min-w-0 flex-col gap-2">
               <span className="flex items-baseline justify-between gap-2 text-xs">
-                <span className="font-mono text-[var(--coach-hero-muted)]">L{level.number}</span>
                 <span className="font-mono text-[var(--coach-hero-muted)]">
                   {done}/{level.lessons.length}
                 </span>
               </span>
               <span
                 role="img"
-                aria-label={`Level ${level.number} ${level.name}: ${done} of ${level.lessons.length} lessons done`}
+                aria-label={`${level.name}: ${done} of ${level.lessons.length} lessons done`}
                 className="flex gap-1"
               >
                 {level.lessons.map((lesson) => (

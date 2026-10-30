@@ -8,6 +8,8 @@ export type ProjectRequirement =
 export type CurriculumProject = {
   id: string;
   title: string;
+  /** The name as it reads mid-sentence: "half adder", "ShellForge". */
+  inSentence: string;
   /** One sentence: what shipping it proves. */
   proves: string;
   level: LevelId;
@@ -23,6 +25,7 @@ export const CURRICULUM_PROJECTS: CurriculumProject[] = [
   {
     id: "half-adder",
     title: "Half adder",
+    inSentence: "half adder",
     proves: "Adds two bits using nothing but logic gates.",
     level: "level-00-bits-logic",
     requires: { kind: "lesson", level: "level-00-bits-logic", slug: "project-half-adder" },
@@ -32,6 +35,7 @@ export const CURRICULUM_PROJECTS: CurriculumProject[] = [
   {
     id: "shellforge",
     title: "ShellForge",
+    inSentence: "ShellForge",
     proves: "A working Unix shell: processes, pipes, redirection and signals.",
     level: "level-03-systems-software",
     requires: { kind: "level", level: "level-03-systems-software" },

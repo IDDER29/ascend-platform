@@ -140,7 +140,7 @@ export default async function ShellforgeResultPage({
           <div className={HUB_CONTENT_CLASS}>
             <div className="mb-4.5 font-mono text-xs text-ink-fainter">
               <Link href="/curriculum" className="hover:text-ink-secondary">Curriculum</Link>{" "}
-              <span className="text-[#C6C1D4]">/</span> Level 03{" "}
+              <span className="text-[#C6C1D4]">/</span> Systems &amp; Software{" "}
               <span className="text-[#C6C1D4]">/</span>{" "}
               <Link href="/projects/shellforge" className="hover:text-ink-secondary">Build your own shell</Link>{" "}
               <span className="text-[#C6C1D4]">/</span> <span className="text-brand-violet">Submission</span>
@@ -336,7 +336,7 @@ export default async function ShellforgeResultPage({
                         </div>
                         <div>
                           <div className="font-display text-2xl font-extrabold leading-none text-[#FFD86B]">+800 XP</div>
-                          <div className="mt-1 text-xs text-[#B9B3D0]">2,600 XP total · Level 8</div>
+                          <div className="mt-1 text-xs text-[#B9B3D0]">2,600 XP total</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 border-t border-white/10 pt-3.5">

@@ -11,7 +11,7 @@ const STEPS = [
     num: "01",
     title: "Open the map",
     tag: "Browse freely",
-    body: "See all four levels at once. Nothing is locked — the order is a recommendation.",
+    body: "See all four topics at once. Nothing is locked — the order is a recommendation.",
   },
   {
     icon: BookOpen,

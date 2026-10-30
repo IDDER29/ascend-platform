@@ -13,7 +13,7 @@ import { PROFILE_ROUTES } from "./routes";
 
 const LOCALE = "en-US";
 
-/** What finishing each level means, said as an ability. */
+/** What finishing each topic means, said as an ability. */
 const LEVEL_SKILLS: Record<LevelId, string> = {
   "level-00-bits-logic": "Explains bits, binary and logic gates, and builds an adder from them",
   "level-01-machine-memory": "Traces how a CPU runs a program and where its data lives",
@@ -81,7 +81,7 @@ export type ProfileModel = {
     name: string;
     username: string;
     bio: string;
-    /** "Level 01 · Machine & Memory"; null before the first lesson. */
+    /** The topic being worked through, e.g. "Machine & Memory"; null before the first lesson. */
     levelLabel: string | null;
     links: ProfileLink[];
   };
@@ -215,7 +215,7 @@ export function buildProfileModel(input: ProfileInput): ProfileModel {
     events.push({ at: completedAt.get(firstLesson.key)!, text: `First lesson: ${firstLesson.title}`, kind: "lesson" });
   }
   for (const [id, at] of levelFinished) {
-    events.push({ at, text: `Finished Level ${levelNumber(id)} · ${levelName(id)}`, kind: "level" });
+    events.push({ at, text: `Finished ${levelName(id)}`, kind: "level" });
   }
   for (const project of allProjects) {
     if (project.state === "shipped") {
@@ -240,7 +240,7 @@ export function buildProfileModel(input: ProfileInput): ProfileModel {
       ? null
       : allDone
         ? "Finished the curriculum"
-        : `Level ${levelNumber(firstOpen!.level)} · ${levelName(firstOpen!.level)}`;
+        : levelName(firstOpen!.level);
 
   const shippedCount = allProjects.filter((p) => p.state === "shipped").length;
 

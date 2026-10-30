@@ -15,7 +15,7 @@ export default function ShellforgeBriefPage() {
           <Link href="/curriculum" className="hover:text-ink-secondary">
             Curriculum
           </Link>{" "}
-          <span className="text-[#C6C1D4]">/</span> Level 03 · Systems{" "}
+          <span className="text-[#C6C1D4]">/</span> Systems &amp; Software{" "}
           <span className="text-[#C6C1D4]">/</span>{" "}
           <span className="text-brand-violet">Project</span>
         </div>

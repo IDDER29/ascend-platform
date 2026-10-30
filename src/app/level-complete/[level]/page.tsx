@@ -44,7 +44,6 @@ export default async function LevelCompletePage({
 
   const lessons = getAllLessons();
   const concepts = lessons.filter((l) => l.meta.level === levelId).length;
-  const xpEarned = concepts * 50;
   const badge = BADGE[levelId];
 
   const nextLevelFirstLesson = nextLevelId
@@ -55,10 +54,10 @@ export default async function LevelCompletePage({
     nextLevelId && nextLevelFirstLesson
       ? {
           href: `/curriculum/${nextLevelFirstLesson.meta.level}/${nextLevelFirstLesson.meta.slug}`,
-          label: `Start Level ${nextLevelId.slice(6, 8)} · ${LEVELS[nextLevelId].name}`,
+          label: `Start ${LEVELS[nextLevelId].name}`,
           title: LEVELS[nextLevelId].name,
           subtitle: NEXT_SUBTITLE[levelId],
-          badge: nextLevelId.slice(6, 8),
+          badge: LEVELS[nextLevelId].name.split(/[^A-Za-z]+/).filter(Boolean).map((w) => w[0]).join("").slice(0, 2),
           unlockLabel: "NEW LEVEL UNLOCKED",
         }
       : {
@@ -72,10 +71,8 @@ export default async function LevelCompletePage({
 
   return (
     <LevelCompleteCard
-      levelNumber={levelId.slice(6, 8)}
       levelName={levelInfo.name}
       concepts={concepts}
-      xpEarned={xpEarned}
       flavor={FLAVOR[levelId]}
       badgeGlyph={badge.glyph}
       badgeLabel={badge.label}

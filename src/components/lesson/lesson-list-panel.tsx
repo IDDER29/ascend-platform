@@ -30,7 +30,7 @@ export function LessonListPanel({
   return (
     <div className={cn("flex flex-col", className)}>
       <div className="mb-1 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-muted">
-        Level {level.slice(6, 8)}
+        Topic
       </div>
       <div className="mb-3 font-display text-[18px] font-extrabold leading-tight tracking-tight text-ink">
         {info.name}

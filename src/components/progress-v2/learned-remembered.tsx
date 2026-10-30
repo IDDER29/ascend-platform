@@ -11,12 +11,9 @@ function Bar({ value, label, className }: { value: number; label: string; classN
 function LevelRow({ level }: { level: LevelRetention }) {
   const donePct = level.lessonCount === 0 ? 0 : Math.round((level.lessonsDone / level.lessonCount) * 100);
   return (
-    <li className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 sm:grid-cols-[44px_minmax(0,200px)_minmax(0,1fr)_minmax(0,1fr)]">
-      <span className="flex size-11 items-center justify-center rounded-xl bg-[var(--coach-mark-bg)] font-mono text-sm font-bold text-[var(--coach-mark-ink)]">
-        {level.number}
-      </span>
+    <li className="grid grid-cols-1 items-center gap-x-4 gap-y-2 sm:grid-cols-[minmax(0,200px)_minmax(0,1fr)_minmax(0,1fr)]">
       <span className="min-w-0 truncate text-[15px] font-semibold">{level.name}</span>
-      <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-1">
+      <div className="flex flex-col gap-1.5">
         <span className="flex justify-between text-xs text-[var(--coach-ink-secondary)]">
           <span>Learned</span>
           <span className="font-mono">
@@ -29,7 +26,7 @@ function LevelRow({ level }: { level: LevelRetention }) {
           className="bg-[var(--coach-ink)]"
         />
       </div>
-      <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-1">
+      <div className="flex flex-col gap-1.5">
         <span className="flex justify-between text-xs text-[var(--coach-ink-secondary)]">
           <span>Remembered</span>
           <span className="font-mono">
@@ -66,7 +63,7 @@ export function LearnedRemembered({ levels }: { levels: LevelRetention[] }) {
         </h2>
         <p className="m-0 text-[13px] text-[var(--coach-ink-secondary)]">
           Finishing a lesson isn&apos;t the same as knowing it. Remembered is the share of a
-          level&apos;s unlocked cards you hold at solid or better in Practice.
+          topic&apos;s unlocked cards you hold at solid or better in Practice.
         </p>
       </div>
       <ol className="m-0 flex list-none flex-col gap-5 p-0">

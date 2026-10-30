@@ -12,12 +12,6 @@ const LAYER: Record<ProfileSkill["state"], string> = {
   next: "border-dashed border-[var(--coach-border-strong)] bg-transparent",
 };
 
-const NUMBER: Record<ProfileSkill["state"], string> = {
-  done: "text-[var(--coach-lime)]",
-  current: "text-[var(--coach-blue)]",
-  next: "text-[var(--coach-ink-muted)]",
-};
-
 const PIP: Record<ProfileSkill["state"], { on: string; off: string }> = {
   done: { on: "bg-[var(--coach-lime)]", off: "bg-[var(--coach-hero-track)]" },
   current: { on: "bg-[var(--coach-blue)]", off: "bg-[var(--coach-scale-empty)]" },
@@ -54,19 +48,11 @@ function Layer({
   const pip = PIP[skill.state];
   return (
     <li
-      className={`grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-4 gap-y-3 rounded-2xl border-2 p-4 sm:grid-cols-[3.25rem_minmax(0,1fr)_auto] sm:items-center sm:p-5 ${LAYER[skill.state]}`}
+      className={`grid grid-cols-1 gap-x-4 gap-y-3 rounded-2xl border-2 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5 ${LAYER[skill.state]}`}
     >
-      <span
-        aria-hidden="true"
-        className={`row-span-2 self-start font-display text-[32px] font-extrabold leading-none tracking-[-0.04em] sm:row-span-1 sm:self-center sm:text-[40px] ${NUMBER[skill.state]}`}
-      >
-        {skill.levelNumber}
-      </span>
-
       <div className="flex min-w-0 flex-col gap-2">
         <div className="flex flex-col gap-0.5">
-          <h3 className="m-0 text-[16px] font-semibold leading-snug">
-            <span className="sr-only">Level {skill.levelNumber}: </span>
+          <h3 className="m-0 text-[17px] font-semibold leading-snug">
             {skill.levelName}
           </h3>
           <p
@@ -119,7 +105,7 @@ function Layer({
       </div>
 
       {projects.length > 0 ? (
-        <div className="col-span-2 flex flex-col items-start gap-2 sm:col-span-1 sm:max-w-[240px] sm:items-end">
+        <div className="flex flex-col items-start gap-2 sm:max-w-[240px] sm:items-end">
           {projects.map((project) => (
             <StackProject key={project.id} project={project} onDark={done} />
           ))}
@@ -129,7 +115,7 @@ function Layer({
   );
 }
 
-/** The learner's climb drawn as the classic abstraction stack: Level 00 at the bottom. */
+/** The learner's climb drawn as the classic abstraction stack: Bits & Logic at the bottom. */
 export function StackSection({ model }: { model: ProfileModel }) {
   const { skills, owner } = model;
   const projectsFor = (skill: ProfileSkill) =>
@@ -143,7 +129,7 @@ export function StackSection({ model }: { model: ProfileModel }) {
         </h2>
         <p className="m-0 max-w-[560px] text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
           {owner ? "Your climb" : "The climb so far"}, from a single bit at the bottom to a working shell at the top.
-          Each layer is a level; its project is pinned beside it.
+          Each layer is a topic; its project is pinned beside it.
         </p>
       </div>
       {/* DOM order is the climb (00 first); the column is reversed so it reads as a tower. */}

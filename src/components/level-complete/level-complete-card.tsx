@@ -6,10 +6,8 @@ import { Share2, BookOpen, LayoutDashboard } from "lucide-react";
 import { Confetti } from "./confetti";
 
 interface Props {
-  levelNumber: string;
   levelName: string;
   concepts: number;
-  xpEarned: number;
   flavor: string;
   badgeGlyph: string;
   badgeLabel: string;
@@ -22,10 +20,8 @@ interface Props {
 }
 
 export function LevelCompleteCard({
-  levelNumber,
   levelName,
   concepts,
-  xpEarned,
   flavor,
   badgeGlyph,
   badgeLabel,
@@ -62,7 +58,7 @@ export function LevelCompleteCard({
 
       <div className="relative max-h-[94vh] w-[min(560px,92vw)] overflow-auto rounded-[28px] border border-white/[0.12] bg-gradient-to-b from-[rgba(38,32,60,0.86)] to-[rgba(26,22,42,0.92)] p-11 pb-8 text-center shadow-[0_40px_100px_rgba(0,0,0,0.6)] backdrop-blur-xl">
         <div className="animate-rise mb-5 font-mono text-xs uppercase tracking-[0.28em] text-[#C6A6FF]">
-          Level Complete
+          Topic complete
         </div>
 
         <div className="animate-badge-spin relative mx-auto h-[168px] w-[168px]">
@@ -71,9 +67,9 @@ export function LevelCompleteCard({
             style={{ background: "conic-gradient(from 210deg, #FFD86B, #FF6B4A, #C13AE0, #7B4DFF, #FFD86B)" }}
           />
           <div className="absolute inset-[9px] flex flex-col items-center justify-center rounded-full border border-white/[0.12] bg-[radial-gradient(circle_at_38%_30%,#2E2650,#1A1630)]">
-            <div className="font-mono text-[11px] tracking-[0.18em] text-[#C6A6FF]">LEVEL</div>
+            <div className="font-mono text-[11px] tracking-[0.18em] text-[#C6A6FF]">TOPIC</div>
             <div className="bg-gradient-to-b from-white to-[#E7D6FF] bg-clip-text font-display text-[58px] font-extrabold leading-[0.9] text-transparent">
-              {levelNumber}
+              {badgeGlyph}
             </div>
             <div className="mt-1 flex gap-1">
               {[0, 1, 2].map((i) => (
@@ -96,32 +92,6 @@ export function LevelCompleteCard({
         <p className="animate-rise mx-auto mb-7 max-w-[390px] text-[16px] leading-relaxed text-[#B8B2CC]">
           You finished all {concepts} concepts — {flavor}
         </p>
-
-        <div className="animate-rise mb-6">
-          <div className="mb-3.5 flex items-center justify-center gap-3">
-            <span className="font-display text-[30px] font-extrabold text-white">
-              <span className="text-[#FFD86B]">+{xpEarned}</span> XP
-            </span>
-            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#12B981]/[0.35] bg-[#12B981]/[0.16] px-2.5 py-1 font-mono text-[13px] text-[#12E39E]">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#12E39E" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m6 15 6-6 6 6" />
-              </svg>
-              Level 7 → 8
-            </span>
-          </div>
-          <div className="mx-auto max-w-[400px]">
-            <div className="mb-1.5 flex justify-between font-mono text-[11.5px] text-[#9990B8]">
-              <span>Level 8</span>
-              <span>1,800 / 2,000 XP</span>
-            </div>
-            <div className="h-[11px] overflow-hidden rounded-full bg-white/[0.12]">
-              <div
-                className="animate-grow h-full rounded-full bg-gradient-to-r from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A] shadow-[0_0_14px_rgba(193,58,224,0.6)]"
-                style={{ width: "90%" }}
-              />
-            </div>
-          </div>
-        </div>
 
         <div className="animate-rise mx-auto mb-6 flex max-w-[400px] gap-3">
           {[
@@ -170,7 +140,6 @@ export function LevelCompleteCard({
               <div className="mb-0.5 font-mono text-[10.5px] tracking-[0.1em] text-[#FFD86B]">BADGE EARNED</div>
               <div className="text-[15.5px] font-bold">{badgeLabel}</div>
             </div>
-            <span className="whitespace-nowrap rounded-full bg-[#12B981]/[0.16] px-2.5 py-1 font-mono text-xs text-[#12E39E]">+50 XP</span>
           </div>
         </div>
 

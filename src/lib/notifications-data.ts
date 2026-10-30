@@ -48,7 +48,7 @@ export const NOTIFICATIONS: NotificationItem[] = [
     section: "Earlier",
     body: "New level unlocked: Systems & Software — processes, syscalls, and eventually Shellforge.",
     boldParts: ["Systems & Software"],
-    cta: { label: "Start Level 03", href: "/curriculum/level-03-systems-software/processes-and-the-process-table" },
+    cta: { label: "Start Systems & Software", href: "/curriculum/level-03-systems-software/processes-and-the-process-table" },
     when: "Yesterday",
     glyph: "🔓",
     iconBg: "bg-[#F1EDFE]",

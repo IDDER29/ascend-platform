@@ -35,7 +35,7 @@ export function ConceptMap({ concepts }: { concepts: ProgressV2Model["concepts"]
         {concepts.map((level) => (
           <div key={level.id} className="flex flex-col gap-2">
             <span className="font-mono text-xs text-[var(--coach-ink-muted)]">
-              L{level.number} · {level.name}
+              {level.name}
             </span>
             <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
               {level.tiles.map((tile) => (

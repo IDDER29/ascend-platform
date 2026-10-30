@@ -73,7 +73,7 @@ test("new learner: not started, next lesson is the first, no slipping or milesto
   assert.ok(model.concepts[1].tiles.every((t) => t.shade === 0));
 });
 
-test("hero tracks the first unfinished lesson and finished levels become milestones", () => {
+test("hero tracks the first unfinished lesson and finished topics become milestones", () => {
   const model = buildProgressV2Model(
     input({
       completions: [
@@ -83,12 +83,12 @@ test("hero tracks the first unfinished lesson and finished levels become milesto
     }),
   );
   assert.equal(model.hero.done, 2);
-  assert.equal(model.hero.levelNumber, "01");
+  assert.equal(model.hero.levelName, "Machine & Memory");
   assert.equal(model.hero.next?.title, "inside-the-cpu");
   assert.deepEqual(model.hero.track[0].lessons.map((l) => l.done), [true, true]);
   assert.deepEqual(
     model.milestones.map((m) => m.label),
-    ["Finished Level 00 · Bits & Logic", "First lesson done — what-is-a-bit"],
+    ["Finished Bits & Logic", "First lesson done — what-is-a-bit"],
   );
 });
 

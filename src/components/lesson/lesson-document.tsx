@@ -63,7 +63,7 @@ export async function LessonDocument({
   const isLastInLevel = next !== null && meta.order === levelInfo.totalConcepts;
   const nextNav = next
     ? isLastInLevel
-      ? { href: `/level-complete/${meta.level}`, title: "Finish level" }
+      ? { href: `/level-complete/${meta.level}`, title: "Finish topic" }
       : next
     : null;
   const railItems: RailItem[] = [

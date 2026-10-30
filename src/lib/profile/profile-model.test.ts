@@ -86,7 +86,8 @@ test("lesson done + repo link ships the project and makes its badge eligible", (
   assert.deepEqual(model.eligibleBadges.map((b) => b.badgeId), ["gate-builder"]);
   assert.equal(model.snapshot.projectsShipped, 1);
   assert.ok(model.journey.some((e) => /Shipped Half adder/.test(e.text)));
-  assert.ok(model.journey.some((e) => /Finished Level 00/.test(e.text)));
+  assert.ok(model.journey.some((e) => e.text === "Finished Bits & Logic"));
+  assert.ok(model.journey.every((e) => !/Level/.test(e.text)));
 });
 
 test("a link without the finished lesson does not ship the project", () => {
@@ -100,7 +101,7 @@ test("a link without the finished lesson does not ship the project", () => {
   assert.deepEqual(model.eligibleBadges, []);
 });
 
-test("ShellForge needs every Level 03 lesson", () => {
+test("ShellForge needs every Systems & Software lesson", () => {
   const link = { projectId: "shellforge", repoUrl: "https://github.com/ada/sh", addedAt: daysAgo(1) };
   const partial = buildProfileModel(input({ completions: done("system-calls"), projectLinks: [link] }));
   assert.notEqual(partial.curriculumProjects.find((p) => p.id === "shellforge")?.state, "shipped");
@@ -132,7 +133,7 @@ test("hero level, skills and links", () => {
       ],
     }),
   );
-  assert.equal(model.hero.levelLabel, "Level 01 · Machine & Memory");
+  assert.equal(model.hero.levelLabel, "Machine & Memory");
   assert.deepEqual(model.hero.links.map((l) => [l.kind, l.label]), [["github", "GitHub"], ["website", "Blog"]]);
   assert.deepEqual(model.skills.slice(0, 3).map((s) => s.state), ["done", "current", "next"]);
   assert.deepEqual(model.skills[0].lessons.map((l) => l.done), [true, true]);
@@ -158,7 +159,7 @@ test("the development sample builds a believable mid-Level-01 profile", async ()
     ...["inside-the-cpu", "assembly-a-first-look", "endianness"].map((slug) => [L01, slug]),
   ].map(([level, slug]) => ({ key: `${level}/${slug}`, level, slug, title: slug, href: `/lessons/${slug}` }));
   const model = buildProfileModel({ viewer: "owner", ...sampleProfileInput(lessons, new Date(2026, 9, 30)) });
-  assert.equal(model.hero.levelLabel, "Level 01 · Machine & Memory");
+  assert.equal(model.hero.levelLabel, "Machine & Memory");
   assert.equal(model.curriculumProjects.find((p) => p.id === "half-adder")?.state, "shipped");
   assert.equal(model.skills[1].state, "current");
 });

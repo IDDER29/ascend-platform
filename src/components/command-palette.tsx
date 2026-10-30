@@ -27,7 +27,7 @@ interface PaletteProject {
 }
 
 const PROJECTS: PaletteProject[] = [
-  { title: "Shellforge", subtitle: "Level 03 · capstone project", href: "/projects/shellforge" },
+  { title: "Shellforge", subtitle: "Systems & Software · capstone project", href: "/projects/shellforge" },
   { title: "Shellforge — your submission", subtitle: "Test results & peer solutions", href: "/projects/shellforge/result?outcome=passed" },
 ];
 

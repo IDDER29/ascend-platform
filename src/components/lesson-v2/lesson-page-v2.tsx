@@ -6,11 +6,9 @@ import GithubSlugger from "github-slugger";
 import { ArrowUpRight, FileText, Play } from "lucide-react";
 import { notFound } from "next/navigation";
 import { LessonBookmarksProvider, SaveLessonButton } from "@/components/bookmarks/lesson-bookmarks";
-import { AdditionalResources } from "@/components/lesson/additional-resources";
 import { LessonContributeLinks } from "@/components/lesson/lesson-contribute-links";
 import { LessonFeedback } from "@/components/lesson/lesson-feedback";
 import { PageRail, type RailItem } from "./page-rail";
-import { TopicLessons } from "./topic-lessons";
 import { PracticeHistoryProvider } from "@/components/paths-v2/lesson-memory";
 import { getCurrentUser } from "@/lib/auth/auth";
 import { lessonEditUrl, lessonIssueUrl } from "@/lib/brand/repo";
@@ -26,6 +24,7 @@ import { completionKey, unlockedQuestions } from "@/lib/practice/session";
 import { isLessonComplete } from "@/lib/progress/queries";
 import { CheckYourself } from "./check-yourself";
 import { FinishCard } from "./finish-card";
+import { ResourceList } from "./resource-list";
 import { LockItIn } from "./lock-it-in";
 
 /** Lesson links stay on v2 while it's being tried out. */
@@ -70,21 +69,20 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
       // database unavailable: shown as not done
     }
   }
-  const doneKeys = new Set(practice.completedKeys);
-  const topicLessons = inTopic.map((l) => ({
-    key: completionKey(l.meta.level, l.meta.slug),
-    title: l.meta.title,
-    href: v2Href(l.meta.level, l.meta.slug),
-    done: doneKeys.has(completionKey(l.meta.level, l.meta.slug)),
-    current: l.meta.slug === meta.slug,
-  }));
   const before = inTopic[index - 1];
   const prev = before ? { href: v2Href(before.meta.level, before.meta.slug), title: before.meta.title } : null;
-  const pathHref = path ? `/paths/${path.slug}` : null;
   const cardIds = PRACTICE_BANK.filter((q) => completionKey(q.lessonLevel, q.lessonSlug) === key).map((q) => q.id);
   const unlocked = new Set(unlockedQuestions(new Set(practice.completedKeys)).map((q) => q.id));
   const canReview = cardIds.length > 0 && cardIds.every((id) => unlocked.has(id));
 
+  // Real links only: the lesson's extra resources, then what it asks you to skim first.
+  const deeper = meta.additionalResources.filter((r): r is typeof r & { url: string } => Boolean(r.url));
+  const learnMore = [
+    ...deeper.map((r) => ({ title: r.title, type: r.type, meta: r.duration ?? r.meta, url: r.url })),
+    ...meta.primer
+      .filter((p): p is typeof p & { url: string } => Boolean(p.url))
+      .map((p) => ({ title: p.title, type: p.type, meta: p.meta, url: p.url })),
+  ].filter((r, i, all) => all.findIndex((x) => x.url === r.url) === i); // a link can be in both lists
   const rail: RailItem[] = [
     ...(meta.primer.length > 0 ? [{ id: "study-first", label: "Study these first" }] : []),
     ...headings(body),
@@ -92,6 +90,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
     ...(cardIds.length > 0 ? [{ id: "lock-it-in", label: "Lock it in" }] : []),
     { id: "assignment", label: "Assignment" },
     { id: "why-this-matters", label: "Why this matters" },
+    ...(deeper.length > 0 ? [{ id: "go-deeper", label: "Go deeper" }] : []),
   ];
   const bookmarkLesson = { key, title: meta.title, href, topic: meta.level };
   const issueUrl = lessonIssueUrl({ level: meta.level, slug: meta.slug, title: meta.title });
@@ -229,7 +228,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
                   get it wrong.
                 </p>
               </div>
-              <CheckYourself items={meta.knowledgeCheck} lesson={bookmarkLesson} />
+              <CheckYourself items={meta.knowledgeCheck} lesson={bookmarkLesson} resources={learnMore} />
             </section>
 
             <div id="lock-it-in" className="scroll-mt-[88px]">
@@ -277,6 +276,20 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
               <p className="m-0 text-[16px] leading-[1.75] text-[var(--coach-ink-secondary)]">{meta.whyThisMatters}</p>
             </section>
 
+            {deeper.length > 0 && (
+              <section id="go-deeper" aria-labelledby="deeper-title" className="flex scroll-mt-[88px] flex-col gap-3">
+                <div>
+                  <h2 id="deeper-title" className={H2}>
+                    Go deeper
+                  </h2>
+                  <p className="m-0 mt-1 text-[15px] text-[var(--coach-ink-secondary)]">
+                    Optional — if you want more on this.
+                  </p>
+                </div>
+                <ResourceList resources={deeper} />
+              </section>
+            )}
+
             <FinishCard
               level={meta.level}
               slug={meta.slug}
@@ -286,37 +299,15 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
               prev={prev}
             />
 
-            {/* Below the wide-screen rail's breakpoint, its parts come at the end. */}
-            <div className="flex flex-col gap-6 xl:hidden">
-              <div className="rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5">
-                <TopicLessons topic={topic.name} pathHref={pathHref} lessons={topicLessons} />
-              </div>
-              {meta.additionalResources.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <p className="m-0 text-[13px] font-semibold text-[var(--coach-ink-muted)]">Go deeper (optional)</p>
-                  <AdditionalResources resources={meta.additionalResources} />
-                </div>
-              )}
-            </div>
-
             <div className="flex flex-col gap-4">
               <LessonContributeLinks editUrl={lessonEditUrl(meta.level, meta.slug)} issueUrl={issueUrl} />
               <LessonFeedback issueUrl={issueUrl} />
             </div>
           </article>
 
-          <aside className="hidden max-h-[calc(100vh-48px)] flex-col gap-7 overflow-y-auto xl:sticky xl:top-6 xl:flex">
-            <div>
-              <p className="m-0 mb-2 text-[13px] font-semibold text-[var(--coach-ink-muted)]">On this page</p>
-              <PageRail items={rail} />
-            </div>
-            <TopicLessons topic={topic.name} pathHref={pathHref} lessons={topicLessons} />
-            {meta.additionalResources.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <p className="m-0 text-[13px] font-semibold text-[var(--coach-ink-muted)]">Go deeper (optional)</p>
-                <AdditionalResources resources={meta.additionalResources} />
-              </div>
-            )}
+          <aside className="hidden xl:sticky xl:top-6 xl:block">
+            <p className="m-0 mb-2 text-[13px] font-semibold text-[var(--coach-ink-muted)]">On this page</p>
+            <PageRail items={rail} />
           </aside>
         </div>
       </PracticeHistoryProvider>

@@ -24,3 +24,8 @@
 - **Check yourself remembers** your reveals and ratings in this browser (`ascend:check-yourself:<lesson>`), with "Try them again".
 - **On this page** highlights the last section whose heading has passed the top (v1's rail lit up a large early section for too long).
 - Finish card stacks below `lg` so tablet widths don't squeeze it.
+
+## Second pass (2026-10-30, the user's review)
+- **Focus while reading:** the right rail is only "On this page" (short, no inner scrollbar). The topic's lesson list ("In Bits & Logic · 0 of 6 done") is removed everywhere — it pulled attention from the reading; breadcrumb and Previous / Next are enough.
+- **Go deeper** is a section of the lesson (after "Why this matters"), not the rail: the lesson's outside resources as cards with save buttons.
+- **Check yourself → Learn more about this** under every revealed question (opens by itself after "Not yet"): re-read the section in this lesson, then up to 3 outside resources to read or watch. A question's own `resources` (optional frontmatter field) win; otherwise the lesson's real links are matched to the question by shared words (`src/lib/content/related-resources.ts`, tested). No invented links.

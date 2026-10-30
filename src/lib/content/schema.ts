@@ -16,6 +16,17 @@ export const KnowledgeCheckItemSchema = z.object({
   jumpToId: z.string(),
   jumpToLabel: z.string(),
   jumpToDetail: z.string().optional(),
+  /** Hand-picked reading or viewing for this question; without it, the lesson's own resources are matched to it. */
+  resources: z
+    .array(
+      z.object({
+        title: z.string(),
+        type: z.enum(["video", "doc", "pdf"]),
+        meta: z.string().optional(),
+        url: z.string().url(),
+      }),
+    )
+    .optional(),
 });
 export type KnowledgeCheckItem = z.infer<typeof KnowledgeCheckItemSchema>;
 

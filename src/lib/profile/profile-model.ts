@@ -4,7 +4,7 @@
  * project links, own projects, earned badges and Practice session counts.
  * Private numbers (retention, accuracy, due cards) belong to Progress.
  */
-import { achievementById } from "@/lib/achievements/catalog";
+import { achievementById, type AchievementGroup } from "@/lib/achievements/catalog";
 import { LEVELS, levelIds, type LevelId } from "@/lib/content/schema";
 import { displayUrl, linkKind, linkLabel, type LinkKind } from "./links";
 import { CURRICULUM_PROJECTS } from "./projects";
@@ -96,7 +96,7 @@ export type ProfileModel = {
   projectTotal: number;
   ownProjects: (ProfileInput["ownProjects"][number] & { urlLabel: string })[];
   skills: ProfileSkill[];
-  achievements: { id: string; label: string; glyph: string; description: string; earnedLabel: string }[];
+  achievements: { id: string; group: AchievementGroup; label: string; glyph: string; description: string; earnedLabel: string }[];
   journey: JourneyEvent[];
   /** Owner only: the next lesson to open. */
   next: { title: string; href: string } | null;
@@ -202,7 +202,7 @@ export function buildProfileModel(input: ProfileInput): ProfileModel {
   const achievements = badgeRows.flatMap((row) => {
     const badge = achievementById(row.badgeId);
     return badge
-      ? [{ id: badge.id, label: badge.label, glyph: badge.glyph, description: badge.means, earnedLabel: shortDate(row.earnedAt) }]
+      ? [{ id: badge.id, group: badge.group, label: badge.label, glyph: badge.glyph, description: badge.means, earnedLabel: shortDate(row.earnedAt) }]
       : [];
   });
 

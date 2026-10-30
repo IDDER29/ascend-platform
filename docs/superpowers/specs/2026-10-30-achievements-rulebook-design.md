@@ -96,3 +96,19 @@ ribbons on a general's chest — things you're proud to show.
 - **Still to earn:** closest first, each with a faded preview of its
   ribbon, its next condition and progress; selecting one shows "Not yet
   awarded" with the full rule as a checklist and the next step.
+
+## Decision (2026-10-30): the chest is the main page
+The user chose the chest. `/achievements` now serves it; the earlier takes
+stay reachable as the user asked: `/achievementsv1` (the old catalog),
+`/achievementsv4` (rule book), `/achievementsv5` (track); `/achievementsv6`
+redirects to `/achievements`.
+
+Finishing touches:
+- **Newly awarded:** decorations earned since the last visit (per browser,
+  localStorage) glow on the rack, open first, and carry a "Newly awarded"
+  tag until selected. On a first visit everything already earned counts as
+  seen.
+- **Worn on the profile:** the profile's Achievements card shows the same
+  ribbon rack (highest first) plus the newest three by name and date, on
+  the owner's page and the public `/u/<username>` alike; "Open your chest"
+  links here.

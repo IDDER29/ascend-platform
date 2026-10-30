@@ -28,7 +28,7 @@ function withEarnedBadges(model: ProfileModel, achievements: AchievementsModel):
     ...model,
     achievements: achievements.earnedNewestFirst.map((id) => {
       const part = byId.get(id)!;
-      return { id, label: part.label, glyph: part.glyph, description: part.means, earnedLabel: part.earnedLabel ?? "" };
+      return { id, group: part.group, label: part.label, glyph: part.glyph, description: part.means, earnedLabel: part.earnedLabel ?? "" };
     }),
   };
 }

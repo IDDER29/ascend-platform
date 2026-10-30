@@ -3,6 +3,7 @@ import { ribbonBackground, ribbonStripes } from "@/lib/achievements/ribbons";
 
 const SIZE = {
   rack: "h-[22px] w-[72px] sm:h-[32px] sm:w-[104px]",
+  card: "h-[16px] w-[52px]",
   small: "h-[12px] w-[40px]",
 } as const;
 

@@ -8,6 +8,7 @@ import { ProgressBar } from "@/components/achievements/progress-bar";
 import type { AchievementsModel, BadgeView } from "@/lib/achievements/achievements-model";
 import { byPrecedence, rackRows } from "@/lib/achievements/ribbons";
 import { Medal } from "./medal";
+import { useSeenDecorations } from "./use-seen-decorations";
 import { Ribbon } from "./ribbon";
 
 const PIN_STEP_MS = 90;
@@ -44,11 +45,13 @@ function citation(badge: BadgeView, name: string): string {
 function Citation({
   badge,
   name,
+  isNew,
   glyphOf,
   onSelect,
 }: {
   badge: BadgeView;
   name: string;
+  isNew: boolean;
   glyphOf: (id: string) => string;
   onSelect: (id: string) => void;
 }) {
@@ -65,6 +68,11 @@ function Citation({
         </h2>
         <span className={`text-[13.5px] font-semibold ${badge.earned ? "text-[var(--coach-tint-lime-ink)]" : "text-[var(--coach-ink-muted)]"}`}>
           {badge.earned ? `Awarded ${badge.earnedLabel}` : "Not yet awarded"}
+          {isNew ? (
+            <span className="ml-2 rounded-full bg-[var(--coach-lime)] px-2 py-0.5 text-[11.5px] font-bold text-[var(--coach-lime-ink)]">
+              Newly awarded
+            </span>
+          ) : null}
         </span>
       </div>
 
@@ -114,11 +122,16 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
   const toEarn = [...model.parts.filter((p) => !p.earned)].sort(
     (a, b) => b.ratio - a.ratio || model.parts.indexOf(a) - model.parts.indexOf(b),
   );
-  const [selectedId, setSelectedId] = useState(worn[0]?.id ?? toEarn[0]?.id ?? model.parts[0].id);
+  const seen = useSeenDecorations(worn.map((b) => b.id));
+  const firstNew = worn.find((b) => seen.isNew(b.id));
+  const [chosenId, setChosenId] = useState<string | null>(null);
+  // A newly awarded decoration opens first until the learner picks something else.
+  const selectedId = chosenId ?? firstNew?.id ?? worn[0]?.id ?? toEarn[0]?.id ?? model.parts[0].id;
   const selected = model.parts.find((p) => p.id === selectedId) ?? model.parts[0];
   const glyphOf = (id: string) => model.parts.find((p) => p.id === id)?.glyph ?? "•";
   const select = (id: string) => {
-    setSelectedId(id);
+    setChosenId(id);
+    seen.markSeen(id);
     if (window.matchMedia("(max-width: 1023px)").matches) {
       document.getElementById("citation-title")?.scrollIntoView({ block: "center", behavior: "smooth" });
     }
@@ -154,11 +167,15 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
                         <button
                           type="button"
                           aria-pressed={selectedId === badge.id}
-                          aria-label={`${badge.label}, awarded ${badge.earnedLabel}`}
+                          aria-label={`${badge.label}, awarded ${badge.earnedLabel}${seen.isNew(badge.id) ? ", new" : ""}`}
                           title={badge.label}
                           onClick={() => select(badge.id)}
-                          className={`block rounded-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--coach-hero-bg)] ${
-                            selectedId === badge.id ? "ring-2 ring-white ring-offset-2 ring-offset-[var(--coach-hero-bg)]" : ""
+                          className={`relative block rounded-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--coach-hero-bg)] ${
+                            selectedId === badge.id
+                              ? "ring-2 ring-white ring-offset-2 ring-offset-[var(--coach-hero-bg)]"
+                              : seen.isNew(badge.id)
+                                ? "shadow-[0_0_0_2px_var(--coach-lime),0_0_14px_var(--coach-lime)]"
+                                : ""
                           }`}
                         >
                           <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} />
@@ -187,7 +204,7 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
           </p>
         </section>
 
-        <Citation badge={selected} name={name} glyphOf={glyphOf} onSelect={select} />
+        <Citation badge={selected} name={name} isNew={seen.isNew(selected.id)} glyphOf={glyphOf} onSelect={select} />
       </div>
 
       {toEarn.length > 0 ? (

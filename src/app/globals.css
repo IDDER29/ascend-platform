@@ -1037,3 +1037,17 @@ html.sidebar-collapsed .app-sidebar-section {
   outline: 3px solid var(--coach-focus);
   outline-offset: 3px;
 }
+
+/* Lesson v2: the MDX body follows Coach ink in light and dark (mdx-components hard-codes older colours). */
+.lesson-v2-body p {
+  color: var(--coach-ink-secondary);
+}
+.lesson-v2-body h2,
+.lesson-v2-body h3,
+.lesson-v2-body strong {
+  color: var(--coach-ink);
+}
+.lesson-v2-body :not(pre) > code {
+  background: var(--coach-tint-neutral-bg);
+  color: var(--coach-ink);
+}

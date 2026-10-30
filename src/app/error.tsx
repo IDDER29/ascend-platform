@@ -57,7 +57,7 @@ export default function Error({
             className="inline-flex items-center gap-2 rounded-[13px] border border-card-border bg-white px-6.5 py-3.5 text-[15px] font-bold text-ink transition-transform hover:-translate-y-0.5"
           >
             <Home size={16} strokeWidth={2.3} className="text-brand-violet" />
-            Dashboard
+            Today
           </Link>
           <Link
             href="/signin"

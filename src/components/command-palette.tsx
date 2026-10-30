@@ -28,7 +28,6 @@ interface PaletteProject {
 
 const PROJECTS: PaletteProject[] = [
   { title: "ShellForge", subtitle: "Systems & Software · capstone project", href: "/projects/shellforge" },
-  { title: "ShellForge — your submission", subtitle: "Test results & peer solutions", href: "/projects/shellforge/result?outcome=passed" },
 ];
 
 const ACTIONS: PaletteAction[] = [

@@ -6,58 +6,14 @@ import { Check, FileCode2, Play, GitBranch, Info, BookOpen, FileText } from "luc
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
 
-const REQUIREMENTS = [
-  { id: "repl", title: "A read–eval–print loop", detail: "Print a prompt, read a line, run it, repeat until EOF.", bonus: false },
-  { id: "exec", title: "Run external programs", detail: "Locate the binary on $PATH and execute it in a child process.", bonus: false },
-  { id: "builtins", title: "Built-in commands", detail: "Implement cd, exit and env inside the shell itself.", bonus: false },
-  { id: "pipes", title: "Pipes", detail: "Support at least one pipe: cmd1 | cmd2, wiring stdout→stdin.", bonus: false },
-  { id: "redirect", title: "Redirections", detail: "Handle >, < and >> to files.", bonus: false },
-  { id: "signals", title: "Signal handling", detail: "Ctrl-C interrupts the running command, not your shell.", bonus: false },
-  { id: "bonus", title: "Multiple pipes & quoting", detail: "Chain 3+ commands and respect \"quoted\" arguments.", bonus: true },
-] as const;
+import { REQUIREMENTS, MILESTONES, RESOURCES as RESOURCE_LINKS, STARTER_FILES } from "@/lib/projects/shellforge-brief-data";
 
-const MILESTONES = [
-  { title: "The prompt loop", time: "~45 min", detail: "Print a prompt, read a line with getline, echo it back. Exit cleanly on Ctrl-D." },
-  { title: "Run one command", time: "~1 hr", detail: "Tokenize the line, fork, execve the binary, wait for it. Hello, ls." },
-  { title: "Built-ins & PATH", time: "~1 hr", detail: "Search $PATH; special-case cd, exit, env before forking." },
-  { title: "Pipes & redirection", time: "~2 hr", detail: "Set up pipe() and dup2() so output flows between commands and files." },
-  { title: "Signals & polish", time: "~1 hr", detail: "Trap SIGINT, free everything, pass with no leaks under valgrind." },
+const RESOURCE_STYLE = [
+  { icon: BookOpen, bg: "bg-[#FFF1EC]", fg: "text-[#FF6B4A]" },
+  { icon: FileCode2, bg: "bg-xp-bg", fg: "text-brand-violet" },
+  { icon: FileText, bg: "bg-[#E7F8F0]", fg: "text-[#12A472]" },
 ];
-
-const STARTER_FILES = [
-  { name: "Makefile", note: "build & clean" },
-  { name: "main.c", note: "the REPL loop" },
-  { name: "parser.c", note: "tokenize input" },
-  { name: "exec.c", note: "fork / execve" },
-  { name: "README.md", note: "your notes" },
-];
-
-const RESOURCES = [
-  {
-    title: "fork(2) man page",
-    meta: "Documentation",
-    href: "https://man7.org/linux/man-pages/man2/fork.2.html",
-    icon: BookOpen,
-    bg: "bg-[#FFF1EC]",
-    fg: "text-[#FF6B4A]",
-  },
-  {
-    title: "execve(2) man page",
-    meta: "Documentation",
-    href: "https://man7.org/linux/man-pages/man2/execve.2.html",
-    icon: FileCode2,
-    bg: "bg-xp-bg",
-    fg: "text-brand-violet",
-  },
-  {
-    title: "dup2(2) man page",
-    meta: "Documentation — pipes & redirection",
-    href: "https://man7.org/linux/man-pages/man2/dup2.2.html",
-    icon: FileText,
-    bg: "bg-[#E7F8F0]",
-    fg: "text-[#12A472]",
-  },
-];
+const RESOURCES = RESOURCE_LINKS.map((r, i) => ({ ...r, ...RESOURCE_STYLE[i % RESOURCE_STYLE.length] }));
 
 export function ShellforgeBrief() {
   const [checked, setChecked] = useState<Record<string, boolean>>({});

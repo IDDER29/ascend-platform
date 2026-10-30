@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
       { source: "/pathsv2", destination: "/paths", permanent: true },
       { source: "/pathsv2/:slug", destination: "/paths/:slug", permanent: true },
       { source: "/lessonsv2/:slug", destination: "/lessons/:slug", permanent: true },
+      { source: "/projects/shellforgev2", destination: "/projects/shellforge", permanent: true },
       // Earlier achievements explorations; the chest is the one page now.
       { source: "/achievementsv:n(\\d+)", destination: "/achievements", permanent: true },
       {

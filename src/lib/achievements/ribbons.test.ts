@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { ACHIEVEMENTS } from "./catalog";
-import { byPrecedence, rackRows, ribbonBackground, ribbonStripes } from "./ribbons";
+import { byPrecedence, groupSwatch, rackRows, ribbonBackground, ribbonStripes } from "./ribbons";
 
 test("every ribbon is symmetric, fills 100%, and is stable per badge", () => {
   for (const a of ACHIEVEMENTS) {
@@ -32,4 +32,11 @@ test("the top rack row holds the remainder", () => {
   assert.deepEqual(rackRows([1, 2, 3, 4, 5]), [[1, 2], [3, 4, 5]]);
   assert.deepEqual(rackRows([1, 2, 3]), [[1, 2, 3]]);
   assert.deepEqual(rackRows([]), []);
+});
+
+test("every group has a swatch for the ribbon key", () => {
+  for (const group of ["combination", "building", "remembering", "learning", "habits"] as const) {
+    assert.ok(groupSwatch(group).length > 0, group);
+  }
+  assert.match(groupSwatch("combination"), /^linear-gradient/);
 });

@@ -4,7 +4,8 @@ import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { AchievementsModel, BadgeView } from "@/lib/achievements/achievements-model";
-import { byPrecedence, rackRows } from "@/lib/achievements/ribbons";
+import { GROUP_TITLES, type AchievementGroup } from "@/lib/achievements/catalog";
+import { byPrecedence, groupSwatch, PRECEDENCE, rackRows } from "@/lib/achievements/ribbons";
 import { CriterionRow } from "./criterion-row";
 import { Medal } from "./medal";
 import { useSeenDecorations } from "./use-seen-decorations";
@@ -35,7 +36,10 @@ const GERUND: Record<string, string> = {
 function citation(badge: BadgeView, name: string): string {
   const reasons = badge.criteria.map((c) => {
     // A citation names what happened, not where to click: drop "on your profile", say "the" for "your".
-    const [verb, ...rest] = c.text.replace(/ on your profile$/, "").replace(/\byour\b/g, "the").split(" ");
+    const [verb, ...rest] = c.text
+      .replace(/ on your profile$/, "")
+      .replace(/\byour\b/g, "the")
+      .split(" ");
     return GERUND[verb] ? `${GERUND[verb]} ${rest.join(" ")}` : lowerFirst(c.text);
   });
   return `Awarded to ${name} on ${badge.earnedLabel} for ${joinAnd(reasons)}.`;
@@ -62,10 +66,15 @@ function Citation({
     >
       <Medal id={badge.id} group={badge.group} glyph={badge.glyph} earned={badge.earned} />
       <div className="flex flex-col gap-1">
-        <h2 id="citation-title" className="m-0 font-display text-[26px] font-extrabold leading-tight tracking-[-0.03em]">
+        <h2
+          id="citation-title"
+          className="m-0 font-display text-[26px] font-extrabold leading-tight tracking-[-0.03em]"
+        >
           {badge.label}
         </h2>
-        <span className={`text-[13.5px] font-semibold ${badge.earned ? "text-[var(--coach-tint-lime-ink)]" : "text-[var(--coach-ink-muted)]"}`}>
+        <span
+          className={`text-[13.5px] font-semibold ${badge.earned ? "text-[var(--coach-tint-lime-ink)]" : "text-[var(--coach-ink-muted)]"}`}
+        >
           {badge.earned ? `Awarded ${badge.earnedLabel}` : "Not yet awarded"}
           {isNew ? (
             <span className="ml-2 rounded-full bg-[var(--coach-lime)] px-2 py-0.5 text-[11.5px] font-bold text-[var(--coach-lime-ink)]">
@@ -90,10 +99,21 @@ function Citation({
               <span className="truncate font-mono">{badge.repoLabel}</span>
             </a>
           ) : null}
+          <Link
+            href="/profile"
+            className="w-fit text-[13px] font-semibold text-[var(--coach-ink)] underline underline-offset-2"
+          >
+            See it on your profile
+          </Link>
           <h3 className="m-0 mt-3 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">How it was earned</h3>
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {badge.criteria.map((c) => (
-              <CriterionRow key={c.text} c={c} partGlyph={c.badgeId ? glyphOf(c.badgeId) : null} onSelectPart={onSelect} />
+              <CriterionRow
+                key={c.text}
+                c={c}
+                partGlyph={c.badgeId ? glyphOf(c.badgeId) : null}
+                onSelectPart={onSelect}
+              />
             ))}
           </ul>
         </div>
@@ -104,7 +124,12 @@ function Citation({
           </h3>
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {badge.criteria.map((c) => (
-              <CriterionRow key={c.text} c={c} partGlyph={c.badgeId ? glyphOf(c.badgeId) : null} onSelectPart={onSelect} />
+              <CriterionRow
+                key={c.text}
+                c={c}
+                partGlyph={c.badgeId ? glyphOf(c.badgeId) : null}
+                onSelectPart={onSelect}
+              />
             ))}
           </ul>
           {badge.action ? (
@@ -121,6 +146,360 @@ function Citation({
   );
 }
 
+type Select = (id: string) => void;
+
+/** Collar, centre seam and buttons: drawn lines only, so the decorations stay the subject. */
+function UniformLines() {
+  return (
+    <>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 200 60"
+        preserveAspectRatio="none"
+        className="pointer-events-none absolute inset-x-0 top-0 hidden h-[110px] w-full sm:block"
+      >
+        <g fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="1.5" vectorEffect="non-scaling-stroke">
+          <path d="M78 0 L100 52 L122 0" vectorEffect="non-scaling-stroke" />
+          <path d="M58 0 L86 46" vectorEffect="non-scaling-stroke" />
+          <path d="M142 0 L114 46" vectorEffect="non-scaling-stroke" />
+        </g>
+      </svg>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-0 left-1/2 top-[94px] hidden w-px bg-white/[0.08] sm:block"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-3 left-1/2 top-[124px] hidden -translate-x-1/2 flex-col items-center justify-around sm:flex"
+      >
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="size-2.5 rounded-full bg-white/[0.14] ring-1 ring-white/10" />
+        ))}
+      </span>
+    </>
+  );
+}
+
+function PocketFlap() {
+  return (
+    <span
+      aria-hidden="true"
+      className="relative block h-10 rounded-b-[16px] border border-t-0 border-white/[0.08] bg-white/[0.02]"
+    >
+      <span className="absolute bottom-2 left-1/2 size-2 -translate-x-1/2 rounded-full bg-white/[0.14]" />
+    </span>
+  );
+}
+
+function Rack({
+  worn,
+  selectedId,
+  isNew,
+  onSelect,
+}: {
+  worn: BadgeView[];
+  selectedId: string;
+  isNew: (id: string) => boolean;
+  onSelect: Select;
+}) {
+  let pin = 0;
+  return (
+    <ol
+      aria-label="Decorations, highest first"
+      className="relative m-0 flex list-none flex-col items-center gap-1.5 p-0"
+    >
+      {rackRows(worn).map((row, r) => (
+        <li key={r}>
+          <ol className="m-0 flex list-none justify-center gap-1.5 p-0">
+            {row.map((badge) => (
+              <li key={badge.id} className="achv-pin" style={{ ["--pin-delay" as string]: `${pin++ * PIN_STEP_MS}ms` }}>
+                <button
+                  type="button"
+                  aria-pressed={selectedId === badge.id}
+                  aria-label={`${badge.label}, awarded ${badge.earnedLabel}${isNew(badge.id) ? ", new" : ""}`}
+                  title={`${badge.label}: ${badge.criteria.map((c) => c.text).join("; ")}`}
+                  onClick={() => onSelect(badge.id)}
+                  className={`relative block rounded-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--coach-hero-bg)] ${
+                    selectedId === badge.id
+                      ? "ring-2 ring-white ring-offset-2 ring-offset-[var(--coach-hero-bg)]"
+                      : isNew(badge.id)
+                        ? "shadow-[0_0_0_2px_var(--coach-lime),0_0_14px_var(--coach-lime)]"
+                        : ""
+                  }`}
+                >
+                  <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} />
+                </button>
+              </li>
+            ))}
+          </ol>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** What each colour stands for, with how many of that kind are worn. */
+function RibbonKey({ model }: { model: AchievementsModel }) {
+  return (
+    <ul
+      aria-label="Ribbon colours"
+      className="relative m-0 flex list-none flex-wrap justify-center gap-x-5 gap-y-2 border-t border-white/[0.08] p-0 pt-4"
+    >
+      {PRECEDENCE.map((group: AchievementGroup) => {
+        const badges = model.parts.filter((p) => p.group === group);
+        return (
+          <li key={group} className="flex items-center gap-2 text-[12.5px] text-[var(--coach-hero-muted)]">
+            <span aria-hidden="true" className="h-2.5 w-6 rounded-[2px]" style={{ background: groupSwatch(group) }} />
+            <span>
+              {GROUP_TITLES[group]}{" "}
+              <span className="font-semibold text-[var(--coach-hero-ink)]">
+                {badges.filter((b) => b.earned).length}/{badges.length}
+              </span>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** A dress uniform: ribbons over the left breast pocket, the nameplate over the right. */
+function Uniform({
+  model,
+  worn,
+  firstToEarn,
+  name,
+  selectedId,
+  isNew,
+  onSelect,
+}: {
+  model: AchievementsModel;
+  worn: BadgeView[];
+  firstToEarn: BadgeView | undefined;
+  name: string;
+  selectedId: string;
+  isNew: (id: string) => boolean;
+  onSelect: Select;
+}) {
+  return (
+    <section
+      aria-labelledby="chest-title"
+      className="relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-[24px] bg-[var(--coach-hero-bg)] px-5 pb-5 text-[var(--coach-hero-ink)] sm:px-8"
+    >
+      <h2 id="chest-title" className="sr-only">
+        Decorations worn
+      </h2>
+
+      {/* The jacket: decorations high on the chest under the collar; the seam runs on down. */}
+      <div className="relative flex flex-1 flex-col gap-3 pb-8 pt-8 sm:min-h-[340px] sm:pt-[112px]">
+        <UniformLines />
+        {/* Viewer's left: nameplate. Viewer's right: the rack, as worn on the wearer's left breast. */}
+        <div className="relative grid grid-cols-1 items-end gap-6 sm:grid-cols-2 sm:gap-x-14">
+          <div className="order-2 flex justify-center sm:order-1">
+            <div className="rounded-[5px] bg-[linear-gradient(180deg,#f3f1ea,#cfccc2)] px-5 py-1.5 shadow-[0_2px_0_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.7)]">
+              <span className="whitespace-nowrap font-mono text-[12.5px] font-semibold uppercase tracking-[0.14em] text-[#1b1d22]">
+                {name}
+              </span>
+            </div>
+          </div>
+          <div className="order-1 flex justify-center sm:order-2">
+            {worn.length > 0 ? (
+              <Rack worn={worn} selectedId={selectedId} isNew={isNew} onSelect={onSelect} />
+            ) : (
+              <p className="m-0 max-w-[280px] rounded-xl border-2 border-dashed border-[var(--coach-hero-track)] px-5 py-4 text-center text-[14px] text-[var(--coach-hero-muted)]">
+                No decorations yet. Your first is {firstToEarn?.label ?? "waiting"}:{" "}
+                {lowerFirst(firstToEarn?.criteria[0]?.text ?? "")}.
+              </p>
+            )}
+          </div>
+        </div>
+        <div aria-hidden="true" className="relative hidden grid-cols-2 gap-x-14 sm:grid">
+          <span className="mx-auto w-full max-w-[240px]">
+            <PocketFlap />
+          </span>
+          <span className="mx-auto w-full max-w-[240px]">
+            <PocketFlap />
+          </span>
+        </div>
+      </div>
+
+      <p className="relative m-0 text-center text-[13px] text-[var(--coach-hero-muted)]">
+        {worn.length === 0
+          ? `${model.total} decorations to earn.`
+          : `${worn.length} of ${model.total} decorations, worn highest first. Select a ribbon to read its citation.`}
+      </p>
+      <RibbonKey model={model} />
+    </section>
+  );
+}
+
+function NextUpCard({
+  badge,
+  selected,
+  glyphOf,
+  onSelect,
+}: {
+  badge: BadgeView;
+  selected: boolean;
+  glyphOf: (id: string) => string;
+  onSelect: Select;
+}) {
+  const met = badge.criteria.filter((c) => c.done).length;
+  return (
+    <li
+      className={`flex h-full min-w-0 flex-col gap-3 rounded-2xl border-2 bg-[var(--coach-surface)] p-4 ${
+        selected ? "border-[var(--coach-blue)]" : "border-[var(--coach-border)]"
+      }`}
+    >
+      <button
+        type="button"
+        aria-pressed={selected}
+        onClick={() => onSelect(badge.id)}
+        className="flex min-w-0 items-center gap-3 rounded-lg text-left hover:underline"
+      >
+        <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} size="small" muted />
+        <span className="min-w-0 flex-1 text-[15px] font-semibold">{badge.label}</span>
+        {badge.criteria.length > 1 ? (
+          <span className="shrink-0 text-[12px] text-[var(--coach-ink-muted)]">
+            {met} of {badge.criteria.length} met
+          </span>
+        ) : null}
+      </button>
+      <ul aria-label="How to earn it" className="m-0 flex list-none flex-col gap-2.5 p-0">
+        {badge.criteria.map((c) => (
+          <CriterionRow key={c.text} c={c} partGlyph={c.badgeId ? glyphOf(c.badgeId) : null} onSelectPart={onSelect} />
+        ))}
+      </ul>
+      {badge.action ? (
+        <Link
+          href={badge.action.href}
+          className="mt-auto inline-flex h-9 w-fit items-center rounded-lg bg-[var(--coach-solid-btn-bg)] px-3.5 text-[13px] font-bold text-[var(--coach-solid-btn-ink)] no-underline shadow-[0_2px_0_var(--coach-solid-btn-shadow)]"
+        >
+          {badge.action.label}
+        </Link>
+      ) : null}
+    </li>
+  );
+}
+
+/** A badge's whole rule as one sentence; a combination names its parts once: "Earn A, B and C". */
+function ruleSentence(badge: BadgeView): string {
+  const parts = badge.criteria.filter((c) => c.badgeId).map((c) => c.text.replace(/^Earn /, ""));
+  const others = badge.criteria.filter((c) => !c.badgeId).map((c) => c.text);
+  const clauses = [...others, ...(parts.length ? [`earn ${joinAnd(parts)}`] : [])];
+  return joinAnd(clauses.map((c, i) => (i === 0 ? c.charAt(0).toUpperCase() + c.slice(1) : lowerFirst(c))));
+}
+
+/** One line per remaining decoration: its rule in a sentence and where you stand. */
+function RestRow({ badge, selected, onSelect }: { badge: BadgeView; selected: boolean; onSelect: Select }) {
+  const open = badge.criteria.filter((c) => !c.done);
+  const counted = open.find((c) => c.progress);
+  return (
+    <li>
+      <button
+        type="button"
+        aria-pressed={selected}
+        onClick={() => onSelect(badge.id)}
+        className={`grid w-full min-w-0 grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 rounded-xl border-2 px-3 py-2.5 text-left ${
+          selected
+            ? "border-[var(--coach-blue)] bg-[var(--coach-surface)]"
+            : "border-transparent hover:bg-[var(--coach-surface)]"
+        }`}
+      >
+        <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} size="small" muted />
+        <span className="min-w-0">
+          <span className="block text-[14.5px] font-semibold">{badge.label}</span>
+          <span className="block text-[13px] leading-snug text-[var(--coach-ink-secondary)]">
+            {ruleSentence(badge)}
+          </span>
+        </span>
+        <span className="text-right text-[12.5px] text-[var(--coach-ink-muted)]">
+          {counted?.progress
+            ? `${counted.progress.done} of ${counted.progress.total}`
+            : badge.criteria.length > 1
+              ? `${badge.criteria.length - open.length} of ${badge.criteria.length} met`
+              : "Not started"}
+        </span>
+      </button>
+    </li>
+  );
+}
+
+/** The closest few in full, the rest one line each, grouped by kind. */
+function StillToEarn({
+  toEarn,
+  selectedId,
+  glyphOf,
+  onSelect,
+}: {
+  toEarn: BadgeView[];
+  selectedId: string;
+  glyphOf: (id: string) => string;
+  onSelect: Select;
+}) {
+  const nextUp = toEarn.slice(0, NEXT_UP);
+  const rest = toEarn.slice(NEXT_UP);
+  return (
+    <section aria-labelledby="to-earn-title" className="flex min-w-0 flex-col gap-5">
+      <div className="flex flex-col gap-1">
+        <h2 id="to-earn-title" className="m-0 font-display text-[22px] font-extrabold tracking-[-0.02em]">
+          Still to earn
+        </h2>
+        <p className="m-0 max-w-[640px] text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
+          Every decoration has its own rule. The closest ones first, with exactly what is left; select any other to see
+          its full rule.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h3 className="m-0 text-[15px] font-semibold">Next up</h3>
+        <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 md:grid-cols-3">
+          {nextUp.map((badge) => (
+            <NextUpCard
+              key={badge.id}
+              badge={badge}
+              selected={selectedId === badge.id}
+              glyphOf={glyphOf}
+              onSelect={onSelect}
+            />
+          ))}
+        </ul>
+      </div>
+
+      {rest.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          <h3 className="m-0 text-[15px] font-semibold">Everything else</h3>
+          <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+            {PRECEDENCE.map((group) => {
+              const badges = rest.filter((b) => b.group === group);
+              if (badges.length === 0) return null;
+              return (
+                <div key={group} className="flex min-w-0 flex-col gap-1">
+                  <h3 className="m-0 flex items-center gap-2 px-3 text-[13px] font-semibold text-[var(--coach-ink-muted)]">
+                    <span
+                      aria-hidden="true"
+                      className="h-2 w-5 rounded-[2px]"
+                      style={{ background: groupSwatch(group) }}
+                    />
+                    {GROUP_TITLES[group]}
+                  </h3>
+                  <ul className="m-0 flex list-none flex-col p-0">
+                    {badges.map((badge) => (
+                      <RestRow key={badge.id} badge={badge} selected={selectedId === badge.id} onSelect={onSelect} />
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+const NEXT_UP = 3;
+
 /** The learner's decorations worn on a uniform, with a citation for each, and the ones still to earn. */
 export function Chest({ model, name }: { model: AchievementsModel; name: string }) {
   const worn = byPrecedence(model.parts.filter((p) => p.earned));
@@ -134,139 +513,31 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
   const selectedId = chosenId ?? firstNew?.id ?? worn[0]?.id ?? toEarn[0]?.id ?? model.parts[0].id;
   const selected = model.parts.find((p) => p.id === selectedId) ?? model.parts[0];
   const glyphOf = (id: string) => model.parts.find((p) => p.id === id)?.glyph ?? "•";
-  const select = (id: string) => {
+  const select: Select = (id) => {
     setChosenId(id);
     seen.markSeen(id);
     if (window.matchMedia("(max-width: 1023px)").matches) {
       document.getElementById("citation-title")?.scrollIntoView({ block: "center", behavior: "smooth" });
     }
   };
-  let pin = 0;
 
   return (
-    <div className="flex min-w-0 flex-col gap-8">
+    <div className="flex min-w-0 flex-col gap-10">
       <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
-        <section
-          aria-labelledby="chest-title"
-          className="relative flex min-h-[300px] min-w-0 flex-col items-center justify-center gap-7 overflow-hidden rounded-[24px] bg-[var(--coach-hero-bg)] px-5 py-9 text-[var(--coach-hero-ink)] sm:px-10"
-        >
-          {/* The uniform: lapels meeting at the top and a placket seam. */}
-          <span aria-hidden="true" className="pointer-events-none absolute -left-16 -top-24 hidden h-56 w-56 rotate-[35deg] border-r border-white/[0.07] sm:block" />
-          <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-24 hidden h-56 w-56 -rotate-[35deg] border-l border-white/[0.07] sm:block" />
-
-          <h2 id="chest-title" className="sr-only">
-            Decorations worn
-          </h2>
-
-          {worn.length > 0 ? (
-            <ol aria-label="Decorations, highest first" className="relative m-0 flex list-none flex-col items-center gap-1.5 p-0">
-              {rackRows(worn).map((row, r) => (
-                <li key={r}>
-                  <ol className="m-0 flex list-none justify-center gap-1.5 p-0">
-                    {row.map((badge) => (
-                      <li
-                        key={badge.id}
-                        className="achv-pin"
-                        style={{ ["--pin-delay" as string]: `${pin++ * PIN_STEP_MS}ms` }}
-                      >
-                        <button
-                          type="button"
-                          aria-pressed={selectedId === badge.id}
-                          aria-label={`${badge.label}, awarded ${badge.earnedLabel}${seen.isNew(badge.id) ? ", new" : ""}`}
-                          title={`${badge.label}: ${badge.criteria.map((c) => c.text).join("; ")}`}
-                          onClick={() => select(badge.id)}
-                          className={`relative block rounded-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--coach-hero-bg)] ${
-                            selectedId === badge.id
-                              ? "ring-2 ring-white ring-offset-2 ring-offset-[var(--coach-hero-bg)]"
-                              : seen.isNew(badge.id)
-                                ? "shadow-[0_0_0_2px_var(--coach-lime),0_0_14px_var(--coach-lime)]"
-                                : ""
-                          }`}
-                        >
-                          <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} />
-                        </button>
-                      </li>
-                    ))}
-                  </ol>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className="relative m-0 max-w-[300px] rounded-xl border-2 border-dashed border-[var(--coach-hero-track)] px-5 py-4 text-center text-[14px] text-[var(--coach-hero-muted)]">
-              No decorations yet. Your first is {toEarn[0]?.label ?? "waiting"}: {lowerFirst(toEarn[0]?.criteria[0]?.text ?? "")}.
-            </p>
-          )}
-
-          {/* Nameplate. */}
-          <div className="relative rounded-[5px] bg-[linear-gradient(180deg,#f3f1ea,#cfccc2)] px-5 py-1.5 shadow-[0_2px_0_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.7)]">
-            <span className="font-mono text-[13px] font-semibold uppercase tracking-[0.18em] text-[#1b1d22]">{name}</span>
-          </div>
-
-          <p className="relative m-0 text-center text-[13px] text-[var(--coach-hero-muted)]">
-            {worn.length === 0
-              ? `${model.total} decorations to earn`
-              : `${worn.length} of ${model.total} decorations, worn highest first. Select a ribbon to read its citation.`}
-          </p>
-        </section>
-
+        <Uniform
+          model={model}
+          worn={worn}
+          firstToEarn={toEarn[0]}
+          name={name}
+          selectedId={selectedId}
+          isNew={seen.isNew}
+          onSelect={select}
+        />
         <Citation badge={selected} name={name} isNew={seen.isNew(selected.id)} glyphOf={glyphOf} onSelect={select} />
       </div>
 
       {toEarn.length > 0 ? (
-        <section aria-labelledby="to-earn-title" className="flex min-w-0 flex-col gap-3">
-          <h2 id="to-earn-title" className="m-0 font-display text-[22px] font-extrabold tracking-[-0.02em]">
-            Still to earn
-          </h2>
-          <p className="m-0 max-w-[640px] text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
-            Every decoration has its own rule. Here is exactly what each one asks for, closest first.
-          </p>
-          <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 md:grid-cols-2">
-            {toEarn.map((badge) => {
-              const met = badge.criteria.filter((c) => c.done).length;
-              return (
-                <li
-                  key={badge.id}
-                  className={`flex h-full min-w-0 flex-col gap-3 rounded-2xl border-2 bg-[var(--coach-surface)] p-4 ${
-                    selectedId === badge.id ? "border-[var(--coach-blue)]" : "border-[var(--coach-border)]"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    aria-pressed={selectedId === badge.id}
-                    onClick={() => select(badge.id)}
-                    className="flex min-w-0 items-center gap-3 rounded-lg text-left hover:underline"
-                  >
-                    <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} size="small" muted />
-                    <span className="min-w-0 flex-1 text-[15px] font-semibold">{badge.label}</span>
-                    {badge.criteria.length > 1 ? (
-                      <span className="shrink-0 text-[12px] text-[var(--coach-ink-muted)]">
-                        {met} of {badge.criteria.length} met
-                      </span>
-                    ) : null}
-                  </button>
-                  <div className="flex flex-col gap-2">
-                    <h3 className="m-0 text-[12px] font-semibold text-[var(--coach-ink-muted)]">
-                      {badge.criteria.length > 1 ? "How to earn it: meet all of these" : "How to earn it"}
-                    </h3>
-                    <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
-                      {badge.criteria.map((c) => (
-                        <CriterionRow key={c.text} c={c} partGlyph={c.badgeId ? glyphOf(c.badgeId) : null} onSelectPart={select} />
-                      ))}
-                    </ul>
-                  </div>
-                  {badge.action ? (
-                    <Link
-                      href={badge.action.href}
-                      className="mt-auto inline-flex h-9 w-fit items-center rounded-lg bg-[var(--coach-solid-btn-bg)] px-3.5 text-[13px] font-bold text-[var(--coach-solid-btn-ink)] no-underline shadow-[0_2px_0_var(--coach-solid-btn-shadow)]"
-                    >
-                      {badge.action.label}
-                    </Link>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        <StillToEarn toEarn={toEarn} selectedId={selectedId} glyphOf={glyphOf} onSelect={select} />
       ) : null}
     </div>
   );

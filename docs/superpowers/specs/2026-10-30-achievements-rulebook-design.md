@@ -126,3 +126,17 @@ decoration:
 - **Combinations** borrow the next step of the first badge they still need
   (Builder → what Shell Smith needs next).
 - Hovering a ribbon on the chest shows its name and rule.
+
+## Polish pass (2026-10-30)
+- **A real dress uniform:** collar and lapels, a centre seam with
+  buttons, two breast-pocket flaps. Decorations sit high on the chest:
+  the rack over the wearer's left pocket (viewer's right), the nameplate
+  over the other. Phones drop the drawn lines and stack rack over
+  nameplate.
+- **Ribbon key:** under the uniform, one swatch per group with how many
+  of that kind are worn ("Learning 2/6").
+- **Still to earn in two tiers:** "Next up" — the three closest in full
+  (rule checklist, progress, next-step button) — then "Everything else",
+  one line per badge grouped by kind with its whole rule as a sentence
+  and where you stand; selecting a row opens its citation.
+- Earned citations link to the profile, where the rack is also worn.

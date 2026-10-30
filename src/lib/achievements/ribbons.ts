@@ -92,3 +92,12 @@ export function rackRows<T>(items: T[], perRow = 3): T[][] {
   for (let i = top; i < items.length; i += perRow) rows.push(items.slice(i, i + perRow));
   return rows;
 }
+
+/** The colour that stands for a group in the ribbon key; combinations mix the others. */
+export function groupSwatch(group: AchievementGroup): string {
+  if (group === "combination") {
+    const [a, b, c, d] = PALETTES.combination;
+    return `linear-gradient(90deg, ${a} 0 25%, ${b} 25% 50%, ${c} 50% 75%, ${d} 75%)`;
+  }
+  return PALETTES[group][0];
+}

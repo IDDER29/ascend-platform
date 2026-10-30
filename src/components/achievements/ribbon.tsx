@@ -2,7 +2,8 @@ import type { AchievementGroup } from "@/lib/achievements/catalog";
 import { ribbonBackground, ribbonStripes } from "@/lib/achievements/ribbons";
 
 const SIZE = {
-  rack: "h-[22px] w-[72px] sm:h-[32px] sm:w-[104px]",
+  // Three to a row must fit half a uniform: narrower where the chest sits beside the citation.
+  rack: "h-[22px] w-[72px] sm:h-[30px] sm:w-[96px] lg:h-[23px] lg:w-[70px]",
   card: "h-[16px] w-[52px]",
   small: "h-[12px] w-[40px]",
 } as const;
@@ -31,7 +32,7 @@ export function Ribbon({
     >
       <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.22),transparent_45%,rgba(0,0,0,0.2))]" />
       {group === "combination" && size === "rack" ? (
-        <span className="absolute left-1/2 top-1/2 flex size-[15px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--coach-hero-bg)] text-[9px] leading-none text-[var(--coach-lime)] sm:size-[22px] sm:text-[12px]">
+        <span className="absolute left-1/2 top-1/2 flex size-[15px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--coach-hero-bg)] text-[9px] leading-none text-[var(--coach-lime)] sm:size-[20px] sm:text-[11px] lg:size-[16px] lg:text-[9px]">
           {glyph}
         </span>
       ) : null}

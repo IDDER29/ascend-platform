@@ -46,3 +46,6 @@
 - Caught up: when the next card comes due, and Free study. No cards yet: finish a lesson to get some (no button).
 - Under it, "Coming up": cards due today and the next six days.
 - Model: `src/lib/dashboard/practice-card-model.ts` (tested).
+
+## Memory curve (2026-10-30)
+- Replaces "Coming up" on the Practice card: "You'd recall about N% of your M cards today" and a 30-day chart — reviewing when due vs if you stop — from an FSRS-style estimate over the learner's own cards. Details, formula and reasoning: `docs/learning-science/spaced-repetition.md` §3. Model: `src/lib/practice/memory-curve.ts` (tested).

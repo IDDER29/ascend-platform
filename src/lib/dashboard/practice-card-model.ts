@@ -1,9 +1,9 @@
 /**
  * The dashboard's Practice card: is there a review to do, how long it takes,
- * how much is waiting, and what's coming this week. Words only; the numbers
- * come from the Practice home model.
+ * and how much is waiting. Words only; the numbers come from the Practice home
+ * model. (The memory curve under it is `memory-curve.ts`.)
  */
-import type { CoachHomeModel, DueWeekDay } from "@/lib/practice/coach-home-model";
+import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
 
 /** A card takes about half a minute in a review. */
 const SECONDS_PER_CARD = 30;
@@ -17,12 +17,10 @@ export type PracticeCardView = {
   detail: string | null;
   primary: { label: string; href: string } | null;
   last: string | null;
-  /** Today and the next six days; null when there are no cards yet. */
-  week: DueWeekDay[] | null;
 };
 
 export function practiceCardView(model: CoachHomeModel, reviewedToday: boolean): PracticeCardView {
-  const { hero, modes, week } = model;
+  const { hero, modes } = model;
   const last = hero.lastScore ? `Last review: ${hero.lastScore.correct} of ${hero.lastScore.total} right` : null;
 
   if (hero.action.mode === "continue") {
@@ -33,7 +31,6 @@ export function practiceCardView(model: CoachHomeModel, reviewedToday: boolean):
       detail: "Finish a lesson and its cards show up here for review.",
       primary: null,
       last: null,
-      week: null,
     };
   }
 
@@ -50,7 +47,6 @@ export function practiceCardView(model: CoachHomeModel, reviewedToday: boolean):
       detail: parts.length > 0 ? `${parts.join(", ")}.` : null,
       primary: { label: "Start review", href: hero.action.href },
       last,
-      week,
     };
   }
 
@@ -61,6 +57,5 @@ export function practiceCardView(model: CoachHomeModel, reviewedToday: boolean):
     detail: hero.nextReviewLabel ? `Next card comes due ${hero.nextReviewLabel}.` : "Nothing due right now.",
     primary: { label: "Free study", href: hero.action.href },
     last,
-    week,
   };
 }

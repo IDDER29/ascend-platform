@@ -32,7 +32,6 @@ test("due: the review's size and time, what's waiting, and the last score", () =
   assert.equal(v.detail, "35 due in all, 3 of them ones you missed.");
   assert.deepEqual(v.primary, { label: "Start review", href: "/practice/session?scope=due" });
   assert.equal(v.last, "Last review: 2 of 3 right");
-  assert.equal(v.week?.length, 7);
 });
 
 test("a small review says nothing about what's waiting; after one today it's 'another'", () => {
@@ -57,7 +56,7 @@ test("caught up: when the next card is due, and free study", () => {
   assert.equal(v.primary?.label, "Free study");
 });
 
-test("no cards yet: no button and no week", () => {
+test("no cards yet: no button", () => {
   const v = practiceCardView(
     model({
       dueNow: 0,
@@ -69,5 +68,4 @@ test("no cards yet: no button and no week", () => {
   );
   assert.equal(v.state, "locked");
   assert.equal(v.primary, null);
-  assert.equal(v.week, null);
 });

@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { readNewDayMeta, syncLocalCards } from "@/lib/practice/cards";
 import { practiceCardView } from "@/lib/dashboard/practice-card-model";
-import { buildCoachHomeModel, type CoachHomeModel, type DueWeekDay } from "@/lib/practice/coach-home-model";
+import { buildCoachHomeModel, type CoachHomeModel } from "@/lib/practice/coach-home-model";
+import { memoryCurve } from "@/lib/practice/memory-curve";
 import { resolveDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
 import { mergeSessionHistory, readLocalHistory, type PracticeSessionRecord } from "@/lib/practice/history";
 import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 import { unlockedQuestions } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
+import { MemoryCurveChart } from "./memory-curve-chart";
 import { RevisitCard } from "./revisit-card";
 import { TodayCard } from "./today-card";
 
@@ -33,16 +35,25 @@ function usePracticeToday({
   initialCards,
   initialHistory,
   initialGoal,
-}: PracticeTodayProps): { model: CoachHomeModel | null; history: PracticeSessionRecord[] | null } {
+}: PracticeTodayProps): {
+  model: CoachHomeModel | null;
+  history: PracticeSessionRecord[] | null;
+  cards: PracticeCard[];
+} {
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
   const unlockedIds = useMemo(() => unlockedQuestions(completed).map((q) => q.id), [completed]);
-  const [state, setState] = useState<{ model: CoachHomeModel; history: PracticeSessionRecord[] } | null>(null);
+  const [state, setState] = useState<{
+    model: CoachHomeModel;
+    history: PracticeSessionRecord[];
+    cards: PracticeCard[];
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     const history = mergeSessionHistory(readLocalHistory(userId), initialHistory);
+    const cards = syncLocalCards(userId, initialCards, unlockedIds);
     const next = buildCoachHomeModel({
-      cards: syncLocalCards(userId, initialCards, unlockedIds),
+      cards,
       history,
       meta: readNewDayMeta(userId),
       completedKeys: completed,
@@ -51,53 +62,37 @@ function usePracticeToday({
       lessonDates: completionDates,
     });
     queueMicrotask(() => {
-      if (!cancelled) setState({ model: next, history });
+      if (!cancelled) setState({ model: next, history, cards });
     });
     return () => {
       cancelled = true;
     };
   }, [completed, completionDates, initialCards, initialGoal, initialHistory, unlockedIds, userId]);
 
-  return { model: state?.model ?? null, history: state?.history ?? null };
+  return { model: state?.model ?? null, history: state?.history ?? null, cards: state?.cards ?? [] };
 }
 
-/** Today and the next six days: how many cards come due each day. */
-function ComingUp({ week }: { week: DueWeekDay[] }) {
-  const max = Math.max(1, ...week.map((d) => d.count));
+/** How much of your cards you'd recall, today and over the next weeks. Hidden until a card has been reviewed. */
+function YourMemory({ cards }: { cards: PracticeCard[] }) {
+  const curve = memoryCurve(cards, new Date());
+  if (curve.cards === 0) return null;
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-[12.5px] text-[var(--coach-ink-muted)]">Coming up</span>
-      <ol aria-label="Cards due, today and the next six days" className="m-0 grid list-none grid-cols-7 gap-1.5 p-0">
-        {week.map((d) => (
-          <li key={d.label} title={d.title} className="flex flex-col items-center gap-1">
-            <span className="text-[11px] tabular-nums text-[var(--coach-ink-muted)]">{d.count > 0 ? d.count : ""}</span>
-            <span className="flex h-10 w-full items-end">
-              <span
-                className={`w-full rounded-md ${
-                  d.isToday
-                    ? "bg-[var(--coach-ink)]"
-                    : d.count > 0
-                      ? "bg-[var(--coach-blue)]"
-                      : "bg-[var(--coach-scale-empty)]"
-                }`}
-                style={{ height: d.count > 0 ? `${Math.max(14, Math.round((d.count / max) * 100))}%` : "4px" }}
-              />
-            </span>
-            <span
-              className={`text-[11px] ${d.isToday ? "font-bold text-[var(--coach-ink)]" : "text-[var(--coach-ink-muted)]"}`}
-            >
-              {d.label}
-            </span>
-            <span className="sr-only">{d.title}</span>
-          </li>
-        ))}
-      </ol>
+    <div className="flex flex-col gap-2 border-t-2 border-[var(--coach-divider)] pt-4">
+      <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
+        You&apos;d recall about{" "}
+        <span className="font-semibold text-[var(--coach-ink)]">{Math.round(curve.today * 100)}%</span> of your{" "}
+        {curve.cards} {curve.cards === 1 ? "card" : "cards"} today.
+      </p>
+      <MemoryCurveChart curve={curve} />
+      <p className="m-0 text-[12px] leading-snug text-[var(--coach-ink-muted)]">
+        An estimate from when you last reviewed each card, not a test.
+      </p>
     </div>
   );
 }
 
 /** Is there a review to do, how long it takes, what's waiting, and what's coming this week. */
-function PracticeDueCard({ model }: { model: CoachHomeModel | null }) {
+function PracticeDueCard({ model, cards }: { model: CoachHomeModel | null; cards: PracticeCard[] }) {
   if (!model) return <div className={`${CARD} min-h-[148px]`} aria-busy="true" />;
   const v = practiceCardView(model, model.sessions.rows.length > 0);
   return (
@@ -136,7 +131,7 @@ function PracticeDueCard({ model }: { model: CoachHomeModel | null }) {
         </div>
       )}
 
-      {v.week && <ComingUp week={v.week} />}
+      {v.state !== "locked" && <YourMemory cards={cards} />}
     </section>
   );
 }
@@ -156,7 +151,7 @@ export function TodayGrid({
   /** Every lesson, for naming the ones Practice shows you missing. */
   lessons: { key: string; title: string; href: string }[];
 }) {
-  const { model, history } = usePracticeToday(practice);
+  const { model, history, cards } = usePracticeToday(practice);
   return (
     <>
       <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,310px)]">
@@ -164,7 +159,7 @@ export function TodayGrid({
         <TodayCard model={model} lessonsDone={lessonsDone} nextLessons={nextLessons} />
       </div>
       <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2">
-        <PracticeDueCard model={model} />
+        <PracticeDueCard model={model} cards={cards} />
         <RevisitCard history={history} lessons={lessons} />
       </div>
     </>

@@ -875,6 +875,9 @@ html.sidebar-collapsed .app-sidebar-section {
 
   --coach-blue: #2e4bdb;
   --coach-orange: #d9622b;
+  /* Memory curve (validated pair, light surface): kept = blue, stopped = orange + dashed. */
+  --coach-chart-kept: #2e4bdb;
+  --coach-chart-stopped: #d9622b;
   --coach-success: #4a5e0e;
   --coach-focus: #5a74e6;
 
@@ -940,6 +943,8 @@ html.sidebar-collapsed .app-sidebar-section {
 
   --coach-blue: #6f86f2;
   --coach-orange: #e8804f;
+  --coach-chart-kept: #6f86f2;
+  --coach-chart-stopped: #e0703a;
   --coach-success: #c5e35a;
   --coach-focus: #8fa2f5;
 

@@ -1,5 +1,5 @@
 /**
- * Client-safe model for /progressv2: the long view of learning, built only
+ * Client-safe model for /progress: the long view of learning, built only
  * from lesson completions and Practice history (no fixtures).
  */
 import { LEVELS, type LevelId } from "@/lib/content/schema";

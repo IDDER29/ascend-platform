@@ -21,9 +21,11 @@ scratchpad — genuine `<textarea>` editing across `main.c`/`scratch.c`/
 `bitwise_test.c`/`notes.md`, quick-start snippet loading, and an honest Run
 button: known snippets show their real compiled output, custom edits get
 an honest "can't compile this in preview" message rather than a faked
-result), `/progress` (stat cards, an XP-over-time chart, mastery-by-level
-bars, recent completions — all real markup driven by real per-level data,
-not a static image), `/achievements` (24 real badges across earned/
+result), `/progress` (the long view in the Practice "Coach" look: where you
+are across the four levels, this week, learned vs. remembered per level, a
+concept map shaded by retention, lessons that are slipping, 12 weeks of
+momentum, dated milestones and practice days — all built only from lesson
+completions and Practice history), `/achievements` (24 real badges across earned/
 in-progress/locked states with functional client-side filter chips, an
 "almost there" in-progress section, and a hero progress ring),
 `/bookmarks` (real filter tabs by kind, and a genuine remove-bookmark

@@ -6,8 +6,10 @@ answers **"am I actually getting better, and where do I stand?"** — the
 long view, read weekly. Honest (built only from lesson completions and
 Practice history), reflective, motivating without guilt.
 
-Built at `/progressv2` beside the existing `/progress` (left untouched),
-in the Practice "Coach" look (`.practice-coach-v2` tokens).
+Built at `/progressv2` beside the existing `/progress`, in the Practice
+"Coach" look (`.practice-coach-v2` tokens). **Cutover (2026-10-30):** v2
+now lives at `/progress`; the old page is deleted and `/progressv2`
+redirects there.
 
 ## Layout (main column + 280px aside, like the Practice home)
 1. **Header** — mono date eyebrow, "Progress", one-line subtitle.
@@ -42,7 +44,7 @@ cards show one honest line each, never zeros or empty charts.
 - Client wrapper `src/components/progress-v2/progress-v2-live.tsx`
   (syncs local cards/history like the Practice screens).
 - Presentational components in `src/components/progress-v2/`.
-- Server page `src/app/(learner)/progressv2/page.tsx`.
+- Server page `src/app/(learner)/progress/page.tsx` (was `progressv2/`).
 
 ## Not in scope
-Replacing `/progress`, sidebar link changes, new DB tables, XP/badges.
+New DB tables, XP/badges.

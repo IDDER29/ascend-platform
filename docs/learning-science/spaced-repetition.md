@@ -72,6 +72,33 @@ A reasonable 45-minute session: ~10 min recall of old material, ~20 min new conc
 - Mistakes: hoarding, collecting ≠ understanding, over-complex systems, skipping reviews.
 - The guide doesn't cover flashcards or active recall directly — it's about organising knowledge, which complements, not replaces, Practice.
 
+### 1.9 The math, checked (2026-10-30)
+From a worked explanation the user shared, every number re-computed:
+
+**Forgetting.** If the rate of forgetting is proportional to what's left, `dR/dt = −λR`, so `R(t) = e^(−λt)` — fast at first, then slower. (λ = 0.5/day gives 60.7%, 36.8%, 22.3%, 8.2%, 3.0% at days 1, 2, 3, 5, 7 — illustrative, not human data.)
+
+**Stability.** Write it with S instead of λ: `R(t, S) = 0.9^(t/S)` — S is the days until recall falls to 90%. Bigger S stretches the curve sideways: `R(t, 2S) = R(t/2, S)`. The slope is `∂R/∂t = (ln 0.9 / S) · R`, so at the same recall, doubling S halves the speed of forgetting. One day after a review, recall is 90% / 94.9% / 97.4% / 98.7% / 99.3% for S = 1 / 2 / 4 / 8 / 16 days.
+
+**What a review does.** Two things: the clock restarts (`t − t_i`) and S grows. Between reviews: `R_i(t) = 0.9^((t − t_i)/S_i)`. If each review is done at 90% and doubles S (`S_i = 2^i`), reviews fall on `t_{i+1} = t_i + S_i`, i.e. days 1, 3, 7, 15, 31 (`t_i = 2^i − 1`). Without reviews, recall would be 90%, 72.9%, 47.8%, 20.6%, 3.8% on those days; with them, it's 90% each time. Desmos version (one memory):
+```
+y = 100(0.9)^x            {0 ≤ x ≤ 31}   no reviews
+y = 100(0.9)^((x−1)/2)    {1 ≤ x ≤ 3}
+y = 100(0.9)^((x−3)/4)    {3 ≤ x ≤ 7}
+y = 100(0.9)^((x−7)/8)    {7 ≤ x ≤ 15}
+y = 100(0.9)^((x−15)/16)  {15 ≤ x ≤ 31}
+```
+Each piece starts at 100% and ends at exactly 90% where the next begins.
+
+**When to review.** For a target recall r: `t = S · ln r / ln 0.9`. With S = 16: 95% → 7.8 days, 90% → 16, 80% → 33.9. Higher target, more reviews.
+
+**Real schedulers.** FSRS 6: `R = (1 + F·t/S)^(−d)`, `F = 0.9^(−1/d) − 1` (still 90% at t = S); `d` sets the shape. With d = 0.5, F = 19/81 — exactly the curve our dashboard uses. And the update `S_new = f(S, D, R, result)` depends on difficulty, current stability and how long you waited — not a fixed ×2.
+
+**Where we agree and where we'd add:**
+- Agree with all of it as a teaching model; the two parts — *predict forgetting* and *update stability* — are the right way to think about any scheduler.
+- **Doubling is only an example.** Ascend's SM-2 multiplies the interval by the card's ease (2.5, +0.1 per "good"): always answering right, reviews fall on days 1, 4, 12, 34, 98, 290 — faster growth than doubling. Answering wrong drops ease and restarts the card.
+- **"A review restores 100%" is an idealisation.** Right after a review recall is high but not certain, and a failed review doesn't restore anything.
+- **Why the deck curve is a power law even if each card were exponential.** Average many exponentials with different S and the result drops faster early and flatter late than any single one: for S = 1, 3, 8, 22, 64, the average is 96.9%, 82.6%, 57.7%, 37.2% at days 1, 7, 30, 90, versus 98.7%, 91.2%, 67.4%, 30.6% for one card with S = 8. That's one reason forgetting data across many items fits power laws — and why the dashboard's *whole-deck* curve uses the FSRS power law, while a *single card* is easiest to explain with the exponential sawtooth above.
+
 ---
 
 ## 2. How Ascend works today
@@ -118,6 +145,7 @@ A reasonable 45-minute session: ~10 min recall of old material, ~20 min new conc
 ## 4. Open ideas (ranked by value for effort)
 
 1. **Use the curve elsewhere** — Progress (the long view) and Practice home; per topic ("Bits & Logic: 88%").
+1b. **Show one card's sawtooth** (§1.9) — open a card and see its own curve: each review resets it and stretches it. Teaches *why* reviews get further apart.
 2. **Order due reviews by lowest R first**, not just due date, so the most-at-risk cards come first when a learner can't do them all.
 3. **"Explain it" prompts** — a short free-text recall after a lesson (expressing / testing effect), checked against the lesson's key points.
 4. **Interleaving** — mix topics in a review rather than one lesson's cards in a row (already shuffled within a deck; check across topics).

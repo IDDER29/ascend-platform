@@ -21,13 +21,20 @@ function build(input: AchievementsInput, sample: boolean, name: string): Achieve
   return { model, scrolls: buildScrolls(input, model), sample, name };
 }
 
-/** The records achievements are worked out from; guests get the development sample (or null when that's off). */
-async function loadInput(): Promise<{ input: AchievementsInput; sample: boolean; name: string } | null> {
+/**
+ * The records achievements are worked out from. Guests get the development sample
+ * (or null when that's off, or when `sampleForGuests` is false).
+ */
+export async function loadAchievementsInput({ sampleForGuests = true } = {}): Promise<{
+  input: AchievementsInput;
+  sample: boolean;
+  name: string;
+} | null> {
   const user = await getCurrentUser();
   const lessons = profileLessons();
   const now = new Date();
   if (!user) {
-    return SHOW_SAMPLE_PROFILE_TO_GUESTS
+    return sampleForGuests && SHOW_SAMPLE_PROFILE_TO_GUESTS
       ? { input: sampleAchievementsInput(lessons, now), sample: true, name: SAMPLE_NAME }
       : null;
   }
@@ -45,13 +52,13 @@ async function loadInput(): Promise<{ input: AchievementsInput; sample: boolean;
 
 /** The signed-in learner's badges and scrolls; guests get the development sample (or null when that's off). */
 export async function loadAchievementsModel(): Promise<AchievementsPageData | null> {
-  const loaded = await loadInput();
+  const loaded = await loadAchievementsInput();
   return loaded ? build(loaded.input, loaded.sample, loaded.name) : null;
 }
 
 /** One topic's finish line for the topic-complete page. */
 export async function loadTopicComplete(topic: LevelId): Promise<{ topic: TopicComplete; sample: boolean } | null> {
-  const loaded = await loadInput();
+  const loaded = await loadAchievementsInput();
   if (!loaded) return null;
   return {
     topic: buildTopicComplete(loaded.input, buildAchievementsModel(loaded.input), topic),

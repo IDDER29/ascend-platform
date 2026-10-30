@@ -1,12 +1,22 @@
 import type { Metadata } from "next";
-import ResetRequestPage from "./reset-client";
+import { Suspense } from "react";
+import { ResetRequest } from "@/components/auth-v2/reset-views";
+import { SiteShell } from "@/components/site/site-shell";
+import { WRAP } from "@/components/site/site-ui";
 
 export const metadata: Metadata = {
-  title: "Reset password · Ascend",
-  description: "Request a link to reset your Ascend password.",
-  robots: { index: false, follow: true },
+  title: "Reset your password — Ascend",
+  robots: { index: false, follow: false },
 };
 
 export default function Page() {
-  return <ResetRequestPage />;
+  return (
+    <SiteShell>
+      <div className={`${WRAP} py-10 sm:py-16`}>
+        <Suspense>
+          <ResetRequest />
+        </Suspense>
+      </div>
+    </SiteShell>
+  );
 }

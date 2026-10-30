@@ -1,25 +1,22 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { NewPasswordClient } from "./new-password-client";
+import { NewPassword } from "@/components/auth-v2/reset-views";
+import { SiteShell } from "@/components/site/site-shell";
+import { WRAP } from "@/components/site/site-ui";
 
 export const metadata: Metadata = {
-  title: "Set new password · Ascend",
-  description: "Choose a new password for your Ascend account.",
-  robots: { index: false, follow: true },
+  title: "Choose a new password — Ascend",
+  robots: { index: false, follow: false },
 };
 
-function Fallback() {
+export default function Page() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg text-ink-muted">
-      <p className="font-mono text-sm">Loading…</p>
-    </div>
-  );
-}
-
-export default function SetNewPasswordPage() {
-  return (
-    <Suspense fallback={<Fallback />}>
-      <NewPasswordClient />
-    </Suspense>
+    <SiteShell>
+      <div className={`${WRAP} py-10 sm:py-16`}>
+        <Suspense>
+          <NewPassword />
+        </Suspense>
+      </div>
+    </SiteShell>
   );
 }

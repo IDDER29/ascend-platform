@@ -1,4 +1,5 @@
 import "server-only";
+import { MIN_PASSWORD_LENGTH } from "./reset-flow";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { db, schema } from "@/lib/db/client";
@@ -56,7 +57,8 @@ export async function signUp(input: { email: string; password: string; name: str
   const name = input.name.trim();
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new AuthError("Enter a valid email address.");
-  if (input.password.length < 6) throw new AuthError("Password must be at least 6 characters.");
+  if (input.password.length < MIN_PASSWORD_LENGTH)
+    throw new AuthError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
   if (!name) throw new AuthError("Enter your name.");
 
   const existing = await conn.query.users.findFirst({ where: eq(schema.users.email, email) });

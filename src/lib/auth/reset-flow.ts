@@ -14,3 +14,6 @@ export const RESET_RESEND_COOLDOWN_SEC = 30;
 
 /** Link lifetime shown in copy (match server when wiring). */
 export const RESET_LINK_TTL_MINUTES = 30;
+
+/** The shortest password Ascend accepts, at sign-up and when resetting. */
+export const MIN_PASSWORD_LENGTH = 6;

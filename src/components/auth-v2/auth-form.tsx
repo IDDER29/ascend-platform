@@ -5,12 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { signInAction, signUpAction, type AuthActionState } from "@/app/signin/actions";
+import { MIN_PASSWORD_LENGTH as MIN_PASSWORD } from "@/lib/auth/reset-flow";
 import { RESET_HREF, SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
 
 export type AuthMode = "signin" | "signup";
 
 const INITIAL: AuthActionState = { error: null };
-const MIN_PASSWORD = 6;
 
 const isEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CardStrength } from "@/components/practice/coach-home/card-strength";
+import { MemoryCard } from "@/components/practice/coach-home/memory-card";
 import { CoachHeader } from "@/components/practice/coach-home/coach-header";
 import { CoachHomeSkeleton } from "@/components/practice/coach-home/coach-home-skeleton";
 import { DueHero } from "@/components/practice/coach-home/due-hero";
@@ -18,7 +19,8 @@ import {
 } from "@/lib/practice/cards";
 import { YourDecks } from "@/components/practice/coach-home/your-decks";
 import { buildCoachBankModel } from "@/lib/practice/coach-bank-model";
-import { savedDeckItems } from "@/lib/practice/coach-custom-model";
+import { deckSessionHref, savedDeckItems } from "@/lib/practice/coach-custom-model";
+import { shakyCards } from "@/lib/practice/shaky";
 import { buildCoachHomeModel } from "@/lib/practice/coach-home-model";
 import type { SavedDeck } from "@/lib/practice/deck-recipe";
 import { resolveDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
@@ -110,6 +112,15 @@ export function PracticeCoachV2HomeLive({
     return savedDeckItems(rows, initialDecks);
   }, [completed, data, initialDecks]);
 
+  // Right but slow, or right just after a miss: their own mode once there are some.
+  const shaky = useMemo(() => {
+    if (!data) return null;
+    const ids = shakyCards(data.history).map((c) => c.id);
+    return ids.length > 0
+      ? { count: ids.length, href: deckSessionHref(ids.slice(0, 30), "Right, but shaky") }
+      : null;
+  }, [data]);
+
   useEnterShortcut(model?.hero.action.href);
 
 
@@ -124,7 +135,7 @@ export function PracticeCoachV2HomeLive({
         <YourDayCard day={model.day} />
       </div>
 
-      <ModeGrid modes={model.modes} />
+      <ModeGrid modes={model.modes} shaky={shaky} />
 
       <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(250px,280px)]">
         <div className="flex min-w-0 flex-col gap-5">
@@ -134,7 +145,8 @@ export function PracticeCoachV2HomeLive({
           <TodaysSessions sessions={model.sessions} isGuest={userId === null} />
         </div>
         <aside className="flex min-w-0 flex-col gap-5">
-          <CardStrength strength={model.strength} week={model.week} />
+          {data ? <MemoryCard history={data.history} /> : null}
+          <CardStrength strength={model.strength} />
           {deckItems.length > 0 ? <YourDecks items={deckItems} /> : null}
           <PracticeDays days={model.days} />
         </aside>

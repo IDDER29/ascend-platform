@@ -84,7 +84,14 @@ function ModeCard({
   );
 }
 
-export function ModeGrid({ modes }: { modes: CoachHomeModel["modes"] }) {
+export function ModeGrid({
+  modes,
+  shaky = null,
+}: {
+  modes: CoachHomeModel["modes"];
+  /** Cards you got right but slowly or just after a miss (`shaky.ts`). */
+  shaky?: { count: number; href: string } | null;
+}) {
   return (
     <section aria-labelledby="modes" className="flex flex-col gap-3">
       <div className="flex w-full flex-wrap items-baseline justify-between gap-3">
@@ -95,7 +102,9 @@ export function ModeGrid({ modes }: { modes: CoachHomeModel["modes"] }) {
           Every mode counts toward your daily goal
         </span>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div
+        className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${shaky ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}
+      >
         <ModeCard
           href={`${PRACTICE_ROUTES.session}?scope=due`}
           tone="orange"
@@ -109,6 +118,20 @@ export function ModeGrid({ modes }: { modes: CoachHomeModel["modes"] }) {
             </Icon>
           }
         />
+        {shaky ? (
+          <ModeCard
+            href={shaky.href}
+            tone="orange"
+            badge={`${shaky.count} ${shaky.count === 1 ? "card" : "cards"}`}
+            title="Right, but shaky"
+            body="Right, but slowly or just after a miss."
+            icon={
+              <Icon>
+                <path d="M3 12h4l3-8 4 16 3-8h4" />
+              </Icon>
+            }
+          />
+        ) : null}
         <ModeCard
           href={`${PRACTICE_ROUTES.session}?scope=all&size=5`}
           tone="lime"

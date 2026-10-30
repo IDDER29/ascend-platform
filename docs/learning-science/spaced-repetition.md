@@ -106,7 +106,7 @@ Each piece starts at 100% and ends at exactly 90% where the next begins.
 | Research idea | Ascend now | Where |
 |---|---|---|
 | Understand first | Lessons with diagrams, knowledge checks, assignments | `content/curriculum`, lesson page |
-| Recall before revealing | Practice: MCQ, typed, cloze, flashcards (answer in your head first) | `src/components/practice/practice-coach-v2-session-live.tsx` |
+| Recall before revealing | Practice: choices (shuffled each showing), short answer, fill in the blank (typed in place), flashcards (answer in your head first) — see §3c | `src/components/practice/practice-coach-v2-session-live.tsx` |
 | Feedback | Wrong answer → right answer + "where to learn this" lesson link | session, `reviewHrefs` |
 | Spacing | **SM-2**: first good → 1 day, then interval × ease; again → relearn now, ease −0.2 | `src/lib/practice/sm2.ts` |
 | Honest grades | Only **Again / Good** are used (MCQ/typed by correctness; flashcards self-graded). Hard/Easy exist in code but no UI uses them — good, no Hard misuse | `cards.ts`, session |
@@ -159,6 +159,14 @@ Each piece starts at 100% and ends at exactly 90% where the next begins.
 A later quick right answer clears it. Misses aren't shaky — they're misses.
 **Where:** "Right, but shaky" in Ways to review (right after Fix your misses) — a review of those cards; each card's page lists answer times.
 **Next (not done):** grade slow-but-right as SM-2 "hard" (smaller interval, ease −0.15), so the schedule itself reflects the struggle — the user's call.
+
+## 3c. Decision: the session's answer moment (2026-10-30)
+**Why (audit of the session, with the user):** the moment after answering is where the testing effect pays off (§1.3), and a few things blunted it or graded unfairly.
+- **Choices are shuffled every time a card is shown** (`shuffledOrder` in `src/lib/practice/session-view.ts`). With a fixed order, after a few reviews learners recall *"it's number 2"* instead of the idea — a cue the real world never gives. The stored `correct` index is unchanged; only the display order moves.
+- **The result shows on the card.** After checking, the right choice turns green and a wrong pick orange (others fade); a blank is typed *inside* the sentence or code line. The answer appears once, in the feedback bar, in mono only when it is code.
+- **"I was right" on a missed short answer / blank.** Exact matching (after trimming, case and a trailing `;`) refuses typos and other wordings ("0/1" vs "0 or 1"); a wrong *Again* on a card you knew resets its interval and wastes reviews. One press turns that answer into *Good*, honestly self-reported as with flashcards. It only changes the answer just given, before Continue; the bar then says "Counted as right". Risk: learners can wave through real misses — the same trust flashcards already rely on.
+- **After a right typed answer that differs from the official wording**, the bar shows it ("Exact wording: 2"), so the precise term sticks.
+- **Flashcards don't get a feedback bar.** The learner has just seen the back and graded themselves; "Not quite — the answer is …" repeated it and judged an honest "Not yet". Grading moves straight on (the progress bar still records it). Buttons read "Not yet" / "Knew it".
 
 ## 4. Open ideas (ranked by value for effort)
 

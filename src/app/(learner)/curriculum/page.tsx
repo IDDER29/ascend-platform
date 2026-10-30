@@ -16,7 +16,7 @@ import { PageHeader, HUB_CONTENT_CLASS, HUB_MAIN_CLASS } from "@/components/ui/p
 
 export const metadata = {
   title: "Curriculum — Ascend",
-  description: "The full 24-lesson, 4-level Ascend curriculum.",
+  description: "Every Ascend lesson, topic by topic.",
 };
 
 const CURRENT_LEVEL: LevelId = "level-00-bits-logic";
@@ -98,11 +98,11 @@ export default async function CurriculumPage() {
       <div className={HUB_CONTENT_CLASS}>
         <PageHeader
           title="The path to the machine"
-          description="Four levels, bottom-up — from single bits to real, working systems."
+          description="Four topics, bottom-up — from single bits to real, working systems."
         />
 
               {current && (
-                <div className="relative mb-6 overflow-hidden rounded-[22px] bg-gradient-to-br from-[#6A3EF0] via-[#9A34D6] to-[#FF6B4A] p-7 text-white shadow-[0_22px_46px_rgba(106,62,240,0.3)]">
+                <div className="relative mb-6 overflow-hidden rounded-[22px] bg-brand-gradient p-7 text-white shadow-[0_22px_46px_rgba(13,159,110,0.3)]">
                   <div className="animate-blob pointer-events-none absolute -right-8 -top-[70px] h-[280px] w-[280px] rounded-full bg-white/[0.13] blur-[9px]" />
                   <div className="relative flex flex-wrap items-center gap-6">
                     <span className="flex h-[54px] w-[54px] flex-none items-center justify-center rounded-2xl border border-white/[0.28] bg-white/[0.16] font-mono text-lg font-bold">
@@ -121,7 +121,7 @@ export default async function CurriculumPage() {
                     <div className="flex flex-none items-center gap-4">
                       <Button href={`/curriculum/${current.meta.level}/${current.meta.slug}`} variant="invert">
                         {user ? "Continue" : "Start"}
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6A3EF0" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M5 12h14" />
                           <path d="m12 5 7 7-7 7" />
                         </svg>
@@ -150,13 +150,13 @@ export default async function CurriculumPage() {
                         <div className="mb-1 flex items-baseline justify-between gap-2">
                           <span className="font-display text-[28px] font-extrabold tracking-tight text-brand-violet">
                             {totalCompleted}
-                            <span className="text-base font-bold text-[#B0A6D0]">/{lessons.length}</span>
+                            <span className="text-base font-bold text-ink-faint">/{lessons.length}</span>
                           </span>
                           <span className="font-mono text-[12px] text-ink-fainter">{pathPct}% of path</span>
                         </div>
-                        <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-[#F0EEF7]">
+                        <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-divider">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-[#7B4DFF] to-[#C13AE0]"
+                            className="h-full rounded-full bg-brand-gradient"
                             style={{ width: `${pathPct}%` }}
                           />
                         </div>
@@ -167,11 +167,11 @@ export default async function CurriculumPage() {
                             </div>
                             <div className="mt-0.5 text-[11.5px] text-[#9A8E8A]">day streak</div>
                           </div>
-                          <div className="flex-1 rounded-[13px] border border-[#E9E1FB] bg-[#F5F1FE] p-3">
+                          <div className="flex-1 rounded-[13px] border border-xp-border bg-xp-bg p-3">
                             <div className="font-display text-lg font-extrabold text-brand-violet">
                               {totalCompleted}
                             </div>
-                            <div className="mt-0.5 text-[11.5px] text-[#9A93AE]">lessons done</div>
+                            <div className="mt-0.5 text-[11.5px] text-ink-muted">lessons done</div>
                           </div>
                         </div>
                       </>
@@ -196,11 +196,11 @@ export default async function CurriculumPage() {
                         <Link
                           key={lesson.meta.slug}
                           href={`/curriculum/${lesson.meta.level}/${lesson.meta.slug}`}
-                          className={`-mx-1.5 flex items-center gap-3 rounded-xl px-2.5 py-2.5 ${i === 0 ? "bg-[#FBF3FE]" : "hover:bg-[#FAF9FE]"}`}
+                          className={`-mx-1.5 flex items-center gap-3 rounded-xl px-2.5 py-2.5 ${i === 0 ? "bg-xp-bg" : "hover:bg-elevated"}`}
                         >
                           <span
                             className={`flex h-8 w-8 flex-none items-center justify-center rounded-[10px] text-xs font-bold ${
-                              i === 0 ? "bg-gradient-to-br from-[#C13AE0] to-[#FF6B4A] text-white" : "bg-[#F2F0F8] text-[#A8A3BC]"
+                              i === 0 ? "bg-brand-gradient text-white" : "bg-elevated text-ink-faint"
                             }`}
                           >
                             {i === 0 ? (
@@ -212,7 +212,7 @@ export default async function CurriculumPage() {
                             )}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <div className="truncate text-[13.5px] font-bold text-[#2A2540]">{lesson.meta.title}</div>
+                            <div className="truncate text-[13.5px] font-bold text-ink">{lesson.meta.title}</div>
                             <div className="font-mono text-[11px] text-ink-fainter">{lesson.meta.timeMin} min</div>
                           </div>
                         </Link>
@@ -223,7 +223,7 @@ export default async function CurriculumPage() {
                   <Card hover={false} className="p-6">
                     <div className="mb-2 font-display text-[17px] font-extrabold">How the path works</div>
                     <p className="mb-4 text-[13px] leading-relaxed text-ink-secondary">
-                      Every lesson is open. Order is a recommendation — finish earlier levels first if you want the story to land.
+                      Every lesson is open. Order is a recommendation — finish earlier topics first if you want the story to land.
                     </p>
                     <Link
                       href="/projects/shellforge"

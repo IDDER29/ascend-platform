@@ -14,7 +14,7 @@ interface Solution {
 }
 
 const SOLUTIONS: Solution[] = [
-  { initial: "E", name: "elena", xp: "892 XP", gradient: "from-[#7B4DFF] to-[#C13AE0]", description: "Clean two-file parser with elegant recursive pipe handling.", likes: 142 },
+  { initial: "E", name: "elena", xp: "892 XP", gradient: "from-brand-violet to-brand-violet", description: "Clean two-file parser with elegant recursive pipe handling.", likes: 142 },
   { initial: "M", name: "marc", xp: "1.2k XP", gradient: "from-[#FF6B4A] to-[#FFCE4A]", description: "Single-pass tokenizer that gracefully handles nested quotes.", likes: 98 },
   { initial: "K", name: "kenji", xp: "640 XP", gradient: "from-[#12B981] to-[#3BC6F0]", description: "Heavily commented — the friendliest version to read first.", likes: 210 },
 ];
@@ -68,7 +68,7 @@ export function PeerSolutions() {
       </p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {solutions.map((s) => (
-          <div key={s.name} className="cursor-pointer rounded-2xl border border-[#EEECF6] p-4.5 transition-shadow hover:shadow-card-hover">
+          <div key={s.name} className="cursor-pointer rounded-2xl border border-divider p-4.5 transition-shadow hover:shadow-card-hover">
             <div className="mb-3.5 flex items-center gap-2.5">
               <div className={cn("flex h-10 w-10 flex-none items-center justify-center rounded-full bg-gradient-to-br font-bold text-white", s.gradient)}>
                 {s.initial}

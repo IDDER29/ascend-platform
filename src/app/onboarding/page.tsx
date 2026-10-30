@@ -20,16 +20,16 @@ const GOALS = [
   {
     id: "fundamentals",
     icon: GraduationCap,
-    iconBg: "bg-[#F1EDFE]",
-    iconFg: "text-[#6D46F2]",
+    iconBg: "bg-xp-bg",
+    iconFg: "text-brand-violet",
     title: "Understand the fundamentals",
     subtitle: "I want to finally get how computers actually work, bottom-up.",
   },
   {
     id: "c-systems",
     icon: Code2,
-    iconBg: "bg-[#FBEBFA]",
-    iconFg: "text-[#C13AE0]",
+    iconBg: "bg-xp-bg",
+    iconFg: "text-brand-violet",
     title: "Get stronger at C & systems",
     subtitle: "I can code, but pointers, memory and the OS still feel fuzzy.",
   },
@@ -67,7 +67,7 @@ export default function OnboardingPage() {
   const pace = PACES.find((p) => p.id === paceId)!;
 
   return (
-    <div className="flex min-h-screen flex-col bg-[radial-gradient(130%_60%_at_50%_-8%,#EAE4FB_0%,#F1F0F7_52%)] text-ink">
+    <div className="flex min-h-screen flex-col bg-bg text-ink">
       <header className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-6 py-5 sm:px-8">
         <div className="flex items-center gap-2.5">
           <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-brand-gradient shadow-glow">
@@ -102,8 +102,8 @@ export default function OnboardingPage() {
                         className={cn(
                           "flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[13px] font-extrabold",
                           state === "active"
-                            ? "bg-gradient-to-br from-[#7B4DFF] to-[#C13AE0] text-white shadow-[0_6px_16px_rgba(123,77,255,0.4)]"
-                            : "border-2 border-[#E4E1EE] bg-white text-[#B0ACBC]",
+                            ? "bg-gradient-to-br from-brand-violet to-brand-violet text-white shadow-[0_6px_16px_rgba(13,159,110,0.4)]"
+                            : "border-2 border-card-border bg-white text-ink-faint",
                         )}
                       >
                         {n}
@@ -112,25 +112,25 @@ export default function OnboardingPage() {
                     <span
                       className={cn(
                         "hidden whitespace-nowrap text-[13.5px] font-bold sm:inline",
-                        state === "done" ? "text-[#12A472]" : state === "active" ? "text-[#5A32D6]" : "text-[#A9A3BE]",
+                        state === "done" ? "text-[#12A472]" : state === "active" ? "text-brand-violet" : "text-ink-faint",
                       )}
                     >
                       {label}
                     </span>
                   </div>
                   {n < TOTAL_STEPS && (
-                    <div className={cn("h-0.5 min-w-[16px] flex-1 rounded-full", n < step ? "bg-[#12B981]" : "bg-[#E4E1EE]")} />
+                    <div className={cn("h-0.5 min-w-[16px] flex-1 rounded-full", n < step ? "bg-[#12B981]" : "bg-card-border")} />
                   )}
                 </div>
               );
             })}
           </div>
 
-          <div className="rounded-[24px] border border-[#EDEBF4] bg-white p-7 shadow-[0_20px_50px_rgba(28,18,64,0.09)] sm:p-9">
+          <div className="rounded-[24px] border border-divider bg-white p-7 shadow-[0_20px_50px_rgba(28,18,64,0.09)] sm:p-9">
             {step === 1 && (
               <div>
                 <div className="mb-7 text-center">
-                  <div className="mx-auto mb-5 flex h-[72px] w-[72px] items-center justify-center rounded-[20px] bg-brand-gradient shadow-[0_16px_34px_rgba(123,77,255,0.35)]">
+                  <div className="mx-auto mb-5 flex h-[72px] w-[72px] items-center justify-center rounded-[20px] bg-brand-gradient shadow-[0_16px_34px_rgba(13,159,110,0.35)]">
                     <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                       <path d="m6 15 6-6 6 6" />
                       <path d="m6 9 6-6 6 6" opacity=".55" />
@@ -150,8 +150,8 @@ export default function OnboardingPage() {
                     "Set a pace that fits your life",
                     "Jump straight into your first lesson",
                   ].map((text, i) => (
-                    <div key={text} className="flex items-center gap-3 text-sm text-[#413D50]">
-                      <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-[#F1EDFE] text-[11px] font-extrabold text-[#6D46F2]">
+                    <div key={text} className="flex items-center gap-3 text-sm text-ink-secondary">
+                      <span className="flex h-[22px] w-[22px] flex-none items-center justify-center rounded-full bg-xp-bg text-[11px] font-extrabold text-brand-violet">
                         {i + 1}
                       </span>
                       {text}
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
             {step === 2 && (
               <div>
                 <div className="mb-7 text-center">
-                  <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#F1EDFE] px-3.5 py-1.5 font-mono text-[11.5px] uppercase tracking-[0.1em] text-[#6D46F2]">
+                  <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-xp-bg px-3.5 py-1.5 font-mono text-[11.5px] uppercase tracking-[0.1em] text-brand-violet">
                     Step 2 of 4
                   </span>
                   <h1 className="mb-2.5 font-display text-[27px] font-extrabold leading-tight tracking-[-0.03em] sm:text-[30px]">
@@ -183,20 +183,20 @@ export default function OnboardingPage() {
                         onClick={() => setGoalId(g.id)}
                         className={cn(
                           "flex items-center gap-4 rounded-2xl border-[1.5px] p-4.5 text-left transition-all hover:-translate-y-0.5",
-                          selected ? "border-[#C13AE0] bg-[#FDF7FE]" : "border-[#E9E5F4] bg-white hover:border-[#C9B8F5]",
+                          selected ? "border-brand-violet bg-xp-bg" : "border-card-border bg-white hover:border-xp-border",
                         )}
                       >
                         <span className={cn("flex h-12 w-12 flex-none items-center justify-center rounded-[13px]", g.iconBg, g.iconFg)}>
                           <g.icon size={21} strokeWidth={2.1} />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <div className="text-[15.5px] font-bold text-[#2A2540]">{g.title}</div>
+                          <div className="text-[15.5px] font-bold text-ink">{g.title}</div>
                           <div className="mt-0.5 text-[13px] leading-snug text-ink-muted">{g.subtitle}</div>
                         </div>
                         <span
                           className={cn(
                             "flex h-6 w-6 flex-none items-center justify-center rounded-full border-2",
-                            selected ? "border-[#C13AE0] bg-[#C13AE0]" : "border-[#DCD7E8] bg-white",
+                            selected ? "border-brand-violet bg-brand-violet" : "border-card-border bg-white",
                           )}
                         >
                           {selected && <Check size={12} strokeWidth={3.2} className="text-white" />}
@@ -211,7 +211,7 @@ export default function OnboardingPage() {
             {step === 3 && (
               <div>
                 <div className="mb-7 text-center">
-                  <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#F1EDFE] px-3.5 py-1.5 font-mono text-[11.5px] uppercase tracking-[0.1em] text-[#6D46F2]">
+                  <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-xp-bg px-3.5 py-1.5 font-mono text-[11.5px] uppercase tracking-[0.1em] text-brand-violet">
                     Step 3 of 4
                   </span>
                   <h1 className="mb-2.5 font-display text-[27px] font-extrabold leading-tight tracking-[-0.03em] sm:text-[30px]">
@@ -230,25 +230,25 @@ export default function OnboardingPage() {
                         onClick={() => setPaceId(p.id)}
                         className={cn(
                           "flex items-center gap-4 rounded-2xl border-[1.5px] p-4.5 text-left transition-all hover:-translate-y-0.5",
-                          selected ? "border-[#C13AE0] bg-[#FDF7FE]" : "border-[#E9E5F4] bg-white hover:border-[#C9B8F5]",
+                          selected ? "border-brand-violet bg-xp-bg" : "border-card-border bg-white hover:border-xp-border",
                         )}
                       >
                         <span
                           className={cn(
                             "flex h-12 w-12 flex-none items-center justify-center rounded-[13px] font-mono text-[13px] font-bold",
-                            selected ? "bg-[#F1EDFE] text-[#6D46F2]" : "bg-[#F2F0F8] text-[#8A8698]",
+                            selected ? "bg-xp-bg text-brand-violet" : "bg-elevated text-ink-muted",
                           )}
                         >
                           {p.kbd}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <div className="text-[15.5px] font-bold text-[#2A2540]">{p.title}</div>
+                          <div className="text-[15.5px] font-bold text-ink">{p.title}</div>
                           <div className="mt-0.5 text-[13px] leading-snug text-ink-muted">{p.subtitle}</div>
                         </div>
                         <span
                           className={cn(
                             "flex h-6 w-6 flex-none items-center justify-center rounded-full border-2",
-                            selected ? "border-[#C13AE0] bg-[#C13AE0]" : "border-[#DCD7E8] bg-white",
+                            selected ? "border-brand-violet bg-brand-violet" : "border-card-border bg-white",
                           )}
                         >
                           {selected && <Check size={12} strokeWidth={3.2} className="text-white" />}
@@ -257,12 +257,12 @@ export default function OnboardingPage() {
                     );
                   })}
                 </div>
-                <div className="flex items-center justify-between gap-3.5 rounded-2xl border border-[#F0EEF6] bg-[#FAF9FD] px-4 py-3.5">
-                  <div className="flex items-center gap-2.5 text-sm font-semibold text-[#413D50]">
-                    <Bell size={16} className="text-[#6D46F2]" strokeWidth={2.2} />
+                <div className="flex items-center justify-between gap-3.5 rounded-2xl border border-divider bg-elevated px-4 py-3.5">
+                  <div className="flex items-center gap-2.5 text-sm font-semibold text-ink-secondary">
+                    <Bell size={16} className="text-brand-violet" strokeWidth={2.2} />
                     Remind me daily at
                   </div>
-                  <span className="rounded-full bg-[#F1EDFE] px-3 py-1.5 font-mono text-[13px] font-bold text-[#5A32D6]">
+                  <span className="rounded-full bg-xp-bg px-3 py-1.5 font-mono text-[13px] font-bold text-brand-violet">
                     8:00 PM
                   </span>
                 </div>
@@ -284,30 +284,30 @@ export default function OnboardingPage() {
                 </div>
                 <Link
                   href={FIRST_LESSON.href}
-                  className="relative mb-5 block overflow-hidden rounded-[18px] bg-gradient-to-br from-[#1B1730] to-[#2C2548] p-5 text-white"
+                  className="relative mb-5 block overflow-hidden rounded-[18px] bg-[#16181d] p-5 text-white"
                 >
-                  <div className="animate-blob pointer-events-none absolute -right-8 -top-10 h-[140px] w-[140px] rounded-full bg-[radial-gradient(circle,rgba(123,77,255,0.45),transparent_68%)] blur-[8px]" />
+                  <div className="animate-blob pointer-events-none absolute -right-8 -top-10 h-[140px] w-[140px] rounded-full bg-[radial-gradient(circle,rgba(13,159,110,0.45),transparent_68%)] blur-[8px]" />
                   <div className="relative flex items-center gap-4">
                     <span className="flex h-[50px] w-[50px] flex-none items-center justify-center rounded-2xl bg-gradient-to-br from-[#12B981] to-[#3BC6F0] font-display text-[17px] font-extrabold shadow-[0_8px_18px_rgba(0,0,0,0.2)]">
                       00
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="mb-0.5 font-mono text-[11px] text-[#B9B3D0]">
+                      <div className="mb-0.5 font-mono text-[11px] text-ink-faint">
                         Bits &amp; Logic · first lesson
                       </div>
                       <div className="font-display text-[18px] font-extrabold">{FIRST_LESSON.title}</div>
                     </div>
-                    <span className="flex-none font-mono text-xs text-[#B9B3D0]">{FIRST_LESSON.timeMin} min</span>
+                    <span className="flex-none font-mono text-xs text-ink-faint">{FIRST_LESSON.timeMin} min</span>
                   </div>
                 </Link>
                 <div className="mx-auto flex max-w-[420px] flex-col gap-2">
                   <div className="flex items-center gap-2.5 text-[13.5px] text-ink-secondary">
                     <Check size={15} strokeWidth={3} className="flex-none text-[#12A472]" />
-                    Goal — <b className="text-[#2A2540]">{goal.title}</b>
+                    Goal — <b className="text-ink">{goal.title}</b>
                   </div>
                   <div className="flex items-center gap-2.5 text-[13.5px] text-ink-secondary">
                     <Check size={15} strokeWidth={3} className="flex-none text-[#12A472]" />
-                    Pace — <b className="text-[#2A2540]">{pace.title}, {pace.kbd.replace("m", " min")}/day</b> · reminders at 8:00 PM
+                    Pace — <b className="text-ink">{pace.title}, {pace.kbd.replace("m", " min")}/day</b> · reminders at 8:00 PM
                   </div>
                 </div>
               </div>
@@ -334,7 +334,7 @@ export default function OnboardingPage() {
                     }
                     setStep((s) => Math.min(TOTAL_STEPS, s + 1));
                   }}
-                  className="inline-flex items-center gap-2 rounded-[13px] bg-gradient-to-r from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A] px-8 py-3.5 text-[15.5px] font-extrabold text-white shadow-[0_14px_30px_rgba(123,77,255,0.4)] transition-transform hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-2 rounded-[13px] bg-brand-gradient px-8 py-3.5 text-[15.5px] font-extrabold text-white shadow-[0_14px_30px_rgba(13,159,110,0.4)] transition-transform hover:-translate-y-0.5"
                 >
                   Continue
                   <ChevronRight size={16} strokeWidth={2.4} />
@@ -342,7 +342,7 @@ export default function OnboardingPage() {
               ) : (
                 <Link
                   href={FIRST_LESSON.href}
-                  className="inline-flex items-center gap-2 rounded-[13px] bg-gradient-to-r from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A] px-8 py-3.5 text-[15.5px] font-extrabold text-white shadow-[0_14px_30px_rgba(123,77,255,0.4)] transition-transform hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-2 rounded-[13px] bg-brand-gradient px-8 py-3.5 text-[15.5px] font-extrabold text-white shadow-[0_14px_30px_rgba(13,159,110,0.4)] transition-transform hover:-translate-y-0.5"
                 >
                   Start learning
                   <Play size={15} className="fill-white" strokeWidth={0} />

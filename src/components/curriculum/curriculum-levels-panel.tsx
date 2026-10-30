@@ -120,7 +120,7 @@ export function CurriculumLevelsPanel({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-mono text-[10.5px] font-bold tracking-[0.04em] text-ink-fainter">
-                    LEVEL {level.id.slice(6, 8)} · {level.timeLabel}
+                    {level.timeLabel}
                   </div>
                   <div className="mt-0.5 font-display text-[19px] font-bold leading-tight">
                     {level.name} <span className="text-[13px] font-medium text-ink-muted">· {level.short}</span>
@@ -131,7 +131,7 @@ export function CurriculumLevelsPanel({
                     </div>
                   ) : (
                     <div className="mt-2.5 flex max-w-[320px] items-center gap-2.5">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#F0EEF7]">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-divider">
                         <div className={cn("h-full rounded-full", level.accent)} style={{ width: `${pct}%` }} />
                       </div>
                       <span className="font-mono text-[11px] text-ink-faint">
@@ -148,7 +148,7 @@ export function CurriculumLevelsPanel({
                         ? "bg-[#E7F8F0] text-[#12B981]"
                         : isCurrent
                           ? "bg-[#FFF1EC] text-[#F0562F]"
-                          : "bg-[#F3F1F8] text-[#9A96A8]",
+                          : "bg-elevated text-[#9A96A8]",
                     )}
                   >
                     {isCompleted ? (
@@ -180,7 +180,7 @@ export function CurriculumLevelsPanel({
                         key={lesson.slug}
                         className={cn(
                           "flex items-center gap-3.5 border-t border-[#F4F2FA] px-5.5 py-3.5",
-                          isLessonCurrent && "bg-gradient-to-r from-[#FBF3FE] to-white",
+                          isLessonCurrent && "bg-gradient-to-r from-xp-bg to-white",
                         )}
                         style={isLessonCurrent ? { boxShadow: "inset 3px 0 0 #0D9F6E" } : undefined}
                       >
@@ -201,11 +201,11 @@ export function CurriculumLevelsPanel({
                           ) : isLessonCurrent ? (
                             <span className="h-2 w-2 animate-pulse rounded-full bg-[#0D9F6E]" />
                           ) : isNextUp ? null : (
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#C6C1D4]" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-ink-fainter" />
                           )}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <div className={cn("text-[14.5px]", isUpcoming ? "font-medium text-[#A29EAF]" : "font-semibold text-[#2A2540]", isLessonCurrent && "font-bold")}>
+                          <div className={cn("text-[14.5px]", isUpcoming ? "font-medium text-[#A29EAF]" : "font-semibold text-ink", isLessonCurrent && "font-bold")}>
                             {lesson.title}
                           </div>
                           <div className="mt-0.5 flex items-center gap-2 text-[11px] text-ink-fainter">

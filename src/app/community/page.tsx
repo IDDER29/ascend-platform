@@ -9,7 +9,7 @@ import { CATEGORIES, THREADS, type CommunityThread, type ThreadCategory } from "
 
 const CATEGORY_ICON = { message: MessageSquare, help: CircleHelp, ship: Rocket, resource: BookOpen };
 const CATEGORY_STYLE: Record<ThreadCategory, { bg: string; fg: string }> = {
-  "General discussion": { bg: "bg-[#F1EDFE]", fg: "text-brand-violet" },
+  "General discussion": { bg: "bg-xp-bg", fg: "text-brand-violet" },
   "Help & debugging": { bg: "bg-[#FFF1EC]", fg: "text-[#F0562F]" },
   "Show your project": { bg: "bg-[#E7F8F0]", fg: "text-[#12A472]" },
   "Resources & links": { bg: "bg-[#FEF4E1]", fg: "text-[#E0900A]" },
@@ -37,7 +37,7 @@ export default function CommunityPage() {
       id: `local-${Date.now()}`,
       title: newTitle.trim(),
       author: "Amine",
-      avatarGradient: "from-[#7B4DFF] to-[#FF6B4A]",
+      avatarGradient: "from-brand-violet to-[#d4a017]",
       category: newCategory,
       when: "just now",
       replies: 0,
@@ -57,7 +57,7 @@ export default function CommunityPage() {
       <SiteHeader />
       <main className="mx-auto w-full max-w-[1080px] px-6 py-12 sm:px-8 sm:py-[52px]">
         <div className="mx-auto mb-10 max-w-[640px] text-center">
-          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand-violet/20 bg-brand-violet/[0.08] px-3.5 py-1.5 font-mono text-[11.5px] uppercase tracking-[0.1em] text-[#8A6AF2]">
+          <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand-violet/20 bg-brand-violet/[0.08] px-3.5 py-1.5 font-mono text-[11.5px] uppercase tracking-[0.1em] text-brand-violet">
             Demo · not live
           </div>
           <h1 className="mb-3 font-display text-[32px] font-extrabold leading-tight tracking-[-0.03em] sm:text-[36px]">
@@ -67,12 +67,12 @@ export default function CommunityPage() {
             Stuck on a segfault, comparing solutions, or just want to say the drop finally clicked — this is where
             Ascend learners talk to each other.
           </p>
-          <p className="mb-5 rounded-xl border border-[#E4DBFB] bg-[#F1EDFE] px-4 py-3 text-left text-[13px] leading-relaxed text-[#5A32D6]">
+          <p className="mb-5 rounded-xl border border-xp-border bg-xp-bg px-4 py-3 text-left text-[13px] leading-relaxed text-brand-violet">
             This page is a UI preview. Threads are sample data; new posts stay in your browser only and aren&apos;t shared with anyone.
           </p>
           <button
             onClick={() => setComposing((c) => !c)}
-            className="inline-flex items-center gap-2 rounded-[13px] bg-gradient-to-r from-[#6D46F2] to-[#C13AE0] px-6 py-3.5 text-sm font-bold text-white shadow-[0_14px_30px_rgba(109,70,242,0.28)] transition-transform hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 rounded-[13px] bg-brand-gradient px-6 py-3.5 text-sm font-bold text-white shadow-[0_14px_30px_rgba(13,159,110,0.28)] transition-transform hover:-translate-y-0.5"
           >
             <Plus size={16} />
             {composing ? "Cancel" : "Start a discussion"}
@@ -90,13 +90,13 @@ export default function CommunityPage() {
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="What's on your mind?"
-              className="mb-3.5 w-full rounded-xl border border-[#E4E1EE] bg-[#FBFAFE] px-4 py-3 text-[15px] text-[#2A2540] outline-none focus:border-[#B79AF2] focus:ring-[3px] focus:ring-[#7B4DFF]/[0.14]"
+              className="mb-3.5 w-full rounded-xl border border-card-border bg-elevated px-4 py-3 text-[15px] text-ink outline-none focus:border-xp-text focus:ring-[3px] focus:ring-brand-violet/[0.14]"
             />
             <label className="mb-1.5 block text-[12.5px] font-bold text-ink-secondary">Category</label>
             <select
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value as ThreadCategory)}
-              className="mb-4 w-full rounded-xl border border-[#E4E1EE] bg-[#FBFAFE] px-4 py-3 text-[15px] text-[#2A2540] outline-none focus:border-[#B79AF2]"
+              className="mb-4 w-full rounded-xl border border-card-border bg-elevated px-4 py-3 text-[15px] text-ink outline-none focus:border-xp-text"
             >
               {CATEGORIES.map((c) => (
                 <option key={c.name} value={c.name}>
@@ -107,7 +107,7 @@ export default function CommunityPage() {
             <button
               type="submit"
               disabled={!newTitle.trim()}
-              className="w-full rounded-xl bg-gradient-to-r from-[#6D46F2] to-[#C13AE0] py-3 text-sm font-bold text-white transition-transform enabled:hover:-translate-y-0.5 disabled:opacity-40"
+              className="w-full rounded-xl bg-brand-gradient py-3 text-sm font-bold text-white transition-transform enabled:hover:-translate-y-0.5 disabled:opacity-40"
             >
               Post thread
             </button>
@@ -160,14 +160,14 @@ export default function CommunityPage() {
               Recent threads
               {categoryFilter && <span className="ml-2 text-sm font-medium text-ink-muted">· {categoryFilter}</span>}
             </div>
-            <div className="inline-flex rounded-[10px] bg-[#EDEAF6] p-[3px]">
+            <div className="inline-flex rounded-[10px] bg-divider p-[3px]">
               {(["latest", "unanswered"] as SortMode[]).map((m) => (
                 <button
                   key={m}
                   onClick={() => setSort(m)}
                   className={cn(
                     "rounded-lg px-3.5 py-1.5 text-[12.5px] font-bold capitalize transition-colors",
-                    sort === m ? "bg-white text-[#2A2540] shadow-[0_3px_8px_rgba(28,18,64,0.08)]" : "text-[#7A7590]",
+                    sort === m ? "bg-white text-ink shadow-[0_3px_8px_rgba(28,18,64,0.08)]" : "text-ink-muted",
                   )}
                 >
                   {m}
@@ -185,10 +185,10 @@ export default function CommunityPage() {
               visible.map((t, i) => {
                 const expanded = expandedId === t.id;
                 return (
-                  <div key={t.id} className={i > 0 ? "border-t border-[#F2F0F8]" : ""}>
+                  <div key={t.id} className={i > 0 ? "border-t border-elevated" : ""}>
                     <button
                       onClick={() => setExpandedId(expanded ? null : t.id)}
-                      className="flex w-full items-center gap-3.5 px-4.5 py-4 text-left transition-colors hover:bg-[#FAF9FE]"
+                      className="flex w-full items-center gap-3.5 px-4.5 py-4 text-left transition-colors hover:bg-elevated"
                     >
                       <span
                         className={cn(
@@ -210,8 +210,8 @@ export default function CommunityPage() {
                       <ChevronDown size={16} className={cn("flex-none text-ink-faint transition-transform", expanded && "rotate-180")} />
                     </button>
                     {expanded && (
-                      <div className="border-t border-[#F2F0F8] bg-[#FBFAFE] px-4.5 py-4">
-                        <p className="mb-3.5 text-[13.5px] leading-relaxed text-[#413D50]">{t.body}</p>
+                      <div className="border-t border-elevated bg-elevated px-4.5 py-4">
+                        <p className="mb-3.5 text-[13.5px] leading-relaxed text-ink-secondary">{t.body}</p>
                         {t.responses.length > 0 ? (
                           <div className="flex flex-col gap-3">
                             {t.responses.map((r, ri) => (
@@ -225,10 +225,10 @@ export default function CommunityPage() {
                                   {r.author[0]}
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-xs font-bold text-[#2A2540]">
+                                  <div className="text-xs font-bold text-ink">
                                     {r.author} <span className="font-normal text-ink-faint">· {r.when}</span>
                                   </div>
-                                  <p className="mt-0.5 text-[13px] leading-relaxed text-[#5C5773]">{r.body}</p>
+                                  <p className="mt-0.5 text-[13px] leading-relaxed text-ink-secondary">{r.body}</p>
                                 </div>
                               </div>
                             ))}
@@ -245,7 +245,7 @@ export default function CommunityPage() {
           </div>
         </div>
 
-        <div className="mt-9 flex flex-wrap items-center gap-4.5 rounded-2xl border border-dashed border-[#DCD7EC] bg-white p-5.5">
+        <div className="mt-9 flex flex-wrap items-center gap-4.5 rounded-2xl border border-dashed border-card-border bg-white p-5.5">
           <span className="flex h-11 w-11 flex-none items-center justify-center rounded-[13px] bg-[#181428] text-white">
             <MessageSquare size={20} strokeWidth={2.1} />
           </span>

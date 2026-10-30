@@ -105,7 +105,7 @@ test("rows carry text, format label and lesson; options list lessons and formats
   const row = model.rows.find((r) => r.id === Q1.id);
   assert.ok(row);
   assert.ok(row.text.length > 0);
-  assert.ok(["Choices", "Flashcard", "Short answer", "Cloze"].includes(row.formatLabel));
+  assert.ok(["Choices", "Flashcard", "Short answer", "Fill in the blank"].includes(row.formatLabel));
   assert.equal(row.lessonKey, `${Q1.lessonLevel}/${Q1.lessonSlug}`);
   assert.ok(row.lessonTitle.length > 0);
   assert.ok(model.lessons.some((lesson) => lesson.key === row.lessonKey));

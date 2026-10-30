@@ -14,7 +14,7 @@ import { PRACTICE_ROUTES } from "./routes";
 export const DECK_FORMAT_LABELS: Record<DeckFormat, string> = {
   mcq: "Choices",
   flashcard: "Flashcards",
-  cloze: "Cloze",
+  cloze: "Fill in the blank",
   typed: "Short answer",
 };
 

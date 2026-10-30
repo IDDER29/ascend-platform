@@ -13,7 +13,7 @@ const KIND: Record<PracticeItem["kind"], string> = {
   mcq: "Choices",
   flashcard: "Flashcard",
   typed: "Short answer",
-  cloze: "Cloze",
+  cloze: "Fill in the blank",
 };
 
 function prompt(q: PracticeItem): string {

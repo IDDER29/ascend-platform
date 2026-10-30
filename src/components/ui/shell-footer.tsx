@@ -5,7 +5,7 @@ import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 
 const FOCUS_ROUTES = [PRACTICE_ROUTES.session];
 
-/** Focus-mode routes (an active practice session) hide the footer and the phone tab bar. */
+/** Focus-mode routes (an active practice session) hide the sidebar, the footer and the phone tab bar. */
 export function isFocusRoute(pathname: string | null): boolean {
   return Boolean(pathname && FOCUS_ROUTES.some((route) => pathname.startsWith(route)));
 }

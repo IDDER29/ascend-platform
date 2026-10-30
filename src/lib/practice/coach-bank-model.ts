@@ -15,7 +15,7 @@ export const BANK_FORMAT_LABELS: Record<BankFormat, string> = {
   mcq: "Choices",
   flashcard: "Flashcard",
   typed: "Short answer",
-  cloze: "Cloze",
+  cloze: "Fill in the blank",
 };
 
 export type BankRow = {

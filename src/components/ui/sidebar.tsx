@@ -13,6 +13,7 @@ import { BrandMark } from "@/components/site/site-ui";
 import { ThemeToggle } from "@/components/site/theme-toggle";
 import { NAV_ICONS } from "@/components/ui/nav-icons";
 import { PlaceholderAvatar } from "@/components/ui/placeholder-avatar";
+import { isFocusRoute } from "@/components/ui/shell-footer";
 import { cn } from "@/lib/cn";
 
 const STORAGE_KEY = "ascend:sidebar-collapsed";
@@ -119,7 +120,7 @@ function Row({
 type Edges = { top: boolean; bottom: boolean };
 
 /** Whether there is more to scroll above / below, so the cut edge can fade out. */
-function useScrollEdges(ref: React.RefObject<HTMLElement | null>): Edges {
+function useScrollEdges(ref: React.RefObject<HTMLElement | null>, shown: boolean): Edges {
   const [edges, setEdges] = useState<Edges>({ top: false, bottom: false });
   useEffect(() => {
     const el = ref.current;
@@ -137,7 +138,7 @@ function useScrollEdges(ref: React.RefObject<HTMLElement | null>): Edges {
       el.removeEventListener("scroll", measure);
       observer.disconnect();
     };
-  }, [ref]);
+  }, [ref, shown]);
   return edges;
 }
 
@@ -153,7 +154,7 @@ export function AppSidebar() {
   const displayName = user?.name?.trim() || null;
   const due = useDueCount(user?.id ?? null);
   const navRef = useRef<HTMLElement>(null);
-  const edges = useScrollEdges(navRef);
+  const edges = useScrollEdges(navRef, !isFocusRoute(pathname));
 
   const collapsed = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => false);
 
@@ -167,6 +168,9 @@ export function AppSidebar() {
   useLayoutEffect(() => {
     document.documentElement.classList.toggle("sidebar-collapsed", readCollapsed());
   }, []);
+
+  // A practice session is focus mode: the whole screen goes to the card ("End session" is the way out).
+  if (isFocusRoute(pathname)) return null;
 
   const width = collapsed ? "w-[78px]" : "w-[260px]";
   const signInHref = pathname ? `${SIGNIN_HREF}?next=${encodeURIComponent(pathname)}` : SIGNIN_HREF;

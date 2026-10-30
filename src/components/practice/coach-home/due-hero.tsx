@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
 
-const MIX = "choices, flashcards, cloze and short answers, shuffled";
+const MIX = "choices, flashcards, fill-in-the-blanks and short answers, shuffled";
 
 function heroCopy(hero: CoachHomeModel["hero"]): {
   title: string;
@@ -112,7 +112,7 @@ export function DueHero({ hero }: { hero: CoachHomeModel["hero"] }) {
         <div className="absolute left-5 top-3 h-[120px] w-[164px] rotate-5 rounded-[14px] bg-[var(--coach-hero-track)]" />
         <div className="absolute left-4 top-5 flex h-[120px] w-[164px] flex-col justify-between rounded-[14px] bg-[var(--coach-hero-card)] p-3.5 text-[var(--coach-hero-card-ink)]">
           <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--coach-hero-card-muted)]">
-            Cloze
+            Fill in the blank
           </span>
           <span className="font-display text-base font-bold leading-[1.2]">
             A bit holds one of{" "}

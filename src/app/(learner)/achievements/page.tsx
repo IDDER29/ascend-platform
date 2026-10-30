@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Chest } from "@/components/achievements/chest";
 import { GuestPrompt } from "@/components/ui/guest-prompt";
-import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
+import { HUB_CONTENT_CLASS, PageHeader } from "@/components/ui/page-header";
 import { loadAchievementsModel } from "@/lib/achievements/server-page-data";
 
 export const metadata: Metadata = {
@@ -33,14 +33,7 @@ export default async function AchievementsPage() {
   return (
     <main className={MAIN}>
       <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-8`}>
-        <header className="flex flex-col gap-1.5">
-          <h1 className="m-0 font-display text-[30px] font-extrabold leading-tight tracking-[-0.035em] sm:text-[36px]">
-            Achievements
-          </h1>
-          <p className="m-0 max-w-[640px] text-[15.5px] leading-relaxed text-[var(--coach-ink-secondary)] [text-wrap:pretty]">
-            {model.headline}
-          </p>
-        </header>
+        <PageHeader title="Achievements" lead={model.headline} />
 
         <Chest model={model} scrolls={scrolls} name={name} />
       </div>

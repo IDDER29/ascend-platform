@@ -3,7 +3,7 @@ import { NextLessonCard } from "@/components/dashboard-v2/next-lesson-card";
 import { TodayGrid } from "@/components/dashboard-v2/practice-today";
 import { StandingRow } from "@/components/dashboard-v2/standing-row";
 import { YourPaths } from "@/components/dashboard-v2/your-paths";
-import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
+import { HUB_CONTENT_CLASS, PageHeader } from "@/components/ui/page-header";
 import { greetingForHour } from "@/lib/dashboard/continue";
 import { loadToday } from "@/lib/dashboard/today-page-data";
 import { loadPracticePageData } from "@/lib/practice/server-page-data";
@@ -25,21 +25,15 @@ export default async function DashboardPage() {
   return (
     <main className={MAIN}>
       <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-6`}>
-        <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1">
-          <div className="flex flex-col gap-1">
-            <h1 className="m-0 font-display text-[30px] font-extrabold leading-tight tracking-[-0.035em] sm:text-[36px]">
-              {firstName ? `${greeting}, ${firstName}.` : `${greeting}.`}
-            </h1>
-            <p className="m-0 text-[15px] text-[var(--coach-ink-secondary)]">
-              {today.lessons.done === 0
-                ? `Your first lesson takes about ${today.next.timeMin ?? 5} minutes.`
-                : `${today.lessons.done} of ${today.lessons.total} lessons done.`}
-            </p>
-          </div>
-          <p className="m-0 text-[13.5px] text-[var(--coach-ink-muted)]">
-            {now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-          </p>
-        </header>
+        <PageHeader
+          title={firstName ? `${greeting}, ${firstName}.` : `${greeting}.`}
+          lead={
+            today.lessons.done === 0
+              ? `Your first lesson takes about ${today.next.timeMin ?? 5} minutes.`
+              : `${today.lessons.done} of ${today.lessons.total} lessons done.`
+          }
+          aside={now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+        />
 
         <TodayGrid
           next={<NextLessonCard next={today.next} />}

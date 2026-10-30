@@ -21,7 +21,7 @@ export function MomentumCard({ momentum }: { momentum: ProgressV2Model["momentum
           Momentum
         </h2>
         <span className="text-xs text-[var(--coach-ink-muted)]">
-          Cards answered per week · lessons finished on top
+          Last 12 weeks: cards answered, lessons finished on top
         </span>
       </div>
       {momentum.hasData ? (

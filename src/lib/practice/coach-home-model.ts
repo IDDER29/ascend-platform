@@ -101,7 +101,6 @@ export type CoachPathCard = {
 };
 
 export type CoachHomeModel = {
-  dateLabel: string;
   hero: {
     dueNow: number;
     sessionSize: number;
@@ -364,11 +363,6 @@ export function buildCoachHomeModel(input: CoachHomeInput): CoachHomeModel {
   const nowMs = now.getTime();
 
   return {
-    dateLabel: now.toLocaleDateString(LOCALE, {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
-    }),
     hero: {
       dueNow,
       sessionSize: Math.min(COACH_SESSION_SIZE, dueNow),

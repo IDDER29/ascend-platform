@@ -182,7 +182,7 @@ export function AppSidebar() {
         </Link>
 
         {/* Scrolls on short screens; the collapse button stays outside so it isn't clipped. */}
-        <div className={cn("-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto px-1", collapsed && "items-center")}>
+        <div className={cn("-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 [scrollbar-width:thin]", collapsed && "items-center")}>
           <nav aria-label="Main" className={cn("flex flex-col", collapsed ? "items-center gap-4" : "gap-5")}>
             {SIDEBAR_GROUPS.map((group) => (
               <div key={group.label} className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PathsCatalog } from "@/components/paths-v2/paths-catalog";
-import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
+import { HUB_CONTENT_CLASS, PageHeader } from "@/components/ui/page-header";
 import { loadPathsV2 } from "@/lib/paths/paths-v2-data";
 
 export const metadata: Metadata = {
@@ -16,14 +16,7 @@ export default async function PathsPage() {
   return (
     <main className={MAIN}>
       <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-6`}>
-        <header className="flex flex-col gap-1.5">
-          <h1 className="m-0 font-display text-[30px] font-extrabold leading-tight tracking-[-0.035em] sm:text-[36px]">
-            Paths
-          </h1>
-          <p className="m-0 max-w-[640px] text-[15.5px] leading-relaxed text-[var(--coach-ink-secondary)]">
-            Your next lesson comes from the path you&apos;re on. Join others any time.
-          </p>
-        </header>
+        <PageHeader title="Paths" lead="Your next lesson comes from the path you're on. Join others any time." />
         <PathsCatalog views={views} />
       </div>
     </main>

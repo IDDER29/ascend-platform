@@ -128,7 +128,7 @@ export function PracticeCoachV2HomeLive({
 
   return (
     <div className="flex min-w-0 max-w-full flex-col gap-8">
-      <CoachHeader dateLabel={model.dateLabel} />
+      <CoachHeader />
 
       <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(250px,280px)]">
         <DueHero hero={model.hero} />

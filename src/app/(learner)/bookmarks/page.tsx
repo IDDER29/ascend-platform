@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { BookmarksPage } from "@/components/bookmarks/bookmarks-page";
-import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
+import { HUB_CONTENT_CLASS, PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
   title: "Bookmarks — Ascend",
@@ -14,14 +14,7 @@ export default function BookmarksRoutePage() {
   return (
     <main className={MAIN}>
       <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-6`}>
-        <header className="flex flex-col gap-1.5">
-          <h1 className="m-0 font-display text-[30px] font-extrabold leading-tight tracking-[-0.035em] sm:text-[36px]">
-            Bookmarks
-          </h1>
-          <p className="m-0 max-w-[640px] text-[15.5px] leading-relaxed text-[var(--coach-ink-secondary)] [text-wrap:pretty]">
-            What you saved to come back to. Things you didn&apos;t get come first.
-          </p>
-        </header>
+        <PageHeader title="Bookmarks" lead="What you saved to come back to. Things you didn't get come first." />
         <BookmarksPage />
       </div>
     </main>

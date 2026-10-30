@@ -93,7 +93,6 @@ export type MomentumWeek = {
 export type Milestone = { at: string; dateLabel: string; label: string };
 
 export type ProgressV2Model = {
-  dateLabel: string;
   started: boolean;
   hero: {
     levelNumber: string;
@@ -341,7 +340,6 @@ export function buildProgressV2Model(input: ProgressV2Input): ProgressV2Model {
   }
 
   return {
-    dateLabel: now.toLocaleDateString(LOCALE, { weekday: "long", month: "short", day: "numeric" }),
     started: completions.length > 0 || history.length > 0,
     hero: {
       levelNumber: levelNumber(heroLevel),

@@ -172,7 +172,6 @@ test("practice days grid is 12 Monday-first weeks with intensity levels", () => 
 
 test("guest with no data gets honest empty values", () => {
   const model = buildCoachHomeModel(input());
-  assert.equal(model.dateLabel, "Tuesday, Sep 29");
   assert.equal(model.hero.lastScore, null);
   assert.equal(model.hero.nextReviewLabel, null);
   assert.equal(model.day.streak, 0);

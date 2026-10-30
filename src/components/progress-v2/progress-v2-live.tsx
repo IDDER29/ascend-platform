@@ -35,8 +35,8 @@ export type ProgressV2LiveProps = {
 
 function ProgressSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Loading progress" className="flex flex-col gap-5">
-      <div className="h-[92px] w-64 rounded-xl bg-[var(--coach-divider)]" />
+    <div aria-busy="true" aria-label="Loading progress" className="flex flex-col gap-8">
+      <ProgressHeader />
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(250px,280px)]">
         <div className="h-[260px] rounded-[20px] bg-[var(--coach-divider)]" />
         <div className="h-[260px] rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)]" />
@@ -83,7 +83,7 @@ export function ProgressV2Live({
 
   return (
     <div className="flex min-w-0 max-w-full flex-col gap-8">
-      <ProgressHeader dateLabel={model.dateLabel} />
+      <ProgressHeader />
 
       <div className={`${TWO_COLUMNS} lg:items-stretch`}>
         <HereHero model={model} />

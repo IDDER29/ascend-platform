@@ -46,10 +46,10 @@ export function DueHero({ hero }: { hero: CoachHomeModel["hero"] }) {
     >
       <div className="flex min-w-0 grow flex-col gap-3.5">
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-[var(--coach-lime)] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--coach-lime-ink)]">
+          <span className="rounded-full bg-[var(--coach-lime)] px-2.5 py-1 text-[12.5px] font-semibold text-[var(--coach-lime-ink)]">
             Recommended
           </span>
-          <span className="font-mono text-xs text-[var(--coach-hero-muted)]">
+          <span className="text-[13.5px] text-[var(--coach-hero-muted)]">
             Up next
           </span>
         </div>
@@ -79,7 +79,7 @@ export function DueHero({ hero }: { hero: CoachHomeModel["hero"] }) {
         <div className="mt-1 flex w-full flex-wrap items-center gap-5">
           <Link
             href={hero.action.href}
-            className="flex h-11 w-full max-w-full items-center justify-center gap-3 rounded-xl bg-[var(--coach-lime)] px-5 text-[14.5px] font-bold uppercase tracking-[0.02em] text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-auto"
+            className="flex h-11 w-full max-w-full items-center justify-center gap-3 rounded-xl bg-[var(--coach-lime)] px-5 text-[14.5px] font-bold tracking-[0.02em] text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-auto"
           >
             {hero.action.label}
             <kbd className="hidden h-[22px] items-center rounded-md border border-b-2 border-[var(--coach-lime-shadow)] bg-[var(--coach-lime-soft)] px-1.5 font-mono text-[11px] font-medium normal-case tracking-normal text-[var(--coach-lime-ink)] sm:inline-flex">

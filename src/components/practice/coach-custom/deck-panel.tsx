@@ -150,7 +150,7 @@ export function DeckPanel({
         {startHref ? (
           <Link
             href={startHref}
-            className="flex h-11 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-lime)] px-5 text-[14.5px] font-bold tracking-[0.02em] text-[var(--coach-lime-ink)] uppercase no-underline shadow-[0_4px_0_var(--coach-lime-shadow)]"
+            className="flex h-11 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-lime)] px-5 text-[14.5px] font-bold tracking-[0.02em] text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)]"
           >
             {label}
             <kbd className="hidden h-[22px] items-center rounded-md border border-b-2 border-[var(--coach-lime-shadow)] bg-[var(--coach-lime-soft)] px-1.5 font-mono text-[11px] font-medium tracking-normal normal-case sm:inline-flex">

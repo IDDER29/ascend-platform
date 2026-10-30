@@ -285,7 +285,7 @@ function LimeCheckButton({
     <button
       type="button"
       disabled={disabled}
-      className="mb-1 flex h-11 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-lime)] text-[14.5px] font-bold uppercase tracking-wide text-[var(--coach-lime-ink)] shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-52 sm:flex-none transition enabled:hover:brightness-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
+      className="mb-1 flex h-11 min-w-0 flex-1 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-lime)] text-[14.5px] font-bold text-[var(--coach-lime-ink)] shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-52 sm:flex-none transition enabled:hover:brightness-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
       onClick={onClick}
     >
       {label}
@@ -343,7 +343,7 @@ function FeedbackBar({
           </div>
           <button
             type="button"
-            className="mb-1 flex h-11 w-full shrink-0 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-solid-btn-bg)] text-[14.5px] font-bold uppercase tracking-wide text-[var(--coach-solid-btn-ink)] shadow-[0_4px_0_var(--coach-solid-btn-shadow)] sm:w-48"
+            className="mb-1 flex h-11 w-full shrink-0 items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-solid-btn-bg)] text-[14.5px] font-bold text-[var(--coach-solid-btn-ink)] shadow-[0_4px_0_var(--coach-solid-btn-shadow)] sm:w-48"
             onClick={onContinue}
           >
             Continue
@@ -417,7 +417,7 @@ function FeedbackBar({
         <div className="flex justify-end">
           <button
             type="button"
-            className="mb-1 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-wrong-strong)] text-[14.5px] font-bold uppercase tracking-wide text-[var(--coach-on-wrong)] shadow-[0_4px_0_var(--coach-wrong-shadow)] sm:w-48"
+            className="mb-1 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--coach-wrong-strong)] text-[14.5px] font-bold text-[var(--coach-on-wrong)] shadow-[0_4px_0_var(--coach-wrong-shadow)] sm:w-48"
             onClick={onContinue}
           >
             Continue

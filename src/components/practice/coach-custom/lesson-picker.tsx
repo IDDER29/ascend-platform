@@ -112,7 +112,7 @@ export function LessonPicker({
             </div>
             {path.sections.map((section) => (
               <div key={section.id} className="flex flex-col gap-1">
-                <h3 className="m-0 text-[11.5px] font-semibold tracking-[0.06em] text-[var(--coach-ink-muted)] uppercase">
+                <h3 className="m-0 text-[13.5px] font-semibold text-[var(--coach-ink-muted)]">
                   {section.title}
                 </h3>
                 <ul className="m-0 flex list-none flex-col p-0">

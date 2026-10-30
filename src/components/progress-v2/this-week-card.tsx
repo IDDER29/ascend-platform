@@ -24,7 +24,7 @@ export function ThisWeekCard({ week }: { week: ProgressV2Model["week"] }) {
       aria-labelledby="week-title"
       className="flex min-w-0 flex-col gap-4 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5"
     >
-      <h2 id="week-title" className="m-0 font-mono text-xs font-normal uppercase tracking-[0.08em] text-[var(--coach-ink-muted)]">
+      <h2 id="week-title" className="m-0 text-[16px] font-bold">
         This week
       </h2>
       {quiet ? (

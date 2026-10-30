@@ -34,7 +34,7 @@ export function SelectionBar({
       </button>
       <Link
         href={href}
-        className="flex h-11 w-full items-center justify-center rounded-xl bg-[var(--coach-lime)] px-5 sm:w-auto text-[14.5px] font-bold tracking-[0.02em] text-[var(--coach-lime-ink)] uppercase no-underline shadow-[0_4px_0_var(--coach-lime-shadow)]"
+        className="flex h-11 w-full items-center justify-center rounded-xl bg-[var(--coach-lime)] px-5 sm:w-auto text-[14.5px] font-bold tracking-[0.02em] text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)]"
       >
         Practice {count === 1 ? "this card" : `these ${count}`}
       </Link>

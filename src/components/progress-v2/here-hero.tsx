@@ -33,7 +33,7 @@ export function HereHero({ model }: { model: ProgressV2Model }) {
       className="flex min-w-0 flex-col gap-5 rounded-[20px] bg-[var(--coach-hero-bg)] px-6 py-6 text-[var(--coach-hero-ink)] sm:px-8 sm:py-7"
     >
       <div className="flex flex-col gap-3">
-        <span className="font-mono text-xs uppercase tracking-[0.08em] text-[var(--coach-hero-muted)]">
+        <span className="text-[14px] font-semibold text-[var(--coach-hero-muted)]">
           {eyebrow}
         </span>
         <h2
@@ -80,7 +80,7 @@ export function HereHero({ model }: { model: ProgressV2Model }) {
         <div className="mt-1 flex flex-wrap items-center gap-x-5 gap-y-3">
           <Link
             href={hero.next.href}
-            className="flex h-11 w-full items-center justify-center rounded-xl bg-[var(--coach-lime)] px-5 text-[14.5px] font-bold uppercase tracking-[0.02em] text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-auto"
+            className="flex h-11 w-full items-center justify-center rounded-xl bg-[var(--coach-lime)] px-5 text-[14.5px] font-bold tracking-[0.02em] text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)] sm:w-auto"
           >
             {hero.done === 0 ? "Start your first lesson" : "Continue lesson"}
           </Link>

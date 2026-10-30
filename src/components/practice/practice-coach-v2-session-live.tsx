@@ -57,7 +57,7 @@ export type PracticeCoachV2SessionLiveProps = {
 const BOTTOM_BAR =
   "sticky bottom-0 z-10 -mx-5 mt-auto flex justify-center border-t-2 px-5 sm:-mx-10 sm:px-10";
 
-type Answered = { questionId: string; grade: PracticeGrade };
+type Answered = { questionId: string; grade: PracticeGrade; ms?: number };
 type Feedback = { correct: boolean; grade: PracticeGrade };
 
 function gradeIsHit(grade: PracticeGrade): boolean {
@@ -473,6 +473,17 @@ export function PracticeCoachV2SessionLive({
   const [phase, setPhase] = useState<"prompt" | "feedback">("prompt");
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
+  // When the current card was shown, and (flashcards) when its answer was
+  // revealed: the answer time.
+  const shownAt = useRef<number | null>(null);
+  const revealedAt = useRef<number | null>(null);
+  useEffect(() => {
+    shownAt.current = Date.now();
+    revealedAt.current = null;
+  }, [index, questions]);
+  useEffect(() => {
+    if (revealed && revealedAt.current === null) revealedAt.current = Date.now();
+  }, [revealed]);
   const [typedAnswer, setTypedAnswer] = useState("");
   const [answered, setAnswered] = useState<Answered[]>([]);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -543,6 +554,11 @@ export function PracticeCoachV2SessionLive({
       .map((answer) => answer.questionId);
     const questionIds = nextAnswered.map((answer) => answer.questionId);
     const answeredIds = new Set(questionIds);
+    const timesMs = Object.fromEntries(
+      nextAnswered
+        .filter((answer) => answer.ms !== undefined)
+        .map((answer) => [answer.questionId, answer.ms!]),
+    );
     const updated = applyGrades(userId, nextAnswered);
 
     if (userId) {
@@ -561,6 +577,7 @@ export function PracticeCoachV2SessionLive({
       total: nextAnswered.length,
       missIds,
       questionIds,
+      timesMs,
     };
     prependLocalSession(userId, record);
     if (userId) {
@@ -601,9 +618,17 @@ export function PracticeCoachV2SessionLive({
   function recordGrade(grade: PracticeGrade, correct: boolean) {
     const question = questions[index];
     if (!question || phase === "feedback") return;
+    const endAt =
+      question.kind === "flashcard"
+        ? (revealedAt.current ?? Date.now())
+        : Date.now();
+    const ms =
+      shownAt.current === null
+        ? undefined
+        : Math.max(0, endAt - shownAt.current);
     const nextAnswered = [
       ...answered,
-      { questionId: question.id, grade },
+      { questionId: question.id, grade, ms },
     ];
     setAnswered(nextAnswered);
     setFeedback({ correct, grade });

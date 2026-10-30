@@ -1,8 +1,9 @@
 /**
  * "Ways to review" on the dashboard, beside the Practice card: the review
- * options worth doing now — your misses, the path you're on (review it before
- * you continue), your other paths with cards due, your saved decks, and what
- * you saved as "Didn't get it". Each says how much is waiting.
+ * options worth doing now — your misses, cards you got right but shakily
+ * (`shaky.ts`), the path you're on (review it before you continue), your other
+ * paths with cards due, your saved decks, and what you saved as "Didn't get
+ * it". Each says how much is waiting.
  */
 export type ReviewOption = {
   id: string;
@@ -18,6 +19,8 @@ export type ReviewOption = {
 export type ReviewOptionsInput = {
   missesDue: number;
   missesHref: string;
+  /** Cards you got right but slowly, or just after missing them. */
+  shaky: { count: number; slow: number; href: string | null };
   /** Cards due now, by Practice path slug. */
   dueByPath: Record<string, number>;
   /** The path you're on (from Your paths); its review sits first after misses. */
@@ -42,6 +45,20 @@ export function buildReviewOptions(input: ReviewOptionsInput): ReviewOption[] {
       href: input.missesHref,
     },
   ];
+
+  if (input.shaky.count > 0 && input.shaky.href) {
+    options.push({
+      id: "shaky",
+      title: "Right, but shaky",
+      detail:
+        input.shaky.slow > 0
+          ? "Cards you got right, but slowly or just after missing them."
+          : "Cards you got right just after missing them.",
+      badge: `${input.shaky.count} ${input.shaky.count === 1 ? "card" : "cards"}`,
+      waiting: true,
+      href: input.shaky.href,
+    });
+  }
 
   if (input.activePath) {
     const n = input.dueByPath[input.activePath.slug] ?? 0;
@@ -91,8 +108,9 @@ export function buildReviewOptions(input: ReviewOptionsInput): ReviewOption[] {
     });
   }
 
-  // Misses first, then the current path; after that, what's waiting before what's clear.
-  const [misses, ...rest] = options;
-  const current = input.activePath ? rest.splice(0, 1) : [];
-  return [misses, ...current, ...rest.sort((a, b) => Number(b.waiting) - Number(a.waiting))];
+  // Misses and shaky cards first, then the current path; after that, what's waiting before what's clear.
+  const lead = options.filter((o) => o.id === "misses" || o.id === "shaky");
+  const current = options.filter((o) => input.activePath && o.id === `path:${input.activePath.slug}`);
+  const rest = options.filter((o) => !lead.includes(o) && !current.includes(o));
+  return [...lead, ...current, ...rest.sort((a, b) => Number(b.waiting) - Number(a.waiting))];
 }

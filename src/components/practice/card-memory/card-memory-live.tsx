@@ -154,6 +154,9 @@ export function CardMemoryLive({
                   />
                   <span className="font-semibold">{r.correct ? "Right" : "Missed"}</span>
                   <span className="whitespace-nowrap text-[var(--coach-ink-muted)]">{date(r.at)}</span>
+                  {r.ms !== null && r.ms <= 180_000 && (
+                    <span className="text-[var(--coach-ink-muted)]">· {Math.max(1, Math.round(r.ms / 1000))}s</span>
+                  )}
                   {i === reviews.length - 1 && <span className="text-[var(--coach-ink-muted)]">· first time</span>}
                 </span>
                 <span className="text-[13px] text-[var(--coach-ink-secondary)]">

@@ -19,6 +19,8 @@ export type CardReview = {
   /** Days since the first review. */
   day: number;
   correct: boolean;
+  /** How long the answer took, when this browser recorded it. */
+  ms: number | null;
   /** Stability after this review, in days: how long until recall falls to 90%. */
   stability: number;
 };
@@ -41,16 +43,16 @@ export function cardMemory(questionId: string, history: PracticeSessionRecord[],
   const events = history
     .filter((s) => s.questionIds.includes(questionId))
     .sort((a, b) => Date.parse(a.at) - Date.parse(b.at))
-    .map((s) => ({ at: s.at, correct: !s.missIds.includes(questionId) }));
+    .map((s) => ({ at: s.at, correct: !s.missIds.includes(questionId), ms: s.timesMs?.[questionId] ?? null }));
   if (events.length === 0) return { reviews: [], today: 0, now: null, due: null, firstStability: null, card: null };
 
   const t0 = Date.parse(events[0].at);
   const dayOf = (iso: string) => (Date.parse(iso) - t0) / DAY_MS;
   let card: PracticeCard = createNewCard(questionId, new Date(t0));
-  const reviews = events.map(({ at, correct }) => {
+  const reviews = events.map(({ at, correct, ms }) => {
     card = gradeCard(card, correct ? "good" : "again", new Date(at));
     const stability = card.state === "learning" ? MISSED_STABILITY : Math.max(1, card.intervalDays);
-    return { at, day: dayOf(at), correct, stability };
+    return { at, day: dayOf(at), correct, ms, stability };
   });
 
   const last = reviews[reviews.length - 1];

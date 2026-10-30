@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { dueCards, readNewDayMeta, syncLocalCards } from "@/lib/practice/cards";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
 import { buildCoachBankModel } from "@/lib/practice/coach-bank-model";
-import { savedDeckItems } from "@/lib/practice/coach-custom-model";
+import { deckSessionHref, savedDeckItems } from "@/lib/practice/coach-custom-model";
+import { shakyCards } from "@/lib/practice/shaky";
 import type { SavedDeck } from "@/lib/practice/deck-recipe";
 import { practicePathSlugForLevel } from "@/lib/practice/path-map";
 import { buildReviewOptions } from "@/lib/dashboard/review-options";
@@ -220,11 +221,23 @@ export function TodayGrid({
 }) {
   const { model, history, dueByPath, decks } = usePracticeToday(practice);
   const flagged = useFlaggedCount();
+  const shaky = history ? shakyCards(history) : [];
   const options =
     model && dueByPath
       ? buildReviewOptions({
           missesDue: model.modes.missesDue,
           missesHref: `${PRACTICE_ROUTES.session}?scope=due`,
+          shaky: {
+            count: shaky.length,
+            slow: shaky.filter((c) => c.reason === "slow").length,
+            href:
+              shaky.length > 0
+                ? deckSessionHref(
+                    shaky.slice(0, 30).map((c) => c.id),
+                    "Right, but shaky",
+                  )
+                : null,
+          },
           dueByPath,
           activePath,
           otherPaths,

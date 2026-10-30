@@ -149,6 +149,17 @@ Each piece starts at 100% and ends at exactly 90% where the next begins.
 - **Two futures** from today: *If you review today* (blue dashed, jumping up at today, then reviewed when due) and *If you skip* (orange dashed).
 - Model: `src/lib/practice/deck-memory.ts` (tested); the future is `memoryCurve` run on the replayed cards, so past and future meet at today.
 
+## 3b. Decision: "Right, but shaky" (2026-10-30)
+**Why (the user):** some cards you answer fast and easily; others you get right but only after a struggle. Those are a set worth reviewing on their own.
+**Research link:** FSRS/Anki's *Hard* is exactly this — a success with effort, which should grow stability less than an easy recall (§1.5). Response time is a common signal of retrieval effort.
+**What we record:** each answer's time (ms) in the session record (`timesMs`): to answer for choices / typed / cloze, **to reveal** for flashcards (the recall itself, not the self-grade). Stored in the browser; the account copy doesn't carry it yet (database pass), and merging keeps the browser's times.
+**Rule** (`src/lib/practice/shaky.ts`, tested): a card is shaky when its latest review was right and either
+- **slow** — over max(floor, 1.75 × your median right-answer time for that kind of card); floors: choices 10 s, flashcards 8 s, cloze 15 s, short answer 20 s; your median needs ≥ 5 answers of that kind; answers over 3 min are ignored (away); or
+- **just recovered** — missed in one of the two reviews before.
+A later quick right answer clears it. Misses aren't shaky — they're misses.
+**Where:** "Right, but shaky" in Ways to review (right after Fix your misses) — a review of those cards; each card's page lists answer times.
+**Next (not done):** grade slow-but-right as SM-2 "hard" (smaller interval, ease −0.15), so the schedule itself reflects the struggle — the user's call.
+
 ## 4. Open ideas (ranked by value for effort)
 
 1. **Use the curve elsewhere** — Progress (the long view) and Practice home; per topic ("Bits & Logic: 88%").

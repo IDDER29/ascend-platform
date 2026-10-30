@@ -6,6 +6,7 @@ function options(patch: Partial<ReviewOptionsInput>) {
   return buildReviewOptions({
     missesDue: 3,
     missesHref: "/practice/session?scope=due",
+    shaky: { count: 0, slow: 0, href: null },
     dueByPath: { "systems-programmer": 4, foundations: 12 },
     activePath: { slug: "systems-programmer", title: "Systems Programmer" },
     otherPaths: [{ slug: "foundations", title: "Foundations" }],
@@ -59,4 +60,17 @@ test("decks with cards come in, waiting ones before the rest; flagged bookmarks 
       ["Pointers", "9 cards"],
     ],
   );
+});
+
+test("shaky cards come right after misses", () => {
+  const o = options({ shaky: { count: 4, slow: 3, href: "/deck/shaky" } });
+  assert.deepEqual(
+    o.slice(0, 3).map((x) => [x.title, x.badge]),
+    [
+      ["Fix your misses", "3 to fix"],
+      ["Right, but shaky", "4 cards"],
+      ["Review Systems Programmer", "4 due"],
+    ],
+  );
+  assert.equal(o[1].href, "/deck/shaky");
 });

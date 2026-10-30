@@ -23,6 +23,12 @@ export type PracticeSessionRecord = {
   total: number;
   missIds: string[];
   questionIds: string[];
+  /**
+   * How long each answer took, in ms: to answer for choices / typed / cloze,
+   * to reveal for flashcards. Kept in this browser (sessions saved to the
+   * account don't carry it yet).
+   */
+  timesMs?: Record<string, number>;
 };
 
 export type PathProgressRow = {
@@ -75,7 +81,16 @@ export function mergeSessionHistory(
   server: PracticeSessionRecord[],
 ): PracticeSessionRecord[] {
   const byId = new Map<string, PracticeSessionRecord>();
-  for (const session of [...local, ...server]) byId.set(session.id, session);
+  for (const session of [...local, ...server]) {
+    // The account's copy wins, but keeps the answer times only this browser recorded.
+    const earlier = byId.get(session.id);
+    byId.set(
+      session.id,
+      earlier?.timesMs && !session.timesMs
+        ? { ...session, timesMs: earlier.timesMs }
+        : session,
+    );
+  }
   return [...byId.values()]
     .sort((a, b) => b.at.localeCompare(a.at))
     .slice(0, MAX_SESSIONS);

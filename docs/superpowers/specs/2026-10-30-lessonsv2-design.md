@@ -11,7 +11,7 @@
 - I do the assignment, read why it matters, mark it done (counts toward today's goal and the streak) and go to the next lesson, the topic's finish line, or the capstone.
 
 **Decisions**
-- Built at `/lessonsv2/<publicSlug>`; lesson links inside v2 stay on v2; `/lessons/…` unchanged until promoted.
+- Promoted to `/lessons/<publicSlug>` (2026-10-30); `/lessonsv2/…` redirects there; the old page is kept at `/lessonsv1/<publicSlug>`.
 - Removed from v1: "CONCEPT 01", the purple-tinted knowledge check and its "Comfortable with all three?" (it didn't match the question count), the fake "Add a note", the gradient banners, the lesson-map drawer (breadcrumb + path page instead).
 - Kept: MDX body and components, Study these first, outcomes, resources rail with save buttons, on-this-page rail, contribute links and feedback.
 - `.lesson-v2-body` in `globals.css` overrides the MDX components' hard-coded paragraph/code colours.

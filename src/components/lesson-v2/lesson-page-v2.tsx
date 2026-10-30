@@ -27,8 +27,6 @@ import { FinishCard } from "./finish-card";
 import { ResourceList } from "./resource-list";
 import { LockItIn } from "./lock-it-in";
 
-/** Lesson links stay on v2 while it's being tried out. */
-export const v2Href = (level: string, slug: string) => lessonHref(level, slug).replace(/^\/lessons\//, "/lessonsv2/");
 
 function headings(body: string): RailItem[] {
   const slugger = new GithubSlugger();
@@ -43,7 +41,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
   if (!lesson) notFound();
   const { meta, body } = lesson;
   const key = completionKey(meta.level, meta.slug);
-  const href = v2Href(meta.level, meta.slug);
+  const href = lessonHref(meta.level, meta.slug);
   const topic = LEVELS[meta.level];
   const inTopic = getAllLessons()
     .filter((l) => l.meta.level === meta.level)
@@ -55,7 +53,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
   const after = inTopic[index + 1];
   const nextTopic = levelIds[levelIds.indexOf(meta.level) + 1] as LevelId | undefined;
   const next = after
-    ? { href: v2Href(after.meta.level, after.meta.slug), label: "Next", title: after.meta.title }
+    ? { href: lessonHref(after.meta.level, after.meta.slug), label: "Next", title: after.meta.title }
     : nextTopic
       ? { href: `/level-complete/${meta.level}`, label: "Finish", title: topic.name }
       : { href: "/projects/shellforge", label: "Capstone", title: "ShellForge" };
@@ -70,7 +68,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
     }
   }
   const before = inTopic[index - 1];
-  const prev = before ? { href: v2Href(before.meta.level, before.meta.slug), title: before.meta.title } : null;
+  const prev = before ? { href: lessonHref(before.meta.level, before.meta.slug), title: before.meta.title } : null;
   const cardIds = PRACTICE_BANK.filter((q) => completionKey(q.lessonLevel, q.lessonSlug) === key).map((q) => q.id);
   const unlocked = new Set(unlockedQuestions(new Set(practice.completedKeys)).map((q) => q.id));
   const canReview = cardIds.length > 0 && cardIds.every((id) => unlocked.has(id));

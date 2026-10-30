@@ -13,12 +13,14 @@ export function FinishCard({
   initiallyComplete,
   signedIn,
   next,
+  prev,
 }: {
   level: string;
   slug: string;
   initiallyComplete: boolean;
   signedIn: boolean;
   next: { href: string; label: string; title: string };
+  prev: { href: string; title: string } | null;
 }) {
   const [complete, setComplete] = useState(initiallyComplete);
   const [error, setError] = useState<string | null>(null);
@@ -34,63 +36,73 @@ export function FinishCard({
   }
 
   return (
-    <section
-      aria-labelledby="finish-title"
-      className="flex flex-col gap-4 rounded-[20px] bg-[var(--coach-hero-bg)] p-6 text-[var(--coach-hero-ink)] sm:flex-row sm:items-center sm:justify-between sm:p-7"
-    >
-      <div className="flex items-center gap-4">
-        <span
-          aria-hidden
-          className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${
-            complete
-              ? "bg-[var(--coach-lime)] text-[var(--coach-lime-ink)]"
-              : "border-2 border-[var(--coach-hero-track)]"
-          }`}
-        >
-          <Check size={22} strokeWidth={3} className={complete ? "" : "opacity-40"} />
-        </span>
-        <div className="min-w-0">
-          <h2 id="finish-title" className="m-0 text-[18px] font-bold">
-            {complete ? "Lesson done" : "Done with this lesson?"}
-          </h2>
-          <p className="m-0 mt-0.5 text-[13.5px] text-[var(--coach-hero-muted)]">
-            {complete
-              ? "It counts toward today's goal and your streak, and its cards join your reviews."
-              : signedIn
-                ? "Mark it done: it counts toward today's goal and your streak."
-                : "Sign in to keep your progress."}
-          </p>
-          {error && <p className="m-0 mt-1 text-[13px] text-[var(--coach-tint-orange-ink)]">{error}</p>}
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-2.5">
-        {!complete &&
-          (signedIn ? (
-            <button
-              type="button"
-              onClick={markComplete}
-              disabled={pending}
-              className="inline-flex h-11 cursor-pointer items-center rounded-xl border-2 border-[var(--coach-hero-track)] px-4 text-[14px] font-semibold text-[var(--coach-hero-ink)] disabled:opacity-60"
-            >
-              {pending ? "Saving…" : "Mark done"}
-            </button>
-          ) : (
-            <Link
-              href={SIGNIN_HREF}
-              className="inline-flex h-11 items-center rounded-xl border-2 border-[var(--coach-hero-track)] px-4 text-[14px] font-semibold text-[var(--coach-hero-ink)] no-underline"
-            >
-              Sign in
-            </Link>
-          ))}
-        <Link
-          href={next.href}
-          className="inline-flex h-11 max-w-full items-center rounded-xl bg-[var(--coach-lime)] px-5 text-[14.5px] font-bold text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)]"
-        >
-          <span className="truncate">
-            {next.label}: {next.title}
+    <div className="flex flex-col gap-3">
+      <section
+        aria-labelledby="finish-title"
+        className="flex flex-col gap-4 rounded-[20px] bg-[var(--coach-hero-bg)] p-6 text-[var(--coach-hero-ink)] sm:p-7 lg:flex-row lg:items-center lg:justify-between"
+      >
+        <div className="flex items-center gap-4">
+          <span
+            aria-hidden
+            className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${
+              complete
+                ? "bg-[var(--coach-lime)] text-[var(--coach-lime-ink)]"
+                : "border-2 border-[var(--coach-hero-track)]"
+            }`}
+          >
+            <Check size={22} strokeWidth={3} className={complete ? "" : "opacity-40"} />
           </span>
+          <div className="min-w-0">
+            <h2 id="finish-title" className="m-0 text-[18px] font-bold">
+              {complete ? "Lesson done" : "Done with this lesson?"}
+            </h2>
+            <p className="m-0 mt-0.5 text-[13.5px] text-[var(--coach-hero-muted)]">
+              {complete
+                ? "It counts toward today's goal and your streak, and its cards join your reviews."
+                : signedIn
+                  ? "Mark it done: it counts toward today's goal and your streak."
+                  : "Sign in to keep your progress."}
+            </p>
+            {error && <p className="m-0 mt-1 text-[13px] text-[var(--coach-tint-orange-ink)]">{error}</p>}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2.5">
+          {!complete &&
+            (signedIn ? (
+              <button
+                type="button"
+                onClick={markComplete}
+                disabled={pending}
+                className="inline-flex h-11 cursor-pointer items-center rounded-xl border-2 border-[var(--coach-hero-track)] px-4 text-[14px] font-semibold text-[var(--coach-hero-ink)] disabled:opacity-60"
+              >
+                {pending ? "Saving…" : "Mark done"}
+              </button>
+            ) : (
+              <Link
+                href={SIGNIN_HREF}
+                className="inline-flex h-11 items-center rounded-xl border-2 border-[var(--coach-hero-track)] px-4 text-[14px] font-semibold text-[var(--coach-hero-ink)] no-underline"
+              >
+                Sign in
+              </Link>
+            ))}
+          <Link
+            href={next.href}
+            className="inline-flex h-11 max-w-full items-center rounded-xl bg-[var(--coach-lime)] px-5 text-[14.5px] font-bold text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)]"
+          >
+            <span className="truncate">
+              {next.label}: {next.title}
+            </span>
+          </Link>
+        </div>
+      </section>
+      {prev && (
+        <Link
+          href={prev.href}
+          className="w-fit text-[13.5px] text-[var(--coach-ink-muted)] underline-offset-2 hover:text-[var(--coach-ink)] hover:underline"
+        >
+          ← Previous: {prev.title}
         </Link>
-      </div>
-    </section>
+      )}
+    </div>
   );
 }

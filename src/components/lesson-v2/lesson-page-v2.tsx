@@ -9,7 +9,8 @@ import { LessonBookmarksProvider, SaveLessonButton } from "@/components/bookmark
 import { AdditionalResources } from "@/components/lesson/additional-resources";
 import { LessonContributeLinks } from "@/components/lesson/lesson-contribute-links";
 import { LessonFeedback } from "@/components/lesson/lesson-feedback";
-import { OnThisPageRail, type RailItem } from "@/components/lesson/on-this-page-rail";
+import { PageRail, type RailItem } from "./page-rail";
+import { TopicLessons } from "./topic-lessons";
 import { PracticeHistoryProvider } from "@/components/paths-v2/lesson-memory";
 import { getCurrentUser } from "@/lib/auth/auth";
 import { lessonEditUrl, lessonIssueUrl } from "@/lib/brand/repo";
@@ -69,6 +70,17 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
       // database unavailable: shown as not done
     }
   }
+  const doneKeys = new Set(practice.completedKeys);
+  const topicLessons = inTopic.map((l) => ({
+    key: completionKey(l.meta.level, l.meta.slug),
+    title: l.meta.title,
+    href: v2Href(l.meta.level, l.meta.slug),
+    done: doneKeys.has(completionKey(l.meta.level, l.meta.slug)),
+    current: l.meta.slug === meta.slug,
+  }));
+  const before = inTopic[index - 1];
+  const prev = before ? { href: v2Href(before.meta.level, before.meta.slug), title: before.meta.title } : null;
+  const pathHref = path ? `/paths/${path.slug}` : null;
   const cardIds = PRACTICE_BANK.filter((q) => completionKey(q.lessonLevel, q.lessonSlug) === key).map((q) => q.id);
   const unlocked = new Set(unlockedQuestions(new Set(practice.completedKeys)).map((q) => q.id));
   const canReview = cardIds.length > 0 && cardIds.every((id) => unlocked.has(id));
@@ -271,7 +283,21 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
               initiallyComplete={complete}
               signedIn={Boolean(user)}
               next={next}
+              prev={prev}
             />
+
+            {/* Below the wide-screen rail's breakpoint, its parts come at the end. */}
+            <div className="flex flex-col gap-6 xl:hidden">
+              <div className="rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5">
+                <TopicLessons topic={topic.name} pathHref={pathHref} lessons={topicLessons} />
+              </div>
+              {meta.additionalResources.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <p className="m-0 text-[13px] font-semibold text-[var(--coach-ink-muted)]">Go deeper (optional)</p>
+                  <AdditionalResources resources={meta.additionalResources} />
+                </div>
+              )}
+            </div>
 
             <div className="flex flex-col gap-4">
               <LessonContributeLinks editUrl={lessonEditUrl(meta.level, meta.slug)} issueUrl={issueUrl} />
@@ -279,11 +305,12 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
             </div>
           </article>
 
-          <aside className="hidden flex-col gap-6 xl:sticky xl:top-6 xl:flex">
+          <aside className="hidden max-h-[calc(100vh-48px)] flex-col gap-7 overflow-y-auto xl:sticky xl:top-6 xl:flex">
             <div>
               <p className="m-0 mb-2 text-[13px] font-semibold text-[var(--coach-ink-muted)]">On this page</p>
-              <OnThisPageRail items={rail} />
+              <PageRail items={rail} />
             </div>
+            <TopicLessons topic={topic.name} pathHref={pathHref} lessons={topicLessons} />
             {meta.additionalResources.length > 0 && (
               <div className="flex flex-col gap-2">
                 <p className="m-0 text-[13px] font-semibold text-[var(--coach-ink-muted)]">Go deeper (optional)</p>

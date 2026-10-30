@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, RotateCcw } from "lucide-react";
 import type { BookmarkLesson } from "@/lib/bookmarks/model";
 import { saveBookmark, updateBookmark, useBookmarks } from "@/lib/bookmarks/use-bookmarks";
@@ -19,6 +19,56 @@ const BTN =
 export function CheckYourself({ items, lesson }: { items: KnowledgeCheckItem[]; lesson: BookmarkLesson }) {
   const [shown, setShown] = useState<Record<number, boolean>>({});
   const [rating, setRating] = useState<Record<number, Rating>>({});
+  const storeKey = `ascend:check-yourself:${lesson.key}`;
+
+  // Your answers are kept in this browser, so coming back shows where you left off.
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const saved = JSON.parse(window.localStorage.getItem(storeKey) ?? "null") as {
+          shown?: Record<number, boolean>;
+          rating?: Record<number, Rating>;
+        } | null;
+        if (saved) {
+          setShown(saved.shown ?? {});
+          setRating(saved.rating ?? {});
+        }
+      } catch {
+        // Nothing saved, or storage blocked.
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [storeKey]);
+
+  function save(nextShown: Record<number, boolean>, nextRating: Record<number, Rating>) {
+    try {
+      window.localStorage.setItem(storeKey, JSON.stringify({ shown: nextShown, rating: nextRating }));
+    } catch {
+      // Storage blocked: it just won't be remembered.
+    }
+  }
+
+  function reveal(i: number) {
+    const next = { ...shown, [i]: true };
+    setShown(next);
+    save(next, rating);
+  }
+
+  function rate(i: number, r: Rating) {
+    const next = { ...rating, [i]: r };
+    setRating(next);
+    save(shown, next);
+  }
+
+  function startOver() {
+    setShown({});
+    setRating({});
+    save({}, {});
+  }
   const bookmarks = useBookmarks();
   const rated = Object.values(rating);
   const got = rated.filter((r) => r === "got").length;
@@ -63,7 +113,7 @@ export function CheckYourself({ items, lesson }: { items: KnowledgeCheckItem[]; 
               {!shown[i] ? (
                 <button
                   type="button"
-                  onClick={() => setShown((s) => ({ ...s, [i]: true }))}
+                  onClick={() => reveal(i)}
                   className="ml-10 w-fit rounded-xl border-2 border-dashed border-[var(--coach-border-strong)] px-4 py-2.5 text-[14px] font-semibold text-[var(--coach-ink-secondary)] hover:text-[var(--coach-ink)]"
                 >
                   Answer it in your head, then show the answer
@@ -78,7 +128,7 @@ export function CheckYourself({ items, lesson }: { items: KnowledgeCheckItem[]; 
                     <button
                       type="button"
                       aria-pressed={rating[i] === "got"}
-                      onClick={() => setRating((r) => ({ ...r, [i]: "got" }))}
+                      onClick={() => rate(i, "got")}
                       className={`${BTN} ${
                         rating[i] === "got"
                           ? "border-[var(--coach-ink)] bg-[var(--coach-ink)] text-[var(--coach-surface)]"
@@ -90,7 +140,7 @@ export function CheckYourself({ items, lesson }: { items: KnowledgeCheckItem[]; 
                     <button
                       type="button"
                       aria-pressed={rating[i] === "not"}
-                      onClick={() => setRating((r) => ({ ...r, [i]: "not" }))}
+                      onClick={() => rate(i, "not")}
                       className={`${BTN} ${
                         rating[i] === "not"
                           ? "border-[var(--coach-tint-orange-ink)] bg-[var(--coach-tint-orange-bg)] text-[var(--coach-tint-orange-ink)]"
@@ -134,7 +184,14 @@ export function CheckYourself({ items, lesson }: { items: KnowledgeCheckItem[]; 
         >
           {notYet.length === 0
             ? `You had all ${items.length}. That's this lesson down.`
-            : `You had ${got} of ${items.length}. Re-read what you missed now — and it'll come back in Practice.`}
+            : `You had ${got} of ${items.length}. Re-read what you missed now — and it'll come back in Practice.`}{" "}
+          <button
+            type="button"
+            onClick={startOver}
+            className="text-[var(--coach-ink-muted)] underline underline-offset-2 hover:text-[var(--coach-ink)]"
+          >
+            Try them again
+          </button>
         </p>
       )}
     </div>

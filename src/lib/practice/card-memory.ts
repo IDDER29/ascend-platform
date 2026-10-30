@@ -33,6 +33,8 @@ export type CardMemory = {
   due: { at: string; day: number } | null;
   /** If the card had never been reviewed after the first time. */
   firstStability: number | null;
+  /** The card as the scheduler leaves it after these reviews; null before any. */
+  card: PracticeCard | null;
 };
 
 export function cardMemory(questionId: string, history: PracticeSessionRecord[], now: Date): CardMemory {
@@ -40,7 +42,7 @@ export function cardMemory(questionId: string, history: PracticeSessionRecord[],
     .filter((s) => s.questionIds.includes(questionId))
     .sort((a, b) => Date.parse(a.at) - Date.parse(b.at))
     .map((s) => ({ at: s.at, correct: !s.missIds.includes(questionId) }));
-  if (events.length === 0) return { reviews: [], today: 0, now: null, due: null, firstStability: null };
+  if (events.length === 0) return { reviews: [], today: 0, now: null, due: null, firstStability: null, card: null };
 
   const t0 = Date.parse(events[0].at);
   const dayOf = (iso: string) => (Date.parse(iso) - t0) / DAY_MS;
@@ -60,6 +62,7 @@ export function cardMemory(questionId: string, history: PracticeSessionRecord[],
     now: recall(today - last.day, last.stability),
     due: { at: dueAt, day: dayOf(dueAt) },
     firstStability: reviews[0].stability,
+    card,
   };
 }
 

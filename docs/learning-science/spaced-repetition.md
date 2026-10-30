@@ -143,6 +143,12 @@ Each piece starts at 100% and ends at exactly 90% where the next begins.
 
 ---
 
+**Redesign (2026-10-30), at the user's request — the deck chart reads like a card's page:**
+- **The past is real:** every reviewed card's sawtooth is rebuilt from Practice history (as on the card page) and averaged — solid line, from at least two weeks back and always back to the last review (up to 60 days), with "Last review <date>" marked on the curve where the deck actually rose to.
+- **Today:** "Now N%" on the curve, and a verdict above the chart — **"Review today"** when any card is below 90% ("N have dropped below 90%; reviewing today brings you back to about M%"), or **"No review needed today"** with when the next card comes due.
+- **Two futures** from today: *If you review today* (blue dashed, jumping up at today, then reviewed when due) and *If you skip* (orange dashed).
+- Model: `src/lib/practice/deck-memory.ts` (tested); the future is `memoryCurve` run on the replayed cards, so past and future meet at today.
+
 ## 4. Open ideas (ranked by value for effort)
 
 1. **Use the curve elsewhere** — Progress (the long view) and Practice home; per topic ("Bits & Logic: 88%").

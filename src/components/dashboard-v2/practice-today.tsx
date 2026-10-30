@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { readNewDayMeta, syncLocalCards } from "@/lib/practice/cards";
 import { practiceCardView } from "@/lib/dashboard/practice-card-model";
 import { buildCoachHomeModel, type CoachHomeModel } from "@/lib/practice/coach-home-model";
-import { memoryCurve } from "@/lib/practice/memory-curve";
+import { deckMemory } from "@/lib/practice/deck-memory";
 import { resolveDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
 import { mergeSessionHistory, readLocalHistory, type PracticeSessionRecord } from "@/lib/practice/history";
 import { PRACTICE_ROUTES } from "@/lib/practice/routes";
@@ -73,31 +73,34 @@ function usePracticeToday({
 }
 
 /** How much of your cards you'd recall, today and over the next weeks. Hidden until a card has been reviewed. */
-function YourMemory({ cards }: { cards: PracticeCard[] }) {
-  const curve = memoryCurve(cards, new Date());
-  if (curve.cards === 0) return null;
+function YourMemory({ history }: { history: PracticeSessionRecord[] | null }) {
+  const memory = history ? deckMemory(history, new Date()) : null;
+  if (!memory) return null;
+  const now = Math.round(memory.now * 100);
+  const nextDue = memory.nextDue
+    ? new Date(memory.nextDue.at).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
+    : null;
   return (
-    <div className="flex flex-col gap-2 border-t-2 border-[var(--coach-divider)] pt-4">
-      <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
-        You&apos;d recall about{" "}
-        <span className="font-semibold text-[var(--coach-ink)]">{Math.round(curve.today * 100)}%</span> of your{" "}
-        {curve.cards} {curve.cards === 1 ? "card" : "cards"} now
-        {curve.points[0].kept - curve.today > 0.005 ? (
-          <>
-            {" "}
-            — about{" "}
-            <span className="font-semibold text-[var(--coach-ink)]">
-              {Math.round(curve.points[0].kept * 100)}%
-            </span>{" "}
-            once you&apos;ve done today&apos;s reviews.
-          </>
-        ) : (
-          "."
-        )}
-      </p>
-      <MemoryCurveChart curve={curve} />
+    <div className="flex flex-col gap-3 border-t-2 border-[var(--coach-divider)] pt-4">
+      <div className="flex flex-col gap-1">
+        <p className="m-0 text-[15px] font-bold">{memory.reviewToday ? "Review today" : "No review needed today"}</p>
+        <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)] [text-wrap:pretty]">
+          You still remember about <span className="font-semibold text-[var(--coach-ink)]">{now}%</span> of your{" "}
+          {memory.cards} {memory.cards === 1 ? "card" : "cards"}.{" "}
+          {memory.reviewToday ? (
+            <>
+              {memory.dueNow} {memory.dueNow === 1 ? "has" : "have"} dropped below 90%; reviewing today brings you back
+              to about{" "}
+              <span className="font-semibold text-[var(--coach-ink)]">{Math.round(memory.afterReview * 100)}%</span>.
+            </>
+          ) : (
+            <>Everything is above 90%{nextDue ? `; the next card comes due ${nextDue}` : ""}.</>
+          )}
+        </p>
+      </div>
+      <MemoryCurveChart memory={memory} />
       <p className="m-0 text-[12px] leading-snug text-[var(--coach-ink-muted)]">
-        An estimate from when you last reviewed each card, not a test.{" "}
+        An estimate from your reviews, not a test.{" "}
         <Link href={PRACTICE_ROUTES.bank} className="underline underline-offset-2">
           See each card&apos;s own curve
         </Link>
@@ -107,7 +110,13 @@ function YourMemory({ cards }: { cards: PracticeCard[] }) {
 }
 
 /** Is there a review to do, how long it takes, what's waiting, and what's coming this week. */
-function PracticeDueCard({ model, cards }: { model: CoachHomeModel | null; cards: PracticeCard[] }) {
+function PracticeDueCard({
+  model,
+  history,
+}: {
+  model: CoachHomeModel | null;
+  history: PracticeSessionRecord[] | null;
+}) {
   if (!model) return <div className={`${CARD} min-h-[148px]`} aria-busy="true" />;
   const v = practiceCardView(model, model.sessions.rows.length > 0);
   return (
@@ -146,7 +155,7 @@ function PracticeDueCard({ model, cards }: { model: CoachHomeModel | null; cards
         </div>
       )}
 
-      {v.state !== "locked" && <YourMemory cards={cards} />}
+      {v.state !== "locked" && <YourMemory history={history} />}
     </section>
   );
 }
@@ -166,7 +175,7 @@ export function TodayGrid({
   /** Every lesson, for naming the ones Practice shows you missing. */
   lessons: { key: string; title: string; href: string }[];
 }) {
-  const { model, history, cards } = usePracticeToday(practice);
+  const { model, history } = usePracticeToday(practice);
   return (
     <>
       <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,310px)]">
@@ -174,7 +183,7 @@ export function TodayGrid({
         <TodayCard model={model} lessonsDone={lessonsDone} nextLessons={nextLessons} />
       </div>
       <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2">
-        <PracticeDueCard model={model} cards={cards} />
+        <PracticeDueCard model={model} history={history} />
         <RevisitCard history={history} lessons={lessons} />
       </div>
     </>

@@ -74,7 +74,7 @@ test("primary action prefers due review, then free study, then curriculum", () =
     mode: "all",
   });
   assert.deepEqual(selectCoachHomeAction(0, 0), {
-    href: "/curriculum",
+    href: "/paths", // Curriculum was replaced by Paths
     label: "Continue learning",
     mode: "continue",
   });

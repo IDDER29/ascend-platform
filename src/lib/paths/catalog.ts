@@ -83,7 +83,7 @@ export const PATHS: PathDef[] = [
     status: "live",
     eyebrow: "Path",
     title: "Systems Programmer",
-    body: "This path takes you through Ascend's systems curriculum. Take the courses in the order shown: how the machine runs, how C touches hardware, how the OS keeps it alive — then prove it with Shellforge. You'll learn everything you need to understand the machine end-to-end and write software that meets it.",
+    body: "This path takes you through Ascend's systems curriculum. Take the courses in the order shown: how the machine runs, how C touches hardware, how the OS keeps it alive — then prove it with ShellForge. You'll learn everything you need to understand the machine end-to-end and write software that meets it.",
     requiresLabel: "Requires Foundations",
     requiresSlug: "foundations",
     courses: [
@@ -107,7 +107,7 @@ export const PATHS: PathDef[] = [
       },
       {
         id: "shellforge",
-        title: "Shellforge",
+        title: "ShellForge",
         body: "Capstone — prove the path with a working shell.",
         href: "/projects/shellforge",
         plannedProjects: 1,

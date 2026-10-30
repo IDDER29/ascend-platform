@@ -47,3 +47,24 @@ export async function unselectPathAction(formData: FormData) {
   revalidatePath("/paths");
   redirect("/dashboard");
 }
+
+/** /pathsv2: follow a path, then stay on its page. */
+export async function joinPathV2Action(formData: FormData) {
+  const slug = String(formData.get("slug") ?? "");
+  const path = getPathBySlug(slug);
+  if (!path || path.status !== "live") redirect("/pathsv2");
+  await setSelectedPathSlug(path.slug);
+  revalidatePath("/dashboard");
+  revalidatePath("/pathsv2");
+  redirect(`/pathsv2/${path.slug}`);
+}
+
+/** /pathsv2: stop following a path; your progress stays. */
+export async function leavePathV2Action(formData: FormData) {
+  const slug = String(formData.get("slug") ?? "");
+  const path = getPathBySlug(slug);
+  if (path) await unfollowPathSlug(path.slug);
+  revalidatePath("/dashboard");
+  revalidatePath("/pathsv2");
+  redirect(`/pathsv2/${slug}`);
+}

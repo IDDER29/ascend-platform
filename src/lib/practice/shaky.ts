@@ -12,7 +12,14 @@ import type { PracticeSessionRecord } from "./history";
 import type { PracticeItem } from "./types";
 
 /** Below this, an answer is never "slow", whatever your usual pace. */
-const FLOOR_MS: Record<PracticeItem["kind"], number> = { mcq: 10_000, flashcard: 8_000, typed: 20_000, cloze: 15_000 };
+const FLOOR_MS: Record<PracticeItem["kind"], number> = {
+  mcq: 10_000,
+  flashcard: 8_000,
+  typed: 20_000,
+  cloze: 15_000,
+  output: 30_000,
+  bug: 25_000,
+};
 /** Slow = this many times your usual (median) right-answer time for the kind. */
 const SLOW_FACTOR = 1.75;
 /** Enough of your own answers to know your usual pace. */

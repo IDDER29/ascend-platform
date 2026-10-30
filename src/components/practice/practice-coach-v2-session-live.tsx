@@ -52,6 +52,7 @@ import {
   blankWidth,
   looksLikeCode,
   officialWording,
+  outputMatches,
   shuffledOrder,
   splitBlank,
   splitCodeBlank,
@@ -363,6 +364,7 @@ function LimeCheckButton({
  */
 function expectedAnswer(question: PracticeItem): string | null {
   if (question.kind === "typed" || question.kind === "cloze") return question.answers[0] ?? null;
+  if (question.kind === "output") return question.output;
   return null;
 }
 
@@ -427,7 +429,16 @@ function FeedbackBar({
                   ? "Here's the answer"
                   : "Not quite"}
             </h2>
-            {shownAnswer ? (
+            {shownAnswer && question.kind === "output" ? (
+              <div className="flex flex-col gap-1">
+                <span className={`text-[15px] ${right ? "text-[var(--coach-correct-ink)]" : "text-[var(--coach-wrong-ink)]"}`}>
+                  It prints:
+                </span>
+                <pre className="m-0 max-h-40 overflow-auto rounded-lg bg-[var(--coach-code-bg)] px-3 py-2 font-[family-name:var(--font-plex-mono)] text-[13px] leading-6 text-[var(--coach-code-ink)]">
+                  {shownAnswer}
+                </pre>
+              </div>
+            ) : shownAnswer ? (
               <p
                 className={`m-0 text-[15px] leading-snug ${right ? "text-[var(--coach-correct-ink)]" : "text-[var(--coach-wrong-ink)]"}`}
               >
@@ -435,7 +446,13 @@ function FeedbackBar({
                 <AnswerText text={shownAnswer} className="font-semibold text-[var(--coach-ink)]" />
               </p>
             ) : null}
-            {question.hint ? (
+            {question.kind === "bug" ? (
+              <p
+                className={`m-0 text-[15px] leading-snug ${right ? "text-[var(--coach-correct-ink)]" : "text-[var(--coach-wrong-ink)]"}`}
+              >
+                <span className="font-semibold text-[var(--coach-ink)]">Line {question.bugLine + 1}:</span> {question.fix}
+              </p>
+            ) : question.hint ? (
               <p
                 className={`m-0 text-sm leading-normal ${right ? "text-[var(--coach-correct-ink)]" : "text-[var(--coach-wrong-ink)]"}`}
               >
@@ -544,6 +561,8 @@ export function PracticeCoachV2SessionLive({
     if (revealed && revealedAt.current === null) revealedAt.current = Date.now();
   }, [revealed]);
   const [typedAnswer, setTypedAnswer] = useState("");
+  // Spot the bug: the line the learner picked (0-based).
+  const [pickedLine, setPickedLine] = useState<number | null>(null);
   const [answered, setAnswered] = useState<Answered[]>([]);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   // A graded flashcard on its way off screen (right: knew it, left: not yet).
@@ -606,6 +625,7 @@ export function PracticeCoachV2SessionLive({
 
   function resetPrompt() {
     setSelected(null);
+    setPickedLine(null);
     setRevealed(false);
     setTypedAnswer("");
     setFeedback(null);
@@ -721,6 +741,8 @@ export function PracticeCoachV2SessionLive({
     const question = questions[index];
     if (!question || question.kind === "flashcard") return;
     if (question.kind === "mcq") setSelected(null);
+    else if (question.kind === "bug") setPickedLine(null);
+    else if (question.kind === "output") setTypedAnswer(question.output);
     else setTypedAnswer(question.answers[0] ?? "");
     if (recordGrade("again", false)) setFeedback({ correct: false, grade: "again", dunno: true });
   }
@@ -746,12 +768,20 @@ export function PracticeCoachV2SessionLive({
     const question = questions[index];
     if (
       !question ||
-      (question.kind !== "typed" && question.kind !== "cloze") ||
+      (question.kind !== "typed" && question.kind !== "cloze" && question.kind !== "output") ||
       typedAnswer.trim().length === 0
     ) {
       return;
     }
-    const correct = answersMatch(typedAnswer, question.answers);
+    const correct =
+      question.kind === "output" ? outputMatches(typedAnswer, question.output) : answersMatch(typedAnswer, question.answers);
+    recordGrade(correct ? "good" : "again", correct);
+  }
+
+  function checkBug() {
+    const question = questions[index];
+    if (!question || question.kind !== "bug" || pickedLine === null) return;
+    const correct = pickedLine === question.bugLine;
     recordGrade(correct ? "good" : "again", correct);
   }
 
@@ -778,9 +808,12 @@ export function PracticeCoachV2SessionLive({
         if (target?.tagName === "BUTTON" && !target.hasAttribute("data-coach-choice")) {
           return;
         }
+        // In the output box, Shift+Enter starts a new line; Enter alone checks.
+        if (target?.tagName === "TEXTAREA" && event.shiftKey && phase === "prompt") return;
         event.preventDefault();
         if (phase === "feedback") advance(answered);
         else if (current.kind === "mcq") checkMcq();
+        else if (current.kind === "bug") checkBug();
         else if (current.kind === "flashcard") {
           if (!revealed) setRevealed(true);
         } else gradeTyped();
@@ -801,8 +834,21 @@ export function PracticeCoachV2SessionLive({
         return;
       }
 
+      if (current.kind === "bug" && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+        event.preventDefault();
+        const step = event.key === "ArrowDown" ? 1 : -1;
+        const last = current.code.length - 1;
+        setPickedLine((line) => (line === null ? 0 : Math.min(last, Math.max(0, line + step))));
+        return;
+      }
+
       const digit = Number(event.key);
       if (!Number.isInteger(digit) || digit < 1) return;
+      if (current.kind === "bug" && digit <= current.code.length) {
+        event.preventDefault();
+        setPickedLine(digit - 1);
+        return;
+      }
       if (current.kind === "mcq" && digit <= current.options.length) {
         event.preventDefault();
         const order = orders[current.id] ?? current.options.map((_, i) => i);
@@ -945,6 +991,97 @@ export function PracticeCoachV2SessionLive({
           </div>
         ) : null}
 
+        {question.kind === "output" ? (
+          <>
+            <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] text-pretty sm:text-[28px]">
+              {question.prompt}
+            </h1>
+            <CodeBlock lines={question.code} />
+            <div
+              className={`rounded-2xl border-2 bg-[var(--coach-code-bg)] p-4 text-[var(--coach-code-ink)] ${
+                fieldState === "right"
+                  ? "border-[var(--coach-correct-border)]"
+                  : fieldState === "wrong"
+                    ? "border-[var(--coach-wrong-border)]"
+                    : fieldState === "shown"
+                      ? "border-dashed border-[var(--coach-ink-muted)]"
+                      : "border-[var(--coach-border)] focus-within:border-[var(--coach-lime)]"
+              }`}
+            >
+              <div className="mb-2 flex items-center justify-between gap-3 font-[family-name:var(--font-plex-mono)] text-[12px] text-[var(--coach-hero-muted)]">
+                <span>$ ./a.out</span>
+                <span className={`hidden sm:inline ${KBD_TOUCH}`}>Shift+Enter for a new line</span>
+              </div>
+              <textarea
+                key={question.id}
+                id="practice-answer"
+                aria-label="What it prints"
+                value={typedAnswer}
+                readOnly={fieldState !== "idle"}
+                onChange={(event) => setTypedAnswer(event.target.value)}
+                rows={3}
+                placeholder="Type exactly what it prints"
+                autoComplete="off"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                autoFocus
+                className={`block w-full resize-none bg-transparent font-[family-name:var(--font-plex-mono)] text-[14px] leading-6 text-[var(--coach-code-ink)] caret-[var(--coach-lime)] outline-none placeholder:text-[var(--coach-hero-muted)] ${
+                  fieldState === "wrong" ? "line-through opacity-80" : ""
+                }`}
+              />
+            </div>
+          </>
+        ) : null}
+
+        {question.kind === "bug" ? (
+          <>
+            <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] text-pretty sm:text-[28px]">
+              {question.prompt}
+            </h1>
+            <div
+              role="radiogroup"
+              aria-label="Lines of code: pick the one with the bug"
+              className="overflow-x-auto rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-code-bg)] py-3 font-[family-name:var(--font-plex-mono)] text-[13.5px] leading-7 text-[var(--coach-code-ink)]"
+            >
+              {question.code.map((line, i) => {
+                const blank = line.trim() === "";
+                const look = inFeedback
+                  ? i === question.bugLine && !feedback.dunno
+                    ? "bg-[var(--coach-correct-bg)] text-[var(--coach-correct-ink)] font-semibold"
+                    : i === question.bugLine
+                      ? "bg-[var(--coach-lime-soft)] text-[var(--coach-lime-ink)] font-semibold"
+                      : i === pickedLine
+                        ? "bg-[var(--coach-wrong-bg)] text-[var(--coach-wrong-ink)] line-through"
+                        : "opacity-70"
+                  : i === pickedLine
+                    ? "bg-[color-mix(in_srgb,var(--coach-lime)_22%,transparent)] shadow-[inset_4px_0_0_var(--coach-lime)]"
+                    : blank
+                      ? ""
+                      : "hover:bg-[color-mix(in_srgb,var(--coach-code-ink)_8%,transparent)]";
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    role="radio"
+                    aria-checked={pickedLine === i}
+                    aria-label={`Line ${i + 1}: ${line.trim() || "blank"}`}
+                    data-coach-choice
+                    disabled={blank || Boolean(inFeedback)}
+                    onClick={() => setPickedLine(i)}
+                    className={`flex w-full min-w-max gap-4 px-4 text-left transition-colors disabled:cursor-default ${look}`}
+                  >
+                    <span aria-hidden className="w-5 shrink-0 text-right text-[var(--coach-hero-muted)]">
+                      {i + 1}
+                    </span>
+                    <span className="whitespace-pre">{line || " "}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : null}
+
         {question.kind === "typed" ? (
           <>
             <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] text-pretty sm:text-[28px]">
@@ -1013,7 +1150,9 @@ export function PracticeCoachV2SessionLive({
           typed={typedAnswer}
           reviewHref={reviewHref}
           onContinue={() => advance(answered)}
-          onOverride={question.kind === "typed" || question.kind === "cloze" ? overrideLast : undefined}
+          onOverride={
+            question.kind === "typed" || question.kind === "cloze" || question.kind === "output" ? overrideLast : undefined
+          }
         />
       ) : question.kind === "mcq" ? (
         <PromptFooter>
@@ -1070,7 +1209,11 @@ export function PracticeCoachV2SessionLive({
             <SkipButton onClick={() => advance()} />
             <QuietButton onClick={dontKnow} label="I don't know" />
           </div>
-          <LimeCheckButton disabled={typedAnswer.trim().length === 0} onClick={gradeTyped} />
+          {question.kind === "bug" ? (
+            <LimeCheckButton disabled={pickedLine === null} onClick={checkBug} />
+          ) : (
+            <LimeCheckButton disabled={typedAnswer.trim().length === 0} onClick={gradeTyped} />
+          )}
         </PromptFooter>
       )}
     </div>

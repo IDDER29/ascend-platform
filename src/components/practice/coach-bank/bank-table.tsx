@@ -8,6 +8,8 @@ const FORMAT_TINTS: Record<BankFormat, string> = {
   flashcard: "bg-[var(--coach-tint-lime-bg)] text-[var(--coach-tint-lime-ink)]",
   typed: "bg-[var(--coach-tint-orange-bg)] text-[var(--coach-tint-orange-ink)]",
   cloze: "bg-[var(--coach-tint-neutral-bg)] text-[var(--coach-ink-secondary)]",
+  output: "bg-[var(--coach-code-bg)] text-[var(--coach-code-ink)]",
+  bug: "bg-[var(--coach-wrong-bg)] text-[var(--coach-wrong-title)]",
 };
 
 const STRENGTH_LEVELS: Record<BankStrength, { label: string; filled: number; color: string }> = {

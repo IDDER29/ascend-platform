@@ -43,7 +43,27 @@ export type ClozeItem = PracticeItemBase & {
   answers: string[];
 };
 
-export type PracticeItem = McqItem | FlashcardItem | TypedItem | ClozeItem;
+/** Predict the output: read the code, type exactly what it prints. */
+export type OutputItem = PracticeItemBase & {
+  kind: "output";
+  prompt: string;
+  code: string[];
+  /** Exactly what the program prints (lines joined by "\n"); verified by compiling and running it. */
+  output: string;
+};
+
+/** Spot the bug: click the one line that's wrong. */
+export type BugItem = PracticeItemBase & {
+  kind: "bug";
+  prompt: string;
+  code: string[];
+  /** 0-based index into `code` of the faulty line. */
+  bugLine: number;
+  /** One sentence: what's wrong on that line and how to fix it. */
+  fix: string;
+};
+
+export type PracticeItem = McqItem | FlashcardItem | TypedItem | ClozeItem | OutputItem | BugItem;
 
 /** @deprecated Use McqItem for MCQ-only code or PracticeItem for mixed sessions. */
 export type PracticeQuestion = McqItem;

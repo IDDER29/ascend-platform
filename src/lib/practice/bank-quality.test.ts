@@ -21,3 +21,21 @@ test("'pick the longest' is not a winning strategy across the bank", () => {
   // Chance is ~25% with four options; allow some slack, never a majority.
   assert.ok(longestIsRightShare(MCQ) <= 0.35, `longest option is right in ${Math.round(longestIsRightShare(MCQ) * 100)}%`);
 });
+
+test("predict-the-output cards have code and an exact output", () => {
+  for (const q of PRACTICE_BANK) {
+    if (q.kind !== "output") continue;
+    assert.ok(q.code.length > 0, q.id);
+    assert.ok(q.output.trim().length > 0, q.id);
+    assert.equal(q.output, q.output.replace(/\s+$/, ""), `${q.id}: no trailing whitespace in output`);
+  }
+});
+
+test("spot-the-bug cards point at a real, non-blank line", () => {
+  for (const q of PRACTICE_BANK) {
+    if (q.kind !== "bug") continue;
+    assert.ok(Number.isInteger(q.bugLine) && q.bugLine >= 0 && q.bugLine < q.code.length, q.id);
+    assert.ok(q.code[q.bugLine].trim().length > 0, `${q.id}: the bug line is blank`);
+    assert.ok(q.fix.length > 20, `${q.id}: explain the fix`);
+  }
+});

@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { blankWidth, looksLikeCode, officialWording, shuffledOrder, splitBlank, splitCodeBlank } from "./session-view";
+import {
+  answerText,
+  blankWidth,
+  looksLikeCode,
+  officialWording,
+  outputMatches,
+  shuffledOrder,
+  splitBlank,
+  splitCodeBlank,
+} from "./session-view";
 
 test("code-shaped answers are code, plain words are not", () => {
   for (const code of ["int *p", "0x1F", "0b1010", "argv[0]", "size_t", "printf()", "a = b", "8", "3.14", "#include"]) {
@@ -53,4 +62,23 @@ test("the official wording shows only when it differs", () => {
   assert.equal(officialWording(" 2 ", ["2"]), null);
   assert.equal(officialWording("Bit", ["bit"]), null);
   assert.equal(officialWording("x", []), null);
+});
+
+test("predicted output matches apart from trailing whitespace and line endings", () => {
+  const expected = "*p = 10\n*(p + 2) = 30";
+  assert.equal(outputMatches("*p = 10\n*(p + 2) = 30\n", expected), true);
+  assert.equal(outputMatches("*p = 10  \r\n*(p + 2) = 30", expected), true);
+  assert.equal(outputMatches("*p = 10\n*(p+2) = 30", expected), false);
+  assert.equal(outputMatches("*P = 10\n*(p + 2) = 30", expected), false); // output is case-sensitive
+  assert.equal(outputMatches("*p = 10", expected), false);
+});
+
+test("every card type has an answer as text", () => {
+  const base = { id: "x", lessonLevel: "l", lessonSlug: "s", conceptId: "c", reviewLabel: "r" };
+  assert.equal(answerText({ ...base, kind: "output", prompt: "p", code: ["x"], output: "7" }), "7");
+  assert.equal(
+    answerText({ ...base, kind: "bug", prompt: "p", code: ["a", "b"], bugLine: 1, fix: "Use ==." }),
+    "Line 2: Use ==.",
+  );
+  assert.equal(answerText({ ...base, kind: "mcq", prompt: "p", options: ["a", "b"], correct: 1 }), "b");
 });

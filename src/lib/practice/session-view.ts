@@ -7,6 +7,8 @@ export const KIND_LABELS: Record<PracticeItem["kind"], string> = {
   flashcard: "Flashcard",
   typed: "Short answer",
   cloze: "Fill in the blank",
+  output: "Predict the output",
+  bug: "Spot the bug",
 };
 
 const CODE_CHARS = /[`{}()[\];=<>*&|^~#%\\]/;
@@ -69,4 +71,36 @@ export function officialWording(input: string, answers: string[]): string | null
   const canonical = answers[0];
   if (!canonical) return null;
   return normalizeAnswer(input) === normalizeAnswer(canonical) ? null : canonical;
+}
+
+/** Program output as compared: \r\n → \n, trailing spaces on each line and trailing blank lines dropped. */
+export function normalizeOutput(raw: string): string {
+  return raw
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((line) => line.replace(/\s+$/, ""))
+    .join("\n")
+    .replace(/\n+$/, "")
+    .replace(/^\n+/, "");
+}
+
+/** A predicted output is right when it matches the real one exactly, apart from trailing whitespace. */
+export function outputMatches(input: string, expected: string): boolean {
+  return normalizeOutput(input) === normalizeOutput(expected);
+}
+
+/** The answer to a card, as text (for the card page, the review summary, bookmarks). */
+export function answerText(q: PracticeItem): string {
+  switch (q.kind) {
+    case "mcq":
+      return q.options[q.correct] ?? "";
+    case "flashcard":
+      return q.back;
+    case "output":
+      return q.output;
+    case "bug":
+      return `Line ${q.bugLine + 1}: ${q.fix}`;
+    default:
+      return q.answers[0] ?? "";
+  }
 }

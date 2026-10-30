@@ -15,6 +15,8 @@ export const DECK_FORMAT_LABELS: Record<DeckFormat, string> = {
   mcq: "Choices",
   flashcard: "Flashcards",
   cloze: "Fill in the blank",
+  output: "Predict the output",
+  bug: "Spot the bug",
   typed: "Short answer",
 };
 

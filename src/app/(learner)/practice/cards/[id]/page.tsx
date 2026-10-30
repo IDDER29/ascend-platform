@@ -8,12 +8,15 @@ import { PRACTICE_BANK } from "@/lib/practice/bank";
 import { loadPracticePageData } from "@/lib/practice/server-page-data";
 import { unlockedQuestions } from "@/lib/practice/session";
 import type { PracticeItem } from "@/lib/practice/types";
+import { answerText } from "@/lib/practice/session-view";
 
 const KIND: Record<PracticeItem["kind"], string> = {
   mcq: "Choices",
   flashcard: "Flashcard",
   typed: "Short answer",
   cloze: "Fill in the blank",
+  output: "Predict the output",
+  bug: "Spot the bug",
 };
 
 function prompt(q: PracticeItem): string {
@@ -24,9 +27,7 @@ function prompt(q: PracticeItem): string {
 }
 
 function answer(q: PracticeItem): string {
-  if (q.kind === "mcq") return q.options[q.correct];
-  if (q.kind === "flashcard") return q.back;
-  return q.answers[0];
+  return answerText(q);
 }
 
 export const metadata: Metadata = { title: "Card — Practice — Ascend" };

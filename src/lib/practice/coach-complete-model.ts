@@ -1,3 +1,4 @@
+import { answerText } from "./session-view";
 import { PRACTICE_BANK } from "./bank";
 import { lessonStreak } from "@/lib/progress/streak";
 import type { DailyGoal } from "./daily-goal";
@@ -51,9 +52,7 @@ function percent(record: PracticeSessionRecord): number {
 }
 
 function correctAnswer(question: PracticeItem): string | null {
-  if (question.kind === "mcq") return question.options[question.correct] ?? null;
-  if (question.kind === "flashcard") return question.back;
-  return question.answers[0] ?? null;
+  return answerText(question) || null;
 }
 
 function toMiss(id: string): CoachCompleteMiss {

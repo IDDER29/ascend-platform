@@ -4,7 +4,7 @@ export type DeckFilter = "all" | "weak" | "due";
 export type DeckFormat = PracticeItem["kind"];
 
 export const DECK_FILTERS: DeckFilter[] = ["all", "weak", "due"];
-export const DECK_FORMATS: DeckFormat[] = ["mcq", "flashcard", "cloze", "typed"];
+export const DECK_FORMATS: DeckFormat[] = ["mcq", "flashcard", "cloze", "typed", "output", "bug"];
 export const DECK_NAME_MAX = 40;
 export const MAX_DECKS = 20;
 

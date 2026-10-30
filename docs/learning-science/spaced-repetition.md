@@ -173,6 +173,11 @@ A later quick right answer clears it. Misses aren't shaky — they're misses.
 - **Wrong options rewritten** as real misconceptions, as long and specific as the right answer. A test (`src/lib/practice/bank-quality.test.ts`) now fails if any card's right option is over 1.2× the longest wrong one, or if "pick the longest" wins in more than 35% of cards across the bank.
 - **"I don't know"** on choices, short answers and blanks (key **D** for choices): the answer is shown on the card (right choice lit, or the field filled in, dashed) and the card is graded *Again* — no guess, no false *Good*. The bar reads "Here's the answer", without "I was right". Skip still exists for "not now" (no grade, the card stays due).
 
+## 3e. Decision: produce, don't recognise — two card types for code (2026-10-30)
+**Why:** the C topic leaned on multiple choice (39 of 86 cards), and "what does this print?" was asked as pick-one-of-four — recognition, where the real skill (and the stronger memory, §1.3) is producing the answer by tracing the code.
+- **Predict the output** (`kind: "output"`): code, then type exactly what it prints into a terminal box (Shift+Enter for new lines). Matched exactly, ignoring only trailing whitespace and line endings (`outputMatches`). "I was right" covers formatting slips. 10 cards converted from "what does this print"; every `output` was produced by compiling and running the snippet with gcc. Questions about *meaning* (undefined behaviour, where output goes) stay multiple choice.
+- **Spot the bug** (`kind: "bug"`): click (or press the line number of) the one faulty line; the bar always explains the fix ("Line 4: …"). 11 new cards across C and Systems — every bug confirmed by a gcc warning, AddressSanitizer or running it. Context labels describe what the code does ("Moving a point"), never the bug.
+
 ## 4. Open ideas (ranked by value for effort)
 
 1. **Use the curve elsewhere** — Progress (the long view) and Practice home; per topic ("Bits & Logic: 88%").

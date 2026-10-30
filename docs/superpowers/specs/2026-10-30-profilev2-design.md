@@ -35,23 +35,26 @@ plus a public view at `/u/<username>`. Practice "Coach" look
 - Editing name / username / bio stays in Settings ("Edit profile").
 
 ## Layout
-1. **Owner bar** (owner only): Public/Private state, public URL, Copy link,
+1. **Owner bar** (owner only): public/private in a sentence, Copy link,
    View as visitor, Make public / Make private.
-2. **Hero (dark)**: placeholder avatar, name, @username, bio, link chips
-   (icon by host), current level, Edit profile. **Aside: Snapshot** —
-   lessons done, projects shipped, own projects, member since.
-3. **Curriculum projects**: one card per catalog project. States:
-   shipped (link, date, badge) · ready (lessons done, owner sees "Add your
-   repo" — hidden from visitors) · next (first project not yet reached,
-   owner only) · hidden (not reached).
-4. **Own projects** + owner "Add a project" tile. **Aside: Achievements**
-   (earned only) and **Journey** (dated real events).
-5. **What I can do**: one skill sentence per level, done / in progress /
-   next. **Aside (owner): Continue** — next lesson.
+2. **Hero (dark, full width)**: placeholder avatar, name, @username, bio,
+   link chips (mark by host), Edit profile, and one plain sentence of
+   facts ("6 of 25 lessons finished, 1 curriculum project shipped… On
+   Ascend since Oct 2026") instead of stat tiles.
+3. **The stack** — the signature element. The learner's climb drawn as
+   the abstraction stack, Level 00 at the bottom: one slab per level with
+   its skill sentence and lesson pips. Done = dark slab, lime pips;
+   current = white with a blue edge and (owner) "Continue with <lesson>";
+   ahead = dashed. Each curriculum project is pinned to its layer:
+   shipped (repo, badge, date) · ready (owner: "Ship X: add your repo"
+   opens the form inline) · next (owner). Pips light up bottom-up once on
+   load; skipped with reduced motion.
+4. **Own projects** grid + owner "Add something you've built" tile.
+   **Aside:** Achievements (earned only) and Journey (dated real events).
 
-Phone: one column in reading order. New learner: hero complete, one
-"Your first project" card, "Joined" journey line — never zeros or locked
-walls.
+Phone: one column in reading order; project pills sit under the layer
+text. New learner: hero complete, the stack with Level 00 as "about to
+start" and the first project as next, "Joined" journey line.
 
 ## Data
 New tables (Postgres + SQLite DDL): `profile_settings` (is_public),

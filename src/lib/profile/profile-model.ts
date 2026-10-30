@@ -64,6 +64,8 @@ export type ProfileSkill = {
   state: "done" | "current" | "next";
   done: number;
   total: number;
+  /** Lessons in curriculum order, for the per-lesson pips. */
+  lessons: { title: string; href: string; done: boolean }[];
 };
 
 export type JourneyKind = "joined" | "lesson" | "level" | "project" | "practice";
@@ -203,6 +205,7 @@ export function buildProfileModel(input: ProfileInput): ProfileModel {
       state,
       done,
       total: level.lessons.length,
+      lessons: level.lessons.map((l) => ({ title: l.title, href: l.href, done: isDone(l) })),
     };
   });
 

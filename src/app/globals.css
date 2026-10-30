@@ -978,6 +978,29 @@ html.sidebar-collapsed .app-sidebar-section {
   --coach-solid-btn-kbd-border: #9a9ea7;
 }
 
+/* Profile "stack": lesson pips light up layer by layer, bottom-up, once on load. */
+@keyframes profile-pip-on {
+  from {
+    opacity: 0.15;
+    transform: scaleY(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.profile-pip-rise {
+  animation: profile-pip-on 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: var(--pip-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-pip-rise {
+    animation: none;
+  }
+}
+
 .practice-coach-v2 a[href]:hover {
   filter: brightness(0.97);
 }

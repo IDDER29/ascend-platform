@@ -135,6 +135,7 @@ test("hero level, skills and links", () => {
   assert.equal(model.hero.levelLabel, "Level 01 · Machine & Memory");
   assert.deepEqual(model.hero.links.map((l) => [l.kind, l.label]), [["github", "GitHub"], ["website", "Blog"]]);
   assert.deepEqual(model.skills.slice(0, 3).map((s) => s.state), ["done", "current", "next"]);
+  assert.deepEqual(model.skills[0].lessons.map((l) => l.done), [true, true]);
 });
 
 test("practice milestones join the journey, newest first", () => {

@@ -31,7 +31,7 @@ export function ProjectLinkForm({ projectId, badgeLabel }: { projectId: string; 
         disabled={pending}
         className="h-9 rounded-lg bg-[var(--coach-lime)] px-4 text-[13px] font-bold text-[var(--coach-lime-ink)] shadow-[0_3px_0_var(--coach-lime-shadow)] disabled:opacity-60"
       >
-        {badgeLabel ? `Ship it · earns ${badgeLabel}` : "Ship it"}
+        {badgeLabel ? `Ship it and earn ${badgeLabel}` : "Ship it"}
       </button>
       {error ? (
         <p role="alert" className="m-0 text-[13px] text-[var(--coach-wrong-ink)]">

@@ -9,9 +9,6 @@ export const CARD_TITLE = "m-0 text-base font-semibold";
 
 export const MUTED_LINE = "m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]";
 
-export const LIME_BUTTON =
-  "inline-flex h-11 items-center justify-center rounded-xl bg-[var(--coach-lime)] px-5 text-[14px] font-bold uppercase tracking-[0.02em] text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)] disabled:opacity-60";
-
 const SMALL_BUTTON_BASE =
   "inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border-2 px-3 text-[13px] font-semibold no-underline disabled:opacity-60";
 

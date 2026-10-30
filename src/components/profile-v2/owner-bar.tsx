@@ -29,15 +29,14 @@ export function OwnerBar({ isPublic, publicPath }: { isPublic: boolean; publicPa
           className={`size-2.5 shrink-0 rounded-full ${isPublic ? "bg-[var(--coach-success)]" : "bg-[var(--coach-border-strong)]"}`}
         />
         {isPublic ? (
-          <span className="min-w-0 truncate">
-            <strong className="font-semibold">Public</strong>
-            <span className="text-[var(--coach-ink-secondary)]"> · anyone with the link can see it · </span>
-            <span className="font-mono text-[12.5px] text-[var(--coach-ink-secondary)]">{publicPath}</span>
+          <span className="min-w-0">
+            <strong className="font-semibold">Your profile is public.</strong>
+            <span className="text-[var(--coach-ink-secondary)]"> Anyone with the link can see it.</span>
           </span>
         ) : (
           <span className="min-w-0">
-            <strong className="font-semibold">Private</strong>
-            <span className="text-[var(--coach-ink-secondary)]"> · only you can see this page</span>
+            <strong className="font-semibold">Your profile is private.</strong>
+            <span className="text-[var(--coach-ink-secondary)]"> Only you can see it until you make it public.</span>
           </span>
         )}
       </div>

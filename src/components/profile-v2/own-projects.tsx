@@ -137,11 +137,13 @@ function AddProjectTile() {
 export function OwnProjects({ projects, editable }: { projects: OwnProject[]; editable: boolean }) {
   return (
     <section aria-labelledby="own-projects-title" className="flex min-w-0 flex-col gap-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="own-projects-title" className="m-0 text-lg font-semibold">
+      <div className="flex flex-col gap-1">
+        <h2 id="own-projects-title" className="m-0 font-display text-[22px] font-extrabold tracking-[-0.02em]">
           Own projects
         </h2>
-        <span className="text-xs text-[var(--coach-ink-muted)]">Not part of the curriculum</span>
+        <p className="m-0 text-[14px] text-[var(--coach-ink-secondary)]">
+          Built outside the curriculum, so they don&apos;t earn curriculum badges.
+        </p>
       </div>
       <ul className="m-0 grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2">
         {projects.map((project) => (

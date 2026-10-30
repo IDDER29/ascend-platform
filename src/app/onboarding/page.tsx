@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check, ChevronLeft, ChevronRight, Play, Bell, GraduationCap, Code2, Clock, Compass } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { savePracticeDailyGoalAction } from "@/lib/practice/actions";
+import { writeDailyGoal } from "@/lib/practice/daily-goal";
 
 const TOTAL_STEPS = 4;
 const STEP_LABELS = ["Welcome", "Your goal", "Your pace", "First lesson"];
@@ -49,10 +51,11 @@ const GOALS = [
   },
 ] as const;
 
+/** The pace you pick here is your daily goal: it sizes the dashboard's checklist each day. */
 const PACES = [
-  { id: "casual", kbd: "5m", title: "Casual", subtitle: "One quick concept a day — steady, low pressure." },
-  { id: "regular", kbd: "15m", title: "Regular", subtitle: "A concept plus practice — steady, real progress every week." },
-  { id: "intense", kbd: "30m", title: "Intense", subtitle: "Multiple concepts a day — for a focused push toward mastery." },
+  { id: "casual", goal: 10, kbd: "5m", title: "Casual", subtitle: "Review your due cards each day." },
+  { id: "regular", goal: 20, kbd: "15m", title: "Regular", subtitle: "A review, plus one lesson a day." },
+  { id: "intense", goal: 40, kbd: "30m", title: "Serious", subtitle: "A review, plus two lessons a day." },
 ] as const;
 
 export default function OnboardingPage() {
@@ -215,7 +218,7 @@ export default function OnboardingPage() {
                     What pace fits your life?
                   </h1>
                   <p className="text-[15px] leading-relaxed text-ink-secondary">
-                    We&apos;ll size your daily goal and reminders around it. Change it anytime in Settings.
+                    This is your daily goal. Any lesson or review keeps your streak. Change it anytime in Settings.
                   </p>
                 </div>
                 <div className="mb-5 flex flex-col gap-3">
@@ -290,7 +293,7 @@ export default function OnboardingPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="mb-0.5 font-mono text-[11px] text-[#B9B3D0]">
-                        LEVEL 00 · BITS &amp; LOGIC · UNLOCKED
+                        Bits &amp; Logic · first lesson
                       </div>
                       <div className="font-display text-[18px] font-extrabold">{FIRST_LESSON.title}</div>
                     </div>
@@ -323,7 +326,14 @@ export default function OnboardingPage() {
               </button>
               {step < TOTAL_STEPS ? (
                 <button
-                  onClick={() => setStep((s) => Math.min(TOTAL_STEPS, s + 1))}
+                  onClick={() => {
+                    if (step === 3) {
+                      // Save the pace as the daily goal: in this browser, and on the account when signed in.
+                      writeDailyGoal(null, pace.goal);
+                      void savePracticeDailyGoalAction(pace.goal);
+                    }
+                    setStep((s) => Math.min(TOTAL_STEPS, s + 1));
+                  }}
                   className="inline-flex items-center gap-2 rounded-[13px] bg-gradient-to-r from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A] px-8 py-3.5 text-[15.5px] font-extrabold text-white shadow-[0_14px_30px_rgba(123,77,255,0.4)] transition-transform hover:-translate-y-0.5"
                 >
                   Continue

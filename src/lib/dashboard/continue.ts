@@ -2,12 +2,7 @@ import type { LessonCompletion } from "@/lib/progress/queries";
 import { listRecentShellforgeSubmissions } from "@/lib/projects/queries";
 import { getAllLessons } from "@/lib/content/lessons";
 import { LEVELS, type LevelId, type Lesson } from "@/lib/content/schema";
-import {
-  courseOpenHref,
-  pathHref as catalogPathHref,
-  type PathDef,
-  type PathCourse,
-} from "@/lib/paths/catalog";
+import { courseOpenHref, pathHref as catalogPathHref, type PathDef, type PathCourse } from "@/lib/paths/catalog";
 import { pathItemRole } from "@/components/paths/path-outline-marks";
 import { lessonHref } from "@/lib/paths/lesson-urls";
 
@@ -52,10 +47,7 @@ export function formatHeaderDate(d: Date): string {
 }
 
 /** ISO calendar day from streak → short relative label for the Continue band. */
-export function formatLastActiveLabel(
-  isoDay: string | null | undefined,
-  now: Date,
-): string | null {
+export function formatLastActiveLabel(isoDay: string | null | undefined, now: Date): string | null {
   if (!isoDay) return null;
   const today = now.toISOString().slice(0, 10);
   const y = new Date(now);
@@ -65,10 +57,7 @@ export function formatLastActiveLabel(
   if (isoDay === yesterday) return "Last active yesterday";
   const then = new Date(`${isoDay}T12:00:00`);
   if (Number.isNaN(then.getTime())) return null;
-  const days = Math.max(
-    1,
-    Math.round((now.getTime() - then.getTime()) / 86_400_000),
-  );
+  const days = Math.max(1, Math.round((now.getTime() - then.getTime()) / 86_400_000));
   if (days < 14) return `Last active ${days}d ago`;
   return `Last active ${then.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
 }
@@ -104,9 +93,7 @@ export function streakHabitLine(opts: {
     return {
       secured: true,
       text:
-        opts.streakCurrent > 0
-          ? `Day ${opts.streakCurrent} secured — come back tomorrow.`
-          : "Today's session logged.",
+        opts.streakCurrent > 0 ? `Day ${opts.streakCurrent} secured — come back tomorrow.` : "Today's session logged.",
     };
   }
   const mins = Math.max(1, opts.continueTimeMin);
@@ -161,9 +148,7 @@ export function buildRecentProjects(
 
   for (const c of projectCompletions) {
     if (items.length >= 3) break;
-    const lesson = getAllLessons().find(
-      (l) => l.meta.level === c.level && l.meta.slug === c.slug,
-    );
+    const lesson = getAllLessons().find((l) => l.meta.level === c.level && l.meta.slug === c.slug);
     items.push({
       id: `lesson-${c.level}-${c.slug}`,
       title: lesson?.meta.title ?? c.slug,
@@ -177,10 +162,7 @@ export function buildRecentProjects(
   return items;
 }
 
-export function nextProjectCta(
-  path: PathDef,
-  completed: LessonCompletion[],
-): NextProjectCta {
+export function nextProjectCta(path: PathDef, completed: LessonCompletion[]): NextProjectCta {
   const done = new Set(completed.map((c) => `${c.level}/${c.slug}`));
 
   for (const course of path.courses) {
@@ -189,8 +171,7 @@ export function nextProjectCta(
         .filter(
           (l) =>
             l.meta.level === course.levelId &&
-            pathItemRole({ slug: l.meta.slug, title: l.meta.title }) ===
-              "project" &&
+            pathItemRole({ slug: l.meta.slug, title: l.meta.title }) === "project" &&
             !done.has(`${l.meta.level}/${l.meta.slug}`),
         )
         .sort((a, b) => a.meta.order - b.meta.order)[0];
@@ -207,8 +188,7 @@ export function nextProjectCta(
       return {
         title: course.title,
         href: course.href,
-        blurb:
-          "Ship a shell that meets the machine — submit, get graded, keep the proof.",
+        blurb: "Ship a shell that meets the machine — submit, get graded, keep the proof.",
         kind: "shellforge",
       };
     }
@@ -217,16 +197,13 @@ export function nextProjectCta(
   return {
     title: "Explore projects on your path",
     href: catalogPathHref(path.slug),
-    blurb:
-      "Open the path outline to find the next build that proves what you've learned.",
+    blurb: "Open the path outline to find the next build that proves what you've learned.",
     kind: "explore",
   };
 }
 
 export function lessonsOnPath(path: PathDef) {
-  const ids = path.courses
-    .map((c) => c.levelId)
-    .filter((id): id is LevelId => Boolean(id));
+  const ids = path.courses.map((c) => c.levelId).filter((id): id is LevelId => Boolean(id));
   return getAllLessons()
     .filter((l) => ids.includes(l.meta.level as LevelId))
     .sort((a, b) => {
@@ -237,14 +214,9 @@ export function lessonsOnPath(path: PathDef) {
     });
 }
 
-function courseIsComplete(
-  course: PathCourse,
-  done: Set<string>,
-): boolean {
+function courseIsComplete(course: PathCourse, done: Set<string>): boolean {
   if (course.levelId) {
-    const lessons = getAllLessons().filter(
-      (l) => l.meta.level === course.levelId,
-    );
+    const lessons = getAllLessons().filter((l) => l.meta.level === course.levelId);
     if (lessons.length === 0) return false;
     return lessons.every((l) => done.has(`${l.meta.level}/${l.meta.slug}`));
   }
@@ -300,9 +272,7 @@ export function resolvePathHandoff(
     }
   }
 
-  const allLevelsDone = path.courses
-    .filter((c) => c.levelId)
-    .every((c) => courseIsComplete(c, done));
+  const allLevelsDone = path.courses.filter((c) => c.levelId).every((c) => courseIsComplete(c, done));
   if (allLevelsDone || currentLevelId != null) {
     return {
       kind: "path-complete",

@@ -18,6 +18,8 @@ export type CoachCompleteInput = {
   history: PracticeSessionRecord[];
   goal: DailyGoal;
   now: Date;
+  /** When each lesson was finished: lessons count toward the streak too. */
+  lessonDates?: readonly string[];
 };
 
 export type CoachCompleteMiss = {
@@ -78,6 +80,7 @@ export function buildCoachCompleteModel({
   record,
   history,
   goal,
+  lessonDates,
   now,
 }: CoachCompleteInput): CoachCompleteModel {
   const missSet = new Set(record.missIds);
@@ -103,7 +106,7 @@ export function buildCoachCompleteModel({
       met: answeredToday >= goal,
       remaining: Math.max(0, goal - answeredToday),
     },
-    streak: streakDays(history, now),
+    streak: streakDays(history, now, lessonDates),
     strength: { movedUp: record.correct, backToLearning: missed },
     misses: record.missIds.map(toMiss),
     primary:

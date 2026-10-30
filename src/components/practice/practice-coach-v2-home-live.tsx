@@ -21,12 +21,7 @@ import { buildCoachBankModel } from "@/lib/practice/coach-bank-model";
 import { savedDeckItems } from "@/lib/practice/coach-custom-model";
 import { buildCoachHomeModel } from "@/lib/practice/coach-home-model";
 import type { SavedDeck } from "@/lib/practice/deck-recipe";
-import { savePracticeDailyGoalAction } from "@/lib/practice/actions";
-import {
-  resolveDailyGoal,
-  writeDailyGoal,
-  type DailyGoal,
-} from "@/lib/practice/daily-goal";
+import { resolveDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
 import {
   mergeSessionHistory,
   readLocalHistory,
@@ -42,6 +37,8 @@ export type PracticeCoachV2HomeLiveProps = {
   initialHistory: PracticeSessionRecord[];
   initialDecks: SavedDeck[];
   initialGoal: DailyGoal | null;
+  /** When each lesson was finished: lessons count toward the streak. */
+  completionDates?: string[];
 };
 
 type HomeData = {
@@ -59,6 +56,7 @@ export function PracticeCoachV2HomeLive({
   initialHistory,
   initialDecks,
   initialGoal,
+  completionDates,
 }: PracticeCoachV2HomeLiveProps) {
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
   const unlockedIds = useMemo(
@@ -95,9 +93,10 @@ export function PracticeCoachV2HomeLive({
             completedKeys: completed,
             goal: data.goal,
             now: data.now,
+            lessonDates: completionDates,
           })
         : null,
-    [completed, data],
+    [completed, completionDates, data],
   );
 
   const deckItems = useMemo(() => {
@@ -113,11 +112,6 @@ export function PracticeCoachV2HomeLive({
 
   useEnterShortcut(model?.hero.action.href);
 
-  function changeGoal(goal: DailyGoal) {
-    writeDailyGoal(userId, goal);
-    if (userId) void savePracticeDailyGoalAction(goal);
-    setData((current) => (current ? { ...current, goal } : current));
-  }
 
   if (!model) return <CoachHomeSkeleton />;
 
@@ -127,7 +121,7 @@ export function PracticeCoachV2HomeLive({
 
       <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(250px,280px)]">
         <DueHero hero={model.hero} />
-        <YourDayCard day={model.day} onGoalChange={changeGoal} />
+        <YourDayCard day={model.day} />
       </div>
 
       <ModeGrid modes={model.modes} />

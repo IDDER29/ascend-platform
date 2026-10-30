@@ -21,3 +21,9 @@
 - Guests see their own day (no sample learner): first lesson, their browser's Practice and Bookmarks.
 - Built at `/dashboardv2`; the old `/dashboard` stays until promoted.
 - Model: `src/lib/dashboard/today-model.ts` (tested).
+
+## Today checklist, one goal, one streak (2026-10-30)
+- **Today** replaces "Your day" on the dashboard: a checklist sized by the daily goal — Casual: review your due cards; Regular: plus one lesson; Serious: plus two. Items tick from what really happened today; "Done for today" when all are ticked. With nothing due, the day asks for one lesson. Model: `src/lib/dashboard/day-plan.ts` (tested).
+- **One goal**, set once: onboarding's pace step saves it; Settings › Preferences changes it (it also writes the older `pace`). Practice and the dashboard show it as "Regular goal · change" — no picker there. Practice still uses it as a card target (10 / 20 / 40).
+- **One streak:** a day counts when a lesson is finished or a review session is done (`streakDays` in `coach-home-model.ts`, now taking lesson dates). Used by the dashboard, Practice home and summary, and Progress.
+- **Still on the old lesson-only streak** (the `streaks` table): the old `/dashboard`, the lesson footer, `/streak-lost`, the curriculum pages. To move when those pages get their pass.

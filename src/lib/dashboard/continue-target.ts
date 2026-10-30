@@ -30,9 +30,7 @@ export type WorkEvent = {
 };
 
 /** Lesson completions as work events (includes project-role lessons). */
-export function lessonWorkEvents(
-  completed: ReadonlyArray<LessonCompletion>,
-): WorkEvent[] {
+export function lessonWorkEvents(completed: ReadonlyArray<LessonCompletion>): WorkEvent[] {
   const out: WorkEvent[] = [];
   for (const c of completed) {
     const pathSlug = pathSlugForLevel(c.level);
@@ -67,13 +65,8 @@ export function resolveContinuePathSlug(input: {
 }
 
 /** Earliest lesson completion on this path — tenure clock start. */
-export function earliestLessonCompletedAt(
-  path: PathDef,
-  completed: ReadonlyArray<LessonCompletion>,
-): Date | null {
-  const levels = new Set(
-    path.courses.map((c) => c.levelId).filter(Boolean) as string[],
-  );
+export function earliestLessonCompletedAt(path: PathDef, completed: ReadonlyArray<LessonCompletion>): Date | null {
+  const levels = new Set(path.courses.map((c) => c.levelId).filter(Boolean) as string[]);
   let earliest: Date | null = null;
   for (const c of completed) {
     if (!levels.has(c.level)) continue;

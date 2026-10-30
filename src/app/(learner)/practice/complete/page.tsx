@@ -27,6 +27,7 @@ export default async function Page({ searchParams }: Props) {
           initialHistory={data.initialHistory}
           sessionId={sessionParam ?? null}
           initialGoal={data.initialGoal}
+          completionDates={data.completionDates}
         />
       </div>
     </main>

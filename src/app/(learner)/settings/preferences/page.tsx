@@ -1,5 +1,7 @@
 import { getCurrentUser } from "@/lib/auth/auth";
 import { getProfileSettings } from "@/lib/progress/queries";
+import { getPracticeDailyGoal } from "@/lib/practice/queries";
+import { DEFAULT_DAILY_GOAL, goalForPace } from "@/lib/practice/daily-goal";
 import { SettingsSectionHeader } from "@/components/settings/settings-shell";
 import { PreferencesSettingsForm } from "@/components/settings/preferences-settings-form";
 
@@ -9,16 +11,18 @@ export const metadata = {
 
 export default async function SettingsPreferencesPage() {
   const user = await getCurrentUser();
-  const profile = user ? await getProfileSettings(user.id).catch(() => null) : null;
+  const [profile, practiceGoal] = user
+    ? await Promise.all([getProfileSettings(user.id).catch(() => null), getPracticeDailyGoal(user.id)])
+    : [null, null];
 
   return (
     <>
       <SettingsSectionHeader
         title="Preferences"
-        description="Pace and alerts — delivery comes later; we save what you want."
+        description="Your daily goal and reminders."
       />
       <PreferencesSettingsForm
-        initialPace={profile?.pace ?? "regular"}
+        initialGoal={practiceGoal ?? goalForPace(profile?.pace) ?? DEFAULT_DAILY_GOAL}
         initialReminderTime={profile?.reminderTime ?? "19:00"}
         initialNotifStreakReminders={profile?.notifStreakReminders ?? true}
         initialNotifWeeklyRecap={profile?.notifWeeklyRecap ?? true}

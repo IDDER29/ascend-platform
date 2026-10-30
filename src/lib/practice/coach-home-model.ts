@@ -40,6 +40,8 @@ export type CoachHomeInput = {
   completedKeys: ReadonlySet<string>;
   goal: DailyGoal;
   now: Date;
+  /** When each lesson was finished: lessons count toward the streak too. */
+  lessonDates?: readonly string[];
 };
 
 export type StrengthBuckets = {
@@ -166,11 +168,20 @@ function sessionCountsByDay(
   return counts;
 }
 
+/**
+ * The one streak: consecutive days with real learning — a review session or a
+ * finished lesson. Today counts once done; until then the streak runs to yesterday.
+ */
 export function streakDays(
   history: PracticeSessionRecord[],
   now: Date,
+  lessonDates: readonly string[] = [],
 ): number {
   const days = sessionCountsByDay(history);
+  for (const at of lessonDates) {
+    const key = dayKeyOf(at);
+    if (key) days.set(key, (days.get(key) ?? 0) + 1);
+  }
   let cursor = startOfDay(now);
   if (!days.has(localDayKey(cursor))) cursor = addDays(cursor, -1);
   let streak = 0;
@@ -382,7 +393,7 @@ export function buildCoachHomeModel(input: CoachHomeInput): CoachHomeModel {
         : null,
     },
     day: {
-      streak: streakDays(history, now),
+      streak: streakDays(history, now, input.lessonDates),
       answeredToday: cardsClearedToday(history, now),
       goal,
     },

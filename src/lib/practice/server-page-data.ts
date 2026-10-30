@@ -26,6 +26,8 @@ const reviewHrefs = Object.fromEntries(
 export async function loadPracticePageData(): Promise<{
   userId: string | null;
   completedKeys: string[];
+  /** When each lesson was finished, for the streak. */
+  completionDates: string[];
   reviewHrefs: Record<string, string>;
   initialHistory: PracticeSessionRecord[];
   initialCards: PracticeCard[];
@@ -35,6 +37,7 @@ export async function loadPracticePageData(): Promise<{
 }> {
   const user = await getCurrentUser();
   let completedKeys: string[] = [];
+  let completionDates: string[] = [];
   let initialHistory: PracticeSessionRecord[] = [];
   let initialCards: PracticeCard[] = [];
   let initialDecks: SavedDeck[] = [];
@@ -44,6 +47,7 @@ export async function loadPracticePageData(): Promise<{
     try {
       const rows = await listCompletedLessons(user.id);
       completedKeys = rows.map((row) => completionKey(row.level, row.slug));
+      completionDates = rows.map((row) => new Date(row.completedAt).toISOString());
     } catch {
       completedKeys = [];
     }
@@ -56,6 +60,7 @@ export async function loadPracticePageData(): Promise<{
   return {
     userId: user?.id ?? null,
     completedKeys,
+    completionDates,
     reviewHrefs,
     initialHistory,
     initialCards,

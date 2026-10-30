@@ -145,7 +145,7 @@ test("this week and momentum count lessons, cards and accuracy per Monday week",
         session("now", daysAgo(1), bit.slice(0, 4), bit.slice(0, 1)), // this week: 3/4
         session("last", daysAgo(8), bit.slice(0, 4), bit.slice(0, 2)), // last week: 2/4
       ],
-      serverStreak: 5,
+      serverStreak: 5, // ignored: the streak comes from lessons and reviews
     }),
   );
   assert.deepEqual(model.week, {
@@ -153,7 +153,7 @@ test("this week and momentum count lessons, cards and accuracy per Monday week",
     cardsAnswered: 4,
     accuracy: 75,
     accuracyDelta: 25,
-    streak: 5,
+    streak: 1, // yesterday's lesson and review; nothing yet today
   });
   const last = model.momentum.weeks[model.momentum.weeks.length - 1];
   assert.equal(model.momentum.weeks.length, 12);

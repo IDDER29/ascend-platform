@@ -26,6 +26,8 @@ export type PracticeCoachV2CompleteLiveProps = {
   initialHistory: PracticeSessionRecord[];
   sessionId: string | null;
   initialGoal: DailyGoal | null;
+  /** When each lesson was finished: lessons count toward the streak. */
+  completionDates?: string[];
 };
 
 type CompleteData = {
@@ -59,6 +61,7 @@ export function PracticeCoachV2CompleteLive({
   initialHistory,
   sessionId,
   initialGoal,
+  completionDates = [],
 }: PracticeCoachV2CompleteLiveProps) {
   const [data, setData] = useState<CompleteData | null>(null);
 
@@ -86,8 +89,9 @@ export function PracticeCoachV2CompleteLive({
       history: data.history,
       goal: data.goal,
       now: data.now,
+      lessonDates: completionDates,
     });
-  }, [data, sessionId]);
+  }, [completionDates, data, sessionId]);
 
   useEnterShortcut(model?.primary.href);
 

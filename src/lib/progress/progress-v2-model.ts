@@ -39,7 +39,7 @@ export type ProgressV2Input = {
   completions: { key: string; completedAt: string }[];
   cards: PracticeCard[];
   history: PracticeSessionRecord[];
-  /** `streaks.current` for signed-in learners; null falls back to practice days. */
+  /** @deprecated The streak is worked out from lessons and reviews; this is ignored. */
   serverStreak: number | null;
   now: Date;
 };
@@ -173,7 +173,7 @@ function tallies(history: PracticeSessionRecord[]) {
 }
 
 export function buildProgressV2Model(input: ProgressV2Input): ProgressV2Model {
-  const { lessons, completions, history, serverStreak, now } = input;
+  const { lessons, completions, history, now } = input;
   const doneAt = new Map(completions.map((c) => [c.key, c.completedAt]));
   const completedKeys = new Set(doneAt.keys());
   const levelIds = [...new Set(lessons.map((l) => l.level))];
@@ -358,7 +358,11 @@ export function buildProgressV2Model(input: ProgressV2Input): ProgressV2Model {
       accuracy: weekAccuracy,
       accuracyDelta:
         weekAccuracy !== null && lastAccuracy !== null ? weekAccuracy - lastAccuracy : null,
-      streak: serverStreak ?? streakDays(history, now),
+      streak: streakDays(
+        history,
+        now,
+        completions.map((c) => c.completedAt),
+      ),
     },
     levels,
     concepts,

@@ -1,4 +1,5 @@
-import { DAILY_GOALS, type DailyGoal } from "@/lib/practice/daily-goal";
+import Link from "next/link";
+import { GOAL_PLANS, type DailyGoal } from "@/lib/practice/daily-goal";
 import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
 
 const RING_CIRCUMFERENCE = 264;
@@ -34,8 +35,8 @@ function StreakRow({ streak }: { streak: number }) {
         </span>
         <span className="text-[13px] text-[var(--coach-ink-secondary)]">
           {active
-            ? `Practice tomorrow to make it ${streak + 1}.`
-            : "Finish a session to start one."}
+            ? `A lesson or a review tomorrow makes it ${streak + 1}.`
+            : "A lesson or a review starts one."}
         </span>
       </div>
     </div>
@@ -113,13 +114,7 @@ function GoalRing({ answered, goal }: { answered: number; goal: DailyGoal }) {
   );
 }
 
-export function YourDayCard({
-  day,
-  onGoalChange,
-}: {
-  day: CoachHomeModel["day"];
-  onGoalChange: (goal: DailyGoal) => void;
-}) {
+export function YourDayCard({ day }: { day: CoachHomeModel["day"] }) {
   return (
     <section
       aria-labelledby="status-title"
@@ -134,30 +129,22 @@ export function YourDayCard({
       <StreakRow streak={day.streak} />
       <div className="h-px bg-[var(--coach-divider)]" />
       <GoalRing answered={day.answeredToday} goal={day.goal} />
-      <div
-        role="group"
-        aria-label="Daily goal"
-        className="grid grid-cols-3 gap-1 rounded-xl bg-[var(--coach-well)] p-1"
-      >
-        {DAILY_GOALS.map(({ value, label }) => {
-          const active = value === day.goal;
-          return (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={active}
-              onClick={() => onGoalChange(value)}
-              className={`h-9 cursor-pointer rounded-lg border-0 font-[inherit] text-xs ${
-                active
-                  ? "bg-[var(--coach-segment-active)] font-semibold text-[var(--coach-ink)] shadow-[var(--coach-segment-shadow)]"
-                  : "bg-transparent text-[var(--coach-ink-secondary)]"
-              }`}
-            >
-              {label} · {value}
-            </button>
-          );
-        })}
-      </div>
+      <GoalLink goal={day.goal} />
     </section>
+  );
+}
+
+/** The goal is set once (onboarding or Settings); here it's only named, with a way to change it. */
+export function GoalLink({ goal }: { goal: DailyGoal }) {
+  return (
+    <p className="m-0 text-[13px] text-[var(--coach-ink-muted)]">
+      {GOAL_PLANS[goal].label} goal ·{" "}
+      <Link
+        href="/settings/preferences"
+        className="text-[var(--coach-ink-secondary)] underline underline-offset-2 hover:text-[var(--coach-ink)]"
+      >
+        change
+      </Link>
+    </p>
   );
 }

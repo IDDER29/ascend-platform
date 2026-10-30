@@ -6,6 +6,28 @@ export const DAILY_GOALS = [
 
 export type DailyGoal = (typeof DAILY_GOALS)[number]["value"];
 
+/**
+ * The one daily goal, set once (onboarding or Settings). It sizes the day's
+ * checklist on the dashboard — a review, plus lessons — and Practice's card
+ * target. Ids of the older "pace" setting map onto it.
+ */
+export const GOAL_PLANS: Record<DailyGoal, { label: string; lessons: number; plan: string; cards: string }> = {
+  10: { label: "Casual", lessons: 0, plan: "Review your due cards", cards: "about 10 cards" },
+  20: { label: "Regular", lessons: 1, plan: "Review, plus one lesson", cards: "about 20 cards" },
+  40: { label: "Serious", lessons: 2, plan: "Review, plus two lessons", cards: "about 40 cards" },
+};
+
+const PACE_GOAL: Record<string, DailyGoal> = { casual: 10, regular: 20, intense: 40, serious: 40 };
+
+/** The goal an older "pace" setting stands for. */
+export function goalForPace(pace: string | null | undefined): DailyGoal | null {
+  return pace ? (PACE_GOAL[pace] ?? null) : null;
+}
+
+export function paceForGoal(goal: DailyGoal): string {
+  return goal === 10 ? "casual" : goal === 20 ? "regular" : "intense";
+}
+
 export const DEFAULT_DAILY_GOAL: DailyGoal = 20;
 
 const PREFIX = "ascend_practice_daily_goal_v1";

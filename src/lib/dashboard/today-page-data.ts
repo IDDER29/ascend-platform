@@ -24,7 +24,12 @@ export function todayLessons(): TodayLesson[] {
 }
 
 /** The dashboard for the signed-in learner, or a guest's first day (no sample: a guest's dashboard is their own). */
-export async function loadToday(): Promise<{ today: Today; firstName: string | null }> {
+export async function loadToday(): Promise<{
+  today: Today;
+  firstName: string | null;
+  /** Lessons finished, with when, for today's checklist. */
+  lessonsDone: { title: string; at: string }[];
+}> {
   const [user, loaded] = await Promise.all([getCurrentUser(), loadAchievementsInput({ sampleForGuests: false })]);
   const lessons = todayLessons();
   const today = buildToday({
@@ -32,5 +37,10 @@ export async function loadToday(): Promise<{ today: Today; firstName: string | n
     completions: loaded?.input.completions ?? [],
     achievements: loaded ? buildAchievementsModel(loaded.input) : null,
   });
-  return { today, firstName: user?.name?.trim().split(/\s+/)[0] || null };
+  const titleOf = new Map(lessons.map((l) => [l.key, l.title]));
+  const lessonsDone = (loaded?.input.completions ?? [])
+    .filter((c) => titleOf.has(c.key))
+    .map((c) => ({ title: titleOf.get(c.key)!, at: c.completedAt }))
+    .sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  return { today, firstName: user?.name?.trim().split(/\s+/)[0] || null, lessonsDone };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Check } from "lucide-react";
 import { patchProfileSettingsAction } from "@/lib/progress/actions";
 import {
@@ -11,30 +11,21 @@ import {
   settingsInputClass,
 } from "@/components/settings/settings-field";
 import { cn } from "@/lib/cn";
+import { savePracticeDailyGoalAction } from "@/lib/practice/actions";
+import {
+  DAILY_GOALS,
+  GOAL_PLANS,
+  paceForGoal,
+  readDailyGoal,
+  writeDailyGoal,
+  type DailyGoal,
+} from "@/lib/practice/daily-goal";
 
-const PACES = [
-  {
-    id: "casual",
-    label: "Casual",
-    meta: "1 concept / day",
-    blurb: "Steady and light.",
-  },
-  {
-    id: "regular",
-    label: "Regular",
-    meta: "3 concepts / day",
-    blurb: "Balanced climb.",
-  },
-  {
-    id: "intense",
-    label: "Intense",
-    meta: "5 concepts / day",
-    blurb: "Push when you can.",
-  },
-];
+/** The one daily goal: it sizes the dashboard's checklist and Practice's card target. */
+const GOALS = DAILY_GOALS.map(({ value }) => ({ value, ...GOAL_PLANS[value] }));
 
 export function PreferencesSettingsForm({
-  initialPace,
+  initialGoal,
   initialReminderTime,
   initialNotifStreakReminders,
   initialNotifWeeklyRecap,
@@ -42,7 +33,7 @@ export function PreferencesSettingsForm({
   initialNotifProductUpdates,
   signedIn,
 }: {
-  initialPace: string;
+  initialGoal: DailyGoal;
   initialReminderTime: string;
   initialNotifStreakReminders: boolean;
   initialNotifWeeklyRecap: boolean;
@@ -51,7 +42,18 @@ export function PreferencesSettingsForm({
   signedIn: boolean;
 }) {
   const reminderId = useId();
-  const [pace, setPace] = useState(initialPace);
+  const [goal, setGoal] = useState<DailyGoal>(initialGoal);
+  // Guests keep their goal in this browser.
+  useEffect(() => {
+    if (signedIn) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) setGoal(readDailyGoal(null));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [signedIn]);
   const [reminderTime, setReminderTime] = useState(initialReminderTime);
   const [notifStreakReminders, setNotifStreakReminders] = useState(
     initialNotifStreakReminders,
@@ -74,14 +76,17 @@ export function PreferencesSettingsForm({
     setSaving(true);
     setError(null);
     setSaved(false);
-    const result = await patchProfileSettingsAction({
-      pace,
+    const [result] = await Promise.all([
+      patchProfileSettingsAction({
+        pace: paceForGoal(goal),
       reminderTime,
       notifStreakReminders,
       notifWeeklyRecap,
       notifPeerSolutions,
       notifProductUpdates,
-    });
+      }),
+      savePracticeDailyGoalAction(goal),
+    ]);
     setSaving(false);
     if (result.ok) {
       setSaved(true);
@@ -126,23 +131,26 @@ export function PreferencesSettingsForm({
     <div className="flex flex-col gap-8">
       <SettingsBlock
         title="Daily goal"
-        description="A pace you can keep. Streak lives on Continue — this is the target."
+        description="What a day takes. It sets your checklist on the dashboard; any lesson or review keeps your streak."
       >
         <div
           className="grid grid-cols-1 gap-2.5 sm:grid-cols-3"
           role="radiogroup"
           aria-label="Daily goal"
         >
-          {PACES.map((p) => {
-            const selected = pace === p.id;
+          {GOALS.map((p) => {
+            const selected = goal === p.value;
             return (
               <button
-                key={p.id}
+                key={p.value}
                 type="button"
                 role="radio"
                 aria-checked={selected}
-                disabled={!signedIn}
-                onClick={() => setPace(p.id)}
+                onClick={() => {
+                  setGoal(p.value);
+                  // Guests keep their goal in this browser; signed-in learners save it below.
+                  if (!signedIn) writeDailyGoal(null, p.value);
+                }}
                 className={cn(
                   "relative rounded-[14px] border px-3.5 py-3.5 text-left transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-violet/35 focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
@@ -169,10 +177,10 @@ export function PreferencesSettingsForm({
                   {p.label}
                 </div>
                 <div className="mt-0.5 font-mono text-[11px] text-ink-fainter">
-                  {p.meta}
+                  {p.cards}
                 </div>
                 <div className="mt-1.5 text-[12px] leading-snug text-ink-secondary">
-                  {p.blurb}
+                  {p.plan}
                 </div>
               </button>
             );

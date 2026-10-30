@@ -22,6 +22,7 @@ export default async function PracticeV2Page() {
           initialHistory={data.initialHistory}
           initialDecks={data.initialDecks}
           initialGoal={data.initialGoal}
+          completionDates={data.completionDates}
         />
       </div>
     </main>

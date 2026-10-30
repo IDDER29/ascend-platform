@@ -1,21 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { YourDayCard } from "@/components/practice/coach-home/your-day-card";
-import { savePracticeDailyGoalAction } from "@/lib/practice/actions";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { readNewDayMeta, syncLocalCards } from "@/lib/practice/cards";
 import { buildCoachHomeModel, type CoachHomeModel } from "@/lib/practice/coach-home-model";
-import { resolveDailyGoal, writeDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
+import { resolveDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
 import { mergeSessionHistory, readLocalHistory, type PracticeSessionRecord } from "@/lib/practice/history";
 import { PRACTICE_ROUTES } from "@/lib/practice/routes";
-import { RevisitCard } from "./revisit-card";
 import { unlockedQuestions } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
+import { RevisitCard } from "./revisit-card";
+import { TodayCard } from "./today-card";
 
 export type PracticeTodayProps = {
   userId: string | null;
   completedKeys: string[];
+  /** When each lesson was finished: lessons count toward the streak. */
+  completionDates: string[];
   initialCards: PracticeCard[];
   initialHistory: PracticeSessionRecord[];
   initialGoal: DailyGoal | null;
@@ -24,28 +25,28 @@ export type PracticeTodayProps = {
 const CARD = "rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5";
 
 /** Today's Practice, worked out in the browser like the Practice page (guests keep their reviews here). */
-export function usePracticeToday({
+function usePracticeToday({
   userId,
   completedKeys,
+  completionDates,
   initialCards,
   initialHistory,
   initialGoal,
-}: PracticeTodayProps) {
+}: PracticeTodayProps): CoachHomeModel | null {
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
   const unlockedIds = useMemo(() => unlockedQuestions(completed).map((q) => q.id), [completed]);
-  const [goal, setGoal] = useState<DailyGoal | null>(null);
   const [model, setModel] = useState<CoachHomeModel | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    const resolved = goal ?? resolveDailyGoal(userId, initialGoal);
     const next = buildCoachHomeModel({
       cards: syncLocalCards(userId, initialCards, unlockedIds),
       history: mergeSessionHistory(readLocalHistory(userId), initialHistory),
       meta: readNewDayMeta(userId),
       completedKeys: completed,
-      goal: resolved,
+      goal: resolveDailyGoal(userId, initialGoal),
       now: new Date(),
+      lessonDates: completionDates,
     });
     queueMicrotask(() => {
       if (!cancelled) setModel(next);
@@ -53,26 +54,9 @@ export function usePracticeToday({
     return () => {
       cancelled = true;
     };
-  }, [completed, goal, initialCards, initialGoal, initialHistory, unlockedIds, userId]);
+  }, [completed, completionDates, initialCards, initialGoal, initialHistory, unlockedIds, userId]);
 
-  function changeGoal(next: DailyGoal) {
-    writeDailyGoal(userId, next);
-    if (userId) void savePracticeDailyGoalAction(next);
-    setGoal(next);
-  }
-
-  return { model, changeGoal };
-}
-
-export function YourDay({
-  model,
-  onGoalChange,
-}: {
-  model: CoachHomeModel | null;
-  onGoalChange: (g: DailyGoal) => void;
-}) {
-  if (!model) return <div className={`${CARD} min-h-[260px]`} aria-busy="true" />;
-  return <YourDayCard day={model.day} onGoalChange={onGoalChange} />;
+  return model;
 }
 
 /** Cards due now, one press from a review. */
@@ -124,14 +108,24 @@ export function PracticeDueCard({ model }: { model: CoachHomeModel | null }) {
   );
 }
 
-/** The top of the dashboard: the next lesson beside your day, then Practice and what to revisit. */
-export function TodayGrid({ next, practice }: { next: React.ReactNode; practice: PracticeTodayProps }) {
-  const { model, changeGoal } = usePracticeToday(practice);
+/** The top of the dashboard: the next lesson beside today's checklist, then Practice and what to revisit. */
+export function TodayGrid({
+  next,
+  practice,
+  lessonsDone,
+  nextLessons,
+}: {
+  next: ReactNode;
+  practice: PracticeTodayProps;
+  lessonsDone: { title: string; at: string }[];
+  nextLessons: { title: string; href: string }[];
+}) {
+  const model = usePracticeToday(practice);
   return (
     <>
-      <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(250px,280px)]">
+      <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,310px)]">
         {next}
-        <YourDay model={model} onGoalChange={changeGoal} />
+        <TodayCard model={model} lessonsDone={lessonsDone} nextLessons={nextLessons} />
       </div>
       <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2">
         <PracticeDueCard model={model} />

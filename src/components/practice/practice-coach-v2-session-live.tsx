@@ -845,10 +845,19 @@ export function PracticeCoachV2SessionLive({
         ) : null}
 
         {question.kind === "flashcard" ? (
-          <div className="relative flex-grow">
+          // One card that flips over on Reveal (or a click); instant when the device asks for less motion.
+          <div key={question.id} className="relative [perspective:1400px]">
             <div aria-hidden className="absolute inset-x-4 top-3 -bottom-3 rounded-[20px] bg-[var(--coach-border)]" />
-            <div className="relative grid min-h-[220px] grid-cols-1 overflow-hidden rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] sm:grid-cols-2">
-              <div className="flex min-w-0 flex-col gap-2.5 border-[var(--coach-border)] p-6 sm:border-r-2 sm:border-dashed sm:p-8">
+            <div
+              onClick={() => !revealed && setRevealed(true)}
+              className={`relative grid transition-transform duration-500 ease-[cubic-bezier(.2,.7,.2,1)] [transform-style:preserve-3d] motion-reduce:transition-none ${
+                revealed ? "[transform:rotateY(180deg)]" : "cursor-pointer"
+              }`}
+            >
+              <div
+                inert={revealed}
+                className="flex min-h-[260px] min-w-0 flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 [backface-visibility:hidden] [grid-area:1/1] sm:p-8"
+              >
                 <span className="font-[family-name:var(--font-plex-mono)] text-[11px] uppercase tracking-[0.08em] text-[var(--coach-ink-muted)]">
                   Front
                 </span>
@@ -857,21 +866,21 @@ export function PracticeCoachV2SessionLive({
                 >
                   {question.front}
                 </h1>
-                {!revealed ? <CodeBlock lines={question.frontCode} /> : null}
+                <CodeBlock lines={question.frontCode} />
+                <p className="m-0 mt-auto text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
+                  Answer in your head first, then turn the card over and be honest with yourself.
+                </p>
               </div>
               <div
-                className="flex min-w-0 flex-col gap-2.5 bg-[var(--coach-flash-back)] p-6 sm:rounded-r-[18px] sm:p-8"
+                inert={!revealed}
+                aria-live="polite"
+                className="flex min-h-[260px] min-w-0 flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-flash-back)] p-6 [backface-visibility:hidden] [grid-area:1/1] [transform:rotateY(180deg)] sm:p-8"
               >
                 <span className="font-[family-name:var(--font-plex-mono)] text-[11px] uppercase tracking-[0.08em] text-[var(--coach-tint-blue-ink)]">
                   Back
                 </span>
-                {revealed ? (
-                  <p className="m-0 text-lg leading-normal">{question.back}</p>
-                ) : (
-                  <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
-                    Answer in your head first, then reveal it and be honest with yourself.
-                  </p>
-                )}
+                <p className="m-0 text-[14px] font-semibold text-[var(--coach-ink-muted)]">{question.front}</p>
+                {revealed ? <p className="m-0 text-xl leading-normal sm:text-[22px]">{question.back}</p> : null}
               </div>
             </div>
           </div>

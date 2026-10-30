@@ -40,3 +40,9 @@
 - Each flag: where it is, your note, its way back (Revisit section / Try the card again …) and "I get it now" (keeps it as a reference). Each Practice lesson: "N of M right in Practice lately", Practice its cards, Reread the lesson.
 - Up to 4 shown; always present, with an empty state saying how things get here.
 - Model: `src/lib/dashboard/revisit-model.ts` (tested).
+
+## Practice card (2026-10-30)
+- Answers "is there a review to do, and how long is it?": "Review ready" (or "Another review ready" after one today), "8 cards · about 4 min" (about 30 s a card), then what's waiting ("35 due in all, 3 of them ones you missed."), Start review and the last score.
+- Caught up: when the next card comes due, and Free study. No cards yet: finish a lesson to get some (no button).
+- Under it, "Coming up": cards due today and the next six days.
+- Model: `src/lib/dashboard/practice-card-model.ts` (tested).

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { readNewDayMeta, syncLocalCards } from "@/lib/practice/cards";
-import { buildCoachHomeModel, type CoachHomeModel } from "@/lib/practice/coach-home-model";
+import { practiceCardView } from "@/lib/dashboard/practice-card-model";
+import { buildCoachHomeModel, type CoachHomeModel, type DueWeekDay } from "@/lib/practice/coach-home-model";
 import { resolveDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
 import { mergeSessionHistory, readLocalHistory, type PracticeSessionRecord } from "@/lib/practice/history";
 import { PRACTICE_ROUTES } from "@/lib/practice/routes";
@@ -60,14 +61,47 @@ function usePracticeToday({
   return { model: state?.model ?? null, history: state?.history ?? null };
 }
 
-/** Cards due now, one press from a review. */
-export function PracticeDueCard({ model }: { model: CoachHomeModel | null }) {
-  if (!model) return <div className={`${CARD} min-h-[148px]`} aria-busy="true" />;
-  const { hero } = model;
-  const due = hero.action.mode === "due";
-  const locked = hero.action.mode === "continue";
+/** Today and the next six days: how many cards come due each day. */
+function ComingUp({ week }: { week: DueWeekDay[] }) {
+  const max = Math.max(1, ...week.map((d) => d.count));
   return (
-    <section aria-labelledby="practice-title" className={`${CARD} flex flex-col gap-3`}>
+    <div className="flex flex-col gap-2">
+      <span className="text-[12.5px] text-[var(--coach-ink-muted)]">Coming up</span>
+      <ol aria-label="Cards due, today and the next six days" className="m-0 grid list-none grid-cols-7 gap-1.5 p-0">
+        {week.map((d) => (
+          <li key={d.label} title={d.title} className="flex flex-col items-center gap-1">
+            <span className="text-[11px] tabular-nums text-[var(--coach-ink-muted)]">{d.count > 0 ? d.count : ""}</span>
+            <span className="flex h-10 w-full items-end">
+              <span
+                className={`w-full rounded-md ${
+                  d.isToday
+                    ? "bg-[var(--coach-ink)]"
+                    : d.count > 0
+                      ? "bg-[var(--coach-blue)]"
+                      : "bg-[var(--coach-scale-empty)]"
+                }`}
+                style={{ height: d.count > 0 ? `${Math.max(14, Math.round((d.count / max) * 100))}%` : "4px" }}
+              />
+            </span>
+            <span
+              className={`text-[11px] ${d.isToday ? "font-bold text-[var(--coach-ink)]" : "text-[var(--coach-ink-muted)]"}`}
+            >
+              {d.label}
+            </span>
+            <span className="sr-only">{d.title}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/** Is there a review to do, how long it takes, what's waiting, and what's coming this week. */
+function PracticeDueCard({ model }: { model: CoachHomeModel | null }) {
+  if (!model) return <div className={`${CARD} min-h-[148px]`} aria-busy="true" />;
+  const v = practiceCardView(model, model.sessions.rows.length > 0);
+  return (
+    <section aria-labelledby="practice-title" className={`${CARD} flex flex-col gap-4`}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 id="practice-title" className="m-0 text-[16px] font-bold">
           Practice
@@ -79,32 +113,30 @@ export function PracticeDueCard({ model }: { model: CoachHomeModel | null }) {
           Open Practice
         </Link>
       </div>
-      <p className="m-0 font-display text-[26px] font-extrabold leading-tight tracking-[-0.02em]">
-        {due ? `${hero.dueNow} ${hero.dueNow === 1 ? "card" : "cards"} due` : locked ? "No cards yet" : "All caught up"}
-      </p>
-      <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
-        {due
-          ? hero.dueNow > hero.sessionSize
-            ? `One review takes ${hero.sessionSize}. The other ${hero.dueNow - hero.sessionSize} wait for the next.`
-            : "One review clears them."
-          : locked
-            ? "Finish a lesson and its cards show up here for review."
-            : hero.nextReviewLabel
-              ? `Next card comes due ${hero.nextReviewLabel}.`
-              : "Nothing due right now."}
-      </p>
-      {!locked && (
-        <Link
-          href={hero.action.href}
-          className={`mt-1 inline-flex h-11 w-fit items-center rounded-xl px-5 text-[14.5px] font-bold no-underline ${
-            due
-              ? "bg-[var(--coach-solid-btn-bg)] text-[var(--coach-solid-btn-ink)] shadow-[0_4px_0_var(--coach-solid-btn-shadow)]"
-              : "border-2 border-[var(--coach-border)] text-[var(--coach-ink)] hover:border-[var(--coach-border-strong)]"
-          }`}
-        >
-          {due ? `Review ${hero.sessionSize}` : "Free study"}
-        </Link>
+
+      <div className="flex flex-col gap-1">
+        <p className="m-0 font-display text-[24px] font-extrabold leading-tight tracking-[-0.02em]">{v.headline}</p>
+        {v.size && <p className="m-0 text-[15px] font-semibold text-[var(--coach-ink)]">{v.size}</p>}
+        {v.detail && <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">{v.detail}</p>}
+      </div>
+
+      {v.primary && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Link
+            href={v.primary.href}
+            className={`inline-flex h-11 items-center rounded-xl px-5 text-[14.5px] font-bold no-underline ${
+              v.state === "due"
+                ? "bg-[var(--coach-solid-btn-bg)] text-[var(--coach-solid-btn-ink)] shadow-[0_4px_0_var(--coach-solid-btn-shadow)]"
+                : "border-2 border-[var(--coach-border)] text-[var(--coach-ink)] hover:border-[var(--coach-border-strong)]"
+            }`}
+          >
+            {v.primary.label}
+          </Link>
+          {v.last && <span className="text-[13px] text-[var(--coach-ink-muted)]">{v.last}</span>}
+        </div>
       )}
+
+      {v.week && <ComingUp week={v.week} />}
     </section>
   );
 }

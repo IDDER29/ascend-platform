@@ -195,3 +195,21 @@ not used.
   tasks and completing 5 C-rank tasks."
 - **New emblems glow:** a newly earned headband or clan crest glows like a
   new ribbon until opened (same per-browser seen list).
+
+## The chest, simplified (2026-10-30, user's direction)
+The uniform was too busy. It now holds only what you're proud of — the
+headband, clan crests, ribbons and the nameplate with your title — and,
+at its foot, **five rank seals** (S A B C D) with how many missions of
+each you've done. The caption, mission chips and ribbon colour key are
+gone.
+- **Select a seal** → the side panel shows what that rank counts and
+  every mission done at it (date, rank, what you did — scores for review
+  sessions).
+- **Select a decoration** → its citation, then **"Missions behind it"**:
+  the actual work that earned it, each with date, rank and score (Week of
+  Practice → its seven sessions; Gatekeeper → the topic and its lessons;
+  Gate Builder → the lesson and the shipped project). Unearned ones show
+  "Missions so far". The ticked rule stays only where it adds something
+  (card counts, combinations).
+- The model records, for every rule, the missions that met it
+  (`missionRefs`), so every badge and title carries its `missions`.

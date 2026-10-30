@@ -222,3 +222,28 @@ test("the mission log lists every task with its rank and a readable label, newes
   );
   assert.equal(m.missions.length, Object.values(m.missionRecord).reduce((a, b) => a + b, 0));
 });
+
+test("every badge lists the missions behind it, newest first", () => {
+  const history = [8, 7, 6, 5, 4, 3, 2].map((d) => session(daysAgo(d), d === 2 ? 12 : 4, d === 2 ? 12 : 5));
+  const m = model({
+    completions: done("what-is-a-bit", "project-half-adder"),
+    projectLinks: [{ projectId: "half-adder", repoUrl: "https://github.com/a/h", addedAt: daysAgo(3) }],
+    history,
+  });
+  const labels = (id: string) => badge(m, id).missions.map((x) => x.label);
+  assert.deepEqual(labels("first-bit"), ["Finished what-is-a-bit"]);
+  assert.deepEqual(labels("gatekeeper"), [
+    "Finished every lesson in Bits & Logic",
+    "Finished project-half-adder",
+    "Finished what-is-a-bit",
+  ]);
+  assert.deepEqual(labels("gate-builder"), ["Shipped the half adder", "Finished project-half-adder"]);
+  assert.deepEqual(labels("clean-run"), ["Review session, 12 of 12 right"]);
+  assert.equal(badge(m, "week-of-practice").missions.length, 7);
+  assert.equal(badge(m, "week-of-practice").missions[0].label, "Review session, 12 of 12 right");
+  // Card counts aren't missions: nothing to list.
+  assert.deepEqual(badge(m, "steady-hands").missions, []);
+  // A title lists the ranked missions that count toward it.
+  const genin = m.titles[0];
+  assert.deepEqual(genin.missions.map((x) => x.rank), ["B", "D", "D"]);
+});

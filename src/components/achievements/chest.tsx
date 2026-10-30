@@ -10,7 +10,7 @@ import {
   MISSION_RANKS,
   TASK_RANKS,
   TITLES,
-  type AchievementGroup,
+  type MissionRank,
   type Title,
 } from "@/lib/achievements/catalog";
 import { byPrecedence, groupSwatch, PRECEDENCE, rackRows } from "@/lib/achievements/ribbons";
@@ -25,6 +25,86 @@ import { Ribbon } from "./ribbon";
 const PIN_STEP_MS = 90;
 
 const TITLE_META: Record<string, Title> = Object.fromEntries(TITLES.map((t) => [t.id, t]));
+
+/** Rank seals share the selection with badges: "rank:D" … "rank:S". */
+function rankKey(rank: MissionRank): string {
+  return `rank:${rank}`;
+}
+
+const MISSIONS_SHOWN = 6;
+
+/** Missions as a dated list with their ranks: the work behind a badge, or every mission of a rank. */
+function MissionList({ missions }: { missions: AchievementsModel["missions"] }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? missions : missions.slice(0, MISSIONS_SHOWN);
+  return (
+    <>
+      <ol className="m-0 flex list-none flex-col p-0">
+        {shown.map((m, i) => (
+          <li
+            key={`${m.ref}-${i}`}
+            className="flex min-w-0 items-start gap-2.5 border-b border-[var(--coach-divider)] py-2 last:border-b-0"
+          >
+            <span className="w-11 shrink-0 pt-0.5 font-mono text-[11.5px] text-[var(--coach-ink-muted)]">
+              {m.dateLabel}
+            </span>
+            <RankChip rank={m.rank} />
+            <span className="min-w-0 flex-1 text-[13.5px] leading-snug">{m.label}</span>
+          </li>
+        ))}
+      </ol>
+      {missions.length > MISSIONS_SHOWN ? (
+        <button
+          type="button"
+          onClick={() => setAll((v) => !v)}
+          className="w-fit text-[13px] font-semibold text-[var(--coach-ink)] underline underline-offset-2"
+        >
+          {all ? "Show fewer" : `Show all ${missions.length}`}
+        </button>
+      ) : null}
+    </>
+  );
+}
+
+/** A rank seal opened: what the rank means and every mission done at it. */
+function RankDetail({ rank, model }: { rank: MissionRank; model: AchievementsModel }) {
+  const missions = model.missions.filter((m) => m.rank === rank);
+  return (
+    <section
+      aria-live="polite"
+      aria-labelledby="citation-title"
+      className="flex min-w-0 flex-col items-center gap-4 rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 text-center sm:p-7"
+    >
+      <span
+        aria-hidden="true"
+        className="flex size-24 items-center justify-center rounded-2xl bg-[var(--coach-hero-bg)] font-display text-[52px] font-extrabold text-[var(--coach-lime)] shadow-[inset_0_0_0_3px_var(--coach-hero-bg),inset_0_0_0_5px_rgba(255,255,255,0.15)]"
+      >
+        {rank}
+      </span>
+      <div className="flex flex-col gap-1">
+        <h2
+          id="citation-title"
+          className="m-0 font-display text-[26px] font-extrabold leading-tight tracking-[-0.03em]"
+        >
+          {rank}-rank missions
+        </h2>
+        <span className="text-[13.5px] font-semibold text-[var(--coach-ink-muted)]">{missions.length} done</span>
+      </div>
+      <div className="flex w-full flex-col gap-2 border-t border-[var(--coach-divider)] pt-4 text-left">
+        <h3 className="m-0 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">What counts</h3>
+        <p className="m-0 text-[14.5px] leading-relaxed">{TASK_RANKS[rank]}.</p>
+        <h3 className="m-0 mt-3 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">
+          Your {rank}-rank missions
+        </h3>
+        {missions.length > 0 ? (
+          <MissionList key={rank} missions={missions} />
+        ) : (
+          <p className="m-0 text-[14px] text-[var(--coach-ink-secondary)]">None yet.</p>
+        )}
+      </div>
+    </section>
+  );
+}
 
 function lowerFirst(text: string): string {
   return text.charAt(0).toLowerCase() + text.slice(1);
@@ -130,17 +210,27 @@ function Citation({
           >
             See it on your profile
           </Link>
-          <h3 className="m-0 mt-3 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">How it was earned</h3>
-          <ul className="m-0 flex list-none flex-col gap-3 p-0">
-            {badge.criteria.map((c) => (
-              <CriterionRow
-                key={c.text}
-                c={c}
-                partGlyph={c.badgeId ? glyphOf(c.badgeId) : null}
-                onSelectPart={onSelect}
-              />
-            ))}
-          </ul>
+          {badge.missions.length > 0 ? (
+            <>
+              <h3 className="m-0 mt-3 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">Missions behind it</h3>
+              <MissionList key={badge.id} missions={badge.missions} />
+            </>
+          ) : null}
+          {badge.missions.length === 0 || badge.criteria.some((c) => c.badgeId) ? (
+            <>
+              <h3 className="m-0 mt-3 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">How it was earned</h3>
+              <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                {badge.criteria.map((c) => (
+                  <CriterionRow
+                    key={c.text}
+                    c={c}
+                    partGlyph={c.badgeId ? glyphOf(c.badgeId) : null}
+                    onSelectPart={onSelect}
+                  />
+                ))}
+              </ul>
+            </>
+          ) : null}
         </div>
       ) : (
         <div className="flex w-full flex-col gap-3 border-t border-[var(--coach-divider)] pt-4 text-left">
@@ -157,6 +247,12 @@ function Citation({
               />
             ))}
           </ul>
+          {badge.missions.length > 0 ? (
+            <>
+              <h3 className="m-0 mt-3 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">Missions so far</h3>
+              <MissionList key={badge.id} missions={badge.missions} />
+            </>
+          ) : null}
           {badge.action ? (
             <Link
               href={badge.action.href}
@@ -263,31 +359,6 @@ function Rack({
   );
 }
 
-/** What each colour stands for, with how many of that kind are worn. */
-function RibbonKey({ model }: { model: AchievementsModel }) {
-  return (
-    <ul
-      aria-label="Ribbon colours"
-      className="relative m-0 flex list-none flex-wrap justify-center gap-x-5 gap-y-2 border-t border-white/[0.08] p-0 pt-4"
-    >
-      {PRECEDENCE.map((group: AchievementGroup) => {
-        const badges = model.parts.filter((p) => p.group === group);
-        return (
-          <li key={group} className="flex items-center gap-2 text-[12.5px] text-[var(--coach-hero-muted)]">
-            <span aria-hidden="true" className="h-2.5 w-6 rounded-[2px]" style={{ background: groupSwatch(group) }} />
-            <span>
-              {GROUP_TITLES[group]}{" "}
-              <span className="font-semibold text-[var(--coach-hero-ink)]">
-                {badges.filter((b) => b.earned).length}/{badges.length}
-              </span>
-            </span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
 /** The headband or a clan crest, selectable like a ribbon to read its citation. */
 function InsigniaButton({
   badge,
@@ -324,21 +395,46 @@ function InsigniaButton({
   );
 }
 
-/** How many missions of each rank are done, hardest first. */
-function MissionRecord({ model }: { model: AchievementsModel }) {
+/** Missions done, one seal per rank: select a seal to see every mission of that rank. */
+function RankSeals({
+  model,
+  selectedId,
+  onSelect,
+}: {
+  model: AchievementsModel;
+  selectedId: string;
+  onSelect: Select;
+}) {
   return (
-    <div className="relative flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-[12.5px] text-[var(--coach-hero-muted)]">
-      <span>Missions</span>
-      <ul aria-label="Missions by rank" className="m-0 flex list-none gap-1.5 p-0">
-        {MISSION_RANKS.map((rank) => (
-          <li
-            key={rank}
-            className="flex items-baseline gap-1 rounded-md bg-white/[0.06] px-2 py-0.5 font-mono text-[12px]"
-          >
-            <span className="font-bold text-[var(--coach-hero-ink)]">{rank}</span>
-            <span>{model.missionRecord[rank]}</span>
-          </li>
-        ))}
+    <div className="relative flex flex-col items-center gap-2.5 border-t border-white/[0.08] pt-4">
+      <h3 className="m-0 text-[12.5px] font-semibold text-[var(--coach-hero-muted)]">Missions done</h3>
+      <ul aria-label="Missions by rank" className="m-0 flex list-none gap-2 p-0 sm:gap-3">
+        {MISSION_RANKS.map((rank) => {
+          const count = model.missionRecord[rank];
+          const selected = selectedId === rankKey(rank);
+          return (
+            <li key={rank}>
+              <button
+                type="button"
+                aria-pressed={selected}
+                aria-label={`${rank}-rank: ${count} ${count === 1 ? "mission" : "missions"}`}
+                onClick={() => onSelect(rankKey(rank))}
+                className={`flex w-[54px] flex-col items-center gap-0.5 rounded-xl border-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] sm:w-[64px] ${
+                  selected ? "border-white bg-white/10" : "border-white/[0.12] hover:border-white/30"
+                } ${count === 0 ? "opacity-45" : ""}`}
+              >
+                <span
+                  className={`font-display text-[24px] font-extrabold leading-none sm:text-[28px] ${
+                    rank === "S" ? "text-[var(--coach-lime)]" : "text-[var(--coach-hero-ink)]"
+                  }`}
+                >
+                  {rank}
+                </span>
+                <span className="font-mono text-[12px] text-[var(--coach-hero-muted)]">{count}</span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -440,13 +536,7 @@ function Uniform({
         </div>
       </div>
 
-      <p className="relative m-0 text-center text-[13px] text-[var(--coach-hero-muted)]">
-        {worn.length === 0
-          ? `${model.total} decorations to earn.`
-          : `${worn.length} of ${model.total} decorations, worn highest first. Select a ribbon to read its citation.`}
-      </p>
-      <MissionRecord model={model} />
-      <RibbonKey model={model} />
+      <RankSeals model={model} selectedId={selectedId} onSelect={onSelect} />
     </section>
   );
 }
@@ -821,7 +911,7 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
       {promoted ? (
         <Promotion title={promoted} onRead={() => select(promoted.id)} onDone={() => seen.markSeen(promoted.id)} />
       ) : null}
-      <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
+      <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
         <Uniform
           model={model}
           worn={worn}
@@ -832,11 +922,14 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
           isNew={seen.isNew}
           onSelect={select}
         />
-        <Citation badge={selected} name={name} isNew={seen.isNew(selected.id)} glyphOf={glyphOf} onSelect={select} />
+        {selectedId.startsWith("rank:") ? (
+          <RankDetail rank={selectedId.slice(5) as MissionRank} model={model} />
+        ) : (
+          <Citation badge={selected} name={name} isNew={seen.isNew(selected.id)} glyphOf={glyphOf} onSelect={select} />
+        )}
       </div>
 
       <TitleSection model={model} glyphOf={glyphOf} onSelect={select} />
-
 
       {toEarn.length > 0 ? (
         <StillToEarn toEarn={toEarn} selectedId={selectedId} glyphOf={glyphOf} onSelect={select} />

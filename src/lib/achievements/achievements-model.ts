@@ -51,10 +51,12 @@ export type Criterion = {
   /** For combination badges: the badge this criterion asks for. */
   badgeId: string | null;
   action: { label: string; href: string } | null;
+  /** The missions that met (or count toward) this condition. */
+  missionRefs: string[];
 };
 
-/** A completed task: what it was, its rank and when. */
-export type Mission = { rank: MissionRank; at: string; label: string };
+/** A completed task: what it was, its rank and when. `ref` names it ("lesson:…", "session:…", "topic:…", "project:…"). */
+export type Mission = { ref: string; rank: MissionRank; at: string; label: string };
 
 export type BadgeView = {
   id: string;
@@ -73,6 +75,8 @@ export type BadgeView = {
   action: { label: string; href: string } | null;
   repoUrl: string | null;
   repoLabel: string | null;
+  /** The missions behind it, newest first. */
+  missions: (Mission & { dateLabel: string })[];
 };
 
 export type AchievementsModel = {
@@ -110,7 +114,7 @@ function dayIndex(key: string): number {
 }
 
 function criterion(partial: Partial<Criterion> & Pick<Criterion, "text" | "done">): Criterion {
-  return { at: null, progress: null, badgeId: null, action: null, ...partial };
+  return { at: null, progress: null, badgeId: null, action: null, missionRefs: [], ...partial };
 }
 
 export function buildAchievementsModel(input: AchievementsInput): AchievementsModel {
@@ -140,16 +144,19 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
   const lessonTitle = new Map(lessons.map((l) => [l.key, l.title]));
   const tasks: Mission[] = [
     ...input.completions.map((c) => ({
+      ref: `lesson:${c.key}`,
       rank: "D" as const,
       at: c.completedAt,
       label: `Finished ${lessonTitle.get(c.key) ?? "a lesson"}`,
     })),
     ...sessions.map((s) => ({
+      ref: `session:${s.id}`,
       rank: s.total >= CLEAN_SESSION_CARDS && s.correct / s.total >= CLEAN_SESSION_SHARE ? ("C" as const) : ("D" as const),
       at: s.at,
       label: `Review session, ${s.correct} of ${s.total} right`,
     })),
     ...[...finished.entries()].map(([level, at]) => ({
+      ref: `topic:${level}`,
       rank: "B" as const,
       at,
       label: `Finished every lesson in ${LEVELS[level as LevelId].name}`,
@@ -157,12 +164,15 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
     ...projects
       .filter((p) => p.shippedAt)
       .map((p) => ({
+        ref: `project:${p.project.id}`,
         rank: (p.project.id === "shellforge" ? "S" : "A") as MissionRank,
         at: p.shippedAt!,
         label: `Shipped ${p.project.id === "shellforge" ? p.project.title : `the ${p.project.inSentence}`}`,
       })),
   ].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
   const tasksOf = (rank: MissionRank) => tasks.filter((t) => t.rank === rank);
+  const taskByRef = new Map(tasks.map((t) => [t.ref, t]));
+  const lessonRefs = (list: ProfileLesson[]) => list.filter(isDone).map((l) => `lesson:${l.key}`);
   const TASK_ACTION: Record<MissionRank, () => { label: string; href: string } | null> = {
     D: () => continueLesson(firstOpen) ?? practice,
     C: () => ({ label: "Start a review", href: PRACTICE_ROUTES.home }),
@@ -190,6 +200,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at: reached,
             progress: rule.count > 1 ? { done: Math.min(doneInOrder.length, rule.count), total: rule.count } : null,
             action: reached ? null : continueLesson(firstOpen),
+            missionRefs: doneInOrder.slice(0, rule.count).map((c) => `lesson:${c.key}`),
           }),
         ];
       }
@@ -203,6 +214,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at,
             progress: { done: topicLessons.filter(isDone).length, total: topicLessons.length },
             action: at ? null : continueLesson(topicLessons.find((l) => !isDone(l)) ?? null),
+            missionRefs: [...lessonRefs(topicLessons), ...(at ? [`topic:${rule.topic}`] : [])],
           }),
         ];
       }
@@ -224,6 +236,11 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at: firstDone?.at ?? null,
             progress: !firstDone && best ? { done: best.done, total: best.lessons.length } : null,
             action: firstDone || !best ? null : continueLesson(best.lessons.find((l) => !isDone(l)) ?? null),
+            missionRefs: firstDone
+              ? [...lessonRefs(firstDone.lessons), `topic:${firstDone.level}`]
+              : best
+                ? lessonRefs(best.lessons)
+                : [],
           }),
         ];
       }
@@ -236,6 +253,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at: done ? latestIso(lessons.map((l) => completedAt.get(l.key)!)) : null,
             progress: { done: lessons.filter(isDone).length, total: lessons.length },
             action: done ? null : continueLesson(firstOpen),
+            missionRefs: lessonRefs(lessons),
           }),
         ];
       }
@@ -257,12 +275,14 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at: status.metAt,
             progress: required.length > 1 ? { done: required.filter(isDone).length, total: required.length } : null,
             action: status.metAt ? null : continueLesson(required.find((l) => !isDone(l)) ?? null),
+            missionRefs: lessonRefs(required),
           }),
           criterion({
             text: `Link your ${project.inSentence} repo on your profile`,
             done: Boolean(status.link),
             at: status.link?.addedAt ?? null,
             action: status.link ? null : { label: "Add your repo on your profile", href: PROFILE_ROUTES.owner },
+            missionRefs: status.shippedAt ? [`project:${project.id}`] : [],
           }),
         ];
       }
@@ -286,16 +306,22 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             done: Boolean(run),
             at: run?.at ?? null,
             action: run ? null : { label: "Start a review", href: PRACTICE_ROUTES.home },
+            missionRefs: run ? [`session:${run.id}`] : [],
           }),
         ];
       }
       case "streak": {
         let run = 0;
         let reachedDay: string | null = null;
+        let runDays: string[] = [];
         for (let i = 0; i < days.length; i++) {
           run = i > 0 && dayIndex(days[i]) - dayIndex(days[i - 1]) === 1 ? run + 1 : 1;
-          if (run >= rule.days && !reachedDay) reachedDay = days[i];
+          if (run >= rule.days && !reachedDay) {
+            reachedDay = days[i];
+            runDays = days.slice(i - rule.days + 1, i + 1);
+          }
         }
+        if (!reachedDay) runDays = days.slice(days.length - run);
         const lastDay = days.at(-1);
         const current = lastDay && dayIndex(localDayKey(now)) - dayIndex(lastDay) <= 1 ? run : 0;
         return [
@@ -305,6 +331,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at: reachedDay ? new Date(`${reachedDay}T12:00:00`).toISOString() : null,
             progress: reachedDay ? null : { done: Math.min(current, rule.days), total: rule.days },
             action: reachedDay ? null : { label: "Practice today", href: PRACTICE_ROUTES.home },
+            missionRefs: sessions.filter((x) => runDays.includes(localDayKey(new Date(x.at)))).map((x) => `session:${x.id}`),
           }),
         ];
       }
@@ -317,6 +344,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at: reached,
             progress: { done: Math.min(sessions.length, rule.count), total: rule.count },
             action: reached ? null : practice,
+            missionRefs: sessions.slice(0, rule.count).map((x) => `session:${x.id}`),
           }),
         ];
       }
@@ -331,6 +359,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             done: Boolean(back),
             at: back?.at ?? null,
             action: !back && away ? { label: "Do one review session", href: PRACTICE_ROUTES.home } : null,
+            missionRefs: back ? [`session:${back.id}`] : [],
           }),
         ];
       }
@@ -344,6 +373,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at: part.earnedAt,
             badgeId: id,
             action: part.action,
+            missionRefs: part.missions.map((x) => x.ref),
           });
         });
       case "tasks": {
@@ -356,6 +386,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at: reached,
             progress: rule.count > 1 || !reached ? { done: Math.min(done.length, rule.count), total: rule.count } : null,
             action: reached ? null : TASK_ACTION[rule.rank](),
+            missionRefs: done.slice(0, rule.count).map((t) => t.ref),
           }),
         ];
       }
@@ -370,6 +401,7 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at: done ? earnedParts[rule.count - 1].earnedAt : null,
             progress: { done: Math.min(earnedParts.length, rule.count), total: rule.count },
             action: done ? null : (parts.find((p) => !p.earned && p.action)?.action ?? null),
+            missionRefs: earnedParts.slice(0, rule.count).flatMap((p) => p.missions.map((x) => x.ref)),
           }),
         ];
       }
@@ -403,6 +435,12 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
       action: earned ? null : (criteria.find((c) => !c.done && c.action)?.action ?? null),
       repoUrl: earned && link ? link.repoUrl : null,
       repoLabel: earned && link ? displayUrl(link.repoUrl) : null,
+      missions: [...new Set(criteria.flatMap((c) => c.missionRefs))]
+        .map((ref) => taskByRef.get(ref))
+        .filter((t): t is Mission => Boolean(t))
+        // Newest first; at the same moment, the higher rank leads (a topic before its last lesson).
+        .sort((x, y) => Date.parse(y.at) - Date.parse(x.at) || MISSION_RANKS.indexOf(x.rank) - MISSION_RANKS.indexOf(y.rank))
+        .map((t) => ({ ...t, dateLabel: shortDate(t.at) })),
     };
     cache.set(a.id, result);
     return result;

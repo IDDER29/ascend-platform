@@ -1,4 +1,15 @@
 import type { CSSProperties, ReactNode } from "react";
+import {
+  AddrSpaceFigure,
+  EndianFigure,
+  FdsFigure,
+  ForkFigure,
+  FramesFigure,
+  LayoutFigure,
+  MemoryFigure,
+  PipeFigure,
+  PtrStepFigure,
+} from "@/components/practice/card-figure-systems";
 import { bitPatterns, groupBits, hexGroups, placeTerms, truthTable, type CardFigure } from "@/lib/practice/figures";
 
 const MONO = "font-[family-name:var(--font-plex-mono)]";
@@ -257,6 +268,24 @@ export function CardFigureView({ figure }: { figure: CardFigure }) {
         return <VoltageFigure />;
       case "cycle":
         return <CycleFigure steps={figure.steps} />;
+      case "memory":
+        return <MemoryFigure cells={figure.cells} caption={figure.caption} />;
+      case "ptrstep":
+        return <PtrStepFigure pointers={figure.pointers} />;
+      case "layout":
+        return <LayoutFigure layouts={figure.layouts} />;
+      case "addrspace":
+        return <AddrSpaceFigure />;
+      case "frames":
+        return <FramesFigure frames={figure.frames} />;
+      case "endian":
+        return <EndianFigure value={figure.value} />;
+      case "fds":
+        return <FdsFigure rows={figure.rows} caption={figure.caption} />;
+      case "fork":
+        return <ForkFigure />;
+      case "pipe":
+        return <PipeFigure />;
     }
   })();
   return (

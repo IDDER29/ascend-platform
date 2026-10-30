@@ -18,7 +18,28 @@ export type CardFigure =
   /** The HIGH / forbidden / LOW voltage bands. */
   | { type: "voltage" }
   /** Steps in a loop (the instruction cycle). */
-  | { type: "cycle"; steps: string[] };
+  | { type: "cycle"; steps: string[] }
+  /** Variables as boxes at addresses; a pointer names the variable it points to. */
+  | { type: "memory"; cells: MemoryCell[]; caption?: string }
+  /** Where p + 1 lands for pointers to elements of different sizes. */
+  | { type: "ptrstep"; pointers: { label: string; size: number }[] }
+  /** Struct (or union) members laid out byte by byte, padding shown. */
+  | { type: "layout"; layouts: { title: string; fields: Field[]; union?: boolean }[] }
+  /** A process's memory map, high addresses at the top. */
+  | { type: "addrspace" }
+  /** Stack frames, oldest at the top, the newest where the stack pointer is. */
+  | { type: "frames"; frames: { name: string; rows: string[] }[] }
+  /** One value's bytes in little- and big-endian order. */
+  | { type: "endian"; value: string }
+  /** A file descriptor table. */
+  | { type: "fds"; rows: { fd: number; target: string; changed?: boolean; closed?: boolean }[]; caption?: string }
+  /** fork(): one call, two returns. */
+  | { type: "fork" }
+  /** A pipe: writer → kernel buffer → reader. */
+  | { type: "pipe" };
+
+export type MemoryCell = { addr: string; name: string; value: string; pointsTo?: string };
+export type Field = { name: string; type: string; size: number };
 
 const GATE_FN: Record<Exclude<Gate, "NOT" | "HALF_ADDER">, (a: number, b: number) => number> = {
   AND: (a, b) => a & b,
@@ -88,4 +109,41 @@ export function placeTerms(
 /** Each 4-bit group with its hex digit. */
 export function hexGroups(bits: string): { bits: string; hex: string }[] {
   return groupBits(bits, 4).map((g) => ({ bits: g.padStart(4, "0"), hex: DIGITS[parseInt(g, 2)] }));
+}
+
+export type LaidOutField = Field & { offset: number };
+
+/**
+ * Lay out C struct members: each starts at the next multiple of its own size (its alignment, for the
+ * primitive types used on cards), and the total rounds up to the largest alignment. A union puts every
+ * member at offset 0 and is as big as its biggest member.
+ */
+export function structLayout(
+  fields: Field[],
+  union = false,
+): { fields: LaidOutField[]; size: number; padding: number[] } {
+  const align = Math.max(1, ...fields.map((f) => f.size));
+  if (union) {
+    const size = Math.ceil(Math.max(0, ...fields.map((f) => f.size)) / align) * align;
+    return { fields: fields.map((f) => ({ ...f, offset: 0 })), size, padding: [] };
+  }
+  let at = 0;
+  const laid: LaidOutField[] = [];
+  const padding: number[] = [];
+  for (const f of fields) {
+    const offset = Math.ceil(at / f.size) * f.size;
+    for (let b = at; b < offset; b++) padding.push(b);
+    laid.push({ ...f, offset });
+    at = offset + f.size;
+  }
+  const size = Math.ceil(at / align) * align;
+  for (let b = at; b < size; b++) padding.push(b);
+  return { fields: laid, size, padding };
+}
+
+/** A hex value's bytes, most significant first ("0x12345678" → ["12", "34", "56", "78"]). */
+export function hexBytes(value: string): string[] {
+  const hex = value.replace(/^0x/i, "").toUpperCase();
+  const even = hex.length % 2 ? `0${hex}` : hex;
+  return even.match(/../g) ?? [];
 }

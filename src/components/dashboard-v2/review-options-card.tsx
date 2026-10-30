@@ -89,14 +89,28 @@ function OptionIcon({ option }: { option: ReviewOption }) {
   );
 }
 
-function Row({ option, history, now }: { option: ReviewOption; history: PracticeSessionRecord[]; now: Date }) {
+function Row({
+  option,
+  history,
+  now,
+  latestAt,
+}: {
+  option: ReviewOption;
+  history: PracticeSessionRecord[];
+  now: Date;
+  /** Your latest review session of all. */
+  latestAt: number | null;
+}) {
   const memory = setMemory(history, option.cardIds, now);
   const minutes = Math.max(1, Math.round((option.toDo * SECONDS_PER_CARD) / 60));
   const lift = memory && memory.reviewToday && memory.afterReview - memory.now > 0.005;
 
+  // The date only when this set wasn't reviewed with everything else.
+  const lastAt = memory?.lastReview ? Date.parse(memory.lastReview.at) : null;
+  const differs = lastAt !== null && latestAt !== null && Math.abs(latestAt - lastAt) > DAY_MS;
   const facts = [
-    memory?.lastReview ? `Last reviewed ${ago(memory.lastReview.at, now.getTime())}` : null,
-    option.toDo > 0 ? `about ${minutes} min` : null,
+    option.toDo > 0 ? `${minutes} min` : null,
+    differs && memory?.lastReview ? `last reviewed ${ago(memory.lastReview.at, now.getTime())}` : null,
   ].filter(Boolean);
 
   return (
@@ -123,25 +137,27 @@ function Row({ option, history, now }: { option: ReviewOption; history: Practice
             </span>
           </span>
 
-          {memory && (
-            <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <Spark memory={memory} />
-              <span className="text-[13px] leading-snug text-[var(--coach-ink-secondary)]">
-                <span className="font-semibold text-[var(--coach-ink)]">{pct(memory.now)} now</span>
-                {lift ? (
-                  <>
-                    {" "}
-                    → about <span className="font-semibold text-[var(--coach-ink)]">{pct(memory.afterReview)}</span> if
-                    you review
-                  </>
-                ) : (
-                  " · holding"
-                )}
-              </span>
+          {(memory || facts.length > 0) && (
+            <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] leading-snug text-[var(--coach-ink-secondary)]">
+              {memory && (
+                <>
+                  <Spark memory={memory} />
+                  <span>
+                    <span className="font-semibold text-[var(--coach-ink)]">{pct(memory.now)}</span>
+                    {lift ? (
+                      <>
+                        {" "}
+                        → <span className="font-semibold text-[var(--coach-ink)]">{pct(memory.afterReview)}</span>
+                      </>
+                    ) : (
+                      " · holding"
+                    )}
+                  </span>
+                </>
+              )}
+              {facts.length > 0 && <span className="text-[var(--coach-ink-muted)]">{facts.join(" · ")}</span>}
             </span>
           )}
-
-          {facts.length > 0 && <span className="text-[12.5px] text-[var(--coach-ink-muted)]">{facts.join(" · ")}</span>}
         </span>
       </Link>
     </li>
@@ -158,17 +174,21 @@ export function ReviewOptionsCard({
 }) {
   if (!options || !history) return <div className={`${CARD} min-h-[148px]`} aria-busy="true" />;
   const now = new Date();
+  const times = history.map((s) => Date.parse(s.at)).filter((t) => !Number.isNaN(t));
+  const latestAt = times.length > 0 ? Math.max(...times) : null;
   return (
     <section aria-labelledby="ways-title" className={CARD}>
       <div className="flex items-baseline justify-between gap-3">
         <h2 id="ways-title" className="m-0 text-[16px] font-bold">
           Ways to review
         </h2>
-        <span className="hidden text-[12.5px] text-[var(--coach-ink-muted)] sm:inline">Every one counts toward your goal</span>
+        <span className="hidden text-[12.5px] text-[var(--coach-ink-muted)] sm:inline">
+          Every one counts toward your goal
+        </span>
       </div>
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {options.map((o) => (
-          <Row key={o.id} option={o} history={history} now={now} />
+          <Row key={o.id} option={o} history={history} now={now} latestAt={latestAt} />
         ))}
       </ul>
     </section>

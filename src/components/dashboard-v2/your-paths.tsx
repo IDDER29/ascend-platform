@@ -56,7 +56,8 @@ function PathTile({ path }: { path: PathCard }) {
       </div>
 
       <div className="mt-auto flex flex-wrap gap-2">
-        {path.next && !path.finished && (
+        {/* The active path's next lesson is the big card at the top. */}
+        {path.next && !path.finished && !path.active && (
           <Link
             href={path.next.href}
             className="inline-flex h-10 items-center rounded-xl bg-[var(--coach-solid-btn-bg)] px-4 text-[14px] font-bold text-[var(--coach-solid-btn-ink)] no-underline"

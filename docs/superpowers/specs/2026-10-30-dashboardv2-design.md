@@ -56,3 +56,11 @@
 ## Ways to review: icons and each set's own curve (2026-10-30)
 - Each row has its own icon in the dark tile used for paths: ↺ misses, pulse line for shaky, the path's own icon for path rows, stacked layers for a custom deck, a bookmark for Didn't get it.
 - Under the title, the set's own memory curve (only its cards; `setMemory` in `deck-memory.ts`), from its last review to today, with a dashed rise to where a review today would take it; then "N% now → about M% if you review" (or "· holding"), and "Last reviewed <when> · about N min" (30 s a card). No curve for a set nobody has reviewed. No streaks or points per row — the slope and the date do the nudging.
+
+## Whole-page pass (2026-10-30)
+Each piece says one thing, once:
+- **Practice card** = the main review (Review ready · 8 cards · about 4 min · Start review · last score) and *Your memory* (one heading; the chart's solid line is "So far"). What's waiting where ("35 due", "3 missed") lives only in Ways to review.
+- **Ways to review** rows are compact: title + badge, one line of detail, then one line — mini curve, "28% → 100%" (or "· holding"), minutes. A set's last-review date shows only when it differs from your latest review (otherwise every row repeated the same date).
+- **The active path's Continue** is the big next-lesson card; its path card keeps View path only. Other paths keep Continue.
+- **Header line** matches the next-lesson card ("Your first lesson takes about N minutes").
+Order top to bottom: what to do now (next lesson + Today checklist) → review (Practice + Ways to review) → the long journey (Your paths) → where you stand (title, badge, project; sign-in for guests).

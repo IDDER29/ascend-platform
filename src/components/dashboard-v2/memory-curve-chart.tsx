@@ -71,7 +71,7 @@ export function MemoryCurveChart({ memory }: { memory: DeckMemory }) {
           <svg width="16" height="6" aria-hidden>
             <line x1="0" y1="3" x2="16" y2="3" stroke="var(--coach-chart-kept)" strokeWidth="2" />
           </svg>
-          Your memory
+          So far
         </span>
         <span className="flex items-center gap-1.5">
           <svg width="16" height="6" aria-hidden>

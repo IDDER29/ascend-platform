@@ -32,7 +32,7 @@ export default async function DashboardV2Page() {
             </h1>
             <p className="m-0 text-[15px] text-[var(--coach-ink-secondary)]">
               {today.lessons.done === 0
-                ? "Start with the first lesson. It takes a few minutes."
+                ? `Your first lesson takes about ${today.next.timeMin ?? 5} minutes.`
                 : `${today.lessons.done} of ${today.lessons.total} lessons done.`}
             </p>
           </div>

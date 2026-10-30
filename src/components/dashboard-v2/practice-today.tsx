@@ -138,7 +138,7 @@ function YourMemory({ history }: { history: PracticeSessionRecord[] | null }) {
   return (
     <div className="flex flex-col gap-3 border-t-2 border-[var(--coach-divider)] pt-4">
       <div className="flex flex-col gap-1">
-        <p className="m-0 text-[15px] font-bold">{memory.reviewToday ? "Review today" : "No review needed today"}</p>
+        <h3 className="m-0 text-[14px] font-bold">Your memory</h3>
         <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)] [text-wrap:pretty]">
           You still remember about <span className="font-semibold text-[var(--coach-ink)]">{now}%</span> of your{" "}
           {memory.cards} {memory.cards === 1 ? "card" : "cards"}.{" "}
@@ -164,7 +164,7 @@ function YourMemory({ history }: { history: PracticeSessionRecord[] | null }) {
   );
 }
 
-/** Is there a review to do, how long it takes, what's waiting, and what's coming this week. */
+/** Is there a review to do and how long it takes, then your memory. What's waiting where is in Ways to review. */
 function PracticeDueCard({
   model,
   history,
@@ -191,7 +191,6 @@ function PracticeDueCard({
       <div className="flex flex-col gap-1">
         <p className="m-0 font-display text-[24px] font-extrabold leading-tight tracking-[-0.02em]">{v.headline}</p>
         {v.size && <p className="m-0 text-[15px] font-semibold text-[var(--coach-ink)]">{v.size}</p>}
-        {v.detail && <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">{v.detail}</p>}
       </div>
 
       {v.primary && (

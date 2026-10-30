@@ -1,9 +1,9 @@
 import "server-only";
 import { getCurrentUser } from "@/lib/auth/auth";
-import { loadPracticePageData } from "@/lib/practice/server-page-data";
+import { listPracticeCardsForUser, listPracticeSessionsForUser } from "@/lib/practice/queries";
 import { loadProfileRecords } from "@/lib/profile/queries";
 import { SHOW_SAMPLE_PROFILE_TO_GUESTS, sampleAchievementsInput } from "@/lib/profile/sample-profile";
-import { profileLessons } from "@/lib/profile/server-page-data";
+import { ALL_SESSIONS, profileLessons } from "@/lib/profile/server-page-data";
 import { buildAchievementsModel, type AchievementsModel } from "./achievements-model";
 
 /** The signed-in learner's badges; guests get the development sample (or null when that's off). */
@@ -16,14 +16,18 @@ export async function loadAchievementsModel(): Promise<{ model: AchievementsMode
       ? { model: buildAchievementsModel(sampleAchievementsInput(lessons, now)), sample: true }
       : null;
   }
-  const [records, practice] = await Promise.all([loadProfileRecords(user.id), loadPracticePageData()]);
+  const [records, cards, history] = await Promise.all([
+    loadProfileRecords(user.id),
+    listPracticeCardsForUser(user.id),
+    listPracticeSessionsForUser(user.id, ALL_SESSIONS),
+  ]);
   return {
     model: buildAchievementsModel({
       lessons,
       completions: records.completions,
       projectLinks: records.projectLinks,
-      cards: practice.initialCards,
-      history: practice.initialHistory,
+      cards,
+      history,
       now,
     }),
     sample: false,

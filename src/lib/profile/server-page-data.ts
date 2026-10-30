@@ -1,10 +1,15 @@
 import "server-only";
+import { buildAchievementsModel, type AchievementsModel } from "@/lib/achievements/achievements-model";
 import { getAllLessons } from "@/lib/content/lessons";
 import { lessonHref } from "@/lib/paths/lesson-urls";
+import { listPracticeCardsForUser, listPracticeSessionsForUser } from "@/lib/practice/queries";
 import { completionKey } from "@/lib/practice/session";
 import { buildProfileModel, type ProfileLesson, type ProfileModel, type ProfileViewer } from "./profile-model";
 import { awardBadges, loadProfileRecords, type ProfileOwner } from "./queries";
-import { sampleProfileInput } from "./sample-profile";
+import { sampleAchievementsInput, sampleProfileInput } from "./sample-profile";
+
+/** Habit badges look at the whole practice history, not just the recent sessions Practice shows. */
+export const ALL_SESSIONS = 5000;
 
 export function profileLessons(): ProfileLesson[] {
   return getAllLessons().map(({ meta }) => ({
@@ -16,20 +21,51 @@ export function profileLessons(): ProfileLesson[] {
   }));
 }
 
-/** Build the profile for `owner` as seen by `viewer`; the owner's view stores newly earned badges. */
+/** The profile lists every badge /achievements works out, newest first — one source for both pages. */
+function withEarnedBadges(model: ProfileModel, achievements: AchievementsModel): ProfileModel {
+  const byId = new Map(achievements.parts.map((p) => [p.id, p]));
+  return {
+    ...model,
+    achievements: achievements.earnedNewestFirst.map((id) => {
+      const part = byId.get(id)!;
+      return { id, label: part.label, glyph: part.glyph, description: part.means, earnedLabel: part.earnedLabel ?? "" };
+    }),
+  };
+}
+
+/** Build the profile for `owner` as seen by `viewer`; the owner's view stores newly earned project badges. */
 export async function loadProfileModel(owner: ProfileOwner, viewer: ProfileViewer): Promise<ProfileModel> {
-  const records = await loadProfileRecords(owner.userId);
+  const lessons = profileLessons();
+  // Practice data is read by the profile owner's id, so a visitor sees the owner's badges, not their own.
+  const [records, cards, history] = await Promise.all([
+    loadProfileRecords(owner.userId),
+    listPracticeCardsForUser(owner.userId),
+    listPracticeSessionsForUser(owner.userId, ALL_SESSIONS),
+  ]);
   const model = buildProfileModel({
     viewer,
     profile: { name: owner.name, username: owner.username, bio: owner.bio, joinedAt: owner.joinedAt },
-    lessons: profileLessons(),
+    lessons,
     ...records,
   });
   if (viewer === "owner") await awardBadges(owner.userId, model.eligibleBadges);
-  return model;
+  const achievements = buildAchievementsModel({
+    lessons,
+    completions: records.completions,
+    projectLinks: records.projectLinks,
+    cards,
+    history,
+    now: new Date(),
+  });
+  return withEarnedBadges(model, achievements);
 }
 
 /** DEVELOPMENT PREVIEW: the sample learner, in the owner's view. See sample-profile.ts. */
 export function loadSampleProfileModel(): ProfileModel {
-  return buildProfileModel({ viewer: "owner", ...sampleProfileInput(profileLessons(), new Date()) });
+  const lessons = profileLessons();
+  const now = new Date();
+  return withEarnedBadges(
+    buildProfileModel({ viewer: "owner", ...sampleProfileInput(lessons, now) }),
+    buildAchievementsModel(sampleAchievementsInput(lessons, now)),
+  );
 }

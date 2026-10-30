@@ -336,11 +336,14 @@ function Uniform({
 function NextUpCard({
   badge,
   selected,
+  showAction,
   glyphOf,
   onSelect,
 }: {
   badge: BadgeView;
   selected: boolean;
+  /** False when an earlier card already offers the same next step. */
+  showAction: boolean;
   glyphOf: (id: string) => string;
   onSelect: Select;
 }) {
@@ -370,7 +373,7 @@ function NextUpCard({
           <CriterionRow key={c.text} c={c} partGlyph={c.badgeId ? glyphOf(c.badgeId) : null} onSelectPart={onSelect} />
         ))}
       </ul>
-      {badge.action ? (
+      {badge.action && showAction ? (
         <Link
           href={badge.action.href}
           className="mt-auto inline-flex h-9 w-fit items-center rounded-lg bg-[var(--coach-solid-btn-bg)] px-3.5 text-[13px] font-bold text-[var(--coach-solid-btn-ink)] no-underline shadow-[0_2px_0_var(--coach-solid-btn-shadow)]"
@@ -454,11 +457,12 @@ function StillToEarn({
       <div className="flex flex-col gap-3">
         <h3 className="m-0 text-[15px] font-semibold">Next up</h3>
         <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 md:grid-cols-3">
-          {nextUp.map((badge) => (
+          {nextUp.map((badge, i) => (
             <NextUpCard
               key={badge.id}
               badge={badge}
               selected={selectedId === badge.id}
+              showAction={!nextUp.slice(0, i).some((b) => b.action?.href === badge.action?.href)}
               glyphOf={glyphOf}
               onSelect={onSelect}
             />

@@ -6,8 +6,10 @@ import {
   EMPTY_BANK_FILTERS,
 } from "@/components/practice/coach-bank/bank-filters";
 import { BankHeader } from "@/components/practice/coach-bank/bank-header";
+import { CoachBreadcrumb } from "@/components/practice/coach-breadcrumb";
 import { BankTable } from "@/components/practice/coach-bank/bank-table";
 import { SelectionBar } from "@/components/practice/coach-bank/selection-bar";
+import { PageHeader } from "@/components/ui/page-header";
 import { syncLocalCards } from "@/lib/practice/cards";
 import {
   buildCoachBankModel,
@@ -36,11 +38,11 @@ type PracticeCoachV2BankProps = {
 function BankSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading card bank" className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3">
-        <span className="h-4 w-32 rounded bg-[var(--coach-divider)]" />
-        <span className="h-8 w-48 rounded-lg bg-[var(--coach-divider)]" />
-        <span className="h-5 w-full max-w-[460px] rounded bg-[var(--coach-divider)]" />
-      </div>
+      <PageHeader
+        breadcrumb={<CoachBreadcrumb current="Card bank" />}
+        title="Card bank"
+        lead="Every card you've unlocked, how well you know it, and when it comes back."
+      />
       <span className="h-11 rounded-xl bg-[var(--coach-divider)]" />
       <div className="h-[420px] rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)]" />
     </div>

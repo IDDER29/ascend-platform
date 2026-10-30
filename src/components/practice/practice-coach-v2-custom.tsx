@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CoachBreadcrumb } from "@/components/practice/coach-breadcrumb";
+import { PageHeader } from "@/components/ui/page-header";
 import { DeckPanel, type DeckSaveState } from "@/components/practice/coach-custom/deck-panel";
 import { LessonPicker } from "@/components/practice/coach-custom/lesson-picker";
 import { SavedDecks } from "@/components/practice/coach-custom/saved-decks";
@@ -231,16 +232,10 @@ export function PracticeCoachV2Custom({
 
 function CustomHeader() {
   return (
-    <div className="flex flex-col gap-3">
-      <CoachBreadcrumb current="Custom deck" />
-      <div className="flex min-w-0 flex-col gap-1.5">
-        <h1 className="m-0 font-display text-[28px] leading-tight font-extrabold tracking-[-0.032em] sm:text-[32px]">
-          Build a custom deck
-        </h1>
-        <p className="m-0 max-w-[560px] text-[15px] leading-relaxed text-[var(--coach-ink-secondary)] [text-wrap:pretty]">
-          Pick the lessons you want to drill. Answers still count toward your schedule and daily goal.
-        </p>
-      </div>
-    </div>
+    <PageHeader
+      breadcrumb={<CoachBreadcrumb current="Custom deck" />}
+      title="Build a custom deck"
+      lead="Pick the lessons you want to drill. Answers still count toward your schedule and daily goal."
+    />
   );
 }

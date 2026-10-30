@@ -1,4 +1,5 @@
 import { normalizeAnswer } from "./normalize";
+import type { CardFigure } from "./figures";
 import type { PracticeItem } from "./types";
 
 /** What each card type is called on screen. */
@@ -134,3 +135,21 @@ export function orderMarks(arrangement: number[]): boolean[] {
   return arrangement.map((step, position) => step === position);
 }
 
+
+/**
+ * The diagram to show after a miss, per card id: the flashcard named in `figureFrom`, or else a flashcard
+ * with a diagram on the same concept. Flashcards don't need one (the diagram is already on their back).
+ */
+export function buildMissFigures(bank: PracticeItem[]): Map<string, CardFigure> {
+  const byId = new Map(bank.map((q) => [q.id, q]));
+  const byConcept = new Map<string, CardFigure>();
+  for (const q of bank) if (q.kind === "flashcard" && q.figure && !byConcept.has(q.conceptId)) byConcept.set(q.conceptId, q.figure);
+  const out = new Map<string, CardFigure>();
+  for (const q of bank) {
+    if (q.kind === "flashcard") continue;
+    const named = q.figureFrom ? byId.get(q.figureFrom) : undefined;
+    const figure = (named?.kind === "flashcard" ? named.figure : undefined) ?? byConcept.get(q.conceptId);
+    if (figure) out.set(q.id, figure);
+  }
+  return out;
+}

@@ -42,6 +42,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "memmachine-03",
+    figureFrom: "memmachine-fc-02",
     prompt: "On most systems, how do the stack and the heap grow?",
     options: [
       "Both grow upward, starting just above the code and global data",
@@ -147,6 +148,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "cloze",
     id: "memmachine-cloze-02",
+    figureFrom: "memmachine-fc-02",
     template:
       "The stack and the {{blank}} start at opposite ends of the address space and grow toward each other.",
     answers: ["heap", "the heap"],
@@ -161,6 +163,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "stackvheap-01",
+    figureFrom: "stackvheap-fc-01",
     prompt:
       "When a function returns, what happens to the local variables in its stack frame?",
     options: [
@@ -204,6 +207,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "stackvheap-03",
+    figureFrom: "stackvheap-fc-01",
     prompt:
       "A function returns the address of one of its own local variables. What does the caller get?",
     options: [
@@ -311,6 +315,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "ptr-01",
+    figureFrom: "ptr-fc-02",
     prompt: "What does `&x` give you?",
     code: ["int x = 42;", 'printf("%p", &x);'],
     options: [
@@ -341,6 +346,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "ptr-03",
+    figureFrom: "ptr-fc-02",
     prompt: "What does this program print?",
     code: ["int  x = 42;", "int *p = &x;", 'printf("%d", *p);'],
     options: [
@@ -359,6 +365,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "ptr-05",
+    figureFrom: "ptr-fc-02",
     prompt: "After `*p = 7;`, why does the original variable x change too?",
     options: [
       "It doesn't — p holds its own copy of x, so x keeps its old value",
@@ -452,6 +459,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "output",
     id: "ptr-typed-01",
+    figureFrom: "ptr-fc-02",
     prompt: "What does this program print?",
     code: ["int x = 42;", "int *p = &x;", "*p = 7;", 'printf("%d", x);'],
     output: "7",
@@ -464,6 +472,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "typed",
     id: "ptr-typed-02",
+    figureFrom: "ptr-fc-02",
     prompt: "Which operator gives you the address of a variable?",
     answers: ["&", "address-of", "address of", "the & operator"],
     reviewLabel: "Address-of operator",
@@ -488,6 +497,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "ptr-04",
+    figureFrom: "ptrarith-fc-01",
     prompt:
       "An `int arr[5]` array sits at address 0x1000. What is `&arr[2]`, assuming a 4-byte int?",
     options: ["0x1000", "0x1002", "0x1008", "0x1014"],
@@ -518,6 +528,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "output",
     id: "ptrarith-01",
+    figureFrom: "ptrarith-fc-01",
     prompt: "What does this program print?",
     code: [
       "int arr[4] = {10, 20, 30, 40};",
@@ -554,6 +565,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "ptrarith-03",
+    figureFrom: "ptrarith-fc-01",
     prompt:
       "For a 4-element array, which address may you compute but never dereference?",
     options: [
@@ -872,6 +884,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "output",
     id: "struct-03",
+    figureFrom: "struct-fc-03",
     prompt: "What does this program print?",
     code: [
       "struct s_pair { int i; float f; };",
@@ -955,6 +968,7 @@ export const LEVEL_02_BANK: PracticeItem[] = [
   {
     kind: "cloze",
     id: "struct-cloze-01",
+    figureFrom: "struct-fc-03",
     template:
       "The sizeof a union equals the size of its {{blank}} member, not the sum of all of them.",
     answers: ["largest", "biggest"],

@@ -184,6 +184,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "typed",
     id: "binary-typed-01",
+    figureFrom: "binary-fc-02",
     prompt: "Write decimal 13 in binary.",
     answers: ["1101", "0b1101"],
     reviewLabel: "Convert decimal 13 to binary",
@@ -205,6 +206,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "cloze",
     id: "binary-cloze-01",
+    figureFrom: "binary-fc-02",
     template: "In binary, each place value is a power of {{blank}}.",
     answers: ["2", "two"],
     reviewLabel: "Binary place-value base",
@@ -215,6 +217,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "cloze",
     id: "binary-cloze-02",
+    figureFrom: "binary-fc-02",
     template: "The binary value 1000 equals decimal {{blank}}.",
     answers: ["8", "eight"],
     reviewLabel: "Convert binary 1000",
@@ -225,6 +228,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "binary-01",
+    figureFrom: "binary-fc-02",
     prompt: "What is binary `1011` in decimal?",
     options: ["3", "11", "13", "1011"],
     correct: 1,
@@ -277,6 +281,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "typed",
     id: "binary-typed-04",
+    figureFrom: "binary-fc-02",
     prompt: "Write decimal 41 in binary.",
     answers: ["101001", "0b101001"],
     reviewLabel: "Convert decimal 41 to binary",
@@ -301,6 +306,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "bool-01",
+    figureFrom: "boolean-fc-01",
     prompt: "In boolean logic, what is the output of AND when both inputs are 1?",
     options: ["0", "1", "Undefined", "Depends on voltage"],
     correct: 1,
@@ -376,6 +382,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "bool-02",
+    figureFrom: "gates-fc-01",
     prompt: "At which input pair do OR and XOR give different outputs?",
     options: ["(0, 0)", "(0, 1)", "(1, 0)", "(1, 1)"],
     correct: 3,
@@ -435,6 +442,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "gates-01",
+    figureFrom: "gates-fc-01",
     prompt: "Which gate outputs 1 when either input is 1 (but not both required)?",
     options: ["AND", "OR", "NOT", "XOR only when inputs differ"],
     correct: 1,
@@ -542,6 +550,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "cloze",
     id: "gates-cloze-02",
+    figureFrom: "gates-fc-03",
     template:
       "In gate symbols, the small {{blank}} on an AND symbol turns it into NAND.",
     answers: ["bubble", "circle"],
@@ -568,6 +577,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "cloze",
     id: "adder-cloze-01",
+    figureFrom: "adder-fc-01",
     template:
       "For a half adder, the {{blank}} output is 1 when both input bits are 1.",
     answers: ["carry", "carry bit"],
@@ -580,6 +590,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "adder-01",
+    figureFrom: "adder-fc-01",
     prompt: "Which gate computes the Sum output of a half-adder?",
     options: ["AND", "OR", "NAND", "XOR"],
     correct: 3,
@@ -592,6 +603,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "adder-02",
+    figureFrom: "adder-fc-01",
     prompt: "For a half-adder with A = 1 and B = 1, what are Sum and Carry?",
     options: [
       "Sum = 0, Carry = 1",
@@ -648,6 +660,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "typed",
     id: "adder-typed-01",
+    figureFrom: "adder-fc-01",
     prompt: "Which gate computes the Carry output of a half-adder?",
     answers: ["AND", "an AND gate", "AND gate"],
     reviewLabel: "Gate for half-adder Carry",
@@ -659,6 +672,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "typed",
     id: "adder-typed-02",
+    figureFrom: "adder-fc-01",
     prompt: "For a half-adder with A = 0 and B = 1, what is the Sum output?",
     answers: ["1", "one"],
     reviewLabel: "Half-adder Sum for 0 and 1",
@@ -716,6 +730,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "typed",
     id: "cpu-typed-02",
+    figureFrom: "cpu-fc-01",
     prompt: "Which register holds the address of the next instruction?",
     answers: ["program counter", "PC", "instruction pointer", "IP"],
     reviewLabel: "Register for the next instruction",
@@ -737,6 +752,7 @@ export const LEVEL_00_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "cpu-01",
+    figureFrom: "cpu-fc-01",
     prompt: "During the fetch step, what happens?",
     options: [
       "The ALU adds the two operands and writes the result back into a register",

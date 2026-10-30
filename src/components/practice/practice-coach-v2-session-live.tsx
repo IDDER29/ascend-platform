@@ -49,9 +49,11 @@ import type {
 } from "@/lib/practice/sm2";
 import type { PracticeItem } from "@/lib/practice/types";
 import { PRACTICE_ROUTES } from "@/lib/practice/routes";
+import { PRACTICE_BANK } from "@/lib/practice/bank";
 import {
   KIND_LABELS,
   blankWidth,
+  buildMissFigures,
   looksLikeCode,
   officialWording,
   moveItem,
@@ -72,6 +74,9 @@ export type PracticeCoachV2SessionLiveProps = {
 
 const BOTTOM_BAR =
   "sticky bottom-0 z-10 -mx-5 mt-auto flex justify-center border-t-2 px-5 sm:-mx-10 sm:px-10";
+
+/** The diagram that explains each card's answer, shown under the card after a miss. */
+const MISS_FIGURES = buildMissFigures(PRACTICE_BANK);
 
 type Answered = { questionId: string; grade: PracticeGrade; ms?: number };
 /**
@@ -574,6 +579,16 @@ export function PracticeCoachV2SessionLive({
   const [cellsById, setCellsById] = useState<Record<string, Cell[]>>({});
   const [answered, setAnswered] = useState<Answered[]>([]);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  // After a miss, the explaining diagram is scrolled into view (above the sticky feedback bar).
+  const missFigureRef = useRef<HTMLElement>(null);
+  const missFigureShown = Boolean(
+    phase === "feedback" && feedback && !feedback.correct && questions[index] && MISS_FIGURES.has(questions[index].id),
+  );
+  useEffect(() => {
+    if (!missFigureShown) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    missFigureRef.current?.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
+  }, [missFigureShown, index]);
   // A graded flashcard on its way off screen (right: knew it, left: not yet).
   const [leaving, setLeaving] = useState<"left" | "right" | null>(null);
 
@@ -1246,6 +1261,14 @@ export function PracticeCoachV2SessionLive({
               );
             })()
           : null}
+
+        {missFigureShown ? (
+          // After a miss (or "I don't know"), the picture that explains the answer, under the card.
+          <section ref={missFigureRef} aria-label="Picture it" className="card-deal-in flex scroll-mb-56 flex-col gap-2">
+            <h2 className="m-0 text-[15px] font-bold">Picture it</h2>
+            <CardFigureView figure={MISS_FIGURES.get(question.id)!} />
+          </section>
+        ) : null}
         </div>
       </div>
 

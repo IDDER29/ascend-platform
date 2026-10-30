@@ -69,3 +69,12 @@ test("every C and Systems lesson has a Predict-the-output and a Spot-the-bug car
     assert.ok(kinds.has("bug"), `${slug} has no Spot-the-bug card`);
   }
 });
+
+test("figureFrom always names a flashcard that has a diagram", () => {
+  const byId = new Map(PRACTICE_BANK.map((q) => [q.id, q]));
+  for (const q of PRACTICE_BANK) {
+    if (!q.figureFrom) continue;
+    const source = byId.get(q.figureFrom);
+    assert.ok(source?.kind === "flashcard" && source.figure, `${q.id} → ${q.figureFrom} has no diagram`);
+  }
+});

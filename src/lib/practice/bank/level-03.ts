@@ -7,6 +7,7 @@ export const LEVEL_03_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "proc-01",
+    figureFrom: "proc-fc-02",
     prompt: "In this program, what value does the child process see in pid?",
     code: [
       "pid_t pid = fork();",
@@ -34,6 +35,7 @@ export const LEVEL_03_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "proc-02",
+    figureFrom: "proc-fc-02",
     prompt: "What does fork() return to the parent process when it succeeds?",
     options: [
       "0, the same value the child gets back",
@@ -306,6 +308,7 @@ export const LEVEL_03_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "pipe-01",
+    figureFrom: "pipe-fc-03",
     prompt: "After pipe(fds) succeeds, which descriptor is the read end?",
     options: ["fds[1]", "fds[0]", "Both — a pipe is bidirectional", "Neither until fork() is called"],
     correct: 1,
@@ -638,6 +641,7 @@ export const LEVEL_03_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "fd-02",
+    figureFrom: "fd-fc-02",
     prompt:
       "When the shell runs ls > out.txt, which process does the open/dup2/close sequence?",
     options: [
@@ -656,6 +660,7 @@ export const LEVEL_03_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "fd-03",
+    figureFrom: "fd-fc-01",
     prompt: "Which file descriptor is stderr by convention?",
     options: ["0", "1", "2", "3"],
     correct: 2,
@@ -668,6 +673,7 @@ export const LEVEL_03_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "fd-04",
+    figureFrom: "fd-fc-02",
     prompt: "Why does ls never know its output was redirected to a file?",
     options: [
       "The shell rewrites ls's printf calls to write to the file",
@@ -720,6 +726,7 @@ export const LEVEL_03_BANK: PracticeItem[] = [
   {
     kind: "typed",
     id: "fd-typed-01",
+    figureFrom: "fd-fc-01",
     prompt: "Which file descriptor number is stdin?",
     answers: ["0", "zero", "fd 0"],
     reviewLabel: "stdin descriptor number",
@@ -731,6 +738,7 @@ export const LEVEL_03_BANK: PracticeItem[] = [
   {
     kind: "typed",
     id: "fd-typed-02",
+    figureFrom: "fd-fc-01",
     prompt: "What number does open() hand back when it succeeds?",
     answers: [
       "the next free number",
@@ -787,6 +795,7 @@ export const LEVEL_03_BANK: PracticeItem[] = [
   {
     kind: "bug",
     id: "fd-bug-01",
+    figureFrom: "fd-fc-02",
     prompt: "Which line has the bug?",
     code: [
       "int fd = open(\"log.txt\", O_WRONLY | O_CREAT | O_TRUNC, 0644);",
@@ -896,6 +905,7 @@ export const LEVEL_03_BANK: PracticeItem[] = [
   {
     kind: "output",
     id: "fd-output-01",
+    figureFrom: "fd-fc-02",
     prompt: "What shows up in the terminal?",
     code: [
       "printf(\"one\\n\");",

@@ -183,6 +183,10 @@ A later quick right answer clears it. Misses aren't shaky — they're misses.
 - **Put in order** (`kind: "order"`): 3–7 steps arrive scrambled (never already right); pick a step (click or its number) and move it with the arrows (buttons or ↑/↓). After Check each step is marked right, or "belongs at n". 6 cards: the instruction cycle, a call and its return, a heap block's life, how a shell runs a command, wiring a pipe, inside a write() call. Steps that happen at the same time in different processes are avoided, so there is one right order.
 - **Flip the bits** (`kind: "bits"`): switch bits on and off to make a value (place values shown: 8 4 2 1), or fill a gate's output column (cells start as "?"). After Check every cell shows the right value, green where you had it, orange where not. 7 cards: 65 / 'A', 13, the largest 4-bit number, hex C, OR, XOR, the half adder. A test checks each truth-table answer against the gate itself.
 
+## 3g. Decision: a picture after a miss (2026-10-31)
+**Why:** a miss is the moment a learner is most open to the explanation (§1.3, feedback); words alone ("add the place values…") often don't land, and the bank already holds diagrams that show the answer.
+**How:** after a miss or "I don't know" on any non-flashcard card, a "Picture it" box appears under the card with the diagram that explains it — scrolled into view above the bar, never on a right answer. The diagram comes from the card's `figureFrom` (a flashcard id), or else from a diagram flashcard on the same `conceptId` (`buildMissFigures`). 76 cards have one (some by concept, the rest named with `figureFrom`). A test fails if a `figureFrom` names a card without a diagram.
+
 ## 4. Open ideas (ranked by value for effort)
 
 1. **Use the curve elsewhere** — Progress (the long view) and Practice home; per topic ("Bits & Logic: 88%").

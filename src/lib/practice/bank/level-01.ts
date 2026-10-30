@@ -630,6 +630,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
   {
     kind: "mcq",
     id: "endian-01",
+    figureFrom: "endian-fc-01",
     prompt: "On a little-endian machine, how is 0x12345678 laid out starting at address 0x100?",
     options: ["12 34 56 78", "78 56 34 12", "56 78 12 34", "21 43 65 87"],
     correct: 1,
@@ -710,6 +711,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
   {
     kind: "typed",
     id: "endian-typed-01",
+    figureFrom: "endian-fc-01",
     prompt: "The 4-byte value 0xAABBCCDD is stored at 0x100 on a little-endian machine. Which byte sits at 0x100?",
     answers: ["dd", "0xdd"],
     reviewLabel: "Low byte of 0xAABBCCDD",
@@ -721,6 +723,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
   {
     kind: "typed",
     id: "endian-typed-02",
+    figureFrom: "endian-fc-01",
     prompt: "The bytes `78 56 34 12` at 0x100 are wrongly read as big-endian. What 4-byte hex value do you get?",
     answers: ["0x78563412", "78563412"],
     reviewLabel: "Misreading bytes as big-endian",

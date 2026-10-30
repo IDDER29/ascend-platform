@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   answerText,
   blankWidth,
+  buildMissFigures,
   looksLikeCode,
   moveItem,
   officialWording,
@@ -99,4 +100,21 @@ test("moving a step swaps it with its neighbour, never off the ends", () => {
   assert.deepEqual(moveItem(["a", "b", "c"], 2, -1), ["a", "c", "b"]);
   assert.deepEqual(moveItem(["a", "b", "c"], 0, -1), ["a", "b", "c"]);
   assert.deepEqual(orderMarks([0, 2, 1]), [true, false, false]);
+});
+
+test("miss diagrams: a named flashcard first, else one on the same concept, never for flashcards", () => {
+  const base = { lessonLevel: "l", lessonSlug: "s", reviewLabel: "r" };
+  const fig = (n: number) => ({ type: "patterns" as const, n });
+  const bank = [
+    { ...base, kind: "flashcard" as const, id: "fc-a", conceptId: "a", front: "f", back: "b", figure: fig(1) },
+    { ...base, kind: "flashcard" as const, id: "fc-b", conceptId: "b", front: "f", back: "b", figure: fig(2) },
+    { ...base, kind: "typed" as const, id: "t-a", conceptId: "a", prompt: "p", answers: ["x"] },
+    { ...base, kind: "typed" as const, id: "t-named", conceptId: "a", prompt: "p", answers: ["x"], figureFrom: "fc-b" },
+    { ...base, kind: "typed" as const, id: "t-none", conceptId: "z", prompt: "p", answers: ["x"] },
+  ];
+  const m = buildMissFigures(bank);
+  assert.deepEqual(m.get("t-a"), fig(1));
+  assert.deepEqual(m.get("t-named"), fig(2));
+  assert.equal(m.has("t-none"), false);
+  assert.equal(m.has("fc-a"), false);
 });

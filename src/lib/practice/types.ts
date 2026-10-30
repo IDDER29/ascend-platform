@@ -8,6 +8,11 @@ export type PracticeItemBase = {
   conceptId: string;
   reviewLabel: string;
   hint?: string;
+  /**
+   * The flashcard whose diagram explains this card's answer, shown after a miss. Without it, a flashcard
+   * with a diagram on the same conceptId is used (see `buildMissFigures`).
+   */
+  figureFrom?: string;
 };
 
 export type McqItem = PracticeItemBase & {

@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AlertCircle, CheckCircle2, Clock, KeyRound, Mail } from "lucide-react";
+import { CheckCircle2, Clock, KeyRound, Mail } from "lucide-react";
 import { CONTENT_REPO_URL } from "@/lib/brand/repo";
 import {
   MIN_PASSWORD_LENGTH,
@@ -12,6 +12,7 @@ import {
   RESET_LINK_TTL_MINUTES,
   RESET_RESEND_COOLDOWN_SEC,
 } from "@/lib/auth/reset-flow";
+import { ErrorNote, inputClass as input } from "@/components/forms/coach-fields";
 import { requestPasswordResetAction, resetPasswordAction, type ResetActionState } from "@/lib/auth/reset-actions";
 import { FIRST_LESSON_HREF, SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
 
@@ -21,10 +22,6 @@ const LIME =
 const OUTLINE =
   "inline-flex min-h-12 w-full items-center justify-center rounded-full border-2 border-[var(--coach-border)] px-6 text-[15px] font-semibold text-[var(--coach-ink)] no-underline hover:border-[var(--coach-border-strong)]";
 const LINK = "font-semibold text-[var(--coach-ink)] underline underline-offset-2";
-const input = (invalid: boolean) =>
-  `block h-12 w-full rounded-xl border-2 bg-[var(--coach-surface)] px-4 text-[16px] text-[var(--coach-ink)] placeholder:text-[var(--coach-ink-muted)] focus:border-[var(--coach-ink)] focus:outline-none ${
-    invalid ? "border-[var(--coach-wrong-border)]" : "border-[var(--coach-border)]"
-  }`;
 const isEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
 /** The card every reset screen sits in: an icon, a title, what's going on, then the content. */
@@ -53,15 +50,6 @@ function ResetCard({
       <p className="m-0 mt-2 text-[15.5px] leading-relaxed text-[var(--coach-ink-secondary)]">{lead}</p>
       <div className="mt-6 flex flex-col gap-4">{children}</div>
     </div>
-  );
-}
-
-function ErrorNote({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="m-0 flex items-start gap-2.5 rounded-xl border-2 border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-bg)] px-4 py-3 text-[14.5px] font-semibold text-[var(--coach-wrong-ink)]">
-      <AlertCircle size={18} strokeWidth={2.4} className="mt-0.5 shrink-0" aria-hidden />
-      {children}
-    </p>
   );
 }
 

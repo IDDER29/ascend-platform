@@ -1,35 +1,31 @@
+import type { Metadata } from "next";
+import { GoalForm } from "@/components/settings-v2/goal-form";
+import { SettingsCard } from "@/components/settings-v2/settings-card";
 import { getCurrentUser } from "@/lib/auth/auth";
-import { getProfileSettings } from "@/lib/progress/queries";
-import { getPracticeDailyGoal } from "@/lib/practice/queries";
 import { DEFAULT_DAILY_GOAL, goalForPace } from "@/lib/practice/daily-goal";
-import { SettingsSectionHeader } from "@/components/settings/settings-shell";
-import { PreferencesSettingsForm } from "@/components/settings/preferences-settings-form";
+import { getPracticeDailyGoal } from "@/lib/practice/queries";
+import { getProfileSettings } from "@/lib/progress/queries";
 
-export const metadata = {
-  title: "Preferences — Settings — Ascend",
-};
+export const metadata: Metadata = { title: "Daily goal — Settings — Ascend" };
 
-export default async function SettingsPreferencesPage() {
+export default async function SettingsGoalPage() {
   const user = await getCurrentUser();
-  const [profile, practiceGoal] = user
-    ? await Promise.all([getProfileSettings(user.id).catch(() => null), getPracticeDailyGoal(user.id)])
+  const [profile, goal] = user
+    ? await Promise.all([
+        getProfileSettings(user.id).catch(() => null),
+        getPracticeDailyGoal(user.id).catch(() => null),
+      ])
     : [null, null];
-
   return (
-    <>
-      <SettingsSectionHeader
-        title="Preferences"
-        description="Your daily goal and reminders."
-      />
-      <PreferencesSettingsForm
-        initialGoal={practiceGoal ?? goalForPace(profile?.pace) ?? DEFAULT_DAILY_GOAL}
-        initialReminderTime={profile?.reminderTime ?? "19:00"}
-        initialNotifStreakReminders={profile?.notifStreakReminders ?? true}
-        initialNotifWeeklyRecap={profile?.notifWeeklyRecap ?? true}
-        initialNotifPeerSolutions={profile?.notifPeerSolutions ?? false}
-        initialNotifProductUpdates={profile?.notifProductUpdates ?? false}
-        signedIn={Boolean(user)}
-      />
-    </>
+    <SettingsCard
+      title="Daily goal"
+      description={
+        user
+          ? "How much you want to do each day. Your Today page turns it into a short checklist."
+          : "How much you want to do each day. Without an account it's kept in this browser."
+      }
+    >
+      <GoalForm userId={user?.id ?? null} initial={goal ?? goalForPace(profile?.pace) ?? DEFAULT_DAILY_GOAL} />
+    </SettingsCard>
   );
 }

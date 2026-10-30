@@ -56,7 +56,7 @@ export function FaqPage() {
       q: "What do you do with my data?",
       a: (
         <>
-          An account stores your name, email, a hashed password and your progress. Nothing is sold or shared. Read the{" "}
+          An account stores your name, email, a hashed password and your progress. Nothing is sold or shared, and you can reset your progress or delete your account any time in Settings. Read the{" "}
           <Link href="/privacy" className={A}>
             privacy page
           </Link>

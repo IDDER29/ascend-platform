@@ -21,6 +21,9 @@ export type {
 
 export class ProgressError extends Error {}
 
+/** The longest bio a profile keeps. */
+export const BIO_MAX = 160;
+
 function requireDb() {
   if (!db) {
     throw new ProgressError(
@@ -215,7 +218,7 @@ export async function updateProfileSettings(
     .set({
       name,
       username,
-      bio: input.bio.trim(),
+      bio: input.bio.trim().slice(0, BIO_MAX),
       pace: input.pace,
       theme: input.theme,
       accent: input.accent,

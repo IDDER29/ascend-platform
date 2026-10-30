@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Check } from "lucide-react";
+import { Choice } from "@/components/forms/coach-fields";
 import { finishOnboardingAction } from "@/lib/onboarding/actions";
 import { DEFAULT_DAILY_GOAL, GOAL_PLANS, type DailyGoal, writeDailyGoal } from "@/lib/practice/daily-goal";
 
@@ -17,44 +17,6 @@ export type StartOption = {
 };
 
 const GOALS = Object.entries(GOAL_PLANS).map(([goal, plan]) => ({ goal: Number(goal) as DailyGoal, ...plan }));
-
-/** A choice drawn as a card around a real radio button, so keyboards and screen readers get a radio group. */
-function Choice({
-  name,
-  value,
-  checked,
-  onChange,
-  children,
-}: {
-  name: string;
-  value: string;
-  checked: boolean;
-  onChange: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <label
-      className={`relative flex cursor-pointer gap-4 rounded-[20px] border-2 p-4 has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--coach-focus)] sm:p-5 ${
-        checked
-          ? "border-[var(--coach-ink)] bg-[var(--coach-surface)]"
-          : "border-[var(--coach-border)] bg-[var(--coach-surface)] hover:border-[var(--coach-border-strong)]"
-      }`}
-    >
-      <input type="radio" name={name} value={value} checked={checked} onChange={onChange} className="sr-only" />
-      {children}
-      <span
-        aria-hidden
-        className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border-2 ${
-          checked
-            ? "border-[var(--coach-ink)] bg-[var(--coach-ink)] text-[var(--coach-bg)]"
-            : "border-[var(--coach-border-strong)]"
-        }`}
-      >
-        {checked && <Check size={14} strokeWidth={3.2} />}
-      </span>
-    </label>
-  );
-}
 
 function StartButton({ lesson }: { lesson: StartOption["firstLesson"] }) {
   const { pending } = useFormStatus();

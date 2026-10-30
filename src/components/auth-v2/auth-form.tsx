@@ -3,7 +3,8 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import { ErrorNote, Field, inputClass as input } from "@/components/forms/coach-fields";
 import { signInAction, signUpAction, type AuthActionState } from "@/app/signin/actions";
 import { MIN_PASSWORD_LENGTH as MIN_PASSWORD } from "@/lib/auth/reset-flow";
 import { RESET_HREF, SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
@@ -16,47 +17,6 @@ const isEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim(
 
 export function modeFrom(raw: string | null): AuthMode {
   return raw === "signup" || raw === "register" || raw === "create" ? "signup" : "signin";
-}
-
-const LABEL = "mb-1.5 block text-[14px] font-semibold text-[var(--coach-ink)]";
-const HINT = "m-0 mt-1.5 text-[13px] leading-snug text-[var(--coach-ink-muted)]";
-const ERROR = "m-0 mt-1.5 text-[13px] font-semibold leading-snug text-[var(--coach-wrong-title)]";
-const input = (invalid: boolean) =>
-  `block h-12 w-full rounded-xl border-2 bg-[var(--coach-surface)] px-4 text-[16px] text-[var(--coach-ink)] placeholder:text-[var(--coach-ink-muted)] focus:border-[var(--coach-ink)] focus:outline-none ${
-    invalid ? "border-[var(--coach-wrong-border)]" : "border-[var(--coach-border)]"
-  }`;
-
-/** One field: its label, the input, then a hint or (after a submit attempt) what's wrong. */
-function Field({
-  id,
-  label,
-  hint,
-  error,
-  children,
-}: {
-  id: string;
-  label: string;
-  hint?: React.ReactNode;
-  error: string | null;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label htmlFor={id} className={LABEL}>
-        {label}
-      </label>
-      {children}
-      {error ? (
-        <p id={`${id}-hint`} className={ERROR}>
-          {error}
-        </p>
-      ) : hint ? (
-        <p id={`${id}-hint`} className={HINT}>
-          {hint}
-        </p>
-      ) : null}
-    </div>
-  );
 }
 
 /** Sign in or create an account: one form, two modes, switched by the URL (?mode=signup). */
@@ -251,10 +211,7 @@ export function AuthForm() {
 
         <div aria-live="polite">
           {state.error && (
-            <p className="m-0 flex items-start gap-2.5 rounded-xl border-2 border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-bg)] px-4 py-3 text-[14.5px] font-semibold text-[var(--coach-wrong-ink)]">
-              <AlertCircle size={18} strokeWidth={2.4} className="mt-0.5 shrink-0" aria-hidden />
-              {state.error}
-            </p>
+            <ErrorNote>{state.error}</ErrorNote>
           )}
         </div>
 

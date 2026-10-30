@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { BookOpen, Hammer, ListChecks, RotateCcw } from "lucide-react";
 import { durationLabel } from "@/lib/paths/paths-v2-model";
@@ -5,6 +6,7 @@ import { FIRST_LESSON_HREF } from "@/lib/routes";
 import { climbSteps, publicPaths, sampleCard, siteStats } from "@/lib/site/site-data";
 import { CATALOG_HREF, HOW_IT_WORKS_HREF, OPEN_SOURCE_HREF, ABOUT_HREF } from "@/lib/site/site-nav";
 import { Climb } from "./climb";
+import { DeletedNotice } from "./deleted-notice";
 import { PathTile } from "./path-tile";
 import { SiteShell } from "./site-shell";
 import { H2, LEAD, LIME_BTN, OUTLINE_ON_DARK_BTN, OUTLINE_BTN, Section, StartBand, WRAP } from "./site-ui";
@@ -43,6 +45,9 @@ export function HomePage() {
 
   return (
     <SiteShell>
+      <Suspense>
+        <DeletedNotice />
+      </Suspense>
       <section aria-labelledby="hero-title" className={`${WRAP} pt-4 sm:pt-8`}>
         <div className="grid gap-10 overflow-hidden rounded-[28px] bg-[var(--coach-hero-bg)] px-5 py-10 text-[var(--coach-hero-ink)] sm:px-10 sm:py-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-center lg:gap-14 lg:px-14 lg:py-16">
           <div>

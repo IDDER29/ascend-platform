@@ -25,12 +25,13 @@ result), `/progress` (the long view in the Practice "Coach" look: where you
 are across the four levels, this week, learned vs. remembered per level, a
 concept map shaded by retention, lessons that are slipping, 12 weeks of
 momentum, dated milestones and practice days — all built only from lesson
-completions and Practice history), `/achievements` (the chest: every earned badge worn
-as an original ribbon bar on a uniform, highest honour first, each with its
-full medal and a citation written from its own rule; below, the badges
-still to earn with their exact rule and progress. 17 badges, each with a
-self-contained rule checked from real records — no levels. Every
-decoration shows exactly how to earn it, with progress and the next step),
+completions and Practice history), `/achievements` (a shinobi profile card: headband, photo, name and title,
+clan crests, decorations worn as medals, missions done by rank (D–S), and
+scrolls of skills per topic plus three forbidden scrolls for the top tier;
+selecting anything opens its detail — a citation with the missions behind
+it, every mission of a rank, or a scroll's skills with their scores. 17
+decorations, each with its own rule; ninja titles earned from ranked tasks;
+no levels),
 `/bookmarks` (real filter tabs by kind, and a genuine remove-bookmark
 interaction backed by client state — not just a static list; saved
 lessons/snippets link to their real destinations, saved resources without

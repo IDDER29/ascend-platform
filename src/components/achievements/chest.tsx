@@ -13,14 +13,16 @@ import {
   type MissionRank,
   type Title,
 } from "@/lib/achievements/catalog";
-import { byPrecedence, groupSwatch, PRECEDENCE, rackRows } from "@/lib/achievements/ribbons";
+import { byPrecedence, groupSwatch, PRECEDENCE } from "@/lib/achievements/ribbons";
 import { CriterionRow } from "./criterion-row";
-import { CrestPatch, Headband } from "./emblems";
+import { PlaceholderAvatar } from "@/components/ui/placeholder-avatar";
+import type { buildScrolls } from "@/lib/achievements/scrolls-model";
+import { CrestPatch, ForbiddenScrollArt, Headband, ScrollArt } from "./emblems";
+import { Medallion } from "./medallion";
 import { BadgeMark, RankChip } from "./marks";
 import { Medal } from "./medal";
 import { MissionLog } from "./mission-log";
 import { useSeenDecorations } from "./use-seen-decorations";
-import { Ribbon } from "./ribbon";
 
 const PIN_STEP_MS = 90;
 
@@ -31,7 +33,141 @@ function rankKey(rank: MissionRank): string {
   return `rank:${rank}`;
 }
 
+type ScrollsData = ReturnType<typeof buildScrolls>;
+
+function scrollKey(id: string): string {
+  return `scroll:${id}`;
+}
+
+function forbiddenKey(id: string): string {
+  return `forbidden:${id}`;
+}
+
 const MISSIONS_SHOWN = 6;
+
+const DETAIL_CARD =
+  "flex min-w-0 flex-col items-center gap-4 rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 text-center sm:p-7 lg:sticky lg:top-6";
+
+/** A scroll opened: every skill in the topic with its scores. */
+function ScrollDetail({ scroll }: { scroll: ScrollsData["scrolls"][number] }) {
+  return (
+    <section aria-live="polite" aria-labelledby="citation-title" className={DETAIL_CARD}>
+      <span className="rounded-2xl bg-[var(--coach-hero-bg)] px-6 py-5">
+        <ScrollArt crest={scroll.crest} learned size="lg" />
+      </span>
+      <div className="flex flex-col gap-1">
+        <h2
+          id="citation-title"
+          className="m-0 font-display text-[26px] font-extrabold leading-tight tracking-[-0.03em]"
+        >
+          {scroll.name} scroll
+        </h2>
+        <span className="text-[13.5px] font-semibold text-[var(--coach-ink-muted)]">
+          {scroll.learned} of {scroll.total} skills learned, {scroll.mastered} mastered
+        </span>
+      </div>
+      <div className="flex w-full flex-col gap-2 border-t border-[var(--coach-divider)] pt-4 text-left">
+        <h3 className="m-0 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">Skills</h3>
+        <ol className="m-0 flex list-none flex-col p-0">
+          {scroll.skills.map((skill) => (
+            <li
+              key={skill.key}
+              className="flex items-start gap-2.5 border-b border-[var(--coach-divider)] py-2.5 last:border-b-0"
+            >
+              <span
+                aria-hidden="true"
+                className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                  skill.mastered
+                    ? "bg-[var(--coach-hero-bg)] text-[var(--coach-lime)]"
+                    : skill.learned
+                      ? "bg-[var(--coach-lime)] text-[var(--coach-lime-ink)]"
+                      : "border-2 border-[var(--coach-border-strong)]"
+                }`}
+              >
+                {skill.mastered ? "★" : skill.learned ? "✓" : ""}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <Link
+                  href={skill.href}
+                  className="text-[14px] font-semibold text-[var(--coach-ink)] no-underline hover:underline"
+                >
+                  {skill.title}
+                </Link>
+                <span className="text-[12.5px] text-[var(--coach-ink-secondary)]">
+                  <span className="sr-only">
+                    {skill.mastered ? "Mastered. " : skill.learned ? "Learned. " : "Not learned yet. "}
+                  </span>
+                  {skill.learned ? "Lesson done" : "Lesson not done"}
+                  {skill.cards.total > 0 ? `, ${skill.cards.solid} of ${skill.cards.total} cards solid` : ""}
+                  {skill.accuracy !== null ? `, ${skill.accuracy}% right` : ""}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="m-0 text-[12.5px] text-[var(--coach-ink-muted)]">
+          ✓ learned (lesson done) · ★ mastered (lesson done and every card solid)
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/** A forbidden scroll opened: sealed, ready to unseal, or the skill inside. */
+function ForbiddenDetail({ scroll }: { scroll: ScrollsData["forbidden"][number] }) {
+  return (
+    <section aria-live="polite" aria-labelledby="citation-title" className={DETAIL_CARD}>
+      <span className="rounded-2xl bg-[var(--coach-hero-bg)] px-6 py-5">
+        <ForbiddenScrollArt unsealed={scroll.unsealed} size="lg" />
+      </span>
+      <div className="flex flex-col gap-1">
+        <h2
+          id="citation-title"
+          className="m-0 font-display text-[26px] font-extrabold leading-tight tracking-[-0.03em]"
+        >
+          {scroll.name}
+        </h2>
+        <span
+          className={`text-[13.5px] font-semibold ${scroll.unsealed ? "text-[var(--coach-tint-lime-ink)]" : "text-[var(--coach-ink-muted)]"}`}
+        >
+          {scroll.unsealed ? "Unsealed" : scroll.met ? "Ready to unseal" : "Sealed"}
+        </span>
+      </div>
+      <div className="flex w-full flex-col gap-3 border-t border-[var(--coach-divider)] pt-4 text-left">
+        {scroll.unsealed ? (
+          <>
+            <h3 className="m-0 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">The skill inside</h3>
+            <p className="m-0 text-[15px] leading-relaxed">{scroll.skill}.</p>
+          </>
+        ) : (
+          <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
+            A forbidden scroll holds a top-tier skill. It opens only for a Jōnin or above who has done what it asks. It
+            never locks a lesson.
+          </p>
+        )}
+        <h3 className="m-0 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">To unseal it</h3>
+        <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+          {scroll.conditions.map((c) => (
+            <li key={c.text} className="flex items-center gap-2.5 text-[13.5px]">
+              <span
+                aria-hidden="true"
+                className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                  c.done
+                    ? "bg-[var(--coach-lime)] text-[var(--coach-lime-ink)]"
+                    : "border-2 border-[var(--coach-border-strong)]"
+                }`}
+              >
+                {c.done ? "✓" : ""}
+              </span>
+              <span className="sr-only">{c.done ? "Done: " : "Not yet: "}</span>
+              {c.text}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
 
 /** Missions as a dated list with their ranks: the work behind a badge, or every mission of a rank. */
 function MissionList({ missions }: { missions: AchievementsModel["missions"] }) {
@@ -73,7 +209,7 @@ function RankDetail({ rank, model }: { rank: MissionRank; model: AchievementsMod
     <section
       aria-live="polite"
       aria-labelledby="citation-title"
-      className="flex min-w-0 flex-col items-center gap-4 rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 text-center sm:p-7"
+      className="flex min-w-0 flex-col items-center gap-4 rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 text-center sm:p-7 lg:sticky lg:top-6"
     >
       <span
         aria-hidden="true"
@@ -157,7 +293,7 @@ function Citation({
     <section
       aria-live="polite"
       aria-labelledby="citation-title"
-      className="flex min-w-0 flex-col items-center gap-4 rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 text-center sm:p-7"
+      className="flex min-w-0 flex-col items-center gap-4 rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 text-center sm:p-7 lg:sticky lg:top-6"
     >
       {badge.insignia ? (
         <span className="flex items-center justify-center rounded-2xl bg-[var(--coach-hero-bg)] px-8 py-6">
@@ -269,96 +405,6 @@ function Citation({
 
 type Select = (id: string) => void;
 
-/** Collar, centre seam and buttons: drawn lines only, so the decorations stay the subject. */
-function UniformLines() {
-  return (
-    <>
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 200 60"
-        preserveAspectRatio="none"
-        className="pointer-events-none absolute inset-x-0 top-0 hidden h-[110px] w-full sm:block"
-      >
-        <g fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="1.5" vectorEffect="non-scaling-stroke">
-          <path d="M78 0 L100 52 L122 0" vectorEffect="non-scaling-stroke" />
-          <path d="M58 0 L86 46" vectorEffect="non-scaling-stroke" />
-          <path d="M142 0 L114 46" vectorEffect="non-scaling-stroke" />
-        </g>
-      </svg>
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 left-1/2 top-[94px] hidden w-px bg-white/[0.08] sm:block"
-      />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-3 left-1/2 top-[124px] hidden -translate-x-1/2 flex-col items-center justify-around sm:flex"
-      >
-        {[0, 1, 2].map((i) => (
-          <span key={i} className="size-2.5 rounded-full bg-white/[0.14] ring-1 ring-white/10" />
-        ))}
-      </span>
-    </>
-  );
-}
-
-function PocketFlap() {
-  return (
-    <span
-      aria-hidden="true"
-      className="relative block h-10 rounded-b-[16px] border border-t-0 border-white/[0.08] bg-white/[0.02]"
-    >
-      <span className="absolute bottom-2 left-1/2 size-2 -translate-x-1/2 rounded-full bg-white/[0.14]" />
-    </span>
-  );
-}
-
-function Rack({
-  worn,
-  selectedId,
-  isNew,
-  onSelect,
-}: {
-  worn: BadgeView[];
-  selectedId: string;
-  isNew: (id: string) => boolean;
-  onSelect: Select;
-}) {
-  let pin = 0;
-  return (
-    <ol
-      aria-label="Decorations, highest first"
-      className="relative m-0 flex list-none flex-col items-center gap-1.5 p-0"
-    >
-      {rackRows(worn).map((row, r) => (
-        <li key={r}>
-          <ol className="m-0 flex list-none justify-center gap-1.5 p-0">
-            {row.map((badge) => (
-              <li key={badge.id} className="achv-pin" style={{ ["--pin-delay" as string]: `${pin++ * PIN_STEP_MS}ms` }}>
-                <button
-                  type="button"
-                  aria-pressed={selectedId === badge.id}
-                  aria-label={`${badge.label}, awarded ${badge.earnedLabel}${isNew(badge.id) ? ", new" : ""}`}
-                  title={`${badge.label}: ${badge.criteria.map((c) => c.text).join("; ")}`}
-                  onClick={() => onSelect(badge.id)}
-                  className={`relative block rounded-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--coach-hero-bg)] ${
-                    selectedId === badge.id
-                      ? "ring-2 ring-white ring-offset-2 ring-offset-[var(--coach-hero-bg)]"
-                      : isNew(badge.id)
-                        ? "shadow-[0_0_0_2px_var(--coach-lime),0_0_14px_var(--coach-lime)]"
-                        : ""
-                  }`}
-                >
-                  <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} />
-                </button>
-              </li>
-            ))}
-          </ol>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
 /** The headband or a clan crest, selectable like a ribbon to read its citation. */
 function InsigniaButton({
   badge,
@@ -440,103 +486,228 @@ function RankSeals({
   );
 }
 
-/** A dress uniform: ribbons over the left breast pocket, the nameplate over the right. */
-function Uniform({
+/** A decoration worn as a medal: its symbol on a lime disc, its name beneath. */
+function MedalButton({
+  badge,
+  selected,
+  isNew,
+  onSelect,
+  delay,
+}: {
+  badge: BadgeView;
+  selected: boolean;
+  isNew: boolean;
+  onSelect: Select;
+  delay: number;
+}) {
+  return (
+    <li className="achv-pin" style={{ ["--pin-delay" as string]: `${delay}ms` }}>
+      <button
+        type="button"
+        aria-pressed={selected}
+        aria-label={`${badge.label}, awarded ${badge.earnedLabel}${isNew ? ", new" : ""}`}
+        title={`${badge.label}: ${badge.criteria.map((c) => c.text).join("; ")}`}
+        onClick={() => onSelect(badge.id)}
+        className={`flex w-[76px] flex-col items-center gap-1.5 rounded-xl px-1 py-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] ${
+          selected ? "bg-white/10" : "hover:bg-white/5"
+        }`}
+      >
+        <span
+          className={`rounded-full ${isNew && !selected ? "shadow-[0_0_0_2px_var(--coach-lime),0_0_16px_var(--coach-lime)]" : ""}`}
+        >
+          <Medallion glyph={badge.glyph} earned size="md" />
+        </span>
+        <span className="text-[11.5px] font-semibold leading-tight text-[var(--coach-hero-ink)]">{badge.label}</span>
+      </button>
+    </li>
+  );
+}
+
+function CardSection({ title, aside, children }: { title: string; aside?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-3 border-t border-white/[0.08] pt-5">
+      <h3 className="m-0 flex items-baseline justify-between gap-2 text-[13px] font-semibold text-[var(--coach-hero-muted)]">
+        {title}
+        {aside ? <span className="font-normal">{aside}</span> : null}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+/** Who you are as a shinobi: headband, photo, name and title, clans, medals, missions and scrolls. */
+function ProfileCard({
   model,
+  scrolls,
   worn,
   firstToEarn,
   name,
-  title,
   selectedId,
   isNew,
   onSelect,
 }: {
   model: AchievementsModel;
+  scrolls: ScrollsData;
   worn: BadgeView[];
   firstToEarn: BadgeView | undefined;
   name: string;
-  title: string | null;
   selectedId: string;
   isNew: (id: string) => boolean;
   onSelect: Select;
 }) {
   const headband = model.insignia.find((p) => p.insignia?.kind === "headband")!;
   const crests = CREST_IDS.map((id) => model.insignia.find((p) => p.id === id)!);
+  const title = model.title ? TITLE_META[model.title.id] : null;
+  const topRank = MISSION_RANKS.find((r) => model.missionRecord[r] > 0) ?? null;
   return (
     <section
       aria-labelledby="chest-title"
-      className="relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-[24px] bg-[var(--coach-hero-bg)] px-5 pb-5 text-[var(--coach-hero-ink)] sm:px-8"
+      className="flex min-w-0 flex-col gap-5 rounded-[24px] bg-[var(--coach-hero-bg)] px-5 py-6 text-[var(--coach-hero-ink)] sm:px-8"
     >
-      <h2 id="chest-title" className="sr-only">
-        Decorations worn
-      </h2>
-
       <InsigniaButton
         badge={headband}
         selected={selectedId === headband.id}
         isNew={isNew(headband.id)}
         onSelect={onSelect}
-        className="relative mx-auto mt-5"
+        className="mx-auto"
       >
         <Headband earned={headband.earned} />
       </InsigniaButton>
 
-      {/* The jacket: decorations high on the chest under the collar; the seam runs on down. */}
-      <div className="relative flex flex-1 flex-col gap-3 pb-8 pt-8 sm:min-h-[340px] sm:pt-[112px]">
-        <UniformLines />
-        {/* Clan crests: two on each shoulder; a row under the headband on phones. */}
-        <div className="relative flex justify-center gap-2 sm:absolute sm:inset-x-0 sm:top-3 sm:justify-between">
-          {[crests.slice(0, 2), crests.slice(2)].map((pair, i) => (
-            <div key={i} className="flex gap-2">
-              {pair.map((crest) => (
-                <InsigniaButton
-                  key={crest.id}
-                  badge={crest}
-                  selected={selectedId === crest.id}
-                  isNew={isNew(crest.id)}
-                  onSelect={onSelect}
-                >
-                  <CrestPatch
-                    crest={crest.insignia!.kind === "crest" ? crest.insignia!.crest : "gate"}
-                    earned={crest.earned}
-                  />
-                </InsigniaButton>
-              ))}
-            </div>
-          ))}
-        </div>
-        {/* Viewer's left: nameplate. Viewer's right: the rack, as worn on the wearer's left breast. */}
-        <div className="relative grid grid-cols-1 items-end gap-6 sm:grid-cols-2 sm:gap-x-14">
-          <div className="order-2 flex justify-center sm:order-1">
-            <div className="rounded-[5px] bg-[linear-gradient(180deg,#f3f1ea,#cfccc2)] px-5 py-1.5 shadow-[0_2px_0_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.7)]">
-              <span className="whitespace-nowrap font-mono text-[12.5px] font-semibold uppercase tracking-[0.14em] text-[#1b1d22]">
-                {title ? <span className="text-[#5a6b16]">{title} · </span> : null}
-                {name}
+      {/* Identity: photo, name, title, top mission rank. */}
+      <div className="flex items-center gap-4">
+        <PlaceholderAvatar name={name} size="md" />
+        <div className="flex min-w-0 flex-col gap-1">
+          <h2
+            id="chest-title"
+            className="m-0 font-display text-[26px] font-extrabold leading-tight tracking-[-0.03em] [overflow-wrap:anywhere] sm:text-[30px]"
+          >
+            {name}
+          </h2>
+          {title ? (
+            <button
+              type="button"
+              onClick={() => onSelect(title.id)}
+              className="w-fit text-left text-[14.5px] font-semibold text-[var(--coach-lime)] hover:underline"
+            >
+              {title.label}{" "}
+              <span className="font-normal text-[var(--coach-hero-muted)]">
+                {title.kanji}, {title.gloss}
               </span>
-            </div>
-          </div>
-          <div className="order-1 flex justify-center sm:order-2">
-            {worn.length > 0 ? (
-              <Rack worn={worn} selectedId={selectedId} isNew={isNew} onSelect={onSelect} />
+            </button>
+          ) : (
+            <span className="text-[14px] text-[var(--coach-hero-muted)]">
+              No title yet. Earn your headband to become Genin.
+            </span>
+          )}
+          <span className="text-[13px] text-[var(--coach-hero-muted)]">
+            {topRank ? (
+              <>
+                Top mission <strong className="font-semibold text-[var(--coach-hero-ink)]">{topRank}-rank</strong>,{" "}
+                {model.missions.length} missions done
+              </>
             ) : (
-              <p className="m-0 max-w-[280px] rounded-xl border-2 border-dashed border-[var(--coach-hero-track)] px-5 py-4 text-center text-[14px] text-[var(--coach-hero-muted)]">
-                No decorations yet. Your first is {firstToEarn?.label ?? "waiting"}:{" "}
-                {lowerFirst(firstToEarn?.criteria[0]?.text ?? "")}.
-              </p>
+              "No missions yet"
             )}
-          </div>
-        </div>
-        <div aria-hidden="true" className="relative hidden grid-cols-2 gap-x-14 sm:grid">
-          <span className="mx-auto w-full max-w-[240px]">
-            <PocketFlap />
-          </span>
-          <span className="mx-auto w-full max-w-[240px]">
-            <PocketFlap />
           </span>
         </div>
       </div>
 
+      <CardSection title="Clans" aside={`${crests.filter((c) => c.earned).length} of ${crests.length} joined`}>
+        <div className="flex flex-wrap gap-2">
+          {crests.map((crest) => (
+            <InsigniaButton
+              key={crest.id}
+              badge={crest}
+              selected={selectedId === crest.id}
+              isNew={isNew(crest.id)}
+              onSelect={onSelect}
+            >
+              <CrestPatch
+                crest={crest.insignia!.kind === "crest" ? crest.insignia!.crest : "gate"}
+                earned={crest.earned}
+              />
+            </InsigniaButton>
+          ))}
+        </div>
+      </CardSection>
+
+      <CardSection title="Decorations" aside={`${worn.length} of ${model.total}`}>
+        {worn.length > 0 ? (
+          <ol aria-label="Decorations, highest first" className="m-0 flex list-none flex-wrap gap-1 p-0">
+            {worn.map((badge, i) => (
+              <MedalButton
+                key={badge.id}
+                badge={badge}
+                selected={selectedId === badge.id}
+                isNew={isNew(badge.id)}
+                onSelect={onSelect}
+                delay={i * PIN_STEP_MS}
+              />
+            ))}
+          </ol>
+        ) : (
+          <p className="m-0 rounded-xl border-2 border-dashed border-[var(--coach-hero-track)] px-4 py-3 text-[13.5px] text-[var(--coach-hero-muted)]">
+            No decorations yet. Your first is {firstToEarn?.label ?? "waiting"}:{" "}
+            {lowerFirst(firstToEarn?.criteria[0]?.text ?? "")}.
+          </p>
+        )}
+      </CardSection>
+
       <RankSeals model={model} selectedId={selectedId} onSelect={onSelect} />
+
+      <CardSection
+        title="Scrolls"
+        aside={`${scrolls.scrolls.reduce((n, s) => n + s.learned, 0)} of ${scrolls.scrolls.reduce((n, s) => n + s.total, 0)} skills`}
+      >
+        <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0 sm:grid-cols-2">
+          {scrolls.scrolls.map((scroll) => (
+            <li key={scroll.id}>
+              <button
+                type="button"
+                aria-pressed={selectedId === scrollKey(scroll.id)}
+                onClick={() => onSelect(scrollKey(scroll.id))}
+                className={`flex w-full min-w-0 items-center gap-3 rounded-xl px-2 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] ${
+                  selectedId === scrollKey(scroll.id) ? "bg-white/10" : "hover:bg-white/5"
+                }`}
+              >
+                <ScrollArt crest={scroll.crest} learned={scroll.learned > 0} />
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate text-[13px] font-semibold">{scroll.name}</span>
+                  <span className="font-mono text-[11.5px] text-[var(--coach-hero-muted)]">
+                    {scroll.learned}/{scroll.total} skills
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </CardSection>
+
+      <CardSection title="Forbidden scrolls" aside="for the top tier">
+        <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0 sm:grid-cols-3">
+          {scrolls.forbidden.map((f) => (
+            <li key={f.id}>
+              <button
+                type="button"
+                aria-pressed={selectedId === forbiddenKey(f.id)}
+                onClick={() => onSelect(forbiddenKey(f.id))}
+                className={`flex w-full min-w-0 items-center gap-3 rounded-xl px-2 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] sm:flex-col sm:items-center sm:text-center ${
+                  selectedId === forbiddenKey(f.id) ? "bg-white/10" : "hover:bg-white/5"
+                }`}
+              >
+                <ForbiddenScrollArt unsealed={f.unsealed} />
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-[12.5px] font-semibold leading-tight">{f.name}</span>
+                  <span className="text-[11.5px] text-[var(--coach-hero-muted)]">
+                    {f.unsealed ? "Unsealed" : f.met ? "Ready to unseal" : "Sealed"}
+                  </span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </CardSection>
     </section>
   );
 }
@@ -882,7 +1053,7 @@ function TitleSection({
 }
 
 /** The learner's decorations worn on a uniform, with a citation for each, and the ones still to earn. */
-export function Chest({ model, name }: { model: AchievementsModel; name: string }) {
+export function Chest({ model, scrolls, name }: { model: AchievementsModel; scrolls: ScrollsData; name: string }) {
   const worn = byPrecedence(model.parts.filter((p) => p.earned));
   const everything = [...model.parts, ...model.insignia, ...model.titles];
   const toEarn = [...model.parts.filter((p) => !p.earned)].sort(
@@ -912,18 +1083,22 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
         <Promotion title={promoted} onRead={() => select(promoted.id)} onDone={() => seen.markSeen(promoted.id)} />
       ) : null}
       <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
-        <Uniform
+        <ProfileCard
           model={model}
+          scrolls={scrolls}
           worn={worn}
           firstToEarn={toEarn[0]}
           name={name}
-          title={model.title?.label ?? null}
           selectedId={selectedId}
           isNew={seen.isNew}
           onSelect={select}
         />
         {selectedId.startsWith("rank:") ? (
           <RankDetail rank={selectedId.slice(5) as MissionRank} model={model} />
+        ) : selectedId.startsWith("scroll:") ? (
+          <ScrollDetail scroll={scrolls.scrolls.find((x) => scrollKey(x.id) === selectedId)!} />
+        ) : selectedId.startsWith("forbidden:") ? (
+          <ForbiddenDetail scroll={scrolls.forbidden.find((x) => forbiddenKey(x.id) === selectedId)!} />
         ) : (
           <Citation badge={selected} name={name} isNew={seen.isNew(selected.id)} glyphOf={glyphOf} onSelect={select} />
         )}

@@ -89,8 +89,13 @@ export function sampleAchievementsInput(lessons: ProfileLesson[], now: Date): Ac
   // A few early sessions, eight days in a row ending last week, then two recent ones.
   // The last five are strong 10-card sessions (C-rank tasks); the rest are everyday (D-rank).
   const days = [22, 21, 20, 19, 14, 13, 12, 11, 10, 9, 8, 7, 3, 1];
+  // Sessions review the sample's own cards, so each skill gets a real accuracy score.
+  const reviewIds = cards.map((c) => c.questionId);
   const history: PracticeSessionRecord[] = days.map((d, i) => {
     const strong = i >= days.length - 5;
+    const size = strong ? 10 : 8;
+    const questionIds = Array.from({ length: size }, (_, k) => reviewIds[(i * 7 + k) % reviewIds.length]);
+    const missIds = questionIds.slice(0, size - (strong ? 9 : 7));
     return {
       id: `sample-session-${d}`,
       at: daysAgo(now, d),
@@ -98,9 +103,9 @@ export function sampleAchievementsInput(lessons: ProfileLesson[], now: Date): Ac
       scopeLabel: "Due review",
       pathSlug: null,
       correct: strong ? 9 : 7,
-      total: strong ? 10 : 8,
-      missIds: [],
-      questionIds: [],
+      total: size,
+      missIds,
+      questionIds,
     };
   });
   return { lessons, completions, projectLinks, cards, history, now };

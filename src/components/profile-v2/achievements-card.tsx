@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { CrestPatch } from "@/components/achievements/emblems";
-import { Ribbon } from "@/components/achievements/ribbon";
-import { byPrecedence, rackRows } from "@/lib/achievements/ribbons";
+import { Medallion } from "@/components/achievements/medallion";
+import { byPrecedence } from "@/lib/achievements/ribbons";
 import type { ProfileModel } from "@/lib/profile/profile-model";
 import { CARD, CARD_TITLE, MUTED_LINE } from "./styles";
 
 const LATEST = 3;
 
-/** The learner's decorations, worn as on the chest: a ribbon rack, then the newest few by name. */
+/** The learner's decorations, worn as on the chest: medals, highest first, then the newest few by name. */
 export function AchievementsCard({
   achievements,
   insignia,
@@ -49,27 +49,21 @@ export function AchievementsCard({
         <>
           <ol
             aria-label={`${achievements.length} decorations, highest first`}
-            className="m-0 flex list-none flex-col items-center gap-1 rounded-xl bg-[var(--coach-hero-bg)] p-0 px-3 py-4"
+            className="m-0 flex list-none flex-wrap justify-center gap-2 rounded-xl bg-[var(--coach-hero-bg)] p-0 px-3 py-3"
           >
-            {rackRows(worn).map((row, r) => (
-              <li key={r}>
-                <ol className="m-0 flex list-none justify-center gap-1 p-0">
-                  {row.map((a) => (
-                    <li key={a.id} title={`${a.label}, ${a.earnedLabel}`}>
-                      <Ribbon id={a.id} group={a.group} glyph={a.glyph} size="card" />
-                      <span className="sr-only">
-                        {a.label}, awarded {a.earnedLabel}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
+            {worn.map((a) => (
+              <li key={a.id} title={`${a.label}, ${a.earnedLabel}`}>
+                <Medallion glyph={a.glyph} earned size="sm" />
+                <span className="sr-only">
+                  {a.label}, awarded {a.earnedLabel}
+                </span>
               </li>
             ))}
           </ol>
           <ul aria-label="Newest decorations" className="m-0 flex list-none flex-col gap-2 p-0">
             {achievements.slice(0, LATEST).map((a) => (
               <li key={a.id} className="flex items-center gap-2.5">
-                <Ribbon id={a.id} group={a.group} glyph={a.glyph} size="small" />
+                <Medallion glyph={a.glyph} earned size="xs" />
                 <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold">{a.label}</span>
                 <span className="shrink-0 font-mono text-[11.5px] text-[var(--coach-ink-muted)]">{a.earnedLabel}</span>
               </li>
@@ -77,7 +71,7 @@ export function AchievementsCard({
           </ul>
           {achievements.length > LATEST ? (
             <p className="m-0 text-[12.5px] text-[var(--coach-ink-muted)]">
-              {achievements.length - LATEST} more on the rack above.
+              {achievements.length - LATEST} more above.
             </p>
           ) : null}
         </>

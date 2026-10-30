@@ -213,3 +213,24 @@ gone.
   (card counts, combinations).
 - The model records, for every rule, the missions that met it
   (`missionRefs`), so every badge and title carries its `missions`.
+
+## The profile card (2026-10-30, final run)
+The left panel became a shinobi profile card, top to bottom:
+1. **Headband.**
+2. **Identity:** photo, name, title (kanji and meaning; opens the title's
+   citation) and "Top mission A-rank, 24 missions done".
+3. **Clans:** the four crests, joined ones stitched.
+4. **Decorations as medals** (the user's choice over ribbon bars): a lime
+   disc with the symbol and the name. The profile page's card uses the
+   same medals.
+5. **Missions done:** the five rank seals.
+6. **Scrolls** (`scrolls-model.ts`, tested): one per topic, a skill per
+   lesson. Learned = lesson done; mastered = lesson done and every one of
+   its Practice cards solid; accuracy = share of its card answers right.
+   Opening a scroll lists every skill with "11 of 11 cards solid, 88%
+   right".
+7. **Forbidden scrolls** for the top tier: The Adder Seal (ship the half
+   adder), The Shell Seal (ship ShellForge), Perfect Memory (every card in
+   a topic solid). Sealed (封) until the condition is met *and* the learner
+   is Jōnin, then unsealed (解) with the skill inside. Honours only — they
+   never lock a lesson.

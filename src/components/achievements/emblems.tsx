@@ -1,7 +1,7 @@
 import type { CrestId } from "@/lib/achievements/catalog";
 
 /** Original clan emblems, one per topic, drawn as line art on a 48×48 grid. */
-function CrestArt({ crest }: { crest: CrestId }) {
+export function CrestArt({ crest }: { crest: CrestId }) {
   switch (crest) {
     // Bits & Logic: an AND gate taking two bits.
     case "gate":
@@ -60,7 +60,15 @@ export function CrestPatch({
       : "border-2 border-dashed border-[var(--coach-border-strong)] text-[var(--coach-ink-muted)]";
   return (
     <span aria-hidden="true" className={`flex shrink-0 items-center justify-center rounded-full ${box} ${look}`}>
-      <svg viewBox="0 0 48 48" className="size-[70%]" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        viewBox="0 0 48 48"
+        className="size-[70%]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <CrestArt crest={crest} />
       </svg>
     </span>
@@ -99,11 +107,79 @@ export function Headband({ earned, size = "md" }: { earned: boolean; size?: "xs"
             <span className="absolute bottom-1 right-1 size-1 rounded-full bg-black/30" />
           </>
         ) : null}
-        <svg viewBox="0 0 24 24" className="h-[70%]" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-[70%]"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="m6 15 6-6 6 6" />
           <path d="m6 9 6-6 6 6" opacity=".55" />
         </svg>
       </span>
+    </span>
+  );
+}
+
+/** A scroll: parchment between two rollers, the topic's crest on it. Faded until a skill is learned. */
+export function ScrollArt({ crest, learned, size = "md" }: { crest: CrestId; learned: boolean; size?: "md" | "lg" }) {
+  const dims =
+    size === "lg"
+      ? { body: "h-16 w-28", roller: "h-20 w-3.5", art: "size-11" }
+      : { body: "h-10 w-[68px]", roller: "h-12 w-2.5", art: "size-7" };
+  return (
+    <span aria-hidden="true" className={`flex items-center ${learned ? "" : "opacity-45"}`}>
+      <span className={`${dims.roller} rounded-full bg-[#6b4a2b] shadow-[inset_0_-2px_0_rgba(0,0,0,0.3)]`} />
+      <span
+        className={`${dims.body} -mx-0.5 flex items-center justify-center bg-[linear-gradient(180deg,#f4ead2,#e2d3ae)] text-[#5a3f22] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.12)]`}
+      >
+        <svg
+          viewBox="0 0 48 48"
+          className={dims.art}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <CrestArt crest={crest} />
+        </svg>
+      </span>
+      <span className={`${dims.roller} rounded-full bg-[#6b4a2b] shadow-[inset_0_-2px_0_rgba(0,0,0,0.3)]`} />
+    </span>
+  );
+}
+
+/** A forbidden scroll: dark parchment closed with a wax seal (封); once unsealed the seal reads 解. */
+export function ForbiddenScrollArt({ unsealed, size = "md" }: { unsealed: boolean; size?: "md" | "lg" }) {
+  const dims =
+    size === "lg"
+      ? { body: "h-16 w-28", roller: "h-20 w-3.5", seal: "size-11 text-[20px]" }
+      : { body: "h-10 w-[68px]", roller: "h-12 w-2.5", seal: "size-7 text-[13px]" };
+  return (
+    <span aria-hidden="true" className="flex items-center">
+      <span className={`${dims.roller} rounded-full bg-[#2a1d14]`} />
+      <span
+        className={`${dims.body} -mx-0.5 flex items-center justify-center ${
+          unsealed
+            ? "bg-[linear-gradient(180deg,#f4ead2,#e2d3ae)] shadow-[0_0_14px_var(--coach-lime)]"
+            : "bg-[linear-gradient(180deg,#3b2a3f,#251a29)]"
+        }`}
+      >
+        <span
+          className={`flex ${dims.seal} items-center justify-center rounded-full font-bold ${
+            unsealed
+              ? "bg-[var(--coach-lime)] text-[var(--coach-lime-ink)]"
+              : "bg-[#b4361f] text-[#ffe3d6] shadow-[inset_0_-2px_0_rgba(0,0,0,0.3)]"
+          }`}
+        >
+          {unsealed ? "解" : "封"}
+        </span>
+      </span>
+      <span className={`${dims.roller} rounded-full bg-[#2a1d14]`} />
     </span>
   );
 }

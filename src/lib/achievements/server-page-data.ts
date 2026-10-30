@@ -4,33 +4,37 @@ import { listPracticeCardsForUser, listPracticeSessionsForUser } from "@/lib/pra
 import { loadProfileRecords } from "@/lib/profile/queries";
 import { SAMPLE_NAME, SHOW_SAMPLE_PROFILE_TO_GUESTS, sampleAchievementsInput } from "@/lib/profile/sample-profile";
 import { ALL_SESSIONS, profileLessons } from "@/lib/profile/server-page-data";
-import { buildAchievementsModel, type AchievementsModel } from "./achievements-model";
+import { buildAchievementsModel, type AchievementsInput, type AchievementsModel } from "./achievements-model";
+import { buildScrolls } from "./scrolls-model";
 
-/** The signed-in learner's badges; guests get the development sample (or null when that's off). */
-export async function loadAchievementsModel(): Promise<{ model: AchievementsModel; sample: boolean; name: string } | null> {
+export type AchievementsPageData = {
+  model: AchievementsModel;
+  scrolls: ReturnType<typeof buildScrolls>;
+  sample: boolean;
+  name: string;
+};
+
+function build(input: AchievementsInput, sample: boolean, name: string): AchievementsPageData {
+  const model = buildAchievementsModel(input);
+  return { model, scrolls: buildScrolls(input, model), sample, name };
+}
+
+/** The signed-in learner's badges and scrolls; guests get the development sample (or null when that's off). */
+export async function loadAchievementsModel(): Promise<AchievementsPageData | null> {
   const user = await getCurrentUser();
   const lessons = profileLessons();
   const now = new Date();
   if (!user) {
-    return SHOW_SAMPLE_PROFILE_TO_GUESTS
-      ? { model: buildAchievementsModel(sampleAchievementsInput(lessons, now)), sample: true, name: SAMPLE_NAME }
-      : null;
+    return SHOW_SAMPLE_PROFILE_TO_GUESTS ? build(sampleAchievementsInput(lessons, now), true, SAMPLE_NAME) : null;
   }
   const [records, cards, history] = await Promise.all([
     loadProfileRecords(user.id),
     listPracticeCardsForUser(user.id),
     listPracticeSessionsForUser(user.id, ALL_SESSIONS),
   ]);
-  return {
-    model: buildAchievementsModel({
-      lessons,
-      completions: records.completions,
-      projectLinks: records.projectLinks,
-      cards,
-      history,
-      now,
-    }),
-    sample: false,
-    name: user.name,
-  };
+  return build(
+    { lessons, completions: records.completions, projectLinks: records.projectLinks, cards, history, now },
+    false,
+    user.name,
+  );
 }

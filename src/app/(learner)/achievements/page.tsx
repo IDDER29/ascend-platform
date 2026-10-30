@@ -31,7 +31,7 @@ export default async function AchievementsPage() {
     );
   }
 
-  const { model, sample, name } = loaded;
+  const { model, scrolls, sample, name } = loaded;
 
   return (
     <main className={MAIN}>
@@ -57,7 +57,7 @@ export default async function AchievementsPage() {
           </p>
         </header>
 
-        <Chest model={model} name={name} />
+        <Chest model={model} scrolls={scrolls} name={name} />
       </div>
     </main>
   );

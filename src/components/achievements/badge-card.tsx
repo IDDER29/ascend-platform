@@ -8,11 +8,27 @@ function shortDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function CriterionRow({ c, partGlyph }: { c: Criterion; partGlyph: string | null }) {
+export function CriterionRow({
+  c,
+  partGlyph,
+  onSelectPart,
+}: {
+  c: Criterion;
+  partGlyph: string | null;
+  /** When given, a combination's part selects that badge instead of linking to its card. */
+  onSelectPart?: (id: string) => void;
+}) {
+  const partName = c.text.replace(/^Earn /, "");
   const marker = partGlyph ? (
-    <a href={`#${badgeAnchor(c.badgeId!)}`} aria-label={`Go to ${c.text.replace(/^Earn /, "")}`} className="shrink-0">
-      <Medallion glyph={partGlyph} earned={c.done} size="xs" />
-    </a>
+    onSelectPart ? (
+      <button type="button" onClick={() => onSelectPart(c.badgeId!)} aria-label={`Show ${partName}`} className="shrink-0 rounded-full">
+        <Medallion glyph={partGlyph} earned={c.done} size="xs" />
+      </button>
+    ) : (
+      <a href={`#${badgeAnchor(c.badgeId!)}`} aria-label={`Go to ${partName}`} className="shrink-0">
+        <Medallion glyph={partGlyph} earned={c.done} size="xs" />
+      </a>
+    )
   ) : (
     <span
       aria-hidden="true"

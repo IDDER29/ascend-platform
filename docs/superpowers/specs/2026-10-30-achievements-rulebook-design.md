@@ -64,3 +64,18 @@ Progress, Profile, the lesson list, homepage, ShellForge, the command
 palette and notifications use topic names instead of levels. The topic-
 complete page lost its fake XP level-up; its other made-up numbers
 (quiz score, streak) still need their own pass.
+
+## Alternative layout: the track (`/achievementsv5`)
+Same 17 badges, same rules, laid out to answer "how close am I?" at a
+glance.
+- **The track (dark):** one lane per group. Each open badge sits along
+  its lane at how far along you are (`ratio`); a lime finish line closes
+  the lane and earned badges sit past it (on phones, in an "Earned" row
+  under the lane). Crowded badges take a second row, then nudge right just
+  enough to stay readable (`track-layout.ts`, tested). Badges slide in
+  from the start once on load (skipped with reduced motion).
+- **Spotlight:** the selected badge (default: the closest) as a large
+  medallion, its status ("80% of the way there", "1 of 2 conditions met")
+  and its rule as a checklist with the next step. Selecting a combination
+  rings the badges it needs on the track; their medallions in the
+  checklist select them.

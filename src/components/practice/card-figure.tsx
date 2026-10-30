@@ -21,7 +21,7 @@ function Bit({ value, i }: { value: string; i: number }) {
   return (
     <span
       style={step(i)}
-      className={`fig-in flex size-9 items-center justify-center rounded-lg border-2 text-[15px] font-bold sm:size-10 ${MONO} ${
+      className={`fig-in flex size-8 items-center justify-center rounded-md border-2 text-[14px] font-bold ${MONO} ${
         on
           ? "border-[var(--coach-ink)] bg-[var(--coach-ink)] text-[var(--coach-bg)]"
           : "border-[var(--coach-border-strong)] bg-[var(--coach-surface)] text-[var(--coach-ink-muted)]"
@@ -36,9 +36,9 @@ function BitsFigure({ bits, group, caption }: { bits: string; group?: number; ca
   let i = 0;
   return (
     <div>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2.5">
         {groupBits(bits, group ?? 0).map((g, gi) => (
-          <div key={gi} className="flex gap-1.5">
+          <div key={gi} className="flex gap-1">
             {g.split("").map((b, bi) => (
               <Bit key={bi} value={b} i={i++} />
             ))}
@@ -260,7 +260,7 @@ export function CardFigureView({ figure }: { figure: CardFigure }) {
     }
   })();
   return (
-    <figure className="m-0 overflow-x-auto rounded-xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-4">
+    <figure className="m-0 overflow-x-auto rounded-xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-3">
       {body}
     </figure>
   );

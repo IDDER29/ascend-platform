@@ -116,9 +116,9 @@ function KindScopeRow({ question, subtitle }: { question: PracticeItem; subtitle
 }
 
 function flashcardFrontSize(front: string): string {
-  if (front.length <= 16) return "text-4xl leading-none sm:text-5xl";
-  if (front.length <= 40) return "text-[28px] leading-[1.15] sm:text-[32px]";
-  return "text-[22px] leading-[1.25] sm:text-2xl";
+  if (front.length <= 16) return "text-[40px] leading-[1.05]";
+  if (front.length <= 40) return "text-[30px] leading-[1.12]";
+  return "text-[24px] leading-[1.22]";
 }
 
 const SEGMENT_CLASS: Record<SessionSegment, string> = {
@@ -824,7 +824,7 @@ export function PracticeCoachV2SessionLive({
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-6">
-      <div className="mx-auto flex w-full max-w-[680px] flex-col gap-5">
+      <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4">
         <SessionTopBar
           segments={progress.segments}
           done={progress.done}
@@ -857,33 +857,37 @@ export function PracticeCoachV2SessionLive({
 
         {question.kind === "flashcard" ? (
           // One card that flips over on Reveal (or a click); instant when the device asks for less motion.
-          <div key={question.id} className="relative [perspective:1100px]">
-            <div aria-hidden className="absolute inset-x-4 top-3 -bottom-3 rounded-[20px] bg-[var(--coach-border)]" />
+          // Portrait, like a real card: 5:7, as wide as fits both the column and the screen height.
+          <div
+            key={question.id}
+            className="relative mx-auto w-[min(380px,100%,calc((100dvh-250px)*5/7))] [perspective:1100px]"
+          >
+            <div aria-hidden className="absolute inset-x-4 top-3 -bottom-3 rounded-[22px] bg-[var(--coach-border)]" />
             <div
               onClick={() => !revealed && setRevealed(true)}
               className={`relative grid [transform-style:preserve-3d] ${revealed ? "flashcard-flipped" : "cursor-pointer"}`}
             >
               <div
                 inert={revealed}
-                className="flashcard-face flex min-h-[260px] min-w-0 flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 [backface-visibility:hidden] [grid-area:1/1] sm:p-8"
+                className="flashcard-face flex aspect-[5/7] min-w-0 flex-col gap-3 rounded-[22px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 [backface-visibility:hidden] [grid-area:1/1] sm:p-8"
               >
                 <span className="font-[family-name:var(--font-plex-mono)] text-[11px] uppercase tracking-[0.08em] text-[var(--coach-ink-muted)]">
                   Front
                 </span>
                 <h1
-                  className={`m-0 font-[family-name:var(--font-bricolage)] font-extrabold tracking-[-0.02em] text-pretty break-words ${flashcardFrontSize(question.front)}`}
+                  className={`m-0 my-auto font-[family-name:var(--font-bricolage)] font-extrabold tracking-[-0.02em] text-pretty break-words ${flashcardFrontSize(question.front)}`}
                 >
                   {question.front}
                 </h1>
                 <CodeBlock lines={question.frontCode} />
-                <p className="m-0 mt-auto text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
+                <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
                   Answer in your head first, then turn the card over and be honest with yourself.
                 </p>
               </div>
               <div
                 inert={!revealed}
                 aria-live="polite"
-                className="flashcard-face flex min-h-[260px] min-w-0 flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-flash-back)] p-6 [backface-visibility:hidden] [grid-area:1/1] [transform:rotateY(180deg)] sm:p-8"
+                className="flashcard-face flex aspect-[5/7] min-w-0 flex-col gap-3 rounded-[22px] border-2 border-[var(--coach-border)] bg-[var(--coach-flash-back)] p-6 [backface-visibility:hidden] [grid-area:1/1] [transform:rotateY(180deg)] sm:p-8"
               >
                 <span className="font-[family-name:var(--font-plex-mono)] text-[11px] uppercase tracking-[0.08em] text-[var(--coach-tint-blue-ink)]">
                   Back
@@ -891,7 +895,7 @@ export function PracticeCoachV2SessionLive({
                 <p className="m-0 text-[14px] font-semibold text-[var(--coach-ink-muted)]">{question.front}</p>
                 {revealed ? (
                   <>
-                    <p className="m-0 text-xl leading-normal sm:text-[22px]">{question.back}</p>
+                    <p className="m-0 text-[19px] leading-snug">{question.back}</p>
                     {question.figure ? <CardFigureView figure={question.figure} /> : null}
                   </>
                 ) : null}

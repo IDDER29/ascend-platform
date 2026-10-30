@@ -14,9 +14,10 @@ export interface Badge {
   progressPct?: number;
 }
 
-/** Catalog only — Ascend does not award badges yet. Every status is locked. */
+/** Catalog. Project badges (Gate Builder, Ship It) are awarded from the profile; the rest are not awarded yet. */
 export const BADGES: Badge[] = [
   { id: "first-steps", glyph: "✦", label: "First Steps", description: "Complete your first concept", rarity: "common", status: "locked", meta: "not awarded yet" },
+  { id: "gate-builder", glyph: "⊕", label: "Gate Builder", description: "Ship the half adder project", rarity: "common", status: "locked", meta: "not awarded yet" },
   { id: "groundwork", glyph: "◇", label: "Groundwork", description: "Finish Level 00 · Bits & Logic", rarity: "common", status: "locked", meta: "not awarded yet" },
   { id: "machine-head", glyph: "▣", label: "Machine Head", description: "Finish Level 01 · Machine & Memory", rarity: "common", status: "locked", meta: "not awarded yet" },
   { id: "memory-master", glyph: "◆", label: "Memory Master", description: "Master pointers & the heap", rarity: "rare", status: "locked", meta: "not awarded yet" },

@@ -146,3 +146,47 @@ export const practiceSettings = pgTable("practice_settings", {
   dailyGoal: integer("daily_goal").notNull().default(20),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
+
+export const profileSettings = pgTable("profile_settings", {
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  isPublic: boolean("is_public").notNull().default(false),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const profileLinks = pgTable(
+  "profile_links",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    label: text("label"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("profile_links_user_idx").on(t.userId)],
+);
+
+export const projectLinks = pgTable(
+  "project_links",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    projectId: text("project_id").notNull(),
+    repoUrl: text("repo_url").notNull(),
+    addedAt: timestamp("added_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("project_links_user_project_idx").on(t.userId, t.projectId)],
+);
+
+export const ownProjects = pgTable(
+  "own_projects",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    url: text("url").notNull(),
+    tags: text("tags").notNull().default("[]"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("own_projects_user_idx").on(t.userId)],
+);

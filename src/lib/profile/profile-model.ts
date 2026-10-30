@@ -1,0 +1,283 @@
+/**
+ * Client-safe model for the profile: who the learner is and what they have
+ * built, from real records only — profile fields, lesson completions,
+ * project links, own projects, earned badges and Practice session counts.
+ * Private numbers (retention, accuracy, due cards) belong to Progress.
+ */
+import { BADGES } from "@/lib/achievements-data";
+import { LEVELS, levelIds, type LevelId } from "@/lib/content/schema";
+import { displayUrl, linkKind, linkLabel, type LinkKind } from "./links";
+import { CURRICULUM_PROJECTS, type CurriculumProject } from "./projects";
+import { PROFILE_ROUTES } from "./routes";
+
+const LOCALE = "en-US";
+
+/** What finishing each level means, said as an ability. */
+const LEVEL_SKILLS: Record<LevelId, string> = {
+  "level-00-bits-logic": "Explains bits, binary and logic gates, and builds an adder from them",
+  "level-01-machine-memory": "Traces how a CPU runs a program and where its data lives",
+  "level-02-the-c-language": "Writes C that manages its own memory with pointers",
+  "level-03-systems-software": "Builds systems software with processes, pipes and signals",
+};
+
+export type ProfileViewer = "owner" | "visitor";
+
+export type ProfileLesson = { key: string; level: string; slug: string; title: string; href: string };
+
+export type ProfileInput = {
+  viewer: ProfileViewer;
+  profile: { name: string; username: string; bio: string; joinedAt: string };
+  isPublic: boolean;
+  /** Every lesson, in curriculum order. */
+  lessons: ProfileLesson[];
+  completions: { key: string; completedAt: string }[];
+  projectLinks: { projectId: string; repoUrl: string; addedAt: string }[];
+  ownProjects: { id: string; title: string; description: string; url: string; tags: string[]; createdAt: string }[];
+  links: { id: string; url: string; label: string | null }[];
+  badges: { badgeId: string; earnedAt: string }[];
+  practice: { sessions: number; firstAt: string | null; tenthAt: string | null };
+};
+
+export type ProfileLink = { id: string; url: string; kind: LinkKind; label: string };
+
+/** shipped: requirement met + link · ready: met, link missing (owner only) · next: first not yet reached (owner only). */
+export type ProjectState = "shipped" | "ready" | "next";
+
+export type ProfileProject = {
+  id: string;
+  title: string;
+  proves: string;
+  levelNumber: string;
+  levelName: string;
+  state: ProjectState;
+  repoUrl: string | null;
+  repoLabel: string | null;
+  shippedLabel: string | null;
+  badge: { label: string; glyph: string } | null;
+  href: string;
+};
+
+export type ProfileSkill = {
+  levelNumber: string;
+  levelName: string;
+  statement: string;
+  state: "done" | "current" | "next";
+  done: number;
+  total: number;
+};
+
+export type JourneyKind = "joined" | "lesson" | "level" | "project" | "practice";
+
+export type JourneyEvent = { at: string; dateLabel: string; text: string; kind: JourneyKind };
+
+export type ProfileModel = {
+  owner: boolean;
+  isPublic: boolean;
+  publicPath: string;
+  hero: {
+    name: string;
+    username: string;
+    bio: string;
+    /** "Level 01 · Machine & Memory"; null before the first lesson. */
+    levelLabel: string | null;
+    links: ProfileLink[];
+  };
+  snapshot: {
+    lessonsDone: number;
+    lessonTotal: number;
+    projectsShipped: number;
+    ownProjects: number;
+    memberSince: string;
+  };
+  curriculumProjects: ProfileProject[];
+  projectTotal: number;
+  ownProjects: (ProfileInput["ownProjects"][number] & { urlLabel: string })[];
+  skills: ProfileSkill[];
+  achievements: { id: string; label: string; glyph: string; description: string; earnedLabel: string }[];
+  journey: JourneyEvent[];
+  /** Owner only: the next lesson to open. */
+  next: { title: string; href: string } | null;
+  /** Badges the records earn that aren't stored yet — the server awards these, dated when shipped. */
+  eligibleBadges: { badgeId: string; earnedAt: string }[];
+};
+
+const JOURNEY_MAX = 8;
+
+function levelNumber(id: string): string {
+  return id.match(/level-(\d+)/)?.[1] ?? "";
+}
+
+function levelName(id: string): string {
+  return LEVELS[id as LevelId]?.name ?? id;
+}
+
+function shortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(LOCALE, { month: "short", day: "numeric" });
+}
+
+function latest(isos: string[]): string {
+  return isos.reduce((a, b) => (Date.parse(b) > Date.parse(a) ? b : a));
+}
+
+export function buildProfileModel(input: ProfileInput): ProfileModel {
+  const { viewer, profile, lessons, completions } = input;
+  const owner = viewer === "owner";
+  const completedAt = new Map(completions.map((c) => [c.key, c.completedAt]));
+  const isDone = (l: ProfileLesson) => completedAt.has(l.key);
+  const doneLessons = lessons.filter(isDone);
+  const firstOpen = lessons.find((l) => !isDone(l)) ?? null;
+
+  // Levels that have lessons, in order.
+  const levels = levelIds
+    .map((id) => ({ id, lessons: lessons.filter((l) => l.level === id) }))
+    .filter((level) => level.lessons.length > 0);
+  const levelFinishedAt = new Map<string, string>();
+  for (const level of levels) {
+    if (level.lessons.every(isDone)) {
+      levelFinishedAt.set(level.id, latest(level.lessons.map((l) => completedAt.get(l.key)!)));
+    }
+  }
+
+  // Curriculum projects
+  const linkFor = new Map(input.projectLinks.map((p) => [p.projectId, p]));
+  const earned = new Set(input.badges.map((b) => b.badgeId));
+  const requirementMetAt = (project: CurriculumProject): string | null => {
+    const { requires } = project;
+    if (requires.kind === "level") return levelFinishedAt.get(requires.level) ?? null;
+    return completedAt.get(`${requires.level}/${requires.slug}`) ?? null;
+  };
+  let nextShown = false;
+  const allProjects: ProfileProject[] = [];
+  const eligibleBadges: ProfileModel["eligibleBadges"] = [];
+  const shippedAt = new Map<string, string>();
+  for (const project of CURRICULUM_PROJECTS) {
+    const metAt = requirementMetAt(project);
+    const link = linkFor.get(project.id);
+    let state: ProjectState | null = null;
+    if (metAt && link) state = "shipped";
+    else if (metAt) state = owner ? "ready" : null;
+    else if (owner && !nextShown) {
+      state = "next";
+      nextShown = true;
+    }
+    const badge = BADGES.find((b) => b.id === project.badgeId);
+    if (state === "shipped") {
+      shippedAt.set(project.id, latest([metAt!, link!.addedAt]));
+      if (!earned.has(project.badgeId) && badge) {
+        eligibleBadges.push({ badgeId: project.badgeId, earnedAt: shippedAt.get(project.id)! });
+      }
+    }
+    if (!state) continue;
+    const { requires } = project;
+    const lesson =
+      requires.kind === "lesson" ? lessons.find((l) => l.key === `${requires.level}/${requires.slug}`) : null;
+    allProjects.push({
+      id: project.id,
+      title: project.title,
+      proves: project.proves,
+      levelNumber: levelNumber(project.level),
+      levelName: levelName(project.level),
+      state,
+      repoUrl: state === "shipped" ? link!.repoUrl : null,
+      repoLabel: state === "shipped" ? displayUrl(link!.repoUrl) : null,
+      shippedLabel: state === "shipped" ? shortDate(shippedAt.get(project.id)!) : null,
+      badge: badge ? { label: badge.label, glyph: badge.glyph } : null,
+      href: project.href ?? lesson?.href ?? "/paths",
+    });
+  }
+
+  // Skills
+  let currentGiven = false;
+  const skills = levels.map((level): ProfileSkill => {
+    const done = level.lessons.filter(isDone).length;
+    let state: ProfileSkill["state"] = "next";
+    if (done === level.lessons.length) state = "done";
+    else if (!currentGiven) {
+      state = "current";
+      currentGiven = true;
+    }
+    return {
+      levelNumber: levelNumber(level.id),
+      levelName: levelName(level.id),
+      statement: LEVEL_SKILLS[level.id],
+      state,
+      done,
+      total: level.lessons.length,
+    };
+  });
+
+  // Achievements: stored badges plus the ones about to be awarded.
+  const badgeRows = [...input.badges, ...eligibleBadges].sort((a, b) => Date.parse(b.earnedAt) - Date.parse(a.earnedAt));
+  const achievements = badgeRows.flatMap((row) => {
+    const badge = BADGES.find((b) => b.id === row.badgeId);
+    return badge
+      ? [{ id: badge.id, label: badge.label, glyph: badge.glyph, description: badge.description, earnedLabel: shortDate(row.earnedAt) }]
+      : [];
+  });
+
+  // Journey: real dated events, newest first; joining always closes it.
+  const events: Omit<JourneyEvent, "dateLabel">[] = [];
+  const firstLesson = [...doneLessons].sort(
+    (a, b) => Date.parse(completedAt.get(a.key)!) - Date.parse(completedAt.get(b.key)!),
+  )[0];
+  if (firstLesson) {
+    events.push({ at: completedAt.get(firstLesson.key)!, text: `First lesson — ${firstLesson.title}`, kind: "lesson" });
+  }
+  for (const [id, at] of levelFinishedAt) {
+    events.push({ at, text: `Finished Level ${levelNumber(id)} · ${levelName(id)}`, kind: "level" });
+  }
+  for (const project of allProjects) {
+    if (project.state === "shipped") {
+      events.push({ at: shippedAt.get(project.id)!, text: `Shipped ${project.title}`, kind: "project" });
+    }
+  }
+  if (input.practice.firstAt) {
+    events.push({ at: input.practice.firstAt, text: "First review session in Practice", kind: "practice" });
+  }
+  if (input.practice.tenthAt) {
+    events.push({ at: input.practice.tenthAt, text: "10 review sessions in Practice", kind: "practice" });
+  }
+  events.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  const journey = [
+    ...events.slice(0, JOURNEY_MAX - 1),
+    { at: profile.joinedAt, text: "Joined Ascend", kind: "joined" as const },
+  ].map((e) => ({ ...e, dateLabel: shortDate(e.at) }));
+
+  const allDone = lessons.length > 0 && !firstOpen;
+  const levelLabel =
+    doneLessons.length === 0
+      ? null
+      : allDone
+        ? "Finished the curriculum"
+        : `Level ${levelNumber(firstOpen!.level)} · ${levelName(firstOpen!.level)}`;
+
+  const shippedCount = allProjects.filter((p) => p.state === "shipped").length;
+
+  return {
+    owner,
+    isPublic: input.isPublic,
+    publicPath: PROFILE_ROUTES.public(profile.username),
+    hero: {
+      name: profile.name,
+      username: profile.username,
+      bio: profile.bio.trim(),
+      levelLabel,
+      links: input.links.map((l) => ({ id: l.id, url: l.url, kind: linkKind(l.url), label: linkLabel(l.url, l.label) })),
+    },
+    snapshot: {
+      lessonsDone: doneLessons.length,
+      lessonTotal: lessons.length,
+      projectsShipped: shippedCount,
+      ownProjects: input.ownProjects.length,
+      memberSince: new Date(profile.joinedAt).toLocaleDateString(LOCALE, { month: "short", year: "numeric" }),
+    },
+    curriculumProjects: allProjects,
+    projectTotal: CURRICULUM_PROJECTS.length,
+    ownProjects: input.ownProjects.map((p) => ({ ...p, urlLabel: displayUrl(p.url) })),
+    skills,
+    achievements,
+    journey,
+    next: owner && firstOpen ? { title: firstOpen.title, href: firstOpen.href } : null,
+    eligibleBadges,
+  };
+}

@@ -137,3 +137,47 @@ export const practiceSettings = sqliteTable("practice_settings", {
   dailyGoal: integer("daily_goal").notNull().default(20),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
+
+export const profileSettings = sqliteTable("profile_settings", {
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  isPublic: integer("is_public", { mode: "boolean" }).notNull().default(false),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});
+
+export const profileLinks = sqliteTable(
+  "profile_links",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    label: text("label"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [index("profile_links_user_idx").on(t.userId)],
+);
+
+export const projectLinks = sqliteTable(
+  "project_links",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    projectId: text("project_id").notNull(),
+    repoUrl: text("repo_url").notNull(),
+    addedAt: integer("added_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [uniqueIndex("project_links_user_project_idx").on(t.userId, t.projectId)],
+);
+
+export const ownProjects = sqliteTable(
+  "own_projects",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    url: text("url").notNull(),
+    tags: text("tags").notNull().default("[]"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [index("own_projects_user_idx").on(t.userId)],
+);

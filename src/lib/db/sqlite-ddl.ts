@@ -132,4 +132,39 @@ CREATE TABLE IF NOT EXISTS practice_settings (
   daily_goal INTEGER NOT NULL DEFAULT 20,
   updated_at INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS profile_settings (
+  user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  is_public INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS profile_links (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  url TEXT NOT NULL,
+  label TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS profile_links_user_idx ON profile_links(user_id);
+
+CREATE TABLE IF NOT EXISTS project_links (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL,
+  repo_url TEXT NOT NULL,
+  added_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS project_links_user_project_idx ON project_links(user_id, project_id);
+
+CREATE TABLE IF NOT EXISTS own_projects (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  url TEXT NOT NULL,
+  tags TEXT NOT NULL DEFAULT '[]',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS own_projects_user_idx ON own_projects(user_id);
 `;

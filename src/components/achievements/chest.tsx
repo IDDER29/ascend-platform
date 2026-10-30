@@ -3,10 +3,9 @@
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { CriterionRow } from "@/components/achievements/badge-card";
-import { ProgressBar } from "@/components/achievements/progress-bar";
 import type { AchievementsModel, BadgeView } from "@/lib/achievements/achievements-model";
 import { byPrecedence, rackRows } from "@/lib/achievements/ribbons";
+import { CriterionRow } from "./criterion-row";
 import { Medal } from "./medal";
 import { useSeenDecorations } from "./use-seen-decorations";
 import { Ribbon } from "./ribbon";
@@ -59,7 +58,7 @@ function Citation({
     <section
       aria-live="polite"
       aria-labelledby="citation-title"
-      className="flex min-w-0 flex-col items-center gap-4 rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 text-center sm:p-7 lg:sticky lg:top-6"
+      className="flex min-w-0 flex-col items-center gap-4 rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 text-center sm:p-7"
     >
       <Medal id={badge.id} group={badge.group} glyph={badge.glyph} earned={badge.earned} />
       <div className="flex flex-col gap-1">
@@ -91,11 +90,17 @@ function Citation({
               <span className="truncate font-mono">{badge.repoLabel}</span>
             </a>
           ) : null}
+          <h3 className="m-0 mt-3 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">How it was earned</h3>
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {badge.criteria.map((c) => (
+              <CriterionRow key={c.text} c={c} partGlyph={c.badgeId ? glyphOf(c.badgeId) : null} onSelectPart={onSelect} />
+            ))}
+          </ul>
         </div>
       ) : (
         <div className="flex w-full flex-col gap-3 border-t border-[var(--coach-divider)] pt-4 text-left">
           <h3 className="m-0 text-[12.5px] font-semibold text-[var(--coach-ink-muted)]">
-            {badge.criteria.length > 1 ? "Awarded for meeting all of these" : "Awarded for"}
+            {badge.criteria.length > 1 ? "How to earn it: meet all of these" : "How to earn it"}
           </h3>
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {badge.criteria.map((c) => (
@@ -140,7 +145,7 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
 
   return (
     <div className="flex min-w-0 flex-col gap-8">
-      <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
+      <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
         <section
           aria-labelledby="chest-title"
           className="relative flex min-h-[300px] min-w-0 flex-col items-center justify-center gap-7 overflow-hidden rounded-[24px] bg-[var(--coach-hero-bg)] px-5 py-9 text-[var(--coach-hero-ink)] sm:px-10"
@@ -168,7 +173,7 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
                           type="button"
                           aria-pressed={selectedId === badge.id}
                           aria-label={`${badge.label}, awarded ${badge.earnedLabel}${seen.isNew(badge.id) ? ", new" : ""}`}
-                          title={badge.label}
+                          title={`${badge.label}: ${badge.criteria.map((c) => c.text).join("; ")}`}
                           onClick={() => select(badge.id)}
                           className={`relative block rounded-[4px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--coach-hero-bg)] ${
                             selectedId === badge.id
@@ -212,36 +217,51 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
           <h2 id="to-earn-title" className="m-0 font-display text-[22px] font-extrabold tracking-[-0.02em]">
             Still to earn
           </h2>
-          <p className="m-0 text-[14px] text-[var(--coach-ink-secondary)]">Closest first. Each one says exactly what it takes.</p>
+          <p className="m-0 max-w-[640px] text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">
+            Every decoration has its own rule. Here is exactly what each one asks for, closest first.
+          </p>
           <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 md:grid-cols-2">
             {toEarn.map((badge) => {
-              const step = badge.criteria.find((c) => !c.done)!;
+              const met = badge.criteria.filter((c) => c.done).length;
               return (
-                <li key={badge.id}>
+                <li
+                  key={badge.id}
+                  className={`flex h-full min-w-0 flex-col gap-3 rounded-2xl border-2 bg-[var(--coach-surface)] p-4 ${
+                    selectedId === badge.id ? "border-[var(--coach-blue)]" : "border-[var(--coach-border)]"
+                  }`}
+                >
                   <button
                     type="button"
                     aria-pressed={selectedId === badge.id}
                     onClick={() => select(badge.id)}
-                    className={`flex h-full w-full min-w-0 items-start gap-3 rounded-2xl border-2 bg-[var(--coach-surface)] p-4 text-left ${
-                      selectedId === badge.id ? "border-[var(--coach-blue)]" : "border-[var(--coach-border)] hover:border-[var(--coach-border-strong)]"
-                    }`}
+                    className="flex min-w-0 items-center gap-3 rounded-lg text-left hover:underline"
                   >
-                    <span className="mt-1">
-                      <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} size="small" muted />
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col gap-1">
-                      <span className="text-[15px] font-semibold">{badge.label}</span>
-                      <span className="text-[13px] leading-snug text-[var(--coach-ink-secondary)]">{step.text}</span>
-                      {step.progress ? (
-                        <span className="flex items-center gap-2">
-                          <ProgressBar done={step.progress.done} total={step.progress.total} />
-                          <span className="shrink-0 text-[12px] text-[var(--coach-ink-muted)]">
-                            {step.progress.done} of {step.progress.total}
-                          </span>
-                        </span>
-                      ) : null}
-                    </span>
+                    <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} size="small" muted />
+                    <span className="min-w-0 flex-1 text-[15px] font-semibold">{badge.label}</span>
+                    {badge.criteria.length > 1 ? (
+                      <span className="shrink-0 text-[12px] text-[var(--coach-ink-muted)]">
+                        {met} of {badge.criteria.length} met
+                      </span>
+                    ) : null}
                   </button>
+                  <div className="flex flex-col gap-2">
+                    <h3 className="m-0 text-[12px] font-semibold text-[var(--coach-ink-muted)]">
+                      {badge.criteria.length > 1 ? "How to earn it: meet all of these" : "How to earn it"}
+                    </h3>
+                    <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+                      {badge.criteria.map((c) => (
+                        <CriterionRow key={c.text} c={c} partGlyph={c.badgeId ? glyphOf(c.badgeId) : null} onSelectPart={select} />
+                      ))}
+                    </ul>
+                  </div>
+                  {badge.action ? (
+                    <Link
+                      href={badge.action.href}
+                      className="mt-auto inline-flex h-9 w-fit items-center rounded-lg bg-[var(--coach-solid-btn-bg)] px-3.5 text-[13px] font-bold text-[var(--coach-solid-btn-ink)] no-underline shadow-[0_2px_0_var(--coach-solid-btn-shadow)]"
+                    >
+                      {badge.action.label}
+                    </Link>
+                  ) : null}
                 </li>
               );
             })}

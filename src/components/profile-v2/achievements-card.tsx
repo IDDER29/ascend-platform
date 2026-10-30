@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Ribbon } from "@/components/achievements-v6/ribbon";
+import { Ribbon } from "@/components/achievements/ribbon";
 import { byPrecedence, rackRows } from "@/lib/achievements/ribbons";
 import type { ProfileModel } from "@/lib/profile/profile-model";
 import { CARD, CARD_TITLE, MUTED_LINE } from "./styles";

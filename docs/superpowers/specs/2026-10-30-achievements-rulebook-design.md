@@ -112,3 +112,17 @@ Finishing touches:
   ribbon rack (highest first) plus the newest three by name and date, on
   the owner's page and the public `/u/<username>` alike; "Open your chest"
   links here.
+
+## Final (2026-10-30): one page, every rule in plain sight
+The user removed the other versions: `/achievementsv1`, `/achievementsv4`,
+`/achievementsv5` (and v6) now redirect to `/achievements` (they're in git
+history). What the chest had to get right was showing what to do for every
+decoration:
+- **Still to earn:** each card shows the badge's complete rule as a
+  checklist (ticked and dated, or with progress) and a button for the next
+  step; the name opens its medal and citation.
+- **Earned:** the citation ends with "How it was earned" — the same rule,
+  ticked with dates.
+- **Combinations** borrow the next step of the first badge they still need
+  (Builder → what Shell Smith needs next).
+- Hovering a ribbon on the chest shows its name and rule.

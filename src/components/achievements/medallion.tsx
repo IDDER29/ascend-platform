@@ -27,10 +27,3 @@ export function Medallion({
     </span>
   );
 }
-
-export function badgeAnchor(id: string): string {
-  return `badge-${id}`;
-}
-
-/** Highlight for the card a link jumped to. */
-export const TARGET_RING = "scroll-mt-6 target:ring-2 target:ring-[var(--coach-blue)] target:ring-offset-2 target:ring-offset-[var(--coach-bg)]";

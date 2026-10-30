@@ -246,7 +246,8 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
       case "badges":
         return rule.ids.map((id) => {
           const part = view(ACHIEVEMENTS.find((a) => a.id === id)!);
-          return criterion({ text: `Earn ${part.label}`, done: part.earned, at: part.earnedAt, badgeId: id });
+          // The next step toward a combination is the next step of the part it still needs.
+          return criterion({ text: `Earn ${part.label}`, done: part.earned, at: part.earnedAt, badgeId: id, action: part.action });
         });
     }
   };

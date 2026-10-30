@@ -123,6 +123,9 @@ test("combination badges list their parts and are earned when the last part is",
 
   const half = model({ completions: all, projectLinks: links.slice(0, 1) });
   assert.deepEqual(badge(half, "builder").criteria.map((c) => c.done), [true, false]);
+  // A combination's next step is the next step of the first badge it still needs.
+  assert.deepEqual(badge(half, "builder").action, badge(half, "ship-it").action);
+  assert.equal(badge(half, "builder").action?.href, "/profile");
   assert.equal(badge(half, "whole-machine").earned, false);
 });
 

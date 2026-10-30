@@ -29,9 +29,8 @@ completions and Practice history), `/achievements` (the chest: every earned badg
 as an original ribbon bar on a uniform, highest honour first, each with its
 full medal and a citation written from its own rule; below, the badges
 still to earn with their exact rule and progress. 17 badges, each with a
-self-contained rule checked from real records — no levels. Earlier takes
-stay reachable: `/achievementsv1` catalog, `/achievementsv4` rule book,
-`/achievementsv5` track),
+self-contained rule checked from real records — no levels. Every
+decoration shows exactly how to earn it, with progress and the next step),
 `/bookmarks` (real filter tabs by kind, and a genuine remove-bookmark
 interaction backed by client state — not just a static list; saved
 lessons/snippets link to their real destinations, saved resources without
@@ -170,7 +169,6 @@ src/lib/
   content/lessons.ts      getLesson / getAllLessons / getLessonNavigation (cross-level prev/next)
   mdx-components.tsx      Maps custom tags (<Visual>, <CodeBlock>, <TruthTable>, ...) for MDXRemote
   playground-snippets.ts  Known-good C snippets + their real compiled output
-  achievements-data.ts    The old 25-idea badge catalog, used only by /achievementsv1
   achievements/           The 17 real badges and their rules (catalog.ts), the model that
                           checks them, and the ribbon designs for the chest
   bookmarks-data.ts       Seed bookmark items

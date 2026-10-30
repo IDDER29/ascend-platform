@@ -12,7 +12,8 @@ const nextConfig: NextConfig = {
       { source: "/practicev2/:rest*", destination: "/practice/:rest*", permanent: true },
       { source: "/progressv2", destination: "/progress", permanent: true },
       { source: "/profilev2", destination: "/profile", permanent: true },
-      { source: "/achievementsv6", destination: "/achievements", permanent: true },
+      // Earlier achievements explorations; the chest is the one page now.
+      { source: "/achievementsv:n(\\d+)", destination: "/achievements", permanent: true },
       {
         source: `/practice/:path(${OLD_PRACTICE_PATHS})`,
         destination: "/practice/paths/:path",

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Chest } from "@/components/achievements-v6/chest";
+import { Chest } from "@/components/achievements/chest";
 import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
 import { loadAchievementsModel } from "@/lib/achievements/server-page-data";
 import { SIGNIN_HREF } from "@/lib/routes";

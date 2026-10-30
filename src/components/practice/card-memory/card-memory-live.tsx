@@ -135,7 +135,7 @@ export function CardMemoryLive({
         <p className="m-0 text-[13px] leading-relaxed text-[var(--coach-ink-muted)]">
           Each right answer makes the memory last longer, so reviews can get further apart; a miss makes it fragile
           again. Estimated from your reviews, not measured.{" "}
-          <Link href="/dashboardv2" className="underline underline-offset-2">
+          <Link href="/dashboard" className="underline underline-offset-2">
             Your whole deck
           </Link>
         </p>

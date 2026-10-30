@@ -70,7 +70,7 @@ function writeCollapsed(next: boolean) {
 }
 
 const LEARN_ITEMS = [
-  { href: "/dashboard", label: "Continue", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Today", icon: LayoutDashboard },
   { href: PATHS_HREF, label: "Paths", icon: Map },
   { href: "/practice", label: "Practice", icon: Swords },
 ];

@@ -24,7 +24,7 @@ const COMMUNITY = [
 ] as const;
 
 const ACCOUNT = [
-  { href: "/dashboard", label: "Continue" },
+  { href: "/dashboard", label: "Today" },
   { href: "/progress", label: "Progress" },
   { href: "/profile", label: "Profile" },
   { href: SIGNIN_HREF, label: "Sign in" },

@@ -58,7 +58,7 @@ const ACTIONS: PaletteAction[] = [
     kbd: "G A",
   },
   {
-    title: "Go to dashboard",
+    title: "Go to Today",
     href: "/dashboard",
     icon: LayoutDashboard,
     iconBg: "bg-[#F3F1F8]",

@@ -19,7 +19,7 @@
 - No levels, no duplicated percentages, no path-selection widgets.
 - Next lesson = the first open lesson in curriculum order.
 - Guests see their own day (no sample learner): first lesson, their browser's Practice and Bookmarks.
-- Built at `/dashboardv2`; the old `/dashboard` stays until promoted.
+- Promoted to `/dashboard` (2026-10-30); `/dashboardv2` redirects there; the old page is kept at `/dashboardv1`. The sidebar, footer and command palette call it **Today**.
 - Model: `src/lib/dashboard/today-model.ts` (tested).
 
 ## Today checklist, one goal, one streak (2026-10-30)

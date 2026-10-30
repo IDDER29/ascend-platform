@@ -59,3 +59,13 @@ test("flip-the-bits cards: bits only, and a gate's answer is its real truth tabl
     }
   }
 });
+
+test("every C and Systems lesson has a Predict-the-output and a Spot-the-bug card", () => {
+  const CODE_TOPICS = ["level-02-the-c-language", "level-03-systems-software"];
+  const lessons = new Set(PRACTICE_BANK.filter((q) => CODE_TOPICS.includes(q.lessonLevel)).map((q) => q.lessonSlug));
+  for (const slug of lessons) {
+    const kinds = new Set(PRACTICE_BANK.filter((q) => q.lessonSlug === slug).map((q) => q.kind));
+    assert.ok(kinds.has("output"), `${slug} has no Predict-the-output card`);
+    assert.ok(kinds.has("bug"), `${slug} has no Spot-the-bug card`);
+  }
+});

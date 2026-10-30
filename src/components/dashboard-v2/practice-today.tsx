@@ -2,17 +2,24 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { readNewDayMeta, syncLocalCards } from "@/lib/practice/cards";
+import { dueCards, readNewDayMeta, syncLocalCards } from "@/lib/practice/cards";
+import { PRACTICE_BANK } from "@/lib/practice/bank";
+import { buildCoachBankModel } from "@/lib/practice/coach-bank-model";
+import { savedDeckItems } from "@/lib/practice/coach-custom-model";
+import type { SavedDeck } from "@/lib/practice/deck-recipe";
+import { practicePathSlugForLevel } from "@/lib/practice/path-map";
+import { buildReviewOptions } from "@/lib/dashboard/review-options";
+import { useBookmarks } from "@/lib/bookmarks/use-bookmarks";
 import { practiceCardView } from "@/lib/dashboard/practice-card-model";
 import { buildCoachHomeModel, type CoachHomeModel } from "@/lib/practice/coach-home-model";
 import { deckMemory } from "@/lib/practice/deck-memory";
 import { resolveDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
 import { mergeSessionHistory, readLocalHistory, type PracticeSessionRecord } from "@/lib/practice/history";
-import { PRACTICE_ROUTES } from "@/lib/practice/routes";
+import { PRACTICE_ROUTES, practiceSessionHref } from "@/lib/practice/routes";
 import { unlockedQuestions } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
 import { MemoryCurveChart } from "./memory-curve-chart";
-import { RevisitCard } from "./revisit-card";
+import { ReviewOptionsCard } from "./review-options-card";
 import { TodayCard } from "./today-card";
 
 export type PracticeTodayProps = {
@@ -23,7 +30,10 @@ export type PracticeTodayProps = {
   initialCards: PracticeCard[];
   initialHistory: PracticeSessionRecord[];
   initialGoal: DailyGoal | null;
+  initialDecks: SavedDeck[];
 };
+
+const QUESTION_BY_ID = new Map(PRACTICE_BANK.map((q) => [q.id, q]));
 
 const CARD = "rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5";
 
@@ -35,10 +45,13 @@ function usePracticeToday({
   initialCards,
   initialHistory,
   initialGoal,
+  initialDecks,
 }: PracticeTodayProps): {
   model: CoachHomeModel | null;
   history: PracticeSessionRecord[] | null;
   cards: PracticeCard[];
+  dueByPath: Record<string, number> | null;
+  decks: { id: string; name: string; due: number; total: number; href: string | null }[];
 } {
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
   const unlockedIds = useMemo(() => unlockedQuestions(completed).map((q) => q.id), [completed]);
@@ -46,6 +59,8 @@ function usePracticeToday({
     model: CoachHomeModel;
     history: PracticeSessionRecord[];
     cards: PracticeCard[];
+    dueByPath: Record<string, number>;
+    decks: { id: string; name: string; due: number; total: number; href: string | null }[];
   } | null>(null);
 
   useEffect(() => {
@@ -61,15 +76,36 @@ function usePracticeToday({
       now: new Date(),
       lessonDates: completionDates,
     });
+    const now = new Date();
+    const dueByPath: Record<string, number> = {};
+    for (const card of dueCards(cards, readNewDayMeta(userId), now)) {
+      const q = QUESTION_BY_ID.get(card.questionId);
+      const slug = q ? practicePathSlugForLevel(q.lessonLevel) : null;
+      if (slug) dueByPath[slug] = (dueByPath[slug] ?? 0) + 1;
+    }
+    const rows = buildCoachBankModel({ cards, history, completedKeys: completed, now }).rows;
+    const decks = savedDeckItems(rows, initialDecks).map(({ deck, summary, href }) => ({
+      id: deck.id,
+      name: deck.name,
+      due: summary.counts.due,
+      total: summary.total,
+      href,
+    }));
     queueMicrotask(() => {
-      if (!cancelled) setState({ model: next, history, cards });
+      if (!cancelled) setState({ model: next, history, cards, dueByPath, decks });
     });
     return () => {
       cancelled = true;
     };
-  }, [completed, completionDates, initialCards, initialGoal, initialHistory, unlockedIds, userId]);
+  }, [completed, completionDates, initialCards, initialDecks, initialGoal, initialHistory, unlockedIds, userId]);
 
-  return { model: state?.model ?? null, history: state?.history ?? null, cards: state?.cards ?? [] };
+  return {
+    model: state?.model ?? null,
+    history: state?.history ?? null,
+    cards: state?.cards ?? [],
+    dueByPath: state?.dueByPath ?? null,
+    decks: state?.decks ?? [],
+  };
 }
 
 /** How much of your cards you'd recall, today and over the next weeks. Hidden until a card has been reviewed. */
@@ -160,22 +196,44 @@ function PracticeDueCard({
   );
 }
 
-/** The top of the dashboard: the next lesson beside today's checklist, then Practice and what to revisit. */
+/** What you flagged in Bookmarks, counted in this browser. */
+function useFlaggedCount(): number {
+  return (useBookmarks() ?? []).filter((b) => b.reason === "revisit").length;
+}
+
+/** The top of the dashboard: the next lesson beside today's checklist, then Practice and the ways to review. */
 export function TodayGrid({
   next,
   practice,
   lessonsDone,
   nextLessons,
-  lessons,
+  activePath,
+  otherPaths,
 }: {
   next: ReactNode;
   practice: PracticeTodayProps;
   lessonsDone: { title: string; at: string }[];
   nextLessons: { title: string; href: string }[];
-  /** Every lesson, for naming the ones Practice shows you missing. */
-  lessons: { key: string; title: string; href: string }[];
+  /** The path you're on and your other joined paths (from Your paths). */
+  activePath: { slug: string; title: string } | null;
+  otherPaths: { slug: string; title: string }[];
 }) {
-  const { model, history } = usePracticeToday(practice);
+  const { model, history, dueByPath, decks } = usePracticeToday(practice);
+  const flagged = useFlaggedCount();
+  const options =
+    model && dueByPath
+      ? buildReviewOptions({
+          missesDue: model.modes.missesDue,
+          missesHref: `${PRACTICE_ROUTES.session}?scope=due`,
+          dueByPath,
+          activePath,
+          otherPaths,
+          pathHref: (slug, n) =>
+            n > 0 ? practiceSessionHref({ scope: "path", path: slug }) : `${PRACTICE_ROUTES.paths}/${slug}`,
+          decks,
+          flagged,
+        })
+      : null;
   return (
     <>
       <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,310px)]">
@@ -184,7 +242,7 @@ export function TodayGrid({
       </div>
       <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2">
         <PracticeDueCard model={model} history={history} />
-        <RevisitCard history={history} lessons={lessons} />
+        <ReviewOptionsCard options={options} />
       </div>
     </>
   );

@@ -49,3 +49,6 @@
 
 ## Memory curve (2026-10-30)
 - Replaces "Coming up" on the Practice card: "You'd recall about N% of your M cards today" and a 30-day chart — reviewing when due vs if you stop — from an FSRS-style estimate over the learner's own cards. Details, formula and reasoning: `docs/learning-science/spaced-repetition.md` §3. Model: `src/lib/practice/memory-curve.ts` (tested).
+
+## Ways to review replaces To revisit (2026-10-30)
+- The user's call: To revisit had no role next to Practice; instead, the review options worth doing now, each with how much is waiting — Fix your misses (N to fix), Review <current path> (before you continue; all clear when nothing's due), other joined paths with cards due, your saved custom decks (N due / N cards), and "Didn't get it" bookmarks (N saved, links to Bookmarks). Misses and the current path always show; the rest only when there's something there. Model: `src/lib/dashboard/review-options.ts` (tested). `revisit-model.ts` and its card were removed.

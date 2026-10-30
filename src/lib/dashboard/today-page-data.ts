@@ -33,7 +33,6 @@ export async function loadToday(): Promise<{
   firstName: string | null;
   /** Lessons finished, with when, for today's checklist. */
   lessonsDone: { title: string; at: string }[];
-  lessons: { key: string; title: string; href: string }[];
 }> {
   const [user, loaded, following] = await Promise.all([
     getCurrentUser(),
@@ -85,6 +84,5 @@ export async function loadToday(): Promise<{
     paths,
     firstName: user?.name?.trim().split(/\s+/)[0] || null,
     lessonsDone,
-    lessons: lessons.map(({ key, title, href }) => ({ key, title, href })),
   };
 }

@@ -149,7 +149,8 @@ function shortDate(iso: string): string {
 }
 
 function shadeFor(strength: StrengthBuckets): ConceptShade {
-  if (strength.total === 0) return 0;
+  // Unlocked but never reviewed is not "fresh" memory — nothing is held yet.
+  if (strength.total === strength.new) return 0;
   const remembered = (strength.solid + strength.mastered) / strength.total;
   if (remembered >= 0.75) return 4;
   if (remembered >= 0.5) return 3;
@@ -252,7 +253,7 @@ export function buildProgressV2Model(input: ProgressV2Input): ProgressV2Model {
           shade,
           label:
             shade === 0
-              ? `${l.title} — not started`
+              ? `${l.title} — not practiced yet`
               : `${l.title} — ${pct(strength.solid + strength.mastered, strength.total)}% remembered`,
         };
       }),

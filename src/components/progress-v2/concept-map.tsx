@@ -10,7 +10,7 @@ const SHADES: Record<ConceptShade, string> = {
 };
 
 const LEGEND: { shade: ConceptShade; label: string }[] = [
-  { shade: 0, label: "Not started" },
+  { shade: 0, label: "Not practiced" },
   { shade: 1, label: "Fresh" },
   { shade: 2, label: "Taking hold" },
   { shade: 3, label: "Mostly solid" },

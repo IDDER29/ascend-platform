@@ -100,6 +100,14 @@ test("all lessons done: no next lesson", () => {
   assert.equal(model.hero.next, null);
 });
 
+test("unlocked cards nobody has practiced leave the tile unshaded", () => {
+  const bit = ids("what-is-a-bit");
+  const model = buildProgressV2Model(input({ cards: bit.map((id) => createNewCard(id, NOW)) }));
+  const tile = model.concepts[0].tiles[0];
+  assert.equal(tile.shade, 0);
+  assert.match(tile.label, /not practiced yet/);
+});
+
 test("remembered share and concept shade come from card strength", () => {
   const bit = ids("what-is-a-bit");
   const model = buildProgressV2Model(input({ cards: bit.map((id) => solid(id)) }));

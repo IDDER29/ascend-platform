@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 import type { ProgressV2Model } from "@/lib/progress/progress-v2-model";
 
 const BAR_MAX_PX = 96;
@@ -6,6 +8,7 @@ export function MomentumCard({ momentum }: { momentum: ProgressV2Model["momentum
   const { weeks, firstAccuracy, lastAccuracy } = momentum;
   const max = Math.max(1, ...weeks.map((w) => w.cards));
   const lessonsTotal = weeks.reduce((sum, w) => sum + w.lessons, 0);
+  const cardsTotal = weeks.reduce((sum, w) => sum + w.cards, 0);
   const summary = weeks.map((w) => `${w.label}: ${w.cards} cards, ${w.lessons} lessons`).join("; ");
 
   return (
@@ -65,6 +68,15 @@ export function MomentumCard({ momentum }: { momentum: ProgressV2Model["momentum
               </span>
             ) : null}
           </div>
+          {cardsTotal === 0 ? (
+            <p className="m-0 text-[13px] text-[var(--coach-ink-secondary)]">
+              No cards answered yet — a{" "}
+              <Link href={PRACTICE_ROUTES.home} className="font-semibold text-[var(--coach-ink)] underline underline-offset-2">
+                review session in Practice
+              </Link>{" "}
+              adds the weekly bars.
+            </p>
+          ) : null}
         </>
       ) : (
         <p className="m-0 text-[14px] text-[var(--coach-ink-secondary)]">

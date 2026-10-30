@@ -33,7 +33,11 @@ function LevelRow({ level }: { level: LevelRetention }) {
         <span className="flex justify-between text-xs text-[var(--coach-ink-secondary)]">
           <span>Remembered</span>
           <span className="font-mono">
-            {level.rememberedPct === null ? "locked" : `${level.rememberedPct}% solid`}
+            {level.rememberedPct === null
+              ? "locked"
+              : level.strength.total === level.strength.new
+                ? "not practiced yet"
+                : `${level.rememberedPct}% solid`}
           </span>
         </span>
         <Bar

@@ -31,12 +31,10 @@ function StreakRow({ streak }: { streak: number }) {
       </span>
       <div className="flex flex-col gap-0.5">
         <span className="font-display text-xl font-extrabold leading-tight">
-          {active ? `${streak} day streak` : "No streak yet"}
+          {streak}-day streak
         </span>
         <span className="text-[13px] text-[var(--coach-ink-secondary)]">
-          {active
-            ? `A lesson or a review tomorrow makes it ${streak + 1}.`
-            : "A lesson or a review starts one."}
+          {active ? "Days in a row with a finished lesson." : "Finish a lesson to start one."}
         </span>
       </div>
     </div>

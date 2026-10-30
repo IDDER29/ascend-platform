@@ -1,8 +1,7 @@
 /**
- * Today's checklist, sized by the one daily goal: a review when cards are due,
- * plus lessons (none for Casual, one for Regular, two for Serious). Each item
- * is ticked by what really happened today. A day with nothing due and no
- * lessons in the goal still asks for one lesson, so there's always a next step.
+ * Today's checklist, sized by the one daily goal: lessons (one for Casual and
+ * Regular, two for Serious) and, for Regular and Serious, a review when cards
+ * are due. Each item is ticked by what really happened today.
  */
 import { GOAL_PLANS, type DailyGoal } from "@/lib/practice/daily-goal";
 
@@ -30,14 +29,14 @@ export type DayPlanInput = {
 
 export function buildDayPlan(input: DayPlanInput): DayPlan {
   const items: DayItem[] = [];
-  if (input.reviewedToday) {
+  const goal = GOAL_PLANS[input.goal];
+  if (goal.review && input.reviewedToday) {
     items.push({ id: "review", text: "Reviewed your cards", done: true, href: null });
-  } else if (input.dueNow > 0) {
+  } else if (goal.review && input.dueNow > 0) {
     items.push({ id: "review", text: `Review your due cards (${input.dueNow})`, done: false, href: input.reviewHref });
   }
 
-  const wanted = Math.max(GOAL_PLANS[input.goal].lessons, items.length === 0 ? 1 : 0);
-  for (let i = 0; i < wanted; i++) {
+  for (let i = 0; i < goal.lessons; i++) {
     const finished = input.lessonsToday[i];
     if (finished) {
       items.push({ id: `lesson-${i}`, text: `Finished ${finished.title}`, done: true, href: null });

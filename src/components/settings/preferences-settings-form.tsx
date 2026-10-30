@@ -131,7 +131,7 @@ export function PreferencesSettingsForm({
     <div className="flex flex-col gap-8">
       <SettingsBlock
         title="Daily goal"
-        description="What a day takes. It sets your checklist on the dashboard; any lesson or review keeps your streak."
+        description="What a day takes. It sets your checklist on the dashboard; a lesson a day keeps your streak."
       >
         <div
           className="grid grid-cols-1 gap-2.5 sm:grid-cols-3"

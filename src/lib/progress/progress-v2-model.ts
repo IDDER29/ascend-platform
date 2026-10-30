@@ -6,12 +6,12 @@ import { LEVELS, type LevelId } from "@/lib/content/schema";
 import { deckSessionHref } from "@/lib/practice/coach-custom-model";
 import {
   practiceDaysGrid,
-  streakDays,
   strengthBuckets,
   type PracticeDaysGrid,
   type StrengthBuckets,
 } from "@/lib/practice/coach-home-model";
 import { COACH_V2_MAX_SIZE } from "@/lib/practice/coach-v2-flow";
+import { lessonStreak } from "./streak";
 import type { PracticeSessionRecord } from "@/lib/practice/history";
 import { completionKey, unlockedQuestions } from "@/lib/practice/session";
 import { createNewCard, type PracticeCard } from "@/lib/practice/sm2";
@@ -358,10 +358,9 @@ export function buildProgressV2Model(input: ProgressV2Input): ProgressV2Model {
       accuracy: weekAccuracy,
       accuracyDelta:
         weekAccuracy !== null && lastAccuracy !== null ? weekAccuracy - lastAccuracy : null,
-      streak: streakDays(
-        history,
-        now,
+      streak: lessonStreak(
         completions.map((c) => c.completedAt),
+        now,
       ),
     },
     levels,

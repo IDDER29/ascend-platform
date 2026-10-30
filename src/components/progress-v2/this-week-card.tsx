@@ -56,7 +56,7 @@ export function ThisWeekCard({ week }: { week: ProgressV2Model["week"] }) {
           </svg>
         </span>
         <span className="font-display text-lg font-extrabold">
-          {week.streak > 0 ? `${week.streak} day streak` : "No streak yet"}
+          {week.streak}-day streak
         </span>
       </div>
     </section>

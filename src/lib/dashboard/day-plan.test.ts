@@ -22,15 +22,15 @@ function plan(patch: Partial<DayPlanInput>) {
 
 const texts = (p: ReturnType<typeof plan>) => p.items.map((i) => `${i.done ? "x" : " "} ${i.text}`);
 
-test("Regular: the review and one lesson", () => {
+test("Regular: a review and one lesson", () => {
   const p = plan({});
   assert.deepEqual(texts(p), ["  Review your due cards (8)", "  One lesson: Binary"]);
   assert.equal(p.remaining, 2);
   assert.equal(p.done, false);
 });
 
-test("Casual is the review only; Serious adds a second lesson", () => {
-  assert.deepEqual(texts(plan({ goal: 10 })), ["  Review your due cards (8)"]);
+test("Casual is one lesson, no review; Serious adds a second lesson", () => {
+  assert.deepEqual(texts(plan({ goal: 10 })), ["  One lesson: Binary"]);
   assert.deepEqual(texts(plan({ goal: 40 })), [
     "  Review your due cards (8)",
     "  One lesson: Binary",
@@ -44,9 +44,8 @@ test("what happened today ticks the items, and the day is done", () => {
   assert.equal(p.done, true);
 });
 
-test("nothing due: no review line; Casual still gets one lesson", () => {
+test("nothing due: no review line", () => {
   assert.deepEqual(texts(plan({ dueNow: 0 })), ["  One lesson: Binary"]);
-  assert.deepEqual(texts(plan({ dueNow: 0, goal: 10 })), ["  One lesson: Binary"]);
 });
 
 test("every lesson done and nothing due: an empty day is not 'done'", () => {

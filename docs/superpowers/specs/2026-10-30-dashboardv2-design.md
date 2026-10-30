@@ -23,7 +23,7 @@
 - Model: `src/lib/dashboard/today-model.ts` (tested).
 
 ## Today checklist, one goal, one streak (2026-10-30)
-- **Today** replaces "Your day" on the dashboard: a checklist sized by the daily goal — Casual: review your due cards; Regular: plus one lesson; Serious: plus two. Items tick from what really happened today; "Done for today" when all are ticked. With nothing due, the day asks for one lesson. Model: `src/lib/dashboard/day-plan.ts` (tested).
+- **Today** replaces "Your day" on the dashboard: a checklist sized by the daily goal — Casual: one lesson; Regular: one lesson and a review; Serious: two lessons and a review (the review line only when cards are due). Items tick from what really happened today; "Done for today" when all are ticked. Model: `src/lib/dashboard/day-plan.ts` (tested).
 - **One goal**, set once: onboarding's pace step saves it; Settings › Preferences changes it (it also writes the older `pace`). Practice and the dashboard show it as "Regular goal · change" — no picker there. Practice still uses it as a card target (10 / 20 / 40).
-- **One streak:** a day counts when a lesson is finished or a review session is done (`streakDays` in `coach-home-model.ts`, now taking lesson dates). Used by the dashboard, Practice home and summary, and Progress.
-- **Still on the old lesson-only streak** (the `streaks` table): the old `/dashboard`, the lesson footer, `/streak-lost`, the curriculum pages. To move when those pages get their pass.
+- **One streak, lessons only** (the user's call): a day counts when a lesson is finished; reviews don't. It always shows a number ("0-day streak"). Under it, this week Monday–Sunday with the lesson days filled. `src/lib/progress/streak.ts` (`lessonStreak`, `lessonWeek`, tested). Used by the dashboard, Practice home and summary, and Progress.
+- **Still read from the `streaks` table** (same rule, lessons only, but stored rather than worked out): the old `/dashboard`, the lesson footer, `/streak-lost`, the curriculum pages. To move when those pages get their pass.

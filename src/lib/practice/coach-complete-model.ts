@@ -1,5 +1,5 @@
 import { PRACTICE_BANK } from "./bank";
-import { streakDays } from "./coach-home-model";
+import { lessonStreak } from "@/lib/progress/streak";
 import type { DailyGoal } from "./daily-goal";
 import type { PracticeSessionRecord } from "./history";
 import { cardsClearedToday } from "./momentum";
@@ -18,7 +18,7 @@ export type CoachCompleteInput = {
   history: PracticeSessionRecord[];
   goal: DailyGoal;
   now: Date;
-  /** When each lesson was finished: lessons count toward the streak too. */
+  /** When each lesson was finished: the streak counts lessons. */
   lessonDates?: readonly string[];
 };
 
@@ -106,7 +106,7 @@ export function buildCoachCompleteModel({
       met: answeredToday >= goal,
       remaining: Math.max(0, goal - answeredToday),
     },
-    streak: streakDays(history, now, lessonDates),
+    streak: lessonStreak(lessonDates ?? [], now),
     strength: { movedUp: record.correct, backToLearning: missed },
     misses: record.missIds.map(toMiss),
     primary:

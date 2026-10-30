@@ -76,7 +76,7 @@ test("lastPercent comes from the newest earlier session", () => {
   assert.equal(first.accuracy.lastPercent, null);
 });
 
-test("daily goal counts today's cards and streak counts consecutive days", () => {
+test("daily goal counts today's cards; the streak counts days with a lesson, not reviews", () => {
   const record = session();
   const earlierToday = session({ id: "s0", at: at(0, 9), questionIds: ["x", "y"] });
   const yesterday = session({ id: "s-1", at: at(1) });
@@ -84,7 +84,10 @@ test("daily goal counts today's cards and streak counts consecutive days", () =>
 
   const model = buildCoachCompleteModel({ record, history, goal: 10, now: NOW });
   assert.deepEqual(model.goal, { answeredToday: 6, goal: 10, met: false, remaining: 4 });
-  assert.equal(model.streak, 2);
+  assert.equal(model.streak, 0); // reviews alone don't make a streak
+
+  const withLessons = buildCoachCompleteModel({ record, history, goal: 10, now: NOW, lessonDates: [at(0), at(1)] });
+  assert.equal(withLessons.streak, 2);
 });
 
 test("goal is met once today's cards reach it", () => {

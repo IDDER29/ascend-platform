@@ -53,9 +53,9 @@ const GOALS = [
 
 /** The pace you pick here is your daily goal: it sizes the dashboard's checklist each day. */
 const PACES = [
-  { id: "casual", goal: 10, kbd: "5m", title: "Casual", subtitle: "Review your due cards each day." },
-  { id: "regular", goal: 20, kbd: "15m", title: "Regular", subtitle: "A review, plus one lesson a day." },
-  { id: "intense", goal: 40, kbd: "30m", title: "Serious", subtitle: "A review, plus two lessons a day." },
+  { id: "casual", goal: 10, kbd: "5m", title: "Casual", subtitle: "One lesson a day." },
+  { id: "regular", goal: 20, kbd: "15m", title: "Regular", subtitle: "One lesson and a review of your cards a day." },
+  { id: "intense", goal: 40, kbd: "30m", title: "Serious", subtitle: "Two lessons and a review a day." },
 ] as const;
 
 export default function OnboardingPage() {
@@ -218,7 +218,7 @@ export default function OnboardingPage() {
                     What pace fits your life?
                   </h1>
                   <p className="text-[15px] leading-relaxed text-ink-secondary">
-                    This is your daily goal. Any lesson or review keeps your streak. Change it anytime in Settings.
+                    This is your daily goal. A lesson a day keeps your streak. Change it anytime in Settings.
                   </p>
                 </div>
                 <div className="mb-5 flex flex-col gap-3">

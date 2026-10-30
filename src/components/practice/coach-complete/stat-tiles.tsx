@@ -66,7 +66,7 @@ export function StatTiles({ model }: { model: CoachCompleteModel }) {
       <Tile
         label="Streak"
         value={`${streak} ${streak === 1 ? "day" : "days"}`}
-        note={streak > 0 ? "Safe for today" : "A lesson or a review starts one"}
+        note={streak > 0 ? "Days in a row with a lesson" : "Finish a lesson to start one"}
         warm={streak > 0}
       />
     </div>

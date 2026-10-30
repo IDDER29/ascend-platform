@@ -8,13 +8,17 @@ export type DailyGoal = (typeof DAILY_GOALS)[number]["value"];
 
 /**
  * The one daily goal, set once (onboarding or Settings). It sizes the day's
- * checklist on the dashboard — a review, plus lessons — and Practice's card
- * target. Ids of the older "pace" setting map onto it.
+ * checklist on the dashboard — lessons, and a review for Regular and Serious —
+ * and Practice's card target. Every goal includes a lesson, because the streak
+ * counts lessons. Ids of the older "pace" setting map onto it.
  */
-export const GOAL_PLANS: Record<DailyGoal, { label: string; lessons: number; plan: string; cards: string }> = {
-  10: { label: "Casual", lessons: 0, plan: "Review your due cards", cards: "about 10 cards" },
-  20: { label: "Regular", lessons: 1, plan: "Review, plus one lesson", cards: "about 20 cards" },
-  40: { label: "Serious", lessons: 2, plan: "Review, plus two lessons", cards: "about 40 cards" },
+export const GOAL_PLANS: Record<
+  DailyGoal,
+  { label: string; lessons: number; review: boolean; plan: string; cards: string }
+> = {
+  10: { label: "Casual", lessons: 1, review: false, plan: "One lesson a day", cards: "about 10 cards" },
+  20: { label: "Regular", lessons: 1, review: true, plan: "One lesson and a review", cards: "about 20 cards" },
+  40: { label: "Serious", lessons: 2, review: true, plan: "Two lessons and a review", cards: "about 40 cards" },
 };
 
 const PACE_GOAL: Record<string, DailyGoal> = { casual: 10, regular: 20, intense: 40, serious: 40 };
@@ -64,10 +68,7 @@ export function writeDailyGoal(userId: string | null, goal: DailyGoal): void {
  * guest store and an offline fallback. A server value wins and is mirrored
  * locally so every Practice screen reads the same goal.
  */
-export function resolveDailyGoal(
-  userId: string | null,
-  serverGoal: DailyGoal | null,
-): DailyGoal {
+export function resolveDailyGoal(userId: string | null, serverGoal: DailyGoal | null): DailyGoal {
   if (userId && serverGoal !== null) {
     writeDailyGoal(userId, serverGoal);
     return serverGoal;

@@ -6,6 +6,7 @@ import { GoalLink } from "@/components/practice/coach-home/your-day-card";
 import { buildDayPlan } from "@/lib/dashboard/day-plan";
 import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
 import { localDayKey } from "@/lib/practice/sm2";
+import { lessonStreak, lessonWeek, type WeekDay } from "@/lib/progress/streak";
 
 const CARD = "flex flex-col gap-4 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5";
 
@@ -35,8 +36,11 @@ export function TodayCard({
     lessonsToday,
     nextLessons,
   });
-  const activeToday = reviewedToday || lessonsToday.length > 0;
-  const streak = model.day.streak;
+  const lessonDates = lessonsDone.map((l) => l.at);
+  const now = new Date();
+  const streak = lessonStreak(lessonDates, now);
+  const week = lessonWeek(lessonDates, now);
+  const learnedToday = lessonsToday.length > 0;
 
   return (
     <section aria-labelledby="today-title" className={CARD}>
@@ -94,10 +98,19 @@ export function TodayCard({
         </p>
       )}
 
-      <div className="mt-auto flex items-center gap-3 border-t-2 border-[var(--coach-divider)] pt-3.5">
+      <StreakWeek streak={streak} learnedToday={learnedToday} week={week} />
+    </section>
+  );
+}
+
+/** The streak (finished lessons only) and this week, Monday to Sunday. */
+function StreakWeek({ streak, learnedToday, week }: { streak: number; learnedToday: boolean; week: WeekDay[] }) {
+  return (
+    <div className="mt-auto flex flex-col gap-3 border-t-2 border-[var(--coach-divider)] pt-3.5">
+      <div className="flex items-center gap-3">
         <span
           className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${
-            activeToday
+            streak > 0
               ? "bg-[var(--coach-tint-orange-bg)] text-[var(--coach-tint-orange-ink)]"
               : "bg-[var(--coach-tint-neutral-bg)] text-[var(--coach-ink-muted)]"
           }`}
@@ -105,18 +118,39 @@ export function TodayCard({
           <Flame size={18} strokeWidth={2.2} aria-hidden />
         </span>
         <span className="flex flex-col">
-          <span className="text-[15px] font-bold leading-tight">
-            {streak > 0 ? `${streak}-day streak` : "No streak yet"}
-          </span>
+          <span className="text-[15px] font-bold leading-tight">{streak}-day streak</span>
           <span className="text-[12.5px] leading-snug text-[var(--coach-ink-muted)]">
-            {activeToday
+            {learnedToday
               ? "Today counts. See you tomorrow."
               : streak > 0
-                ? "A lesson or a review today keeps it going."
-                : "A lesson or a review starts one."}
+                ? "Finish a lesson today to keep it."
+                : "Finish a lesson to start one."}
           </span>
         </span>
       </div>
-    </section>
+      <ol aria-label="This week" className="m-0 grid list-none grid-cols-7 gap-1 p-0">
+        {week.map((d) => (
+          <li key={d.label} className="flex flex-col items-center gap-1" title={d.label}>
+            <span
+              className={`text-[11px] ${d.today ? "font-bold text-[var(--coach-ink)]" : "text-[var(--coach-ink-muted)]"}`}
+            >
+              {d.letter}
+            </span>
+            <span
+              className={`size-6 rounded-full ${
+                d.learned
+                  ? "bg-[var(--coach-tint-orange-ink)]"
+                  : d.future
+                    ? "border-2 border-dashed border-[var(--coach-divider)]"
+                    : "bg-[var(--coach-tint-neutral-bg)]"
+              } ${d.today ? "ring-2 ring-[var(--coach-ink)] ring-offset-2 ring-offset-[var(--coach-surface)]" : ""}`}
+            />
+            <span className="sr-only">
+              {d.label}: {d.learned ? "lesson finished" : d.future ? "still to come" : "no lesson"}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

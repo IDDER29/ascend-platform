@@ -140,3 +140,30 @@ decoration:
   one line per badge grouped by kind with its whole rule as a sentence
   and where you stand; selecting a row opens its citation.
 - Earned citations link to the profile, where the rack is also worn.
+
+## The ninja layer (2026-10-30)
+Inspired by Naruto (the user's idea) — the idea, not the art: everything is
+original, and Naruto's own inventions (Kage, Hokage, village symbols) are
+not used.
+- **Mission ranks D–S** on every decoration grade the *task*, never the
+  person (D everyday · C real effort · B serious · A hard · S the biggest).
+  The chest shows a mission record (S/A/B/C/D counts).
+- **Headband** (B-rank): earned by finishing every lesson in *any one*
+  topic — the graduation. A navy band with a riveted plate engraved with
+  Ascend's chevrons, worn across the top of the uniform and beside the
+  name on the profile.
+- **Clans**: the four topic decorations became clans — Gate (Bits &
+  Logic), Core (Machine & Memory), Pointer (The C Language), Shell
+  (Systems & Software) — with original line-art crests (AND gate, chip,
+  `*`→box, `>_|`), worn as shoulder patches; unjoined clans are stitched
+  outlines.
+- **Titles**: Genin (下忍, the initiate) → Chūnin (中忍, the trusted) →
+  Jōnin (上忍, the elite) → Sōke (宗家, head of the school) → Ascended
+  (昇, the legend). Real historical ninja ranks plus Ascend's own top.
+  Each title is a combination rule that includes the title before it (a
+  tested invariant — none can be skipped); "any N of the clan crests" is a
+  new rule kind. Titles are earned by real work, kept for good and never
+  lock anything. The current title is engraved on the nameplate and shown
+  on the profile; "Your title" shows the path and the next title's rule.
+- The user is fine with this ladder because it's framed as fun motivation,
+  not levels: no XP, nothing taken away, nothing locked.

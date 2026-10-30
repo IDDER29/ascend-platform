@@ -1,5 +1,6 @@
 import { Pencil } from "lucide-react";
 import Link from "next/link";
+import { Headband } from "@/components/achievements/emblems";
 import { PlaceholderAvatar } from "@/components/ui/placeholder-avatar";
 import type { ProfileModel } from "@/lib/profile/profile-model";
 import { PROFILE_ROUTES } from "@/lib/profile/routes";
@@ -35,6 +36,23 @@ export function ProfileHero({ model }: { model: ProfileModel }) {
             {hero.name}
           </h1>
           <span className="text-[14px] text-[var(--coach-hero-muted)]">@{hero.username}</span>
+          {model.insignia.headband || model.insignia.title ? (
+            <span className="mt-1.5 flex flex-wrap items-center gap-3">
+              {model.insignia.headband ? (
+                <span title="Headband: graduated by finishing a whole topic">
+                  <Headband earned size="sm" />
+                </span>
+              ) : null}
+              {model.insignia.title ? (
+                <span className="text-[14px] font-semibold text-[var(--coach-lime)]">
+                  {model.insignia.title.label}{" "}
+                  <span className="font-normal text-[var(--coach-hero-muted)]">
+                    {model.insignia.title.kanji}, {model.insignia.title.gloss}
+                  </span>
+                </span>
+              ) : null}
+            </span>
+          ) : null}
         </div>
         {owner ? (
           <Link

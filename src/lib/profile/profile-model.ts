@@ -4,7 +4,7 @@
  * project links, own projects, earned badges and Practice session counts.
  * Private numbers (retention, accuracy, due cards) belong to Progress.
  */
-import { achievementById, type AchievementGroup } from "@/lib/achievements/catalog";
+import { achievementById, type AchievementGroup, type CrestId } from "@/lib/achievements/catalog";
 import { LEVELS, levelIds, type LevelId } from "@/lib/content/schema";
 import { displayUrl, linkKind, linkLabel, type LinkKind } from "./links";
 import { CURRICULUM_PROJECTS } from "./projects";
@@ -97,6 +97,12 @@ export type ProfileModel = {
   ownProjects: (ProfileInput["ownProjects"][number] & { urlLabel: string })[];
   skills: ProfileSkill[];
   achievements: { id: string; group: AchievementGroup; label: string; glyph: string; description: string; earnedLabel: string }[];
+  /** What the learner wears: the headband, a title and clan crests (filled from the achievements model). */
+  insignia: {
+    headband: boolean;
+    title: { label: string; kanji: string; gloss: string } | null;
+    crests: { crest: CrestId; label: string; earned: boolean }[];
+  };
   journey: JourneyEvent[];
   /** Owner only: the next lesson to open. */
   next: { title: string; href: string } | null;
@@ -267,6 +273,7 @@ export function buildProfileModel(input: ProfileInput): ProfileModel {
     ownProjects: input.ownProjects.map((p) => ({ ...p, urlLabel: displayUrl(p.url) })),
     skills,
     achievements,
+    insignia: { headband: false, title: null, crests: [] },
     journey,
     next: owner && firstOpen ? { title: firstOpen.title, href: firstOpen.href } : null,
     eligibleBadges,

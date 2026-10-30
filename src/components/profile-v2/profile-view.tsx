@@ -26,7 +26,7 @@ export function ProfileView({ model, signedIn = true }: { model: ProfileModel; s
           {showOwn ? <OwnProjects projects={model.ownProjects} editable={owner} /> : null}
         </div>
         <aside className="flex min-w-0 flex-col gap-5">
-          <AchievementsCard achievements={model.achievements} owner={owner} />
+          <AchievementsCard achievements={model.achievements} insignia={model.insignia} owner={owner} />
           <JourneyCard journey={model.journey} />
           {owner && signedIn ? (
             <form action={signOutAction} className="self-start">

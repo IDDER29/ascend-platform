@@ -1,5 +1,6 @@
 import "server-only";
 import { buildAchievementsModel, type AchievementsModel } from "@/lib/achievements/achievements-model";
+import { CREST_IDS, TITLES } from "@/lib/achievements/catalog";
 import { getAllLessons } from "@/lib/content/lessons";
 import { lessonHref } from "@/lib/paths/lesson-urls";
 import { listPracticeCardsForUser, listPracticeSessionsForUser } from "@/lib/practice/queries";
@@ -21,15 +22,35 @@ export function profileLessons(): ProfileLesson[] {
   }));
 }
 
-/** The profile lists every badge /achievements works out, newest first — one source for both pages. */
+/**
+ * The profile wears what /achievements works out — one source for both pages: ribbons (newest first), and
+ * the insignia worn as emblems (headband, title, clan crests).
+ */
 function withEarnedBadges(model: ProfileModel, achievements: AchievementsModel): ProfileModel {
   const byId = new Map(achievements.parts.map((p) => [p.id, p]));
+  const title = achievements.title ? TITLES.find((t) => t.id === achievements.title!.id)! : null;
   return {
     ...model,
-    achievements: achievements.earnedNewestFirst.map((id) => {
-      const part = byId.get(id)!;
-      return { id, group: part.group, label: part.label, glyph: part.glyph, description: part.means, earnedLabel: part.earnedLabel ?? "" };
-    }),
+    achievements: achievements.earnedNewestFirst
+      .map((id) => byId.get(id)!)
+      .filter((part) => !part.insignia)
+      .map((part) => ({
+        id: part.id,
+        group: part.group,
+        label: part.label,
+        glyph: part.glyph,
+        description: part.means,
+        earnedLabel: part.earnedLabel ?? "",
+      })),
+    insignia: {
+      headband: achievements.parts.some((p) => p.insignia?.kind === "headband" && p.earned),
+      title: title ? { label: title.label, kanji: title.kanji, gloss: title.gloss } : null,
+      crests: CREST_IDS.map((id) => byId.get(id)!).map((p) => ({
+        crest: p.insignia?.kind === "crest" ? p.insignia.crest : "gate",
+        label: p.label,
+        earned: p.earned,
+      })),
+    },
   };
 }
 

@@ -14,7 +14,17 @@ import { displayUrl } from "@/lib/profile/links";
 import type { ProfileLesson } from "@/lib/profile/profile-model";
 import { curriculumProject } from "@/lib/profile/projects";
 import { PROFILE_ROUTES } from "@/lib/profile/routes";
-import { ACHIEVEMENTS, GROUP_TITLES, type Achievement, type AchievementGroup, type BadgeRule } from "./catalog";
+import {
+  ACHIEVEMENTS,
+  achievementById,
+  GROUP_TITLES,
+  MISSION_RANKS,
+  TITLES,
+  type Achievement,
+  type AchievementGroup,
+  type BadgeRule,
+  type MissionRank,
+} from "./catalog";
 
 const LOCALE = "en-US";
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -45,6 +55,8 @@ export type Criterion = {
 export type BadgeView = {
   id: string;
   group: AchievementGroup;
+  rank: MissionRank;
+  insignia: Achievement["insignia"] | null;
   label: string;
   glyph: string;
   means: string;
@@ -71,6 +83,14 @@ export type AchievementsModel = {
   parts: BadgeView[];
   /** Earned badge ids, newest first. */
   earnedNewestFirst: string[];
+  /** Every title in order, each a combination rule. */
+  titles: BadgeView[];
+  /** The highest title earned, or null before the first. */
+  title: BadgeView | null;
+  /** The next title to earn, or null once every title is earned. */
+  nextTitle: BadgeView | null;
+  /** How many earned decorations of each mission rank. */
+  missionRecord: Record<MissionRank, number>;
 };
 
 function shortDate(iso: string): string {
@@ -133,6 +153,27 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
             at,
             progress: { done: topicLessons.filter(isDone).length, total: topicLessons.length },
             action: at ? null : continueLesson(topicLessons.find((l) => !isDone(l)) ?? null),
+          }),
+        ];
+      }
+      case "anyTopic": {
+        const topics = [...new Set(lessons.map((l) => l.level))].map((level) => {
+          const topicLessons = lessons.filter((l) => l.level === level);
+          return { level, lessons: topicLessons, done: topicLessons.filter(isDone).length, at: finished.get(level) ?? null };
+        });
+        const firstDone = topics
+          .filter((t) => t.at)
+          .sort((a, b) => Date.parse(a.at!) - Date.parse(b.at!))[0];
+        // Progress shows the topic you're furthest along in.
+        const best = [...topics].sort((a, b) => b.done / b.lessons.length - a.done / a.lessons.length)[0];
+        return [
+          criterion({
+            // Once earned, name the topic that did it.
+            text: firstDone ? `Finish every lesson in ${LEVELS[firstDone.level as LevelId].name}` : "Finish every lesson in any one topic",
+            done: Boolean(firstDone),
+            at: firstDone?.at ?? null,
+            progress: !firstDone && best ? { done: best.done, total: best.lessons.length } : null,
+            action: firstDone || !best ? null : continueLesson(best.lessons.find((l) => !isDone(l)) ?? null),
           }),
         ];
       }
@@ -245,10 +286,30 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
       }
       case "badges":
         return rule.ids.map((id) => {
-          const part = view(ACHIEVEMENTS.find((a) => a.id === id)!);
+          const part = view(achievementById(id)!);
           // The next step toward a combination is the next step of the part it still needs.
-          return criterion({ text: `Earn ${part.label}`, done: part.earned, at: part.earnedAt, badgeId: id, action: part.action });
+          return criterion({
+            text: `${id.startsWith("title-") ? "Become" : "Earn"} ${part.label}`,
+            done: part.earned,
+            at: part.earnedAt,
+            badgeId: id,
+            action: part.action,
+          });
         });
+      case "anyOf": {
+        const parts = rule.ids.map((id) => view(achievementById(id)!));
+        const earnedParts = parts.filter((p) => p.earned).sort((a, b) => Date.parse(a.earnedAt!) - Date.parse(b.earnedAt!));
+        const done = earnedParts.length >= rule.count;
+        return [
+          criterion({
+            text: rule.count === rule.ids.length ? `Earn all ${rule.count} ${rule.what}` : `Earn ${rule.count} of the ${rule.ids.length} ${rule.what}`,
+            done,
+            at: done ? earnedParts[rule.count - 1].earnedAt : null,
+            progress: { done: Math.min(earnedParts.length, rule.count), total: rule.count },
+            action: done ? null : (parts.find((p) => !p.earned && p.action)?.action ?? null),
+          }),
+        ];
+      }
     }
   };
 
@@ -267,6 +328,8 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
     const result: BadgeView = {
       id: a.id,
       group: a.group,
+      rank: a.rank,
+      insignia: a.insignia ?? null,
       label: a.label,
       glyph: a.glyph,
       means: a.means,
@@ -312,7 +375,17 @@ export function buildAchievementsModel(input: AchievementsInput): AchievementsMo
     badges: parts.filter((p) => p.group === id),
   }));
 
+  const titles = TITLES.map(view);
+  const missionRecord = Object.fromEntries(MISSION_RANKS.map((r) => [r, earned.filter((p) => p.rank === r).length])) as Record<
+    MissionRank,
+    number
+  >;
+
   return {
+    titles,
+    title: [...titles].reverse().find((t) => t.earned) ?? null,
+    nextTitle: titles.find((t) => !t.earned) ?? null,
+    missionRecord,
     total,
     earnedCount: earned.length,
     headline,

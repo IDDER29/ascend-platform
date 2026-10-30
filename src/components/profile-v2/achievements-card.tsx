@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CrestPatch } from "@/components/achievements/emblems";
 import { Ribbon } from "@/components/achievements/ribbon";
 import { byPrecedence, rackRows } from "@/lib/achievements/ribbons";
 import type { ProfileModel } from "@/lib/profile/profile-model";
@@ -7,7 +8,15 @@ import { CARD, CARD_TITLE, MUTED_LINE } from "./styles";
 const LATEST = 3;
 
 /** The learner's decorations, worn as on the chest: a ribbon rack, then the newest few by name. */
-export function AchievementsCard({ achievements, owner }: { achievements: ProfileModel["achievements"]; owner: boolean }) {
+export function AchievementsCard({
+  achievements,
+  insignia,
+  owner,
+}: {
+  achievements: ProfileModel["achievements"];
+  insignia: ProfileModel["insignia"];
+  owner: boolean;
+}) {
   const worn = byPrecedence(achievements);
   return (
     <section aria-labelledby="achievements-title" className={CARD}>
@@ -21,6 +30,19 @@ export function AchievementsCard({ achievements, owner }: { achievements: Profil
           </Link>
         ) : null}
       </div>
+      {insignia.crests.some((c) => c.earned) ? (
+        <ul aria-label="Clans" className="m-0 flex list-none justify-center gap-2 rounded-xl bg-[var(--coach-hero-bg)] p-0 py-3">
+          {insignia.crests.map((c) => (
+            <li key={c.crest} title={c.earned ? c.label : `${c.label}: not joined yet`}>
+              <CrestPatch crest={c.crest} earned={c.earned} size="sm" />
+              <span className="sr-only">
+                {c.label}
+                {c.earned ? "" : ", not joined yet"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {achievements.length === 0 ? (
         <p className={MUTED_LINE}>{owner ? "Finish a lesson to earn your first decoration." : "No decorations yet."}</p>
       ) : (

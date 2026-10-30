@@ -4,14 +4,25 @@ import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { AchievementsModel, BadgeView } from "@/lib/achievements/achievements-model";
-import { GROUP_TITLES, type AchievementGroup } from "@/lib/achievements/catalog";
+import {
+  CREST_IDS,
+  GROUP_TITLES,
+  MISSION_RANKS,
+  TITLES,
+  type AchievementGroup,
+  type Title,
+} from "@/lib/achievements/catalog";
 import { byPrecedence, groupSwatch, PRECEDENCE, rackRows } from "@/lib/achievements/ribbons";
 import { CriterionRow } from "./criterion-row";
+import { CrestPatch, Headband } from "./emblems";
+import { BadgeMark, RankChip } from "./marks";
 import { Medal } from "./medal";
 import { useSeenDecorations } from "./use-seen-decorations";
 import { Ribbon } from "./ribbon";
 
 const PIN_STEP_MS = 90;
+
+const TITLE_META: Record<string, Title> = Object.fromEntries(TITLES.map((t) => [t.id, t]));
 
 function lowerFirst(text: string): string {
   return text.charAt(0).toLowerCase() + text.slice(1);
@@ -64,8 +75,19 @@ function Citation({
       aria-labelledby="citation-title"
       className="flex min-w-0 flex-col items-center gap-4 rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 text-center sm:p-7"
     >
-      <Medal id={badge.id} group={badge.group} glyph={badge.glyph} earned={badge.earned} />
-      <div className="flex flex-col gap-1">
+      {badge.insignia ? (
+        <span className="flex items-center justify-center rounded-2xl bg-[var(--coach-hero-bg)] px-8 py-6">
+          {badge.insignia.kind === "crest" ? (
+            <CrestPatch crest={badge.insignia.crest} earned={badge.earned} size="lg" />
+          ) : (
+            <Headband earned={badge.earned} size="lg" />
+          )}
+        </span>
+      ) : (
+        <Medal id={badge.id} group={badge.group} glyph={badge.glyph} earned={badge.earned} />
+      )}
+      <div className="flex flex-col items-center gap-1">
+        <RankChip rank={badge.rank} />
         <h2
           id="citation-title"
           className="m-0 font-display text-[26px] font-extrabold leading-tight tracking-[-0.03em]"
@@ -263,12 +285,63 @@ function RibbonKey({ model }: { model: AchievementsModel }) {
   );
 }
 
+/** The headband or a clan crest, selectable like a ribbon to read its citation. */
+function InsigniaButton({
+  badge,
+  selected,
+  onSelect,
+  className = "",
+  children,
+}: {
+  badge: BadgeView;
+  selected: boolean;
+  onSelect: Select;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      aria-label={badge.earned ? `${badge.label}, awarded ${badge.earnedLabel}` : `${badge.label}, not yet earned`}
+      title={`${badge.label}: ${badge.criteria.map((c) => c.text).join("; ")}`}
+      onClick={() => onSelect(badge.id)}
+      className={`rounded-full p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--coach-lime)] ${
+        selected ? "bg-white/10" : "hover:bg-white/5"
+      } ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** How many missions of each rank are done, hardest first. */
+function MissionRecord({ model }: { model: AchievementsModel }) {
+  return (
+    <div className="relative flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-[12.5px] text-[var(--coach-hero-muted)]">
+      <span>Missions</span>
+      <ul aria-label="Missions by rank" className="m-0 flex list-none gap-1.5 p-0">
+        {MISSION_RANKS.map((rank) => (
+          <li
+            key={rank}
+            className="flex items-baseline gap-1 rounded-md bg-white/[0.06] px-2 py-0.5 font-mono text-[12px]"
+          >
+            <span className="font-bold text-[var(--coach-hero-ink)]">{rank}</span>
+            <span>{model.missionRecord[rank]}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** A dress uniform: ribbons over the left breast pocket, the nameplate over the right. */
 function Uniform({
   model,
   worn,
   firstToEarn,
   name,
+  title,
   selectedId,
   isNew,
   onSelect,
@@ -277,10 +350,13 @@ function Uniform({
   worn: BadgeView[];
   firstToEarn: BadgeView | undefined;
   name: string;
+  title: string | null;
   selectedId: string;
   isNew: (id: string) => boolean;
   onSelect: Select;
 }) {
+  const headband = model.parts.find((p) => p.insignia?.kind === "headband")!;
+  const crests = CREST_IDS.map((id) => model.parts.find((p) => p.id === id)!);
   return (
     <section
       aria-labelledby="chest-title"
@@ -290,14 +366,39 @@ function Uniform({
         Decorations worn
       </h2>
 
+      <InsigniaButton
+        badge={headband}
+        selected={selectedId === headband.id}
+        onSelect={onSelect}
+        className="relative mx-auto mt-5"
+      >
+        <Headband earned={headband.earned} />
+      </InsigniaButton>
+
       {/* The jacket: decorations high on the chest under the collar; the seam runs on down. */}
       <div className="relative flex flex-1 flex-col gap-3 pb-8 pt-8 sm:min-h-[340px] sm:pt-[112px]">
         <UniformLines />
+        {/* Clan crests: two on each shoulder; a row under the headband on phones. */}
+        <div className="relative flex justify-center gap-2 sm:absolute sm:inset-x-0 sm:top-3 sm:justify-between">
+          {[crests.slice(0, 2), crests.slice(2)].map((pair, i) => (
+            <div key={i} className="flex gap-2">
+              {pair.map((crest) => (
+                <InsigniaButton key={crest.id} badge={crest} selected={selectedId === crest.id} onSelect={onSelect}>
+                  <CrestPatch
+                    crest={crest.insignia!.kind === "crest" ? crest.insignia!.crest : "gate"}
+                    earned={crest.earned}
+                  />
+                </InsigniaButton>
+              ))}
+            </div>
+          ))}
+        </div>
         {/* Viewer's left: nameplate. Viewer's right: the rack, as worn on the wearer's left breast. */}
         <div className="relative grid grid-cols-1 items-end gap-6 sm:grid-cols-2 sm:gap-x-14">
           <div className="order-2 flex justify-center sm:order-1">
             <div className="rounded-[5px] bg-[linear-gradient(180deg,#f3f1ea,#cfccc2)] px-5 py-1.5 shadow-[0_2px_0_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.7)]">
               <span className="whitespace-nowrap font-mono text-[12.5px] font-semibold uppercase tracking-[0.14em] text-[#1b1d22]">
+                {title ? <span className="text-[#5a6b16]">{title} · </span> : null}
                 {name}
               </span>
             </div>
@@ -328,6 +429,7 @@ function Uniform({
           ? `${model.total} decorations to earn.`
           : `${worn.length} of ${model.total} decorations, worn highest first. Select a ribbon to read its citation.`}
       </p>
+      <MissionRecord model={model} />
       <RibbonKey model={model} />
     </section>
   );
@@ -360,8 +462,9 @@ function NextUpCard({
         onClick={() => onSelect(badge.id)}
         className="flex min-w-0 items-center gap-3 rounded-lg text-left hover:underline"
       >
-        <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} size="small" muted />
+        <BadgeMark badge={badge} />
         <span className="min-w-0 flex-1 text-[15px] font-semibold">{badge.label}</span>
+        <RankChip rank={badge.rank} />
         {badge.criteria.length > 1 ? (
           <span className="shrink-0 text-[12px] text-[var(--coach-ink-muted)]">
             {met} of {badge.criteria.length} met
@@ -409,9 +512,12 @@ function RestRow({ badge, selected, onSelect }: { badge: BadgeView; selected: bo
             : "border-transparent hover:bg-[var(--coach-surface)]"
         }`}
       >
-        <Ribbon id={badge.id} group={badge.group} glyph={badge.glyph} size="small" muted />
+        <BadgeMark badge={badge} />
         <span className="min-w-0">
-          <span className="block text-[14.5px] font-semibold">{badge.label}</span>
+          <span className="flex items-center gap-2 text-[14.5px] font-semibold">
+            {badge.label}
+            <RankChip rank={badge.rank} />
+          </span>
           <span className="block text-[13px] leading-snug text-[var(--coach-ink-secondary)]">
             {ruleSentence(badge)}
           </span>
@@ -504,9 +610,117 @@ function StillToEarn({
 
 const NEXT_UP = 3;
 
+/** Your title and the path of titles: each one earned by a combination of missions, never taken away. */
+function TitleSection({
+  model,
+  glyphOf,
+  onSelect,
+}: {
+  model: AchievementsModel;
+  glyphOf: (id: string) => string;
+  onSelect: Select;
+}) {
+  const { title, nextTitle, titles } = model;
+  const current = title ? TITLE_META[title.id] : null;
+  return (
+    <section
+      aria-labelledby="title-heading"
+      className="grid min-w-0 grid-cols-1 gap-6 rounded-[24px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] md:p-8"
+    >
+      <div className="flex min-w-0 flex-col gap-4">
+        <h2 id="title-heading" className="m-0 text-[13px] font-semibold text-[var(--coach-ink-muted)]">
+          Your title
+        </h2>
+        {title && current ? (
+          <div className="flex items-center gap-4">
+            <span
+              aria-hidden="true"
+              className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-[var(--coach-hero-bg)] text-[28px] text-[var(--coach-lime)]"
+            >
+              {current.kanji.charAt(0)}
+            </span>
+            <div className="flex flex-col">
+              <span className="font-display text-[34px] font-extrabold leading-none tracking-[-0.03em]">
+                {title.label}
+              </span>
+              <span className="text-[14px] text-[var(--coach-ink-secondary)]">
+                {current.kanji}, {current.gloss}. Since {title.earnedLabel}.
+              </span>
+            </div>
+          </div>
+        ) : (
+          <p className="m-0 text-[15px] leading-relaxed text-[var(--coach-ink-secondary)]">
+            No title yet. Earn your headband to become <strong className="text-[var(--coach-ink)]">Genin</strong>.
+          </p>
+        )}
+        <ol aria-label="Titles" className="m-0 flex list-none flex-wrap items-center gap-1.5 p-0">
+          {titles.map((t, i) => (
+            <li key={t.id} className="flex items-center gap-1.5">
+              {i > 0 ? (
+                <span
+                  aria-hidden="true"
+                  className={`h-0.5 w-3 ${t.earned ? "bg-[var(--coach-lime-shadow)]" : "bg-[var(--coach-border)]"}`}
+                />
+              ) : null}
+              <span
+                className={`rounded-full px-2.5 py-1 text-[12.5px] font-semibold ${
+                  t.earned
+                    ? "bg-[var(--coach-hero-bg)] text-[var(--coach-lime)]"
+                    : t.id === nextTitle?.id
+                      ? "border-2 border-[var(--coach-blue)] text-[var(--coach-ink)]"
+                      : "border-2 border-dashed border-[var(--coach-border-strong)] text-[var(--coach-ink-muted)]"
+                }`}
+              >
+                {t.label}
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="m-0 text-[13px] leading-relaxed text-[var(--coach-ink-muted)]">
+          Titles are earned by real work, kept for good, and never lock anything.
+        </p>
+      </div>
+
+      {nextTitle ? (
+        <div className="flex min-w-0 flex-col gap-3 md:border-l md:border-[var(--coach-divider)] md:pl-6">
+          <h3 className="m-0 text-[13px] font-semibold text-[var(--coach-ink-muted)]">
+            Next title: <span className="text-[var(--coach-ink)]">{nextTitle.label}</span> (
+            {TITLE_META[nextTitle.id].gloss}).{" "}
+            {nextTitle.criteria.length > 1 ? "Earn it by meeting all of these" : "Earn it by"}
+          </h3>
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {nextTitle.criteria.map((c) => (
+              <CriterionRow
+                key={c.text}
+                c={c}
+                partGlyph={c.badgeId ? glyphOf(c.badgeId) : null}
+                onSelectPart={onSelect}
+              />
+            ))}
+          </ul>
+          {nextTitle.action ? (
+            <Link
+              href={nextTitle.action.href}
+              className="mt-1 inline-flex h-10 w-fit items-center rounded-xl bg-[var(--coach-lime)] px-4 text-[13.5px] font-bold text-[var(--coach-lime-ink)] no-underline shadow-[0_3px_0_var(--coach-lime-shadow)]"
+            >
+              {nextTitle.action.label}
+            </Link>
+          ) : null}
+        </div>
+      ) : (
+        <p className="m-0 self-center text-[15px] text-[var(--coach-ink-secondary)]">
+          Every title earned. You are Ascended.
+        </p>
+      )}
+    </section>
+  );
+}
+
 /** The learner's decorations worn on a uniform, with a citation for each, and the ones still to earn. */
 export function Chest({ model, name }: { model: AchievementsModel; name: string }) {
   const worn = byPrecedence(model.parts.filter((p) => p.earned));
+  const ribbons = worn.filter((p) => !p.insignia);
+  const everything = [...model.parts, ...model.titles];
   const toEarn = [...model.parts.filter((p) => !p.earned)].sort(
     (a, b) => b.ratio - a.ratio || model.parts.indexOf(a) - model.parts.indexOf(b),
   );
@@ -515,8 +729,8 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
   const [chosenId, setChosenId] = useState<string | null>(null);
   // A newly awarded decoration opens first until the learner picks something else.
   const selectedId = chosenId ?? firstNew?.id ?? worn[0]?.id ?? toEarn[0]?.id ?? model.parts[0].id;
-  const selected = model.parts.find((p) => p.id === selectedId) ?? model.parts[0];
-  const glyphOf = (id: string) => model.parts.find((p) => p.id === id)?.glyph ?? "•";
+  const selected = everything.find((p) => p.id === selectedId) ?? model.parts[0];
+  const glyphOf = (id: string) => everything.find((p) => p.id === id)?.glyph ?? "•";
   const select: Select = (id) => {
     setChosenId(id);
     seen.markSeen(id);
@@ -530,15 +744,18 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
       <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
         <Uniform
           model={model}
-          worn={worn}
+          worn={ribbons}
           firstToEarn={toEarn[0]}
           name={name}
+          title={model.title?.label ?? null}
           selectedId={selectedId}
           isNew={seen.isNew}
           onSelect={select}
         />
         <Citation badge={selected} name={name} isNew={seen.isNew(selected.id)} glyphOf={glyphOf} onSelect={select} />
       </div>
+
+      <TitleSection model={model} glyphOf={glyphOf} onSelect={select} />
 
       {toEarn.length > 0 ? (
         <StillToEarn toEarn={toEarn} selectedId={selectedId} glyphOf={glyphOf} onSelect={select} />

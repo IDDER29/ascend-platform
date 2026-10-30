@@ -52,7 +52,11 @@ export function StackProject({ project, onDark }: { project: ProfileProject; onD
     return linking ? (
       <div className="w-full rounded-xl bg-[var(--coach-surface)] p-3 text-[var(--coach-ink)] sm:w-[240px]">
         <p className="m-0 mb-2 text-[13px] leading-snug text-[var(--coach-ink-secondary)]">{project.proves}</p>
-        <ProjectLinkForm projectId={project.id} badgeLabel={project.badge?.label ?? null} />
+        <ProjectLinkForm
+          projectId={project.id}
+          badgeLabel={project.badge?.label ?? null}
+          onCancel={() => setLinking(false)}
+        />
       </div>
     ) : (
       <button

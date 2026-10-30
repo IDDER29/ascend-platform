@@ -111,7 +111,7 @@ function Layer({
         {next && skill.state === "current" ? (
           <Link
             href={next.href}
-            className="mt-1 inline-flex min-h-10 w-fit max-w-full items-center rounded-xl bg-[var(--coach-lime)] px-4 py-2 text-left text-[13.5px] font-bold leading-snug text-[var(--coach-lime-ink)] no-underline shadow-[0_3px_0_var(--coach-lime-shadow)]"
+            className="mt-1 inline-flex min-h-10 w-fit max-w-full items-center rounded-xl bg-[var(--coach-solid-btn-bg)] px-4 py-2 text-left text-[13.5px] font-bold leading-snug text-[var(--coach-solid-btn-ink)] no-underline shadow-[0_3px_0_var(--coach-solid-btn-shadow)]"
           >
             Continue with {next.title}
           </Link>

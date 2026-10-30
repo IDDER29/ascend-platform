@@ -5,7 +5,15 @@ import { saveProjectLinkAction } from "@/lib/profile/actions";
 import { FIELD } from "./styles";
 import { useProfileAction } from "./use-profile-action";
 
-export function ProjectLinkForm({ projectId, badgeLabel }: { projectId: string; badgeLabel: string | null }) {
+export function ProjectLinkForm({
+  projectId,
+  badgeLabel,
+  onCancel,
+}: {
+  projectId: string;
+  badgeLabel: string | null;
+  onCancel?: () => void;
+}) {
   const { pending, error, run } = useProfileAction();
   const [url, setUrl] = useState("");
   return (
@@ -19,6 +27,7 @@ export function ProjectLinkForm({ projectId, badgeLabel }: { projectId: string; 
       <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
         Link your repo
         <input
+          autoFocus={Boolean(onCancel)}
           required
           value={url}
           onChange={(e) => setUrl(e.target.value)}
@@ -33,6 +42,15 @@ export function ProjectLinkForm({ projectId, badgeLabel }: { projectId: string; 
       >
         {badgeLabel ? `Ship it and earn ${badgeLabel}` : "Ship it"}
       </button>
+      {onCancel ? (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="h-8 text-[13px] font-semibold text-[var(--coach-ink-secondary)] hover:text-[var(--coach-ink)]"
+        >
+          Cancel
+        </button>
+      ) : null}
       {error ? (
         <p role="alert" className="m-0 text-[13px] text-[var(--coach-wrong-ink)]">
           {error}

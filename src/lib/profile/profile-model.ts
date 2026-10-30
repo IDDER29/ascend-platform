@@ -224,7 +224,7 @@ export function buildProfileModel(input: ProfileInput): ProfileModel {
     (a, b) => Date.parse(completedAt.get(a.key)!) - Date.parse(completedAt.get(b.key)!),
   )[0];
   if (firstLesson) {
-    events.push({ at: completedAt.get(firstLesson.key)!, text: `First lesson — ${firstLesson.title}`, kind: "lesson" });
+    events.push({ at: completedAt.get(firstLesson.key)!, text: `First lesson: ${firstLesson.title}`, kind: "lesson" });
   }
   for (const [id, at] of levelFinishedAt) {
     events.push({ at, text: `Finished Level ${levelNumber(id)} · ${levelName(id)}`, kind: "level" });

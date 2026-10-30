@@ -10,6 +10,8 @@ const FORMAT_TINTS: Record<BankFormat, string> = {
   cloze: "bg-[var(--coach-tint-neutral-bg)] text-[var(--coach-ink-secondary)]",
   output: "bg-[var(--coach-code-bg)] text-[var(--coach-code-ink)]",
   bug: "bg-[var(--coach-wrong-bg)] text-[var(--coach-wrong-title)]",
+  order: "bg-[var(--coach-tint-blue-bg)] text-[var(--coach-tint-blue-ink)]",
+  bits: "bg-[var(--coach-lime)] text-[var(--coach-lime-ink)]",
 };
 
 const STRENGTH_LEVELS: Record<BankStrength, { label: string; filled: number; color: string }> = {

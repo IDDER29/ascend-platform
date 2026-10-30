@@ -9,6 +9,8 @@ export const KIND_LABELS: Record<PracticeItem["kind"], string> = {
   cloze: "Fill in the blank",
   output: "Predict the output",
   bug: "Spot the bug",
+  order: "Put in order",
+  bits: "Flip the bits",
 };
 
 const CODE_CHARS = /[`{}()[\];=<>*&|^~#%\\]/;
@@ -100,7 +102,35 @@ export function answerText(q: PracticeItem): string {
       return q.output;
     case "bug":
       return `Line ${q.bugLine + 1}: ${q.fix}`;
+    case "order":
+      return q.steps.join(" → ");
+    case "bits":
+      return q.bits;
     default:
       return q.answers[0] ?? "";
   }
 }
+
+/** A shuffled order that is never already right, so an ordering card always needs some moves. */
+export function scrambledOrder(length: number, rng: () => number = Math.random): number[] {
+  if (length < 2) return Array.from({ length }, (_, i) => i);
+  for (;;) {
+    const order = shuffledOrder(length, rng);
+    if (order.some((v, i) => v !== i)) return order;
+  }
+}
+
+/** Move the item at `from` one place up (-1) or down (+1); out-of-range moves change nothing. */
+export function moveItem<T>(list: T[], from: number, step: -1 | 1): T[] {
+  const to = from + step;
+  if (from < 0 || from >= list.length || to < 0 || to >= list.length) return list;
+  const next = [...list];
+  [next[from], next[to]] = [next[to], next[from]];
+  return next;
+}
+
+/** Each position of an arrangement: is the step there the one that belongs there? */
+export function orderMarks(arrangement: number[]): boolean[] {
+  return arrangement.map((step, position) => step === position);
+}
+

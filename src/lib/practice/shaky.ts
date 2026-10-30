@@ -19,6 +19,8 @@ const FLOOR_MS: Record<PracticeItem["kind"], number> = {
   cloze: 15_000,
   output: 30_000,
   bug: 25_000,
+  order: 25_000,
+  bits: 20_000,
 };
 /** Slow = this many times your usual (median) right-answer time for the kind. */
 const SLOW_FACTOR = 1.75;

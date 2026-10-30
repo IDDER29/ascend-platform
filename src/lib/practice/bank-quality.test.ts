@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { PRACTICE_BANK } from "./bank";
 import { hasLengthCue, longestIsRightShare } from "./bank-quality";
+import { truthTable } from "./figures";
 import type { McqItem } from "./types";
 
 const MCQ = PRACTICE_BANK.filter((q): q is McqItem => q.kind === "mcq");
@@ -37,5 +38,24 @@ test("spot-the-bug cards point at a real, non-blank line", () => {
     assert.ok(Number.isInteger(q.bugLine) && q.bugLine >= 0 && q.bugLine < q.code.length, q.id);
     assert.ok(q.code[q.bugLine].trim().length > 0, `${q.id}: the bug line is blank`);
     assert.ok(q.fix.length > 20, `${q.id}: explain the fix`);
+  }
+});
+
+test("put-in-order cards have 3 to 7 distinct steps", () => {
+  for (const q of PRACTICE_BANK) {
+    if (q.kind !== "order") continue;
+    assert.ok(q.steps.length >= 3 && q.steps.length <= 7, q.id);
+    assert.equal(new Set(q.steps).size, q.steps.length, `${q.id}: steps must be distinct`);
+  }
+});
+
+test("flip-the-bits cards: bits only, and a gate's answer is its real truth table", () => {
+  for (const q of PRACTICE_BANK) {
+    if (q.kind !== "bits") continue;
+    assert.match(q.bits, /^[01]+$/, q.id);
+    if (q.gate) {
+      const outputs = truthTable(q.gate).rows.flatMap((r) => r.out).join("");
+      assert.equal(q.bits, outputs, `${q.id}: answer doesn't match the ${q.gate} table`);
+    }
   }
 });

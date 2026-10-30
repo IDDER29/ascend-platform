@@ -17,6 +17,8 @@ export const DECK_FORMAT_LABELS: Record<DeckFormat, string> = {
   cloze: "Fill in the blank",
   output: "Predict the output",
   bug: "Spot the bug",
+  order: "Put in order",
+  bits: "Flip the bits",
   typed: "Short answer",
 };
 

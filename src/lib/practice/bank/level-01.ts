@@ -736,4 +736,22 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     conceptId: "network-byte-order",
     hint: "It stores the most-significant byte first.",
   },
+  // ── put in order ──
+  {
+    kind: "order",
+    id: "stackheap-order-01",
+    prompt: "Put a function call and its return in order.",
+    steps: [
+      "call pushes the return address onto the stack",
+      "Execution jumps to the function's first instruction",
+      "The function makes room for its locals in a new frame",
+      "The function body runs",
+      "The frame is released and ret jumps back to the caller",
+    ],
+    hint: "The way back is saved before anything else happens.",
+    reviewLabel: "A call and its return",
+    lessonLevel: L01,
+    lessonSlug: "the-stack-and-the-heap",
+    conceptId: "call-return-sequence",
+  },
 ];

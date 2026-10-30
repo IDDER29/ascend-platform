@@ -1,4 +1,4 @@
-import type { CardFigure } from "./figures";
+import type { CardFigure, Gate } from "./figures";
 
 export type PracticeItemBase = {
   id: string;
@@ -63,7 +63,29 @@ export type BugItem = PracticeItemBase & {
   fix: string;
 };
 
-export type PracticeItem = McqItem | FlashcardItem | TypedItem | ClozeItem | OutputItem | BugItem;
+/** Put in order: arrange shuffled steps into the right sequence. */
+export type OrderItem = PracticeItemBase & {
+  kind: "order";
+  prompt: string;
+  /** The steps, in the right order (shown shuffled). */
+  steps: string[];
+};
+
+/**
+ * Flip the bits: switch bits on and off to make a value, or fill in a gate's output column.
+ * `bits` is the answer: left to right, or (with `gate`) the output cells row by row.
+ */
+export type BitsItem = PracticeItemBase & {
+  kind: "bits";
+  prompt: string;
+  bits: string;
+  /** Show each bit's place value (8 4 2 1) above it. */
+  places?: boolean;
+  /** Fill in this gate's truth table instead of a row of bits. */
+  gate?: Gate;
+};
+
+export type PracticeItem = McqItem | FlashcardItem | TypedItem | ClozeItem | OutputItem | BugItem | OrderItem | BitsItem;
 
 /** @deprecated Use McqItem for MCQ-only code or PracticeItem for mixed sessions. */
 export type PracticeQuestion = McqItem;

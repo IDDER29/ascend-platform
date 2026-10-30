@@ -1423,4 +1423,22 @@ export const LEVEL_02_BANK: PracticeItem[] = [
     lessonSlug: "undefined-behaviour",
     conceptId: "use-after-free",
   },
+  // ── put in order ──
+  {
+    kind: "order",
+    id: "dynmem-order-01",
+    prompt: "Put the life of a heap block in order.",
+    steps: [
+      "Call malloc for the bytes you need",
+      "Check the pointer isn't NULL",
+      "Use the memory",
+      "Call free on the pointer",
+      "Set the pointer to NULL",
+    ],
+    hint: "Check before you use; clear the pointer after you free.",
+    reviewLabel: "The life of a heap block",
+    lessonLevel: L02,
+    lessonSlug: "dynamic-memory",
+    conceptId: "malloc-lifecycle",
+  },
 ];

@@ -178,6 +178,11 @@ A later quick right answer clears it. Misses aren't shaky — they're misses.
 - **Predict the output** (`kind: "output"`): code, then type exactly what it prints into a terminal box (Shift+Enter for new lines). Matched exactly, ignoring only trailing whitespace and line endings (`outputMatches`). "I was right" covers formatting slips. 10 cards converted from "what does this print"; every `output` was produced by compiling and running the snippet with gcc. Questions about *meaning* (undefined behaviour, where output goes) stay multiple choice.
 - **Spot the bug** (`kind: "bug"`): click (or press the line number of) the one faulty line; the bar always explains the fix ("Line 4: …"). 11 new cards across C and Systems — every bug confirmed by a gcc warning, AddressSanitizer or running it. Context labels describe what the code does ("Moving a point"), never the bug.
 
+## 3f. Decision: sequences and bits you build yourself (2026-10-30)
+**Why:** half of systems knowledge is *order* (fork before exec, pipe before fork, trap before kernel mode), and Foundations is about *bit patterns* — neither had a card type that made the learner produce them.
+- **Put in order** (`kind: "order"`): 3–7 steps arrive scrambled (never already right); pick a step (click or its number) and move it with the arrows (buttons or ↑/↓). After Check each step is marked right, or "belongs at n". 6 cards: the instruction cycle, a call and its return, a heap block's life, how a shell runs a command, wiring a pipe, inside a write() call. Steps that happen at the same time in different processes are avoided, so there is one right order.
+- **Flip the bits** (`kind: "bits"`): switch bits on and off to make a value (place values shown: 8 4 2 1), or fill a gate's output column (cells start as "?"). After Check every cell shows the right value, green where you had it, orange where not. 7 cards: 65 / 'A', 13, the largest 4-bit number, hex C, OR, XOR, the half adder. A test checks each truth-table answer against the gate itself.
+
 ## 4. Open ideas (ranked by value for effort)
 
 1. **Use the curve elsewhere** — Progress (the long view) and Practice home; per topic ("Bits & Logic: 88%").

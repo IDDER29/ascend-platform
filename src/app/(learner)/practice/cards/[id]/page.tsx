@@ -17,6 +17,8 @@ const KIND: Record<PracticeItem["kind"], string> = {
   cloze: "Fill in the blank",
   output: "Predict the output",
   bug: "Spot the bug",
+  order: "Put in order",
+  bits: "Flip the bits",
 };
 
 function prompt(q: PracticeItem): string {

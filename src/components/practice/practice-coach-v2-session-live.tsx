@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { SaveButton } from "@/components/bookmarks/save-button";
 import { CardFigureView } from "@/components/practice/card-figure";
+import { BitsCard, type Cell } from "@/components/practice/session/bits-card";
+import { OrderCard } from "@/components/practice/session/order-card";
 import { cardTarget } from "@/lib/bookmarks/model";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -52,7 +54,9 @@ import {
   blankWidth,
   looksLikeCode,
   officialWording,
+  moveItem,
   outputMatches,
+  scrambledOrder,
   shuffledOrder,
   splitBlank,
   splitCodeBlank,
@@ -563,6 +567,11 @@ export function PracticeCoachV2SessionLive({
   const [typedAnswer, setTypedAnswer] = useState("");
   // Spot the bug: the line the learner picked (0-based).
   const [pickedLine, setPickedLine] = useState<number | null>(null);
+  // Put in order: each card's current arrangement (step indices by position) and the picked position.
+  const [arrangements, setArrangements] = useState<Record<string, number[]>>({});
+  const [pickedPos, setPickedPos] = useState<number | null>(null);
+  // Flip the bits: each card's cells (null = not set yet, for truth tables).
+  const [cellsById, setCellsById] = useState<Record<string, Cell[]>>({});
   const [answered, setAnswered] = useState<Answered[]>([]);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   // A graded flashcard on its way off screen (right: knew it, left: not yet).
@@ -615,7 +624,13 @@ export function PracticeCoachV2SessionLive({
       return;
     }
     const nextOrders = Object.fromEntries(
-      next.flatMap((q) => (q.kind === "mcq" ? [[q.id, shuffledOrder(q.options.length)] as const] : [])),
+      next.flatMap((q) =>
+        q.kind === "mcq"
+          ? [[q.id, shuffledOrder(q.options.length)] as const]
+          : q.kind === "order"
+            ? [[q.id, scrambledOrder(q.steps.length)] as const]
+            : [],
+      ),
     );
     queueMicrotask(() => {
       setOrders(nextOrders);
@@ -626,6 +641,7 @@ export function PracticeCoachV2SessionLive({
   function resetPrompt() {
     setSelected(null);
     setPickedLine(null);
+    setPickedPos(null);
     setRevealed(false);
     setTypedAnswer("");
     setFeedback(null);
@@ -742,8 +758,11 @@ export function PracticeCoachV2SessionLive({
     if (!question || question.kind === "flashcard") return;
     if (question.kind === "mcq") setSelected(null);
     else if (question.kind === "bug") setPickedLine(null);
+    else if (question.kind === "order")
+      setArrangements((prev) => ({ ...prev, [question.id]: question.steps.map((_, i) => i) }));
     else if (question.kind === "output") setTypedAnswer(question.output);
-    else setTypedAnswer(question.answers[0] ?? "");
+    // Bits cards show the answer themselves in the feedback phase.
+    else if (question.kind !== "bits") setTypedAnswer(question.answers[0] ?? "");
     if (recordGrade("again", false)) setFeedback({ correct: false, grade: "again", dunno: true });
   }
 
@@ -775,6 +794,43 @@ export function PracticeCoachV2SessionLive({
     }
     const correct =
       question.kind === "output" ? outputMatches(typedAnswer, question.output) : answersMatch(typedAnswer, question.answers);
+    recordGrade(correct ? "good" : "again", correct);
+  }
+
+  const arrangementOf = (q: PracticeItem) =>
+    q.kind === "order" ? (arrangements[q.id] ?? orders[q.id] ?? q.steps.map((_, i) => i)) : [];
+  const cellsOf = (q: PracticeItem): Cell[] =>
+    q.kind === "bits" ? (cellsById[q.id] ?? Array.from(q.bits, () => (q.gate ? null : 0))) : [];
+
+  function moveStep(position: number, step: -1 | 1) {
+    const question = questions[index];
+    if (!question || question.kind !== "order" || phase !== "prompt") return;
+    setArrangements((prev) => ({ ...prev, [question.id]: moveItem(arrangementOf(question), position, step) }));
+    setPickedPos(Math.min(question.steps.length - 1, Math.max(0, position + step)));
+  }
+
+  function toggleCell(i: number) {
+    const question = questions[index];
+    if (!question || question.kind !== "bits" || phase !== "prompt") return;
+    const cells = [...cellsOf(question)];
+    if (i < 0 || i >= cells.length) return;
+    cells[i] = cells[i] === 1 ? 0 : 1;
+    setCellsById((prev) => ({ ...prev, [question.id]: cells }));
+  }
+
+  function checkOrder() {
+    const question = questions[index];
+    if (!question || question.kind !== "order") return;
+    const correct = arrangementOf(question).every((step, position) => step === position);
+    recordGrade(correct ? "good" : "again", correct);
+  }
+
+  function checkBits() {
+    const question = questions[index];
+    if (!question || question.kind !== "bits") return;
+    const cells = cellsOf(question);
+    if (cells.some((c) => c === null)) return;
+    const correct = cells.join("") === question.bits;
     recordGrade(correct ? "good" : "again", correct);
   }
 
@@ -814,6 +870,8 @@ export function PracticeCoachV2SessionLive({
         if (phase === "feedback") advance(answered);
         else if (current.kind === "mcq") checkMcq();
         else if (current.kind === "bug") checkBug();
+        else if (current.kind === "order") checkOrder();
+        else if (current.kind === "bits") checkBits();
         else if (current.kind === "flashcard") {
           if (!revealed) setRevealed(true);
         } else gradeTyped();
@@ -834,6 +892,12 @@ export function PracticeCoachV2SessionLive({
         return;
       }
 
+      if (current.kind === "order" && pickedPos !== null && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+        event.preventDefault();
+        moveStep(pickedPos, event.key === "ArrowDown" ? 1 : -1);
+        return;
+      }
+
       if (current.kind === "bug" && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
         event.preventDefault();
         const step = event.key === "ArrowDown" ? 1 : -1;
@@ -847,6 +911,16 @@ export function PracticeCoachV2SessionLive({
       if (current.kind === "bug" && digit <= current.code.length) {
         event.preventDefault();
         setPickedLine(digit - 1);
+        return;
+      }
+      if (current.kind === "order" && digit <= current.steps.length) {
+        event.preventDefault();
+        setPickedPos(digit - 1);
+        return;
+      }
+      if (current.kind === "bits" && digit <= current.bits.length) {
+        event.preventDefault();
+        toggleCell(digit - 1);
         return;
       }
       if (current.kind === "mcq" && digit <= current.options.length) {
@@ -1082,6 +1156,38 @@ export function PracticeCoachV2SessionLive({
           </>
         ) : null}
 
+        {question.kind === "order" ? (
+          <>
+            <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] text-pretty sm:text-[28px]">
+              {question.prompt}
+            </h1>
+            <OrderCard
+              steps={question.steps}
+              arrangement={arrangementOf(question)}
+              picked={pickedPos}
+              locked={Boolean(inFeedback)}
+              onPick={setPickedPos}
+              onMove={moveStep}
+            />
+          </>
+        ) : null}
+
+        {question.kind === "bits" ? (
+          <>
+            <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] text-pretty sm:text-[28px]">
+              {question.prompt}
+            </h1>
+            <BitsCard
+              answer={question.bits}
+              cells={cellsOf(question)}
+              places={question.places}
+              gate={question.gate}
+              phase={inFeedback ? (feedback.dunno ? "shown" : "checked") : "prompt"}
+              onToggle={toggleCell}
+            />
+          </>
+        ) : null}
+
         {question.kind === "typed" ? (
           <>
             <h1 className="m-0 font-[family-name:var(--font-bricolage)] text-2xl font-bold leading-[1.25] tracking-[-0.01em] text-pretty sm:text-[28px]">
@@ -1211,6 +1317,10 @@ export function PracticeCoachV2SessionLive({
           </div>
           {question.kind === "bug" ? (
             <LimeCheckButton disabled={pickedLine === null} onClick={checkBug} />
+          ) : question.kind === "order" ? (
+            <LimeCheckButton onClick={checkOrder} />
+          ) : question.kind === "bits" ? (
+            <LimeCheckButton disabled={cellsOf(question).some((c) => c === null)} onClick={checkBits} />
           ) : (
             <LimeCheckButton disabled={typedAnswer.trim().length === 0} onClick={gradeTyped} />
           )}

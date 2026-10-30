@@ -4,8 +4,11 @@ import {
   answerText,
   blankWidth,
   looksLikeCode,
+  moveItem,
   officialWording,
+  orderMarks,
   outputMatches,
+  scrambledOrder,
   shuffledOrder,
   splitBlank,
   splitCodeBlank,
@@ -81,4 +84,19 @@ test("every card type has an answer as text", () => {
     "Line 2: Use ==.",
   );
   assert.equal(answerText({ ...base, kind: "mcq", prompt: "p", options: ["a", "b"], correct: 1 }), "b");
+});
+
+test("a scrambled order is never already right", () => {
+  for (let i = 0; i < 50; i++) {
+    const order = scrambledOrder(4);
+    assert.deepEqual([...order].sort(), [0, 1, 2, 3]);
+    assert.ok(order.some((v, j) => v !== j));
+  }
+});
+
+test("moving a step swaps it with its neighbour, never off the ends", () => {
+  assert.deepEqual(moveItem(["a", "b", "c"], 0, 1), ["b", "a", "c"]);
+  assert.deepEqual(moveItem(["a", "b", "c"], 2, -1), ["a", "c", "b"]);
+  assert.deepEqual(moveItem(["a", "b", "c"], 0, -1), ["a", "b", "c"]);
+  assert.deepEqual(orderMarks([0, 2, 1]), [true, false, false]);
 });

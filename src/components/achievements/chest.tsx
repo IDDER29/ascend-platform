@@ -837,11 +837,12 @@ export function Chest({ model, name }: { model: AchievementsModel; name: string 
 
       <TitleSection model={model} glyphOf={glyphOf} onSelect={select} />
 
-      <MissionLog model={model} />
 
       {toEarn.length > 0 ? (
         <StillToEarn toEarn={toEarn} selectedId={selectedId} glyphOf={glyphOf} onSelect={select} />
       ) : null}
+
+      <MissionLog model={model} />
     </div>
   );
 }

@@ -6,8 +6,10 @@ getting better?". Profile answers **"who am I as a learner here, and what
 have I built?"** — a proof-of-work page the learner is glad to share.
 Private numbers (retention, accuracy, due cards) stay on Progress.
 
-Built at `/profilev2` (owner) beside the existing `/profile` (untouched),
-plus a public view at `/u/<username>`. Practice "Coach" look
+Built at `/profilev2` (owner) beside the existing `/profile`, plus a
+public view at `/u/<username>`. **Cutover (2026-10-30):** the owner page
+now lives at `/profile`; the old page is deleted (its Sign out moved into
+the new page) and `/profilev2` redirects there. Practice "Coach" look
 (`.practice-coach-v2` tokens), same main column + 280px aside.
 
 ## Decisions (from the user)
@@ -67,9 +69,9 @@ practice_sessions (count + first date).
   host → kind) + tests; `projects.ts` catalog.
 - `src/lib/profile/queries.ts`, `actions.ts` (server actions).
 - Components in `src/components/profile-v2/`.
-- Routes `src/app/(learner)/profilev2/page.tsx`,
+- Routes `src/app/(learner)/profile/page.tsx` (was `profilev2/`),
   `src/app/(learner)/u/[username]/page.tsx`.
 
 ## Not in scope
-Replacing `/profile`, avatars upload, follower/social features, the
+Avatar upload, follower/social features, the
 `/achievements` page (it keeps its catalog view).

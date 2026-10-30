@@ -38,9 +38,13 @@ quick actions, full keyboard nav, reachable from any page via `⌘K`/`Ctrl+K`
 or the topbar search bar), a **notifications dropdown** anchored to the
 topbar bell (real items derived from the same badge/streak data used
 elsewhere, unread dot clears on open, click-outside closes it), and
-`/profile` (hero stats, per-level skill mastery, earned badges, activity
-heatmap — all reusing the same real data sources as Dashboard/Achievements/
-Progress rather than a second hardcoded copy), `/onboarding` (a real
+`/profile` (a proof-of-work page in the Practice "Coach" look: the
+learner's climb drawn as the abstraction stack — one layer per level with
+its skill, lesson pips and pinned curriculum project — plus profile links,
+own projects, earned badges and a dated journey; curriculum projects ship
+when their lessons are done and a repo link is added, which awards the
+project badge; profiles are private until the owner makes them public at
+`/u/<username>`), `/onboarding` (a real
 4-step flow — goal and pace are actual client state, not decoration: the
 step 4 summary reflects whatever the user actually picked, and "Start
 learning" links to the real first lesson), a custom `not-found.tsx` (real

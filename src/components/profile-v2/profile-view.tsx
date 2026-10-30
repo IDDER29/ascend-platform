@@ -1,3 +1,5 @@
+import { LogOut } from "lucide-react";
+import { signOutAction } from "@/lib/auth/actions";
 import type { ProfileModel } from "@/lib/profile/profile-model";
 import { AchievementsCard } from "./achievements-card";
 import { JourneyCard } from "./journey-card";
@@ -26,6 +28,17 @@ export function ProfileView({ model }: { model: ProfileModel }) {
         <aside className="flex min-w-0 flex-col gap-5">
           <AchievementsCard achievements={model.achievements} owner={owner} />
           <JourneyCard journey={model.journey} />
+          {owner ? (
+            <form action={signOutAction} className="self-start">
+              <button
+                type="submit"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-[13px] font-semibold text-[var(--coach-ink-secondary)] hover:text-[var(--coach-ink)]"
+              >
+                <LogOut size={14} aria-hidden="true" />
+                Sign out
+              </button>
+            </form>
+          ) : null}
         </aside>
       </div>
     </div>

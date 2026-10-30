@@ -78,3 +78,31 @@ test("every lesson done: the capstone is next", () => {
   assert.equal(t.next.kind, "capstone");
   assert.equal(t.next.href, "/projects/shellforge");
 });
+
+test("following a path: the next lesson comes from it, then its capstone", () => {
+  const input = (completions: { key: string; completedAt: string }[]) => ({
+    lessons: LESSONS,
+    completions,
+    achievements: null,
+    focus: {
+      title: "Systems Programmer",
+      levels: [MACHINE],
+      capstone: { title: "ShellForge", href: "/projects/shellforge" },
+    },
+  });
+  const t = buildToday(input([]));
+  assert.equal(t.next.title, "Inside the CPU");
+  assert.equal(t.next.path, "Systems Programmer");
+  assert.deepEqual(
+    t.next.then.map((l) => l.title),
+    ["Memory"],
+  );
+  const both = buildToday(
+    input([
+      { key: `${MACHINE}/inside-the-cpu`, completedAt: at(3) },
+      { key: `${MACHINE}/memory`, completedAt: at(4) },
+    ]),
+  );
+  assert.equal(both.next.kind, "capstone");
+  assert.equal(both.next.href, "/projects/shellforge");
+});

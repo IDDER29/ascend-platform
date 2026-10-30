@@ -19,6 +19,7 @@ export function NextLessonCard({ next }: { next: NextStep }) {
         <span className="rounded-full bg-[var(--coach-lime)] px-2.5 py-0.5 text-[12px] font-semibold text-[var(--coach-lime-ink)]">
           {next.kind === "capstone" ? "Capstone" : "Next lesson"}
         </span>
+        {next.path && <span className="font-semibold text-[var(--coach-hero-ink)]">{next.path}</span>}
         {step && next.topic && (
           <span>
             {next.topic}, lesson {step.index} of {step.total}

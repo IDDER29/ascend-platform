@@ -10,7 +10,7 @@ import { completionKey } from "@/lib/practice/session";
 import type { AchievementsInput, AchievementsModel } from "./achievements-model";
 import type { CrestId } from "./catalog";
 
-const CREST_OF: Record<LevelId, CrestId> = {
+export const CREST_OF: Record<LevelId, CrestId> = {
   "level-00-bits-logic": "gate",
   "level-01-machine-memory": "core",
   "level-02-the-c-language": "pointer",

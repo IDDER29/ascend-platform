@@ -23,11 +23,15 @@ export type TodayInput = {
   completions: { key: string; completedAt: string }[];
   /** Null for guests: nothing is recorded yet. */
   achievements: AchievementsModel | null;
+  /** The path worked on last: the next lesson comes from its topics, then its capstone. */
+  focus?: { title: string; levels: string[]; capstone: { title: string; href: string } | null } | null;
 };
 
 export type NextStep = {
   /** "start": nothing done yet; "continue": the next open lesson; "capstone": every lesson done. */
   kind: "start" | "continue" | "capstone";
+  /** The path this step is on, when the learner follows one. */
+  path: string | null;
   title: string;
   href: string;
   blurb: string;
@@ -61,11 +65,28 @@ const KANJI = Object.fromEntries(TITLES.map((t) => [t.id, t]));
 
 const firstOpen = (b: BadgeView) => b.criteria.find((c) => !c.done) ?? null;
 
-function nextStep(lessons: TodayLesson[], done: Set<string>): NextStep {
-  const i = lessons.findIndex((l) => !done.has(l.key));
+function nextStep(lessons: TodayLesson[], done: Set<string>, focus: TodayInput["focus"]): NextStep {
+  const scoped = focus ? lessons.filter((l) => focus.levels.includes(l.level)) : lessons;
+  const i = scoped.findIndex((l) => !done.has(l.key));
   if (i === -1) {
+    if (focus?.capstone) {
+      return {
+        kind: "capstone",
+        path: focus.title,
+        title: focus.capstone.title,
+        href: focus.capstone.href,
+        blurb: `Every lesson on ${focus.title} is done. Build it and link its repo to ship the capstone.`,
+        timeMin: null,
+        topic: null,
+        topicStep: null,
+        then: [],
+      };
+    }
+    // The followed path is done: carry on through the rest of the curriculum.
+    if (focus && lessons.some((l) => !done.has(l.key))) return nextStep(lessons, done, null);
     return {
       kind: "capstone",
+      path: null,
       title: "ShellForge",
       href: "/projects/shellforge",
       blurb: "Every lesson is done. Build a working shell and link its repo to ship the capstone.",
@@ -75,10 +96,11 @@ function nextStep(lessons: TodayLesson[], done: Set<string>): NextStep {
       then: [],
     };
   }
-  const lesson = lessons[i];
+  const lesson = scoped[i];
   const inTopic = lessons.filter((l) => l.level === lesson.level);
   return {
     kind: done.size === 0 ? "start" : "continue",
+    path: focus?.title ?? null,
     title: lesson.title,
     href: lesson.href,
     blurb: lesson.blurb,
@@ -89,7 +111,7 @@ function nextStep(lessons: TodayLesson[], done: Set<string>): NextStep {
       total: inTopic.length,
       done: inTopic.filter((l) => done.has(l.key)).length,
     },
-    then: lessons
+    then: scoped
       .slice(i + 1)
       .filter((l) => !done.has(l.key))
       .slice(0, THEN_COUNT)
@@ -123,7 +145,7 @@ function standing(model: AchievementsModel): Standing {
 export function buildToday(input: TodayInput): Today {
   const done = new Set(input.completions.map((c) => c.key).filter((k) => input.lessons.some((l) => l.key === k)));
   return {
-    next: nextStep(input.lessons, done),
+    next: nextStep(input.lessons, done, input.focus ?? null),
     lessons: { done: done.size, total: input.lessons.length },
     standing: input.achievements ? standing(input.achievements) : null,
   };

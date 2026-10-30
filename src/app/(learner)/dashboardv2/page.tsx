@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { NextLessonCard } from "@/components/dashboard-v2/next-lesson-card";
 import { TodayGrid } from "@/components/dashboard-v2/practice-today";
 import { StandingRow } from "@/components/dashboard-v2/standing-row";
+import { YourPaths } from "@/components/dashboard-v2/your-paths";
 import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
 import { greetingForHour } from "@/lib/dashboard/continue";
 import { loadToday } from "@/lib/dashboard/today-page-data";
@@ -16,7 +17,7 @@ const MAIN =
   "practice-coach-v2 flex-1 overflow-x-clip bg-[var(--coach-bg)] px-5 py-8 font-sans text-[var(--coach-ink)] antialiased sm:px-10";
 
 export default async function DashboardV2Page() {
-  const [{ today, firstName, lessonsDone }, practice] = await Promise.all([loadToday(), loadPracticePageData()]);
+  const [{ today, paths, firstName, lessonsDone }, practice] = await Promise.all([loadToday(), loadPracticePageData()]);
   const now = new Date();
   const greeting = greetingForHour(now.getHours());
 
@@ -56,6 +57,8 @@ export default async function DashboardV2Page() {
             initialGoal: practice.initialGoal,
           }}
         />
+
+        <YourPaths paths={paths} />
 
         <StandingRow standing={today.standing} />
       </div>

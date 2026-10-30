@@ -6,7 +6,7 @@ import { GoalLink } from "@/components/practice/coach-home/your-day-card";
 import { buildDayPlan } from "@/lib/dashboard/day-plan";
 import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
 import { localDayKey } from "@/lib/practice/sm2";
-import { lessonStreak, lessonWeek, type WeekDay } from "@/lib/progress/streak";
+import { endedStreak, lessonStreak, lessonWeek, type WeekDay } from "@/lib/progress/streak";
 
 const CARD = "flex flex-col gap-4 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5";
 
@@ -98,13 +98,27 @@ export function TodayCard({
         </p>
       )}
 
-      <StreakWeek streak={streak} learnedToday={learnedToday} week={week} />
+      <StreakWeek streak={streak} learnedToday={learnedToday} week={week} ended={endedStreak(lessonDates, now)} />
     </section>
   );
 }
 
 /** The streak (finished lessons only) and this week, Monday to Sunday. */
-function StreakWeek({ streak, learnedToday, week }: { streak: number; learnedToday: boolean; week: WeekDay[] }) {
+function StreakWeek({
+  streak,
+  learnedToday,
+  week,
+  ended,
+}: {
+  streak: number;
+  learnedToday: boolean;
+  week: WeekDay[];
+  /** The streak that ended most recently, if any — said plainly, without guilt. */
+  ended: { days: number; lastDay: string } | null;
+}) {
+  const endedOn = ended
+    ? new Date(ended.lastDay).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : null;
   return (
     <div className="mt-auto flex flex-col gap-3 border-t-2 border-[var(--coach-divider)] pt-3.5">
       <div className="flex items-center gap-3">
@@ -124,7 +138,11 @@ function StreakWeek({ streak, learnedToday, week }: { streak: number; learnedTod
               ? "Today counts. See you tomorrow."
               : streak > 0
                 ? "Finish a lesson today to keep it."
-                : "Finish a lesson to start one."}
+                : ended && ended.days > 1
+                  ? `Your ${ended.days}-day streak ended ${endedOn}. A lesson today starts a new one.`
+                  : ended
+                    ? `Your last lesson was ${endedOn}. A lesson today starts a streak.`
+                    : "Finish a lesson to start one."}
           </span>
         </span>
       </div>

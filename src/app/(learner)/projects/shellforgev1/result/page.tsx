@@ -361,7 +361,7 @@ export default async function ShellforgeResultPage({
                     </div>
                     <div className="mb-[18px] font-mono text-xs text-ink-fainter">{reqPassed} of {reqTotal} requirements</div>
                     <Link
-                      href="/projects/shellforge/submit"
+                      href="/projects/shellforgev1/submit"
                       className="mb-2.5 flex items-center justify-center gap-2 rounded-[13px] bg-gradient-to-r from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A] px-4 py-3.5 text-[15.5px] font-extrabold text-white shadow-[0_14px_30px_rgba(193,58,224,0.4)] transition-transform hover:-translate-y-0.5"
                     >
                       <RefreshCw size={16} strokeWidth={2.3} />
@@ -406,7 +406,7 @@ export default async function ShellforgeResultPage({
                   </div>
                   {passed && (
                     <Link
-                      href="/projects/shellforge/submit"
+                      href="/projects/shellforgev1/submit"
                       className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-card-border px-4 py-2.5 text-[13.5px] font-bold text-ink-secondary transition-transform hover:-translate-y-0.5"
                     >
                       <RefreshCw size={15} strokeWidth={2.2} />

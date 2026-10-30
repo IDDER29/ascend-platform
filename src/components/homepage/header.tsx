@@ -19,7 +19,6 @@ import { CURRICULUM_HREF, FIRST_LESSON_HREF, SIGNIN_HREF } from "@/lib/routes";
 const NAV = [
   { href: CURRICULUM_HREF, label: "All Paths" },
   { href: "/#why", label: "About" },
-  { href: "/community", label: "Community" },
   { href: "/#open", label: "Support us" },
 ] as const;
 
@@ -28,8 +27,7 @@ const focusRing =
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const onCommunity = pathname?.startsWith("/community");
-  const onCurriculum = pathname?.startsWith("/curriculum");
+  const onPaths = pathname?.startsWith(CURRICULUM_HREF);
   const [open, setOpen] = useState(false);
 
   return (
@@ -56,9 +54,7 @@ export function SiteHeader() {
 
         <ul className="hidden flex-1 items-center justify-center gap-0.5 lg:flex">
           {NAV.map((item) => {
-            const active =
-              (item.href === "/community" && onCommunity) ||
-              (item.href === CURRICULUM_HREF && onCurriculum);
+            const active = item.href === CURRICULUM_HREF && onPaths;
             return (
               <li key={item.label}>
                 <Link
@@ -115,9 +111,7 @@ export function SiteHeader() {
         >
           <ul className="flex flex-col gap-0.5">
             {NAV.map((item) => {
-              const active =
-                (item.href === "/community" && onCommunity) ||
-                (item.href === CURRICULUM_HREF && onCurriculum);
+              const active = item.href === CURRICULUM_HREF && onPaths;
               return (
                 <li key={item.label}>
                   <Link

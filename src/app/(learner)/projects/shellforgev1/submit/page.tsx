@@ -50,7 +50,7 @@ export default function ShellforgeSubmitPage() {
           <button
             type="button"
             disabled={!canSubmit}
-            onClick={() => router.push("/projects/shellforge/result?outcome=passed")}
+            onClick={() => router.push("/projects/shellforgev1/result?outcome=passed")}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#12B981] to-[#3BC6F0] px-5 py-3.5 text-[14.5px] font-bold text-white shadow-[0_10px_24px_rgba(18,185,129,0.32)] transition-transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-40"
           >
             Simulate: all checks pass
@@ -58,7 +58,7 @@ export default function ShellforgeSubmitPage() {
           <button
             type="button"
             disabled={!canSubmit}
-            onClick={() => router.push("/projects/shellforge/result?outcome=failed")}
+            onClick={() => router.push("/projects/shellforgev1/result?outcome=failed")}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-card-border px-5 py-3.5 text-[14.5px] font-bold text-ink-secondary transition-transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-40"
           >
             Simulate: needs fixes

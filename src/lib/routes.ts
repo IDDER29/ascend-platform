@@ -1,5 +1,5 @@
-/** Canonical learner entry URLs. */
-export const CURRICULUM_HREF = "/curriculum";
+/** Canonical learner entry URLs. Curriculum was replaced by Paths; the name stays for the homepage's links. */
+export const CURRICULUM_HREF = "/paths";
 
 export const PATHS_HREF = "/paths";
 

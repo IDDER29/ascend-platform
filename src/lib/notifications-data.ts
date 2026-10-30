@@ -59,7 +59,7 @@ export const NOTIFICATIONS: NotificationItem[] = [
     section: "Earlier",
     body: "marc published a notable solution to Shellforge — see a new approach.",
     boldParts: ["marc", "Shellforge"],
-    cta: { label: "Read solution", href: "/projects/shellforge/result?outcome=passed" },
+    cta: { label: "Read solution", href: "/projects/shellforgev1/result?outcome=passed" },
     when: "Yesterday",
     glyph: "👤",
     iconBg: "bg-[#EAF1FF]",

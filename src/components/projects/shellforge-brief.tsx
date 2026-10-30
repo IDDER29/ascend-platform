@@ -187,7 +187,7 @@ export function ShellforgeBrief() {
             {requiredDone} of {requiredTotal} requirements
           </div>
           <Link
-            href="/projects/shellforge/submit"
+            href="/projects/shellforgev1/submit"
             className="mb-2.5 flex items-center justify-center gap-2 rounded-[13px] bg-gradient-to-r from-[#7B4DFF] via-[#C13AE0] to-[#FF6B4A] px-4 py-4 text-[15.5px] font-extrabold text-white shadow-[0_14px_30px_rgba(193,58,224,0.4)] transition-transform hover:-translate-y-0.5"
           >
             <Play size={16} className="fill-current" />

@@ -68,3 +68,18 @@ export function lessonWeek(lessonDates: readonly string[], now: Date): WeekDay[]
     };
   });
 }
+
+/**
+ * The streak that ended most recently: its length and the last day it counted.
+ * Null while a streak is still alive (a lesson today or yesterday) or before any lesson.
+ */
+export function endedStreak(lessonDates: readonly string[], now: Date): { days: number; lastDay: string } | null {
+  if (lessonStreak(lessonDates, now) > 0) return null;
+  const days = [...lessonDays(lessonDates)].sort();
+  if (days.length === 0) return null;
+  const last = days[days.length - 1];
+  const [y, m, d] = last.split("-").map(Number);
+  // Count back from the last lesson day.
+  const lastDate = new Date(y, m - 1, d);
+  return { days: lessonStreak(lessonDates, lastDate), lastDay: lastDate.toISOString() };
+}

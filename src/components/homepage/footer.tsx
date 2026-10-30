@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { brandMarkSmClass } from "@/components/homepage/landing-styles";
 import {
-  CURRICULUM_HREF,
   FIRST_LESSON_HREF,
   PATHS_HREF,
   SIGNIN_HREF,
@@ -13,13 +12,11 @@ import {
 } from "@/lib/brand/social";
 
 const LEARN = [
-  { href: CURRICULUM_HREF, label: "Curriculum" },
   { href: PATHS_HREF, label: "Paths" },
   { href: "/practice", label: "Practice" },
 ] as const;
 
 const COMMUNITY = [
-  { href: "/community", label: "Community" },
   { href: "/#open", label: "Support us" },
 ] as const;
 

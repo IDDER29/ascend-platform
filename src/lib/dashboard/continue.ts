@@ -132,7 +132,7 @@ export function buildRecentProjects(
     items.push({
       id: `shellforge-${sub.id}`,
       title: "Shellforge",
-      href: `/projects/shellforge/result?outcome=${encodeURIComponent(sub.outcome)}`,
+      href: `/projects/shellforgev1/result?outcome=${encodeURIComponent(sub.outcome)}`,
       statusLabel: passed ? "Passed" : failed ? "Needs work" : sub.outcome,
       statusTone: passed ? "pass" : failed ? "fail" : "neutral",
       meta: `Attempt ${sub.attempt} · ${formatProjectWhen(sub.submittedAt, now)}`,

@@ -18,6 +18,13 @@ const nextConfig: NextConfig = {
       { source: "/pathsv2/:slug", destination: "/paths/:slug", permanent: true },
       { source: "/lessonsv2/:slug", destination: "/lessons/:slug", permanent: true },
       { source: "/projects/shellforgev2", destination: "/projects/shellforge", permanent: true },
+      // Curriculum was replaced by Paths; lesson links under /curriculum/... still redirect to the lesson.
+      { source: "/curriculum", destination: "/paths", permanent: true },
+      // Retired: the Today card says when a streak ended. Old demo kept at /streak-lostv1.
+      { source: "/streak-lost", destination: "/dashboard", permanent: true },
+      // ShellForge's demo submit/result moved beside the old brief; the real page explains shipping.
+      { source: "/projects/shellforge/submit", destination: "/projects/shellforge", permanent: true },
+      { source: "/projects/shellforge/result", destination: "/projects/shellforge", permanent: true },
       // Earlier achievements explorations; the chest is the one page now.
       { source: "/achievementsv:n(\\d+)", destination: "/achievements", permanent: true },
       {

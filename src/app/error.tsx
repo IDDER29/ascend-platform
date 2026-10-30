@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CONTENT_REPO_URL } from "@/lib/brand/repo";
 import { Home, RotateCw, LogIn, MessageSquare } from "lucide-react";
 
 export default function Error({
@@ -71,9 +72,9 @@ export default function Error({
         <div className="inline-flex items-center gap-2 rounded-xl border border-divider bg-paper px-4 py-2.5 text-sm font-semibold text-ink-secondary">
           <MessageSquare size={15} className="text-brand-violet" strokeWidth={2.1} />
           Keeps happening?{" "}
-          <Link href="/community" className="text-brand-violet underline">
-            Ask the community
-          </Link>
+          <a href={`${CONTENT_REPO_URL}/issues`} target="_blank" rel="noreferrer" className="text-brand-violet underline">
+            Report it on GitHub
+          </a>
         </div>
       </div>
     </div>

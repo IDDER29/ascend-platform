@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { lessonStreak, lessonWeek } from "@/lib/progress/streak";
+import { endedStreak, lessonStreak, lessonWeek } from "@/lib/progress/streak";
 
 // Friday, October 30 2026, mid-afternoon.
 const NOW = new Date(2026, 9, 30, 15);
@@ -21,4 +21,12 @@ test("the week runs Monday to Sunday and marks the days with a lesson", () => {
     ["M●", "T○", "W●", "T○", "F●!", "S○…", "S○…"],
   );
   assert.equal(week[0].label, "Monday, October 26");
+});
+
+test("an ended streak: how long it was and its last day; none while one is alive", () => {
+  assert.equal(endedStreak([], NOW), null);
+  assert.equal(endedStreak([day(29)], NOW), null); // yesterday: still alive
+  const ended = endedStreak([day(24), day(25), day(26), day(20)], NOW)!;
+  assert.equal(ended.days, 3);
+  assert.equal(new Date(ended.lastDay).getDate(), 26);
 });

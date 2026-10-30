@@ -288,10 +288,10 @@ export function BookmarksPage({ sample }: { sample: Bookmark[] | null }) {
             <HowToSave />
           </div>
           <Link
-            href="/curriculum"
+            href="/paths"
             className="mt-6 inline-flex h-10 items-center rounded-full bg-[var(--coach-solid-btn-bg)] px-5 text-[14px] font-bold text-[var(--coach-solid-btn-ink)]"
           >
-            Open the curriculum
+            Browse paths
           </Link>
         </section>
         {sample && (

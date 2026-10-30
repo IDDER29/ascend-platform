@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Search, BookOpen, Swords, Trophy, MessageSquare, Flame } from "lucide-react";
+import { Home, Search, BookOpen, Swords, Trophy, Bookmark, Flame } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -60,10 +60,10 @@ export default function NotFound() {
         <div className="mb-2.5 font-mono text-[11px] uppercase tracking-[0.12em] text-ink-fainter">Or jump to</div>
         <div className="flex flex-wrap justify-center gap-2.5">
           {[
-            { href: "/curriculum", label: "Curriculum", icon: BookOpen },
+            { href: "/paths", label: "Paths", icon: BookOpen },
             { href: "/practice", label: "Practice", icon: Swords },
             { href: "/achievements", label: "Achievements", icon: Trophy },
-            { href: "/community", label: "Community", icon: MessageSquare },
+            { href: "/bookmarks", label: "Bookmarks", icon: Bookmark },
           ].map((l) => (
             <Link
               key={l.href}

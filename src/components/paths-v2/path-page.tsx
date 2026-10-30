@@ -4,9 +4,14 @@ import { CrestPatch } from "@/components/achievements/emblems";
 import { BadgeMark } from "@/components/achievements/marks";
 import type { BadgeView } from "@/lib/achievements/achievements-model";
 import { leavePathV2Action } from "@/lib/paths/actions";
+import { PRACTICE_PATH_TITLES } from "@/lib/practice/path-map";
+import { practiceSessionHref } from "@/lib/practice/routes";
 import { durationLabel, type PathCourse, type PathItem, type PathView } from "@/lib/paths/paths-v2-model";
 import { LessonMemory } from "./lesson-memory";
 import { CARD, JoinButton, PathGlyph, pathMeta, TopicBar } from "./path-parts";
+
+/** Practice has a desk for this path (Foundations, Systems Programmer). */
+const practicePathSlugForPath = (slug: string) => (slug in PRACTICE_PATH_TITLES ? slug : null);
 
 const CAPSTONE: Record<NonNullable<PathCourse["capstone"]>, string> = {
   "not-started": "After the lessons before it",
@@ -32,7 +37,11 @@ function Hero({ path }: { path: PathView }) {
             >
               {path.title}
             </h1>
-            {path.active ? (
+            {path.finished ? (
+              <span className="rounded-full bg-[var(--coach-lime)] px-2.5 py-0.5 text-[12px] font-semibold text-[var(--coach-lime-ink)]">
+                Finished
+              </span>
+            ) : path.active ? (
               <span className="rounded-full bg-[var(--coach-lime)] px-2.5 py-0.5 text-[12px] font-semibold text-[var(--coach-lime-ink)]">
                 Active
               </span>
@@ -70,7 +79,21 @@ function Hero({ path }: { path: PathView }) {
                 className="inline-flex h-11 items-center rounded-xl bg-[var(--coach-lime)] px-5 text-[14.5px] font-bold text-[var(--coach-lime-ink)] shadow-[0_4px_0_var(--coach-lime-shadow)]"
               />
             ) : null}
+            {/* Once some of its lessons are done, its Practice cards are worth a review. */}
+            {path.lessons.done > 0 && practicePathSlugForPath(path.slug) && (
+              <Link
+                href={practiceSessionHref({ scope: "path", path: path.slug })}
+                className="inline-flex h-11 items-center rounded-xl border-2 border-[var(--coach-hero-track)] px-4 text-[14px] font-semibold text-[var(--coach-hero-ink)] no-underline"
+              >
+                Review its cards
+              </Link>
+            )}
           </div>
+          {path.finished && (
+            <span className="text-[13.5px] text-[var(--coach-hero-muted)]">
+              Every lesson done{path.courses.some((c) => c.kind === "capstone") ? " and the capstone shipped" : ""}.
+            </span>
+          )}
         </div>
       )}
     </section>
@@ -133,7 +156,7 @@ function CourseCard({ course, index }: { course: PathCourse; index: number }) {
               href={course.href}
               className="text-[13.5px] font-semibold text-[var(--coach-ink)] underline underline-offset-2"
             >
-              Open
+              Open {course.title}
             </Link>
           )}
         </div>

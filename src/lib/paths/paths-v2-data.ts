@@ -13,7 +13,7 @@ import { lessonHref } from "./lesson-urls";
 import { buildPathViews, type PathInput, type PathLessonInfo, type PathView } from "./paths-v2-model";
 import { getFollowingMap } from "./selected-path";
 
-export const PATHS_V2_HREF = "/pathsv2";
+export const PATHS_INDEX_HREF = "/paths";
 
 const PROJECT_BADGE: Record<string, string> = {
   "level-00-bits-logic/project-half-adder": "gate-builder",
@@ -68,7 +68,7 @@ function pathInput(p: PathDef, lessons: PathLessonInfo[]): PathInput {
     pitch: firstSentence(p.body),
     body: p.body,
     status: p.status,
-    href: `${PATHS_V2_HREF}/${p.slug}`,
+    href: `${PATHS_INDEX_HREF}/${p.slug}`,
     requires: requires ? { slug: requires.slug, title: requires.title } : null,
     courses: p.courses.map((c) => ({
       id: c.id,

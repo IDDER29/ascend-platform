@@ -10,7 +10,8 @@
 - On a path's page: what it is, its size, Join / Start / Continue; every topic with its sections and lessons — done ✓, minutes, project marks, "You're here" / "Up next", and how well I remember each lesson's cards; the capstone's state; what it builds on; what it earns (clans, topic badges, project badges); Leave path (progress stays).
 
 **Decisions**
-- Built at `/pathsv2` and `/pathsv2/<slug>`; the old `/paths` stays until promoted.
+- Promoted to `/paths` and `/paths/<slug>` (2026-10-30); `/pathsv2…` redirects there; the old pages are kept at `/pathsv1` and `/pathsv1/<slug>`.
+- Finishing touches: "Review its cards" in the hero once some lessons are done (Practice for that path), a Finished state, "Open ShellForge" on the capstone.
 - Coach style, no levels (topics by name, e.g. Bits & Logic — not the course name), no purple, no percentages; "N of M lessons", segment per topic.
 - Active = the joined, unfinished path worked on last — same rule as the dashboard.
 - Join/Leave use the same following cookie as the old Select/Unselect (`joinPathV2Action`, `leavePathV2Action`).

@@ -1,100 +1,46 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/auth";
-import {
-  countCompletedInLevel,
-  getContinueLesson,
-  listCompletedLessons,
-} from "@/lib/progress/queries";
-import {
-  PATHS,
-  getPathBySlug,
-  pathContinueHref,
-  pathIsEngaged,
-} from "@/lib/paths/catalog";
-import { getSelectedPathSlug } from "@/lib/paths/selected-path";
-import { PathDetail } from "@/components/paths/path-detail";
-import { FoundationsDetail } from "@/components/paths/foundations-detail";
-import { HUB_CONTENT_CLASS, HUB_MAIN_CLASS } from "@/components/ui/page-header";
+import { PracticeHistoryProvider } from "@/components/paths-v2/lesson-memory";
+import { PathPage } from "@/components/paths-v2/path-page";
+import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
+import { getPathBySlug } from "@/lib/paths/catalog";
+import { loadPathsV2, PATHS_INDEX_HREF } from "@/lib/paths/paths-v2-data";
+import { loadPracticePageData } from "@/lib/practice/server-page-data";
 
-export function generateStaticParams() {
-  return PATHS.map((p) => ({ slug: p.slug }));
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const path = getPathBySlug((await params).slug);
+  return { title: path ? `${path.title} — Paths — Ascend` : "Path — Ascend", description: path?.body };
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const path = getPathBySlug(slug);
-  if (!path) return { title: "Path — Ascend" };
-  return {
-    title: `${path.title} — Ascend`,
-    description: path.body,
-    robots: { index: false },
-  };
-}
+const MAIN =
+  "practice-coach-v2 flex-1 overflow-x-clip bg-[var(--coach-bg)] px-5 py-8 font-sans text-[var(--coach-ink)] antialiased sm:px-10";
 
-export default async function PathDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function PathRoute({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const path = getPathBySlug(slug);
+  const [{ views, earns }, practice] = await Promise.all([loadPathsV2(), loadPracticePageData()]);
+  const path = views.find((v) => v.slug === slug);
   if (!path) notFound();
-
-  const user = await getCurrentUser();
-  const selectedSlug = await getSelectedPathSlug();
-  let completed: { level: string; slug: string }[] = [];
-  let foundationsDone = 0;
-  let foundationsOrder = 1;
-
-  if (user) {
-    try {
-      const [done, lessons, cont] = await Promise.all([
-        countCompletedInLevel(user.id, "level-00-bits-logic"),
-        listCompletedLessons(user.id),
-        getContinueLesson(user.id),
-      ]);
-      foundationsDone = done;
-      completed = lessons;
-      if (cont.level === "level-00-bits-logic") {
-        foundationsOrder = cont.order;
-      }
-    } catch {
-      // open-path defaults
-    }
-  }
-
-  const continueHref = pathContinueHref(path, completed);
-  const engaged = pathIsEngaged(path, selectedSlug, completed);
-  const signedIn = Boolean(user);
+  const other = path.requires ? (views.find((v) => v.slug === path.requires!.slug) ?? null) : null;
 
   return (
-    <main className={HUB_MAIN_CLASS}>
-      <div className={HUB_CONTENT_CLASS}>
-        {path.slug === "foundations" ? (
-          <FoundationsDetail
-            path={path}
-            currentOrder={foundationsOrder}
-            doneCount={foundationsDone}
-            completed={completed}
-            continueHref={
-              continueHref ?? "/lessons/foundations-bits-what-is-a-bit"
-            }
-            engaged={engaged}
-            signedIn={signedIn}
-          />
-        ) : (
-          <PathDetail
-            path={path}
-            continueHref={continueHref}
-            engaged={engaged}
-            completed={completed}
-            signedIn={signedIn}
-          />
-        )}
+    <main className={MAIN}>
+      <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-4`}>
+        <nav aria-label="Breadcrumb" className="text-[13px] text-[var(--coach-ink-muted)]">
+          <Link
+            href={PATHS_INDEX_HREF}
+            className="text-[var(--coach-ink-muted)] no-underline hover:text-[var(--coach-ink)]"
+          >
+            Paths
+          </Link>
+          <span aria-hidden className="mx-1.5">
+            /
+          </span>
+          <span className="text-[var(--coach-ink)]">{path.title}</span>
+        </nav>
+        <PracticeHistoryProvider userId={practice.userId} initialHistory={practice.initialHistory}>
+          <PathPage path={path} earns={earns[slug] ?? []} other={other} />
+        </PracticeHistoryProvider>
       </div>
     </main>
   );

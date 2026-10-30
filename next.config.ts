@@ -14,6 +14,8 @@ const nextConfig: NextConfig = {
       { source: "/profilev2", destination: "/profile", permanent: true },
       { source: "/bookmarksv2", destination: "/bookmarks", permanent: true },
       { source: "/dashboardv2", destination: "/dashboard", permanent: true },
+      { source: "/pathsv2", destination: "/paths", permanent: true },
+      { source: "/pathsv2/:slug", destination: "/paths/:slug", permanent: true },
       // Earlier achievements explorations; the chest is the one page now.
       { source: "/achievementsv:n(\\d+)", destination: "/achievements", permanent: true },
       {

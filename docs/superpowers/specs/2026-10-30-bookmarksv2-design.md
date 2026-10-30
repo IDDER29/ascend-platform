@@ -20,7 +20,7 @@ saved material into a Practice deck.
 - **Refs** are stable: `lesson:<level>/<slug>`, `section:<key>#<h2 id>`, `snippet:<key>#<hash of code>`, `resource:<url>`, `card:<question id>`.
 - **Grouping:** the shelf is grouped by topic (never levels), then "Outside resources". "Didn't get it" items sit apart in a dark "To revisit" card.
 - **Practice them:** saved cards plus the cards of saved lessons, sections and snippets; the session takes the first 30.
-- Built at `/bookmarksv2`; the old `/bookmarks` page stays until the user promotes v2.
+- Promoted to `/bookmarks` (2026-10-30); `/bookmarksv2` redirects there. The old page is kept at `/bookmarksv1`.
 - Development only: an empty page offers "load sample bookmarks" made from real lessons.
 
 ## Where

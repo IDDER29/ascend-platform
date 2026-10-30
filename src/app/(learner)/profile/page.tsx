@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ProfileView } from "@/components/profile-v2/profile-view";
+import { GuestPrompt } from "@/components/ui/guest-prompt";
 import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
 import { getCurrentUser } from "@/lib/auth/auth";
 import { getProfileOwner } from "@/lib/profile/queries";
-import { SHOW_SAMPLE_PROFILE_TO_GUESTS } from "@/lib/profile/sample-profile";
-import { loadProfileModel, loadSampleProfileModel } from "@/lib/profile/server-page-data";
-import { SIGNIN_HREF, SIGNUP_HREF } from "@/lib/routes";
+import { loadProfileModel } from "@/lib/profile/server-page-data";
 
 export const metadata: Metadata = {
   title: "Profile — Ascend",
@@ -20,44 +18,15 @@ export default async function ProfilePage() {
   const user = await getCurrentUser();
   const owner = user ? await getProfileOwner(user.id) : null;
 
-  // DEVELOPMENT PREVIEW: guests see a sample profile. Turn off before launch (sample-profile.ts).
-  if (!owner && SHOW_SAMPLE_PROFILE_TO_GUESTS) {
-    return (
-      <main className={MAIN}>
-        <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-5`}>
-          <p className="m-0 rounded-xl border-2 border-dashed border-[var(--coach-border-strong)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--coach-ink-secondary)]">
-            <strong className="font-semibold text-[var(--coach-ink)]">Development preview.</strong> You&apos;re not
-            signed in, so this is a sample profile with made-up data. Editing needs an account:{" "}
-            <Link href={SIGNIN_HREF} className="font-semibold text-[var(--coach-ink)] underline underline-offset-2">
-              sign in
-            </Link>{" "}
-            to see yours.
-          </p>
-          <ProfileView model={loadSampleProfileModel()} signedIn={false} />
-        </div>
-      </main>
-    );
-  }
-
   if (!owner) {
     return (
       <main className={MAIN}>
-        <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-4`}>
-          <h1 className="m-0 font-display text-[28px] font-extrabold tracking-[-0.03em]">Your profile</h1>
-          <p className="m-0 max-w-[520px] text-[15px] leading-relaxed text-[var(--coach-ink-secondary)]">
-            Sign in to get a profile: the projects you ship, what you can do, and the links you want people to see.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href={SIGNIN_HREF}
-              className="inline-flex h-11 items-center rounded-xl bg-[var(--coach-lime)] px-5 text-[14px] font-bold uppercase tracking-[0.02em] text-[var(--coach-lime-ink)] no-underline shadow-[0_4px_0_var(--coach-lime-shadow)]"
-            >
-              Sign in
-            </Link>
-            <Link href={SIGNUP_HREF} className="inline-flex h-11 items-center px-2 text-[14px] font-semibold text-[var(--coach-ink)]">
-              Create account
-            </Link>
-          </div>
+        <div className={HUB_CONTENT_CLASS}>
+          <GuestPrompt
+            title="Your profile"
+            body="Sign in to get a profile: the topics you finished, the projects you shipped and the links you want people to see."
+            next="/profile"
+          />
         </div>
       </main>
     );

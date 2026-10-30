@@ -7,7 +7,7 @@ const LINES: { n: number; tokens: { text: string; cls?: string }[] }[] = [
   {
     n: 1,
     tokens: [
-      { text: "int", cls: "text-[#9B7BFF]" },
+      { text: "int", cls: "text-[#8ab4f8]" },
       { text: "  x = " },
       { text: "42", cls: "text-[#FFC06B]" },
       { text: ";" },
@@ -16,7 +16,7 @@ const LINES: { n: number; tokens: { text: string; cls?: string }[] }[] = [
   {
     n: 2,
     tokens: [
-      { text: "int", cls: "text-[#9B7BFF]" },
+      { text: "int", cls: "text-[#8ab4f8]" },
       { text: " *p = &x;" },
     ],
   },
@@ -59,10 +59,10 @@ export function CodeLab() {
         </button>
       </div>
 
-      <div className="bg-[#181428] py-4 pr-1.5 font-mono text-[13px] leading-[1.95] text-[#D8D4E6]">
+      <div className="bg-[#16181d] py-4 pr-1.5 font-mono text-[13px] leading-[1.95] text-[#e6e4dd]">
         {LINES.map((line) => (
           <div key={line.n} className="flex gap-3.5 px-1.5">
-            <span className="w-8 flex-none select-none text-right text-[#4E4869]">
+            <span className="w-8 flex-none select-none text-right text-[#4a4e57]">
               {line.n}
             </span>
             <span>
@@ -79,15 +79,15 @@ export function CodeLab() {
         ))}
       </div>
 
-      <div className="border-t border-white/[0.07] bg-[#12101F] py-3 pl-[54px] pr-4 font-mono text-[12.5px] text-[#8FCF9A]">
-        <span className="text-[#5E5878]">output › </span>
+      <div className="border-t border-white/[0.07] bg-[#0d0e11] py-3 pl-[54px] pr-4 font-mono text-[12.5px] text-[#8FCF9A]">
+        <span className="text-[#6b6f78]">output › </span>
         {ran ? (
           <>
             x = 7
-            <span className="text-[#5E5878]"> compiled &amp; ran in 0.04s ✓</span>
+            <span className="text-[#6b6f78]"> compiled &amp; ran in 0.04s ✓</span>
           </>
         ) : (
-          <span className="text-[#5E5878]">— press Run to compile and execute —</span>
+          <span className="text-[#6b6f78]">— press Run to compile and execute —</span>
         )}
       </div>
 

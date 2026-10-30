@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { BookmarksPage } from "@/components/bookmarks/bookmarks-page";
 import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
-import { sampleBookmarks } from "@/lib/bookmarks/server-page-data";
 
 export const metadata: Metadata = {
   title: "Bookmarks — Ascend",
@@ -23,7 +22,7 @@ export default function BookmarksRoutePage() {
             What you saved to come back to. Things you didn&apos;t get come first.
           </p>
         </header>
-        <BookmarksPage sample={process.env.NODE_ENV === "production" ? null : sampleBookmarks()} />
+        <BookmarksPage />
       </div>
     </main>
   );

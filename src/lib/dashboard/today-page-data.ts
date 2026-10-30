@@ -36,7 +36,7 @@ export async function loadToday(): Promise<{
 }> {
   const [user, loaded, following] = await Promise.all([
     getCurrentUser(),
-    loadAchievementsInput({ sampleForGuests: false }),
+    loadAchievementsInput(),
     getFollowingMap(),
   ]);
   const lessons = todayLessons();

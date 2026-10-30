@@ -3,7 +3,6 @@ import type { TopicComplete } from "@/lib/achievements/topic-complete-model";
 import { CrestPatch } from "@/components/achievements/emblems";
 import { BadgeMark, RankChip } from "@/components/achievements/marks";
 import { deckSessionHref } from "@/lib/practice/coach-custom-model";
-import { SIGNIN_HREF } from "@/lib/routes";
 import { Confetti } from "./confetti";
 import { ShareLinkButton } from "./share-link-button";
 
@@ -26,7 +25,7 @@ const SECONDARY =
   "inline-flex h-11 flex-1 items-center justify-center whitespace-nowrap rounded-full border-2 border-[var(--coach-hero-track)] px-4 text-[14px] font-semibold text-[var(--coach-hero-ink)] transition-colors hover:border-[var(--coach-hero-muted)]";
 
 /** The topic's finish line: a celebration once every lesson is done, what's left before that. */
-export function TopicCompleteView({ t, sample }: { t: TopicComplete; sample: boolean }) {
+export function TopicCompleteView({ t }: { t: TopicComplete }) {
   const lessonsWord = t.total === 1 ? "lesson" : "lessons";
   const clan = t.earned.find((b) => b.insignia?.kind === "crest");
 
@@ -35,19 +34,6 @@ export function TopicCompleteView({ t, sample }: { t: TopicComplete; sample: boo
       {t.finished && <Confetti colors={LIME_CONFETTI} />}
 
       <div className="relative mx-auto flex w-full max-w-[520px] flex-col items-center text-center">
-        {sample && (
-          // DEVELOPMENT PREVIEW: guests see the sample learner's topic.
-          <p className="m-0 mb-8 rounded-xl border-2 border-dashed border-[var(--coach-hero-track)] px-4 py-2.5 text-[13px] text-[var(--coach-hero-muted)]">
-            Development preview: a sample learner&apos;s record.{" "}
-            <Link
-              href={SIGNIN_HREF}
-              className="font-semibold text-[var(--coach-hero-ink)] underline underline-offset-2"
-            >
-              Sign in
-            </Link>{" "}
-            to see yours.
-          </p>
-        )}
 
         <span className="animate-rise">
           <CrestPatch crest={t.crest} earned={t.finished} size="lg" />

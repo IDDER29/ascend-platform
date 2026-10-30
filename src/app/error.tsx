@@ -27,7 +27,7 @@ export default function Error({
           <span className="font-display text-[21px] font-extrabold tracking-tight text-ink">Ascend</span>
         </Link>
 
-        <div className="mb-7 inline-block rounded-2xl bg-[#181428] px-4.5 py-3.5 text-left font-mono text-[13px] leading-[1.8] text-ink-fainter shadow-[0_16px_34px_rgba(24,16,50,0.2)]">
+        <div className="mb-7 inline-block rounded-2xl bg-[#16181d] px-4.5 py-3.5 text-left font-mono text-[13px] leading-[1.8] text-ink-fainter shadow-[0_16px_34px_rgba(0,0,0,0.2)]">
           <span className="text-[#FF8A80]">$</span> ./ascend --render <span className="text-[#FFC06B]">&quot;this-page&quot;</span>
           <br />
           <span className="text-[#FF8A80]">Segmentation fault</span> <span className="text-ink-secondary">(core dumped)</span>

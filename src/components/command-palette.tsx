@@ -247,7 +247,7 @@ export function CommandPalette({ lessons }: { lessons: PaletteLesson[] }) {
                           activeIndex === flatIndex ? "bg-xp-bg" : ""
                         }`}
                       >
-                        <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[10px] bg-[#181428] text-white">
+                        <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[10px] bg-[#16181d] text-white">
                           <Terminal size={16} strokeWidth={2.1} />
                         </span>
                         <div className="min-w-0 flex-1">

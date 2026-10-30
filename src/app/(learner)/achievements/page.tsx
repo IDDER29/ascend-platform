@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Chest } from "@/components/achievements/chest";
+import { GuestPrompt } from "@/components/ui/guest-prompt";
 import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
 import { loadAchievementsModel } from "@/lib/achievements/server-page-data";
-import { SIGNIN_HREF } from "@/lib/routes";
 
 export const metadata: Metadata = {
   title: "Achievements — Ascend",
@@ -18,36 +17,22 @@ export default async function AchievementsPage() {
   if (!loaded) {
     return (
       <main className={MAIN}>
-        <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-4`}>
-          <h1 className="m-0 font-display text-[28px] font-extrabold tracking-[-0.03em]">Achievements</h1>
-          <p className="m-0 max-w-[520px] text-[15px] leading-relaxed text-[var(--coach-ink-secondary)]">
-            Sign in to earn badges. Each one has its own rule, and you can see your progress against it.
-          </p>
-          <Link href={SIGNIN_HREF} className="w-fit text-[14px] font-semibold text-[var(--coach-ink)] underline underline-offset-2">
-            Sign in
-          </Link>
+        <div className={HUB_CONTENT_CLASS}>
+          <GuestPrompt
+            title="Achievements"
+            body="Sign in to earn badges and clan crests. Each one has its own rule, and you can see how close you are to every one."
+            next="/achievements"
+          />
         </div>
       </main>
     );
   }
 
-  const { model, scrolls, sample, name } = loaded;
+  const { model, scrolls, name } = loaded;
 
   return (
     <main className={MAIN}>
       <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-8`}>
-        {sample ? (
-          // DEVELOPMENT PREVIEW: guests see the sample learner. Turned off with the profile's switch.
-          <p className="m-0 rounded-xl border-2 border-dashed border-[var(--coach-border-strong)] px-4 py-3 text-[13.5px] leading-relaxed text-[var(--coach-ink-secondary)]">
-            <strong className="font-semibold text-[var(--coach-ink)]">Development preview.</strong> You&apos;re not
-            signed in, so these are a sample learner&apos;s badges.{" "}
-            <Link href={SIGNIN_HREF} className="font-semibold text-[var(--coach-ink)] underline underline-offset-2">
-              Sign in
-            </Link>{" "}
-            to see yours.
-          </p>
-        ) : null}
-
         <header className="flex flex-col gap-1.5">
           <h1 className="m-0 font-display text-[30px] font-extrabold leading-tight tracking-[-0.035em] sm:text-[36px]">
             Achievements

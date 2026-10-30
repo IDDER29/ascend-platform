@@ -35,7 +35,7 @@ const LAYOUT = [
 
 /** ShellForge, the Systems Programmer capstone: what to build, how it's shipped (for real), and how to get there. */
 export default async function ShellForgePage() {
-  const loaded = await loadAchievementsInput({ sampleForGuests: false });
+  const loaded = await loadAchievementsInput();
   const shipIt = loaded ? buildAchievementsModel(loaded.input).parts.find((p) => p.id === "ship-it") : undefined;
   const steps = shipIt?.criteria ?? [];
   const shipped = Boolean(shipIt?.earned);

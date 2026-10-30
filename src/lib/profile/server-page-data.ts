@@ -7,7 +7,6 @@ import { listPracticeCardsForUser, listPracticeSessionsForUser } from "@/lib/pra
 import { completionKey } from "@/lib/practice/session";
 import { buildProfileModel, type ProfileLesson, type ProfileModel, type ProfileViewer } from "./profile-model";
 import { awardBadges, loadProfileRecords, type ProfileOwner } from "./queries";
-import { sampleAchievementsInput, sampleProfileInput } from "./sample-profile";
 
 /** Habit badges look at the whole practice history, not just the recent sessions Practice shows. */
 export const ALL_SESSIONS = 5000;
@@ -81,12 +80,3 @@ export async function loadProfileModel(owner: ProfileOwner, viewer: ProfileViewe
   return withEarnedBadges(model, achievements);
 }
 
-/** DEVELOPMENT PREVIEW: the sample learner, in the owner's view. See sample-profile.ts. */
-export function loadSampleProfileModel(): ProfileModel {
-  const lessons = profileLessons();
-  const now = new Date();
-  return withEarnedBadges(
-    buildProfileModel({ viewer: "owner", ...sampleProfileInput(lessons, now) }),
-    buildAchievementsModel(sampleAchievementsInput(lessons, now)),
-  );
-}

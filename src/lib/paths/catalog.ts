@@ -1,4 +1,4 @@
-import { getAllLessons } from "@/lib/content/lessons";
+
 import { LEVELS, type LevelId } from "@/lib/content/schema";
 
 export type PathStatus = "live" | "soon";

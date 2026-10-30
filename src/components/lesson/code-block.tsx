@@ -50,13 +50,13 @@ export function CodeBlock({
           </button>
         </div>
       )}
-      <div className="relative bg-[#181428] py-4 pr-1.5 font-mono text-[13px] leading-[1.95] text-[#D8D4E6]">
+      <div className="relative bg-[#16181d] py-4 pr-1.5 font-mono text-[13px] leading-[1.95] text-[#e6e4dd]">
         {!runnable && save && (
           <div className="absolute right-2 top-2">{save}</div>
         )}
         {lines.map((line, i) => (
           <div key={i} className="flex gap-3.5 px-1.5">
-            <span className="w-8 flex-none select-none text-right text-[#4E4869]">
+            <span className="w-8 flex-none select-none text-right text-[#4a4e57]">
               {line.trim() ? i + 1 : ""}
             </span>
             <span className="whitespace-pre">
@@ -68,16 +68,16 @@ export function CodeBlock({
       {runnable && (
         <div
           className={cn(
-            "border-t border-white/[0.07] bg-[#12101F] px-[18px] py-3 font-mono text-[12.5px] text-[#8FCF9A]",
+            "border-t border-white/[0.07] bg-[#0d0e11] px-[18px] py-3 font-mono text-[12.5px] text-[#8FCF9A]",
           )}
         >
-          <span className="text-[#5E5878]">output › </span>
+          <span className="text-[#6b6f78]">output › </span>
           {ran && expectedOutput ? (
             <span className="whitespace-pre-wrap">
               {decodeEntities(expectedOutput)}
             </span>
           ) : (
-            <span className="text-[#5E5878]">
+            <span className="text-[#6b6f78]">
               — press Run to compile and execute —
             </span>
           )}

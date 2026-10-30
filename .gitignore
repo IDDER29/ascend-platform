@@ -48,3 +48,6 @@ next-env.d.ts
 /.debug-shots
 /prod.log
 
+
+# The template is safe to commit.
+!.env.example

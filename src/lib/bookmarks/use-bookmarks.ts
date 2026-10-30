@@ -69,10 +69,6 @@ export function removeBookmark(ref: string) {
   write(current().filter((b) => b.ref !== ref));
 }
 
-export function replaceBookmarks(list: Bookmark[]) {
-  write(list);
-}
-
 /** Every bookmark in this browser; `null` until the browser store has been read. */
 export function useBookmarks(): Bookmark[] | null {
   const raw = useSyncExternalStore(subscribe, readRaw, () => "\u0000server");

@@ -147,7 +147,7 @@ function unearned(id: string): BadgeView | null {
 }
 
 export async function loadPathsV2(): Promise<PathsV2Data> {
-  const [loaded, following] = await Promise.all([loadAchievementsInput({ sampleForGuests: false }), getFollowingMap()]);
+  const [loaded, following] = await Promise.all([loadAchievementsInput(), getFollowingMap()]);
   const lessons = lessonInfos();
   const model = loaded ? buildAchievementsModel(loaded.input) : null;
   const badge = (id: string): BadgeView | null =>

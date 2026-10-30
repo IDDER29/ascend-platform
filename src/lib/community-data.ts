@@ -24,7 +24,7 @@ export const THREADS: CommunityThread[] = [
     id: "t1",
     title: "Why does my linked-list `free()` still segfault after I null the pointer?",
     author: "Rhea",
-    avatarGradient: "from-[#7B4DFF] to-[#C13AE0]",
+    avatarGradient: "from-[#2e4bdb] to-[#3bc6a0]",
     category: "Help & debugging",
     when: "12 min ago",
     replies: 8,
@@ -56,7 +56,7 @@ export const THREADS: CommunityThread[] = [
     responses: [
       {
         author: "Kenji",
-        avatarGradient: "from-[#6D46F2] to-[#C13AE0]",
+        avatarGradient: "from-[#6D46F2] to-[#3bc6a0]",
         when: "1 hour ago",
         body: "Nice work! Did you close unused fds in every child, or only the ones actively piping?",
       },
@@ -74,13 +74,13 @@ export const THREADS: CommunityThread[] = [
     responses: [
       {
         author: "Rhea",
-        avatarGradient: "from-[#7B4DFF] to-[#C13AE0]",
+        avatarGradient: "from-[#2e4bdb] to-[#3bc6a0]",
         when: "4 hours ago",
         body: "'Stack grows down, heap grows up, and they race toward each other' is the one that stuck for me.",
       },
       {
         author: "Kenji",
-        avatarGradient: "from-[#6D46F2] to-[#C13AE0]",
+        avatarGradient: "from-[#6D46F2] to-[#3bc6a0]",
         when: "3 hours ago",
         body: "I print &x for a local and compare it to a malloc'd pointer in the same program — seeing the real addresses made it click instantly.",
       },
@@ -90,7 +90,7 @@ export const THREADS: CommunityThread[] = [
     id: "t4",
     title: "man 2 fork vs man 3 — which section for what, exactly?",
     author: "Kenji",
-    avatarGradient: "from-[#6D46F2] to-[#C13AE0]",
+    avatarGradient: "from-[#6D46F2] to-[#3bc6a0]",
     category: "Resources & links",
     when: "yesterday",
     replies: 6,
@@ -108,7 +108,7 @@ export const THREADS: CommunityThread[] = [
     id: "t5",
     title: "Struct padding — does field order actually matter for size?",
     author: "Amine",
-    avatarGradient: "from-[#7B4DFF] to-[#FF6B4A]",
+    avatarGradient: "from-[#2e4bdb] to-[#FF6B4A]",
     category: "General discussion",
     when: "2 days ago",
     replies: 0,

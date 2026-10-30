@@ -248,7 +248,7 @@ export default function CommunityPage() {
         </div>
 
         <div className="mt-9 flex flex-wrap items-center gap-4.5 rounded-2xl border border-dashed border-card-border bg-white p-5.5">
-          <span className="flex h-11 w-11 flex-none items-center justify-center rounded-[13px] bg-[#181428] text-white">
+          <span className="flex h-11 w-11 flex-none items-center justify-center rounded-[13px] bg-[#16181d] text-white">
             <MessageSquare size={20} strokeWidth={2.1} />
           </span>
           <div className="min-w-[220px] flex-1">

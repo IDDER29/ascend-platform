@@ -12,7 +12,7 @@ import {
   type BookmarkKind,
   type BookmarkReason,
 } from "@/lib/bookmarks/model";
-import { replaceBookmarks, updateBookmark, useBookmarks } from "@/lib/bookmarks/use-bookmarks";
+import { updateBookmark, useBookmarks } from "@/lib/bookmarks/use-bookmarks";
 import { deckSessionHref } from "@/lib/practice/coach-custom-model";
 import { SaveButton } from "./save-button";
 
@@ -266,7 +266,7 @@ function HowToSave() {
   );
 }
 
-export function BookmarksPage({ sample }: { sample: Bookmark[] | null }) {
+export function BookmarksPage() {
   const all = useBookmarks();
   const [query, setQuery] = useState("");
   const [reason, setReason] = useState<BookmarkReason | null>(null);
@@ -294,16 +294,6 @@ export function BookmarksPage({ sample }: { sample: Bookmark[] | null }) {
             Browse paths
           </Link>
         </section>
-        {sample && (
-          // DEVELOPMENT PREVIEW: fill the page with bookmarks made from real lessons.
-          <button
-            type="button"
-            onClick={() => replaceBookmarks(sample)}
-            className="w-fit rounded-xl border-2 border-dashed border-[var(--coach-border-strong)] px-4 py-2.5 text-[13.5px] font-semibold text-[var(--coach-ink-secondary)]"
-          >
-            Development preview: load sample bookmarks
-          </button>
-        )}
       </div>
     );
   }

@@ -79,3 +79,20 @@ glance.
   and its rule as a checklist with the next step. Selecting a combination
   rings the badges it needs on the track; their medallions in the
   checklist select them.
+
+## Alternative layout: the chest (`/achievementsv6`)
+The user's original idea: achievements are honours you wear, like the
+ribbons on a general's chest — things you're proud to show.
+- **The chest (dark uniform panel):** only earned badges are worn, as
+  original ribbon bars (stable, symmetric stripe patterns from the group's
+  colours — `ribbons.ts`, tested; combinations carry a device with their
+  glyph), racked three to a row in order of precedence — combinations,
+  building, remembering, learning, habits — with the top row holding the
+  remainder. A nameplate with the learner's name sits under the rack.
+  Ribbons are pinned one by one on load (skipped with reduced motion).
+- **Citation:** selecting a ribbon shows the full medal (ribbon drape +
+  medal) and a citation built from the badge's own rule: "Awarded to
+  Sample Learner on Oct 22 for practicing 7 days in a row."
+- **Still to earn:** closest first, each with a faded preview of its
+  ribbon, its next condition and progress; selecting one shows "Not yet
+  awarded" with the full rule as a checklist and the next step.

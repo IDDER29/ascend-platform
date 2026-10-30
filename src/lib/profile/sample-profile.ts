@@ -15,6 +15,8 @@ import type { ProfileInput, ProfileLesson } from "./profile-model";
 
 export const SHOW_SAMPLE_PROFILE_TO_GUESTS = true;
 
+export const SAMPLE_NAME = "Sample Learner";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function daysAgo(now: Date, days: number): string {
@@ -35,7 +37,7 @@ export function sampleProfileInput(lessons: ProfileLesson[], now: Date): Omit<Pr
 
   return {
     profile: {
-      name: "Sample Learner",
+      name: SAMPLE_NAME,
       username: "sample-learner",
       bio: "Learning how computers really work, one layer at a time.",
       joinedAt: daysAgo(now, 45),

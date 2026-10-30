@@ -17,7 +17,10 @@ const MAIN =
   "practice-coach-v2 flex-1 overflow-x-clip bg-[var(--coach-bg)] px-5 py-8 font-sans text-[var(--coach-ink)] antialiased sm:px-10";
 
 export default async function DashboardV2Page() {
-  const [{ today, paths, firstName, lessonsDone }, practice] = await Promise.all([loadToday(), loadPracticePageData()]);
+  const [{ today, paths, firstName, lessonsDone, lessons }, practice] = await Promise.all([
+    loadToday(),
+    loadPracticePageData(),
+  ]);
   const now = new Date();
   const greeting = greetingForHour(now.getHours());
 
@@ -43,6 +46,7 @@ export default async function DashboardV2Page() {
         <TodayGrid
           next={<NextLessonCard next={today.next} />}
           lessonsDone={lessonsDone}
+          lessons={lessons}
           nextLessons={
             today.next.kind === "capstone"
               ? []

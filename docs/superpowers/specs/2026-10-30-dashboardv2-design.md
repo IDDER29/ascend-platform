@@ -34,3 +34,9 @@
 - The top card's next lesson now comes from that leading path (its topics, then its capstone), labelled with the path's name; with no path joined it's the first open lesson in the curriculum, as before.
 - No path joined: a one-line prompt to pick one.
 - Model: `src/lib/dashboard/paths-model.ts` (tested).
+
+## To revisit (2026-10-30)
+- What didn't click, from two sources: what you flagged ("Didn't get it" bookmarks, newest first), then lessons Practice shows you keep missing lately (last 30 days, at least 3 answers, under 70% right; worst first). A lesson flagged as a whole isn't listed again. Overdue cards stay on the Practice card.
+- Each flag: where it is, your note, its way back (Revisit section / Try the card again …) and "I get it now" (keeps it as a reference). Each Practice lesson: "N of M right in Practice lately", Practice its cards, Reread the lesson.
+- Up to 4 shown; always present, with an empty state saying how things get here.
+- Model: `src/lib/dashboard/revisit-model.ts` (tested).

@@ -33,6 +33,7 @@ export async function loadToday(): Promise<{
   firstName: string | null;
   /** Lessons finished, with when, for today's checklist. */
   lessonsDone: { title: string; at: string }[];
+  lessons: { key: string; title: string; href: string }[];
 }> {
   const [user, loaded, following] = await Promise.all([
     getCurrentUser(),
@@ -79,5 +80,11 @@ export async function loadToday(): Promise<{
     .filter((c) => titleOf.has(c.key))
     .map((c) => ({ title: titleOf.get(c.key)!, at: c.completedAt }))
     .sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
-  return { today, paths, firstName: user?.name?.trim().split(/\s+/)[0] || null, lessonsDone };
+  return {
+    today,
+    paths,
+    firstName: user?.name?.trim().split(/\s+/)[0] || null,
+    lessonsDone,
+    lessons: lessons.map(({ key, title, href }) => ({ key, title, href })),
+  };
 }

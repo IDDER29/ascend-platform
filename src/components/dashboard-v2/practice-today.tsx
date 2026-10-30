@@ -32,16 +32,17 @@ function usePracticeToday({
   initialCards,
   initialHistory,
   initialGoal,
-}: PracticeTodayProps): CoachHomeModel | null {
+}: PracticeTodayProps): { model: CoachHomeModel | null; history: PracticeSessionRecord[] | null } {
   const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
   const unlockedIds = useMemo(() => unlockedQuestions(completed).map((q) => q.id), [completed]);
-  const [model, setModel] = useState<CoachHomeModel | null>(null);
+  const [state, setState] = useState<{ model: CoachHomeModel; history: PracticeSessionRecord[] } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const history = mergeSessionHistory(readLocalHistory(userId), initialHistory);
     const next = buildCoachHomeModel({
       cards: syncLocalCards(userId, initialCards, unlockedIds),
-      history: mergeSessionHistory(readLocalHistory(userId), initialHistory),
+      history,
       meta: readNewDayMeta(userId),
       completedKeys: completed,
       goal: resolveDailyGoal(userId, initialGoal),
@@ -49,14 +50,14 @@ function usePracticeToday({
       lessonDates: completionDates,
     });
     queueMicrotask(() => {
-      if (!cancelled) setModel(next);
+      if (!cancelled) setState({ model: next, history });
     });
     return () => {
       cancelled = true;
     };
   }, [completed, completionDates, initialCards, initialGoal, initialHistory, unlockedIds, userId]);
 
-  return model;
+  return { model: state?.model ?? null, history: state?.history ?? null };
 }
 
 /** Cards due now, one press from a review. */
@@ -114,13 +115,16 @@ export function TodayGrid({
   practice,
   lessonsDone,
   nextLessons,
+  lessons,
 }: {
   next: ReactNode;
   practice: PracticeTodayProps;
   lessonsDone: { title: string; at: string }[];
   nextLessons: { title: string; href: string }[];
+  /** Every lesson, for naming the ones Practice shows you missing. */
+  lessons: { key: string; title: string; href: string }[];
 }) {
-  const model = usePracticeToday(practice);
+  const { model, history } = usePracticeToday(practice);
   return (
     <>
       <div className="grid w-full min-w-0 grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(260px,310px)]">
@@ -129,7 +133,7 @@ export function TodayGrid({
       </div>
       <div className="grid w-full min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2">
         <PracticeDueCard model={model} />
-        <RevisitCard />
+        <RevisitCard history={history} lessons={lessons} />
       </div>
     </>
   );

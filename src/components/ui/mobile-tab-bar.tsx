@@ -152,7 +152,7 @@ export function MobileTabBar() {
               <PlaceholderAvatar
                 name={displayName}
                 size="sm"
-                className="border-2 border-[color:var(--coach-border)] bg-[color:var(--coach-bg)]"
+                className="bg-[var(--coach-bg)]"
               />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[15px] font-bold">{displayName || "Learner"}</span>

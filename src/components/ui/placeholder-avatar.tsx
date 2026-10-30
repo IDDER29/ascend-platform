@@ -20,7 +20,7 @@ const SIZE = {
 } as const;
 
 /**
- * Placeholder profile avatar — quiet Phosphor surface, not a brand/purple wash.
+ * Placeholder profile avatar — quiet Coach surface (render inside `practice-coach-v2`), not a brand wash.
  * Shows initial when a name exists; otherwise a user icon.
  */
 export function PlaceholderAvatar({
@@ -38,18 +38,18 @@ export function PlaceholderAvatar({
   return (
     <div
       className={cn(
-        "flex flex-none items-center justify-center border border-card-border bg-elevated text-ink-secondary",
+        "flex flex-none items-center justify-center border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] text-[var(--coach-ink-secondary)]",
         s.box,
         className,
       )}
       aria-hidden={initial ? undefined : true}
     >
       {initial ? (
-        <span className={cn("font-display font-extrabold leading-none text-ink", s.text)}>
+        <span className={cn("font-display font-extrabold leading-none text-[var(--coach-ink)]", s.text)}>
           {initial}
         </span>
       ) : (
-        <UserRound size={s.icon} strokeWidth={1.8} className="text-ink-faint" />
+        <UserRound size={s.icon} strokeWidth={1.8} className="text-[var(--coach-ink-muted)]" />
       )}
     </div>
   );

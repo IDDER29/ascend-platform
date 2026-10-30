@@ -182,7 +182,12 @@ export function AppSidebar() {
         </Link>
 
         {/* Scrolls on short screens; the collapse button stays outside so it isn't clipped. */}
-        <div className={cn("-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 [scrollbar-width:thin]", collapsed && "items-center")}>
+        <div
+          className={cn(
+            "-mx-1 flex min-h-0 flex-1 flex-col overflow-y-auto px-1 [scrollbar-width:thin]",
+            collapsed && "items-center",
+          )}
+        >
           <nav aria-label="Main" className={cn("flex flex-col", collapsed ? "items-center gap-4" : "gap-5")}>
             {SIDEBAR_GROUPS.map((group) => (
               <div key={group.label} className={cn("flex flex-col gap-0.5", collapsed && "items-center")}>
@@ -211,11 +216,7 @@ export function AppSidebar() {
                 title={user ? displayName || "Profile" : "Sign in"}
                 className="rounded-xl no-underline"
               >
-                <PlaceholderAvatar
-                  name={user ? displayName : null}
-                  size="sm"
-                  className="border-2 border-[color:var(--coach-border)] bg-[color:var(--coach-surface)]"
-                />
+                <PlaceholderAvatar name={user ? displayName : null} size="sm" />
               </Link>
             ) : user ? (
               <div className="app-sidebar-expanded-only flex items-center gap-2.5 rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-2.5">
@@ -223,11 +224,7 @@ export function AppSidebar() {
                   href="/profile"
                   className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl text-[var(--coach-ink)] no-underline"
                 >
-                  <PlaceholderAvatar
-                    name={displayName}
-                    size="sm"
-                    className="border-2 border-[color:var(--coach-border)] bg-[color:var(--coach-bg)]"
-                  />
+                  <PlaceholderAvatar name={displayName} size="sm" className="bg-[var(--coach-bg)]" />
                   <span className="min-w-0">
                     <span className="block truncate text-[14px] font-bold">{displayName || "Learner"}</span>
                     <span className="block truncate text-[12.5px] text-[var(--coach-ink-muted)]">@{user.username}</span>

@@ -11,7 +11,7 @@ Ascend is a learning platform for how computers really work (bits → CPU → C 
 ```bash
 npm run dev                      # http://localhost:3000 (also rewrites the Next.js block in AGENTS.md)
 npm run build                    # next build --webpack
-npm run lint                     # eslint; 2 warnings are pre-existing — don't count those as yours
+npm run lint                     # eslint; clean — keep it at zero warnings
 npx tsc --noEmit                 # type-check; ignore errors reported under .next/
 npx tsx --test $(git ls-files 'src/**/*.test.ts')   # all tests (node:test via tsx; @/ paths resolve)
 npx tsx --test src/lib/practice/sm2.test.ts          # one test file (add new untracked test files explicitly)
@@ -36,12 +36,12 @@ There is no `npm test` script and no Prettier config. Many existing files mix tw
 
 **The model / loader / live split** (used by Practice, Progress, Profile, Achievements, Bookmarks, Dashboard, Paths):
 - `src/lib/<area>/*-model.ts` — pure, client-safe functions from records to view data, each with a `*.test.ts` beside it. Put logic here.
-- `src/lib/<area>/server-page-data.ts` (or `*-data.ts`) — `import "server-only"` loaders that read the DB/lesson files and build model input. Guests may get a sample learner (`SHOW_SAMPLE_PROFILE_TO_GUESTS` in `src/lib/profile/sample-profile.ts`); the dashboard deliberately doesn't.
+- `src/lib/<area>/server-page-data.ts` (or `*-data.ts`) — `import "server-only"` loaders that read the DB/lesson files and build model input. Guests never get sample data: account-only pages show `GuestPrompt` (`src/components/ui/guest-prompt.tsx`).
 - `*-live.tsx` / client components — merge server data with browser storage (`mergeSessionHistory(readLocalHistory(userId), initialHistory)`, `syncLocalCards`) inside `useEffect` + `queueMicrotask` (the lint rule forbids synchronous setState in effects); per-browser stores use `useSyncExternalStore` over localStorage (`src/lib/bookmarks/use-bookmarks.ts`).
 
 **Practice and memory.** Scheduling is SM-2 (`src/lib/practice/sm2.ts`; the UI grades only Again/Good). Cards come from `PRACTICE_BANK` (`src/lib/practice/bank/`) and unlock as lessons are completed; Practice URLs go through `src/lib/practice/routes.ts`. Recall is *estimated* with FSRS's power-law curve: `memory-curve.ts` (deck), `card-memory.ts` (one card's sawtooth, replayed from history), `deck-memory.ts` (`setMemory` for any subset), `shaky.ts` (right but slow or just-recovered, using answer times). Reasoning and open ideas: `docs/learning-science/spaced-repetition.md` — read and update it when touching Practice or memory.
 
-**Goal and streak.** One daily goal (`GOAL_PLANS` in `src/lib/practice/daily-goal.ts`: Casual/Regular/Serious) set in onboarding or Settings, driving the dashboard's Today checklist (`src/lib/dashboard/day-plan.ts`). One streak, counting days with a finished lesson only (`src/lib/progress/streak.ts`); the old dashboard, lesson footer and `/streak-lost` still read the `streaks` table.
+**Goal and streak.** One daily goal (`GOAL_PLANS` in `src/lib/practice/daily-goal.ts`: Casual/Regular/Serious) set in onboarding or Settings, driving the dashboard's Today checklist (`src/lib/dashboard/day-plan.ts`). One streak, counting days with a finished lesson only (`src/lib/progress/streak.ts`); finishing a lesson also bumps the `streaks` table (`bumpStreak` in `src/lib/progress/queries.ts`), which Progress reads as the server-side streak.
 
 **Achievements** are computed from records, never stored: badges each have their own rule in `src/lib/achievements/catalog.ts`; ninja titles come from counts of ranked tasks (D–S grade tasks, never badges); clan crests per topic. Original art only.
 

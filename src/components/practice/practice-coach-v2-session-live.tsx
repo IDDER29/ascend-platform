@@ -846,17 +846,15 @@ export function PracticeCoachV2SessionLive({
 
         {question.kind === "flashcard" ? (
           // One card that flips over on Reveal (or a click); instant when the device asks for less motion.
-          <div key={question.id} className="relative [perspective:1400px]">
+          <div key={question.id} className="relative [perspective:1100px]">
             <div aria-hidden className="absolute inset-x-4 top-3 -bottom-3 rounded-[20px] bg-[var(--coach-border)]" />
             <div
               onClick={() => !revealed && setRevealed(true)}
-              className={`relative grid transition-transform duration-500 ease-[cubic-bezier(.2,.7,.2,1)] [transform-style:preserve-3d] motion-reduce:transition-none ${
-                revealed ? "[transform:rotateY(180deg)]" : "cursor-pointer"
-              }`}
+              className={`relative grid [transform-style:preserve-3d] ${revealed ? "flashcard-flipped" : "cursor-pointer"}`}
             >
               <div
                 inert={revealed}
-                className="flex min-h-[260px] min-w-0 flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 [backface-visibility:hidden] [grid-area:1/1] sm:p-8"
+                className="flashcard-face flex min-h-[260px] min-w-0 flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6 [backface-visibility:hidden] [grid-area:1/1] sm:p-8"
               >
                 <span className="font-[family-name:var(--font-plex-mono)] text-[11px] uppercase tracking-[0.08em] text-[var(--coach-ink-muted)]">
                   Front
@@ -874,7 +872,7 @@ export function PracticeCoachV2SessionLive({
               <div
                 inert={!revealed}
                 aria-live="polite"
-                className="flex min-h-[260px] min-w-0 flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-flash-back)] p-6 [backface-visibility:hidden] [grid-area:1/1] [transform:rotateY(180deg)] sm:p-8"
+                className="flashcard-face flex min-h-[260px] min-w-0 flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-flash-back)] p-6 [backface-visibility:hidden] [grid-area:1/1] [transform:rotateY(180deg)] sm:p-8"
               >
                 <span className="font-[family-name:var(--font-plex-mono)] text-[11px] uppercase tracking-[0.08em] text-[var(--coach-tint-blue-ink)]">
                   Back

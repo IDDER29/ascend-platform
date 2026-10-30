@@ -513,6 +513,44 @@ html.sidebar-collapsed .app-sidebar-section {
   }
 }
 
+/* Practice flashcard: the card lifts toward you, turns over, overshoots a touch and settles. */
+.flashcard-flipped {
+  transform: rotateY(180deg);
+  animation: flashcard-flip 780ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
+}
+.flashcard-flipped .flashcard-face {
+  animation: flashcard-lift 780ms ease-in-out both;
+}
+@keyframes flashcard-flip {
+  0% {
+    transform: rotateY(0deg) translateY(0) scale(1);
+  }
+  45% {
+    transform: rotateY(96deg) translateY(-14px) scale(1.05);
+  }
+  78% {
+    transform: rotateY(189deg) translateY(-3px) scale(1.01);
+  }
+  100% {
+    transform: rotateY(180deg) translateY(0) scale(1);
+  }
+}
+@keyframes flashcard-lift {
+  0%,
+  100% {
+    box-shadow: 0 0 0 transparent;
+  }
+  45% {
+    box-shadow: 0 30px 50px -14px rgba(0, 0, 0, 0.3);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flashcard-flipped,
+  .flashcard-flipped .flashcard-face {
+    animation: none;
+  }
+}
+
 .practice-coach-v2 a[href]:hover {
   filter: brightness(0.97);
 }

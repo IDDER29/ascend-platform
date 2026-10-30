@@ -168,6 +168,11 @@ A later quick right answer clears it. Misses aren't shaky — they're misses.
 - **After a right typed answer that differs from the official wording**, the bar shows it ("Exact wording: 2"), so the precise term sticks.
 - **Flashcards don't get a feedback bar.** The learner has just seen the back and graded themselves; "Not quite — the answer is …" repeated it and judged an honest "Not yet". Grading moves straight on (the progress bar still records it). Buttons read "Not yet" / "Knew it".
 
+## 3d. Decision: honest multiple choice (2026-10-30)
+**Why:** a measurement of the bank found the right option was the single longest in **56%** of the 99 multiple-choice cards (chance ≈ 25%), and in 39 it was more than 1.2× every wrong option. "Pick the longest" won more than half the time, so a recognition score said little about memory — and every lucky win pushed a card days away (SM-2 *Good*).
+- **Wrong options rewritten** as real misconceptions, as long and specific as the right answer. A test (`src/lib/practice/bank-quality.test.ts`) now fails if any card's right option is over 1.2× the longest wrong one, or if "pick the longest" wins in more than 35% of cards across the bank.
+- **"I don't know"** on choices, short answers and blanks (key **D** for choices): the answer is shown on the card (right choice lit, or the field filled in, dashed) and the card is graded *Again* — no guess, no false *Good*. The bar reads "Here's the answer", without "I was right". Skip still exists for "not now" (no grade, the card stays due).
+
 ## 4. Open ideas (ranked by value for effort)
 
 1. **Use the curve elsewhere** — Progress (the long view) and Practice home; per topic ("Bits & Logic: 88%").

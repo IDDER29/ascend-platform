@@ -69,8 +69,11 @@ const BOTTOM_BAR =
   "sticky bottom-0 z-10 -mx-5 mt-auto flex justify-center border-t-2 px-5 sm:-mx-10 sm:px-10";
 
 type Answered = { questionId: string; grade: PracticeGrade; ms?: number };
-/** `overridden`: a typed answer marked wrong that the learner said was right ("I was right"). */
-type Feedback = { correct: boolean; grade: PracticeGrade; overridden?: boolean };
+/**
+ * `overridden`: a typed answer marked wrong that the learner said was right ("I was right").
+ * `dunno`: the learner pressed "I don't know" — a miss, without a guess, and the answer is shown.
+ */
+type Feedback = { correct: boolean; grade: PracticeGrade; overridden?: boolean; dunno?: boolean };
 
 function gradeIsHit(grade: PracticeGrade): boolean {
   return grade === "good" || grade === "easy";
@@ -237,7 +240,7 @@ function McqChoice({
   );
 }
 
-type FieldState = "idle" | "right" | "wrong";
+type FieldState = "idle" | "right" | "wrong" | "shown";
 
 /** The typing field, for short answers and for blanks (inline, inside the sentence or the code line). */
 function AnswerInput({
@@ -264,6 +267,8 @@ function AnswerInput({
       ? "border-[var(--coach-correct-border)] bg-[var(--coach-correct-bg)] text-[var(--coach-correct-ink)]"
       : state === "wrong"
         ? "border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-soft)] text-[var(--coach-wrong-ink)] line-through"
+        : state === "shown"
+          ? "border-dashed border-[var(--coach-ink-muted)] bg-[var(--coach-well)] text-[var(--coach-ink)]"
         : onDark
           ? "border-[var(--coach-lime)] bg-[var(--coach-surface)] text-[var(--coach-ink)]"
           : "border-[var(--coach-border-strong)] bg-[var(--coach-surface)] text-[var(--coach-ink)]";
@@ -303,21 +308,27 @@ function PromptFooter({ children }: { children: ReactNode }) {
   );
 }
 
-function SkipButton({ onClick }: { onClick: () => void }) {
+function QuietButton({ onClick, label, keyHint }: { onClick: () => void; label: string; keyHint?: string }) {
   return (
     <button
       type="button"
-      className="flex h-11 items-center gap-2 rounded-xl border-2 border-[var(--coach-border-strong)] px-4 text-sm font-semibold text-[var(--coach-ink-secondary)]"
+      className="flex h-11 items-center gap-2 rounded-xl border-2 border-[var(--coach-border-strong)] px-3.5 text-sm font-semibold whitespace-nowrap text-[var(--coach-ink-secondary)] sm:px-4"
       onClick={onClick}
     >
-      Skip
-      <kbd
-        className={`hidden min-h-5 min-w-5 items-center justify-center rounded-md border border-b-2 border-[var(--coach-border-strong)] bg-[var(--coach-bg)] px-1 font-[family-name:var(--font-plex-mono)] text-[11px] sm:inline-flex ${KBD_TOUCH}`}
-      >
-        S
-      </kbd>
+      {label}
+      {keyHint ? (
+        <kbd
+          className={`hidden min-h-5 min-w-5 items-center justify-center rounded-md border border-b-2 border-[var(--coach-border-strong)] bg-[var(--coach-bg)] px-1 font-[family-name:var(--font-plex-mono)] text-[11px] sm:inline-flex ${KBD_TOUCH}`}
+        >
+          {keyHint}
+        </kbd>
+      ) : null}
     </button>
   );
+}
+
+function SkipButton({ onClick }: { onClick: () => void }) {
+  return <QuietButton onClick={onClick} label="Skip" keyHint="S" />;
 }
 
 function LimeCheckButton({
@@ -373,11 +384,14 @@ function FeedbackBar({
   const right = feedback.correct;
   const accepted = question.kind === "typed" || question.kind === "cloze" ? question.answers : null;
   // After a right typed answer, show the official wording only when it differs from what was typed.
+  // After "I don't know" the card itself shows the answer (the right choice lit, the field filled in).
   const shownAnswer = right
     ? accepted && !feedback.overridden
       ? officialWording(typed, accepted)
       : null
-    : expectedAnswer(question);
+    : feedback.dunno
+      ? null
+      : expectedAnswer(question);
 
   return (
     <section
@@ -405,7 +419,13 @@ function FeedbackBar({
                 right ? "" : "text-[var(--coach-wrong-title)]"
               }`}
             >
-              {right ? (feedback.overridden ? "Counted as right" : "Correct") : "Not quite"}
+              {right
+                ? feedback.overridden
+                  ? "Counted as right"
+                  : "Correct"
+                : feedback.dunno
+                  ? "Here's the answer"
+                  : "Not quite"}
             </h2>
             {shownAnswer ? (
               <p
@@ -433,7 +453,7 @@ function FeedbackBar({
           </div>
         </div>
         <div className="flex w-full gap-3 sm:w-auto">
-          {!right && onOverride ? (
+          {!right && !feedback.dunno && onOverride ? (
             <button
               type="button"
               onClick={onOverride}
@@ -696,6 +716,15 @@ export function PracticeCoachV2SessionLive({
     window.setTimeout(commit, 260);
   }
 
+  /** "I don't know": show the answer and count a miss, instead of a guess that might luck into "right". */
+  function dontKnow() {
+    const question = questions[index];
+    if (!question || question.kind === "flashcard") return;
+    if (question.kind === "mcq") setSelected(null);
+    else setTypedAnswer(question.answers[0] ?? "");
+    if (recordGrade("again", false)) setFeedback({ correct: false, grade: "again", dunno: true });
+  }
+
   /** "I was right": a typed answer the matcher refused (a typo, another wording) counts as a hit. */
   function overrideLast() {
     const question = questions[index];
@@ -760,6 +789,12 @@ export function PracticeCoachV2SessionLive({
 
       if (typing || phase === "feedback") return;
 
+      if ((event.key === "d" || event.key === "D") && current.kind !== "flashcard") {
+        event.preventDefault();
+        dontKnow();
+        return;
+      }
+
       if (event.key === "s" || event.key === "S") {
         event.preventDefault();
         advance();
@@ -791,7 +826,13 @@ export function PracticeCoachV2SessionLive({
   const subtitle = scopeSubtitle(activeScope.scopeLabel, question.reviewLabel);
   const reviewHref = feedback && !feedback.correct ? reviewHrefs[question.id] : undefined;
   const inFeedback = phase === "feedback" && feedback;
-  const fieldState: FieldState = inFeedback ? (feedback.correct ? "right" : "wrong") : "idle";
+  const fieldState: FieldState = inFeedback
+    ? feedback.correct
+      ? "right"
+      : feedback.dunno
+        ? "shown"
+        : "wrong"
+    : "idle";
 
   const progress = sessionProgress(
     questions.map((q) => q.id),
@@ -976,10 +1017,10 @@ export function PracticeCoachV2SessionLive({
         />
       ) : question.kind === "mcq" ? (
         <PromptFooter>
-          <SkipButton onClick={() => advance()} />
-          <span className={`hidden text-[13px] text-[var(--coach-ink-muted)] sm:inline ${KBD_TOUCH}`}>
-            Press 1–{question.options.length} to choose
-          </span>
+          <div className="flex gap-2">
+            <SkipButton onClick={() => advance()} />
+            <QuietButton onClick={dontKnow} label="I don't know" keyHint="D" />
+          </div>
           <LimeCheckButton disabled={selected === null} onClick={checkMcq} />
         </PromptFooter>
       ) : question.kind === "flashcard" ? (
@@ -1025,7 +1066,10 @@ export function PracticeCoachV2SessionLive({
         </PromptFooter>
       ) : (
         <PromptFooter>
-          <SkipButton onClick={() => advance()} />
+          <div className="flex gap-2">
+            <SkipButton onClick={() => advance()} />
+            <QuietButton onClick={dontKnow} label="I don't know" />
+          </div>
           <LimeCheckButton disabled={typedAnswer.trim().length === 0} onClick={gradeTyped} />
         </PromptFooter>
       )}

@@ -1,3 +1,4 @@
+import { dueCards, type NewDayMeta } from "./cards";
 import { cardStrength, type CardStrength } from "./coach-home-model";
 import type { PracticeSessionRecord } from "./history";
 import { completionKey, unlockedQuestions } from "./session";
@@ -36,6 +37,8 @@ export type CoachBankModel = {
   rows: BankRow[];
   total: number;
   dueToday: number;
+  /** What a session would serve right now, the same count as the Practice badge: reviews + today's new cards. */
+  dueNow: { reviews: number; fresh: number };
   strengthCounts: Record<BankStrength, number>;
   lessons: { key: string; title: string }[];
   formats: { value: BankFormat; label: string }[];
@@ -53,6 +56,8 @@ export type CoachBankInput = {
   history: PracticeSessionRecord[];
   completedKeys: Set<string>;
   now: Date;
+  /** New cards already started today (they're capped per day). */
+  meta?: NewDayMeta;
 };
 
 function cardText(question: PracticeItem): string {
@@ -82,6 +87,7 @@ export function buildCoachBankModel({
   history,
   completedKeys,
   now,
+  meta = { date: "", count: 0 },
 }: CoachBankInput): CoachBankModel {
   const cardsById = new Map(cards.map((c) => [c.questionId, c] as const));
   const tallies = historyTallies(history);
@@ -120,6 +126,13 @@ export function buildCoachBankModel({
   });
   rows.sort((a, b) => a.dueSort - b.dueSort || a.text.localeCompare(b.text));
 
+  const unlockedIds = new Set(rows.map((row) => row.id));
+  const due = dueCards(
+    cards.filter((c) => unlockedIds.has(c.questionId)),
+    meta,
+    now,
+  );
+
   const strengthCounts = { new: 0, learning: 0, solid: 0, mastered: 0 };
   for (const row of rows) strengthCounts[row.strength] += 1;
 
@@ -134,6 +147,7 @@ export function buildCoachBankModel({
     rows,
     total: rows.length,
     dueToday: rows.filter((row) => row.dueToday).length,
+    dueNow: { reviews: due.filter((c) => c.state !== "new").length, fresh: due.filter((c) => c.state === "new").length },
     strengthCounts,
     lessons: [...lessons].map(([key, title]) => ({ key, title })),
     formats: (Object.keys(BANK_FORMAT_LABELS) as BankFormat[])

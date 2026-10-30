@@ -10,7 +10,7 @@ import { CoachBreadcrumb } from "@/components/practice/coach-breadcrumb";
 import { BankTable } from "@/components/practice/coach-bank/bank-table";
 import { SelectionBar } from "@/components/practice/coach-bank/selection-bar";
 import { PageHeader } from "@/components/ui/page-header";
-import { syncLocalCards } from "@/lib/practice/cards";
+import { readNewDayMeta, syncLocalCards } from "@/lib/practice/cards";
 import {
   buildCoachBankModel,
   filterBankRows,
@@ -69,6 +69,7 @@ export function PracticeCoachV2Bank({
       history: mergeSessionHistory(readLocalHistory(userId), initialHistory),
       completedKeys: completed,
       now: new Date(),
+      meta: readNewDayMeta(userId),
     });
     queueMicrotask(() => {
       if (!cancelled) setModel(next);
@@ -110,7 +111,7 @@ export function PracticeCoachV2Bank({
 
   return (
     <div className="flex flex-col gap-6">
-      <BankHeader total={model.total} dueToday={model.dueToday} />
+      <BankHeader total={model.total} dueNow={model.dueNow} />
       <BankFilters model={model} filters={filters} onChange={setFilters} />
       <BankTable
         rows={rows}

@@ -129,3 +129,28 @@ test("filters combine: query, lesson, format and strength", () => {
   assert.deepEqual(filterBankRows(rows, { ...NO_FILTERS, strength: "learning", format: target.format === "mcq" ? "cloze" : "mcq" }), []);
   assert.deepEqual(filterBankRows(rows, { ...NO_FILTERS, query: "zzz-no-match" }), []);
 });
+
+test("due now splits into reviews and today's new cards, like the Practice badge", () => {
+  const model = build([
+    card(Q1.id, { state: "learning", dueAt: new Date(2026, 8, 29, 8).toISOString() }),
+    card(Q2.id, { dueAt: new Date(2026, 8, 29, 20).toISOString() }),
+    card(Q3.id, { state: "new", reps: 0, dueAt: NOW.toISOString() }),
+    card(Q4.id, { state: "new", reps: 0, dueAt: NOW.toISOString() }),
+  ]);
+  // Q2 is due later today: in "due today", not yet "due now".
+  assert.equal(model.dueToday, 2);
+  assert.deepEqual(model.dueNow, { reviews: 1, fresh: 2 });
+});
+
+test("new cards already started today come off the daily allowance", () => {
+  const fresh = UNLOCKED.slice(0, 25).map((q) => card(q.id, { state: "new", reps: 0, dueAt: NOW.toISOString() }));
+  assert.equal(build(fresh).dueNow.fresh, 20);
+  const model = buildCoachBankModel({
+    cards: fresh,
+    history: [],
+    completedKeys: COMPLETED,
+    now: NOW,
+    meta: { date: "2026-09-29", count: 15 },
+  });
+  assert.equal(model.dueNow.fresh, 5);
+});

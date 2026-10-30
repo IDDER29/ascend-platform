@@ -12,7 +12,7 @@ export type CurriculumProject = {
   proves: string;
   level: LevelId;
   requires: ProjectRequirement;
-  /** Badge from `BADGES` earned when the requirement is met and a repo link is added. */
+  /** Badge from `ACHIEVEMENTS` earned when the requirement is met and a repo link is added. */
   badgeId: string;
   /** Where the project lives; null means the lesson page (resolved by the caller). */
   href: string | null;

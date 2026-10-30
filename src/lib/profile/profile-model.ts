@@ -4,10 +4,11 @@
  * project links, own projects, earned badges and Practice session counts.
  * Private numbers (retention, accuracy, due cards) belong to Progress.
  */
-import { BADGES } from "@/lib/achievements-data";
+import { achievementById } from "@/lib/achievements/catalog";
 import { LEVELS, levelIds, type LevelId } from "@/lib/content/schema";
 import { displayUrl, linkKind, linkLabel, type LinkKind } from "./links";
-import { CURRICULUM_PROJECTS, type CurriculumProject } from "./projects";
+import { CURRICULUM_PROJECTS } from "./projects";
+import { levelFinishedAt, projectStatuses } from "./curriculum-records";
 import { PROFILE_ROUTES } from "./routes";
 
 const LOCALE = "en-US";
@@ -117,10 +118,6 @@ function shortDate(iso: string): string {
   return new Date(iso).toLocaleDateString(LOCALE, { month: "short", day: "numeric" });
 }
 
-function latest(isos: string[]): string {
-  return isos.reduce((a, b) => (Date.parse(b) > Date.parse(a) ? b : a));
-}
-
 export function buildProfileModel(input: ProfileInput): ProfileModel {
   const { viewer, profile, lessons, completions } = input;
   const owner = viewer === "owner";
@@ -133,40 +130,31 @@ export function buildProfileModel(input: ProfileInput): ProfileModel {
   const levels = levelIds
     .map((id) => ({ id, lessons: lessons.filter((l) => l.level === id) }))
     .filter((level) => level.lessons.length > 0);
-  const levelFinishedAt = new Map<string, string>();
-  for (const level of levels) {
-    if (level.lessons.every(isDone)) {
-      levelFinishedAt.set(level.id, latest(level.lessons.map((l) => completedAt.get(l.key)!)));
-    }
-  }
+  const levelFinished = levelFinishedAt(lessons, completedAt);
 
   // Curriculum projects
-  const linkFor = new Map(input.projectLinks.map((p) => [p.projectId, p]));
   const earned = new Set(input.badges.map((b) => b.badgeId));
-  const requirementMetAt = (project: CurriculumProject): string | null => {
-    const { requires } = project;
-    if (requires.kind === "level") return levelFinishedAt.get(requires.level) ?? null;
-    return completedAt.get(`${requires.level}/${requires.slug}`) ?? null;
-  };
   let nextShown = false;
   const allProjects: ProfileProject[] = [];
   const eligibleBadges: ProfileModel["eligibleBadges"] = [];
   const shippedAt = new Map<string, string>();
-  for (const project of CURRICULUM_PROJECTS) {
-    const metAt = requirementMetAt(project);
-    const link = linkFor.get(project.id);
+  for (const { project, metAt, link, shippedAt: shipped } of projectStatuses(
+    completedAt,
+    levelFinished,
+    input.projectLinks,
+  )) {
     let state: ProjectState | null = null;
-    if (metAt && link) state = "shipped";
+    if (shipped) state = "shipped";
     else if (metAt) state = owner ? "ready" : null;
     else if (owner && !nextShown) {
       state = "next";
       nextShown = true;
     }
-    const badge = BADGES.find((b) => b.id === project.badgeId);
-    if (state === "shipped") {
-      shippedAt.set(project.id, latest([metAt!, link!.addedAt]));
+    const badge = achievementById(project.badgeId);
+    if (shipped) {
+      shippedAt.set(project.id, shipped);
       if (!earned.has(project.badgeId) && badge) {
-        eligibleBadges.push({ badgeId: project.badgeId, earnedAt: shippedAt.get(project.id)! });
+        eligibleBadges.push({ badgeId: project.badgeId, earnedAt: shipped });
       }
     }
     if (!state) continue;
@@ -212,9 +200,9 @@ export function buildProfileModel(input: ProfileInput): ProfileModel {
   // Achievements: stored badges plus the ones about to be awarded.
   const badgeRows = [...input.badges, ...eligibleBadges].sort((a, b) => Date.parse(b.earnedAt) - Date.parse(a.earnedAt));
   const achievements = badgeRows.flatMap((row) => {
-    const badge = BADGES.find((b) => b.id === row.badgeId);
+    const badge = achievementById(row.badgeId);
     return badge
-      ? [{ id: badge.id, label: badge.label, glyph: badge.glyph, description: badge.description, earnedLabel: shortDate(row.earnedAt) }]
+      ? [{ id: badge.id, label: badge.label, glyph: badge.glyph, description: badge.means, earnedLabel: shortDate(row.earnedAt) }]
       : [];
   });
 
@@ -226,7 +214,7 @@ export function buildProfileModel(input: ProfileInput): ProfileModel {
   if (firstLesson) {
     events.push({ at: completedAt.get(firstLesson.key)!, text: `First lesson: ${firstLesson.title}`, kind: "lesson" });
   }
-  for (const [id, at] of levelFinishedAt) {
+  for (const [id, at] of levelFinished) {
     events.push({ at, text: `Finished Level ${levelNumber(id)} · ${levelName(id)}`, kind: "level" });
   }
   for (const project of allProjects) {

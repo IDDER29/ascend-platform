@@ -96,6 +96,7 @@ function isNavActive(pathname: string | null, href: string): boolean {
       pathname.startsWith("/projects/shellforge")
     );
   }
+  if (href === "/achievements" && pathname.startsWith("/achievementsv2")) return true;
   if (href === "/dashboard") {
     return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   }

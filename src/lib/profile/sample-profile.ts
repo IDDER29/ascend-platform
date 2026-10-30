@@ -1,11 +1,16 @@
 /**
- * DEVELOPMENT PREVIEW ONLY. A made-up learner shown at /profile to signed-out
- * visitors while the app is in development, so the page can be reviewed
- * without an account. Built purely in memory — nothing is read or written.
+ * DEVELOPMENT PREVIEW ONLY. A made-up learner shown at /profile and
+ * /achievements to signed-out visitors while the app is in development, so
+ * the pages can be reviewed without an account. Built purely in memory —
+ * nothing is read or written.
  *
  * Before launch: set SHOW_SAMPLE_PROFILE_TO_GUESTS to false (guests then get
  * the "Sign in to get a profile" prompt again) and delete this file.
  */
+import type { AchievementsInput } from "@/lib/achievements/achievements-model";
+import { PRACTICE_BANK } from "@/lib/practice/bank";
+import type { PracticeSessionRecord } from "@/lib/practice/history";
+import type { PracticeCard } from "@/lib/practice/sm2";
 import type { ProfileInput, ProfileLesson } from "./profile-model";
 
 export const SHOW_SAMPLE_PROFILE_TO_GUESTS = true;
@@ -58,4 +63,38 @@ export function sampleProfileInput(lessons: ProfileLesson[], now: Date): Omit<Pr
     badges: [],
     practice: { sessions: 12, firstAt: daysAgo(now, 30), tenthAt: daysAgo(now, 6) },
   };
+}
+
+/** The same sample learner for /achievements: Level 00 cards all solid, a week-long practice run. */
+export function sampleAchievementsInput(lessons: ProfileLesson[], now: Date): AchievementsInput {
+  const { completions, projectLinks } = sampleProfileInput(lessons, now);
+  const level01Done = new Set(completions.map((c) => c.key));
+  const cards: PracticeCard[] = PRACTICE_BANK.filter(
+    (q) => q.lessonLevel === "level-00-bits-logic" || level01Done.has(`${q.lessonLevel}/${q.lessonSlug}`),
+  ).map((q, i) => {
+    const solid = q.lessonLevel === "level-00-bits-logic" || i % 3 === 0;
+    return {
+      questionId: q.id,
+      state: solid ? "review" : "learning",
+      reps: solid ? 3 : 1,
+      ease: 2.5,
+      intervalDays: solid ? 9 : 1,
+      dueAt: daysAgo(now, -4),
+      lapses: 0,
+      updatedAt: daysAgo(now, 5),
+    };
+  });
+  // Eight days in a row ending last week, plus two recent sessions.
+  const history: PracticeSessionRecord[] = [14, 13, 12, 11, 10, 9, 8, 7, 3, 1].map((d) => ({
+    id: `sample-session-${d}`,
+    at: daysAgo(now, d),
+    scopeType: "due",
+    scopeLabel: "Due review",
+    pathSlug: null,
+    correct: 7,
+    total: 8,
+    missIds: [],
+    questionIds: [],
+  }));
+  return { lessons, completions, projectLinks, cards, history, now };
 }

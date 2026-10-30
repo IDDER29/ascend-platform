@@ -6,7 +6,7 @@ import { buildProfileModel, type ProfileLesson, type ProfileModel, type ProfileV
 import { awardBadges, loadProfileRecords, type ProfileOwner } from "./queries";
 import { sampleProfileInput } from "./sample-profile";
 
-function profileLessons(): ProfileLesson[] {
+export function profileLessons(): ProfileLesson[] {
   return getAllLessons().map(({ meta }) => ({
     key: completionKey(meta.level, meta.slug),
     level: meta.level,

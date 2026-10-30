@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { BADGES } from "@/lib/achievements-data";
+import { achievementById } from "@/lib/achievements/catalog";
 import { CURRICULUM_PROJECTS } from "./projects";
 
 const CURRICULUM = join(process.cwd(), "content/curriculum");
@@ -22,5 +22,5 @@ test("every project-* lesson is a curriculum project, and every project lesson e
 test("project ids are unique and every badge exists", () => {
   const ids = CURRICULUM_PROJECTS.map((p) => p.id);
   assert.equal(new Set(ids).size, ids.length);
-  for (const p of CURRICULUM_PROJECTS) assert.ok(BADGES.some((b) => b.id === p.badgeId), p.badgeId);
+  for (const p of CURRICULUM_PROJECTS) assert.ok(achievementById(p.badgeId), p.badgeId);
 });

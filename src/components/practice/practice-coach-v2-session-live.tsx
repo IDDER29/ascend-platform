@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { SaveButton } from "@/components/bookmarks/save-button";
+import { cardTarget } from "@/lib/bookmarks/model";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
@@ -89,14 +91,15 @@ function CodeBlock({ lines }: { lines?: string[] }) {
 }
 
 function KindScopeRow({
-  kind,
+  question,
   subtitle,
   trailing,
 }: {
-  kind: PracticeItem["kind"];
+  question: PracticeItem;
   subtitle: string;
   trailing?: ReactNode;
 }) {
+  const kind = question.kind;
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-2">
@@ -105,7 +108,10 @@ function KindScopeRow({
         </span>
         <span className="text-[13px] text-[var(--coach-ink-muted)]">{subtitle}</span>
       </div>
-      {trailing}
+      <div className="flex flex-wrap items-center gap-3">
+        {trailing}
+        <SaveButton target={cardTarget(question)} look="coach" label="Save card" />
+      </div>
     </div>
   );
 }
@@ -714,7 +720,7 @@ export function PracticeCoachV2SessionLive({
         />
         {question.kind === "flashcard" ? (
           <KindScopeRow
-            kind={question.kind}
+            question={question}
             subtitle={subtitle}
             trailing={
               phase === "prompt" && !revealed ? (
@@ -725,7 +731,7 @@ export function PracticeCoachV2SessionLive({
             }
           />
         ) : (
-          <KindScopeRow kind={question.kind} subtitle={subtitle} />
+          <KindScopeRow question={question} subtitle={subtitle} />
         )}
 
         {question.kind === "mcq" ? (

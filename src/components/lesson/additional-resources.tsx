@@ -1,5 +1,6 @@
 import { Play, FileText, File } from "lucide-react";
 import type { AdditionalResource } from "@/lib/content/schema";
+import { SaveResourceButton } from "@/components/bookmarks/lesson-bookmarks";
 
 const ICONS: Record<AdditionalResource["type"], typeof Play> = {
   video: Play,
@@ -29,7 +30,9 @@ function VideoCard({ r }: { r: AdditionalResource }) {
         )}
       </div>
       <div className="px-3.5 py-3">
-        <div className="text-[13.5px] font-bold leading-tight text-ink">{r.title}</div>
+        <div className="text-[13.5px] font-bold leading-tight text-ink">
+          {r.title}
+        </div>
         <div className="mt-0.5 text-[11.5px] text-ink-faint">{r.meta}</div>
       </div>
     </>
@@ -41,7 +44,10 @@ function VideoCard({ r }: { r: AdditionalResource }) {
       {inner}
     </a>
   ) : (
-    <div className={className} title="Referenced in this lesson's diagram above — no external link">
+    <div
+      className={className}
+      title="Referenced in this lesson's diagram above — no external link"
+    >
       {inner}
     </div>
   );
@@ -55,7 +61,16 @@ export function AdditionalResources({
   return (
     <div className="flex flex-col gap-2.5">
       {resources.map((r, i) => {
-        if (r.type === "video") return <VideoCard key={i} r={r} />;
+        const save = r.url ? (
+          <SaveResourceButton title={r.title} url={r.url} meta={r.meta} />
+        ) : null;
+        if (r.type === "video")
+          return (
+            <div key={i} className="relative">
+              <VideoCard r={r} />
+              {save}
+            </div>
+          );
 
         const Icon = ICONS[r.type];
         const inner = (
@@ -66,21 +81,25 @@ export function AdditionalResources({
               <Icon size={15} strokeWidth={2.2} />
             </span>
             <div className="min-w-0">
-              <div className="text-[13px] font-bold text-ink">{r.title}</div>
+              <div className="pr-6 text-[13px] font-bold text-ink">
+                {r.title}
+              </div>
               <div className="text-[11px] text-ink-faint">{r.meta}</div>
             </div>
           </>
         );
         return r.url ? (
-          <a
-            key={i}
-            href={r.url}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-3 rounded-xl border border-card-border bg-paper px-3.5 py-3 transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-card-hover dark:bg-elevated"
-          >
-            {inner}
-          </a>
+          <div key={i} className="relative">
+            <a
+              href={r.url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 rounded-xl border border-card-border bg-paper px-3.5 py-3 transition-transform duration-150 hover:-translate-y-0.5 hover:shadow-card-hover dark:bg-elevated"
+            >
+              {inner}
+            </a>
+            {save}
+          </div>
         ) : (
           <div
             key={i}

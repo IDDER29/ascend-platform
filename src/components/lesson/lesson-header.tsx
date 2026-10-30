@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, Share2, Check } from "lucide-react";
+import { Share2, Check } from "lucide-react";
+import { SaveLessonButton } from "@/components/bookmarks/lesson-bookmarks";
 import type { LessonFrontmatter } from "@/lib/content/schema";
 import { LEVELS } from "@/lib/content/schema";
 
@@ -34,15 +35,7 @@ export function LessonHeader({ meta }: { meta: LessonFrontmatter }) {
           {level.name}
         </span>
         <div className="flex gap-1.5">
-          <button
-            type="button"
-            disabled
-            title="Bookmarks aren’t saved yet"
-            aria-label="Bookmarks aren’t saved yet"
-            className="flex h-[34px] w-[34px] cursor-not-allowed items-center justify-center rounded-[10px] border border-card-border text-ink-fainter opacity-60"
-          >
-            <Bookmark size={15} strokeWidth={2.2} />
-          </button>
+          <SaveLessonButton />
           <button
             type="button"
             onClick={handleShare}

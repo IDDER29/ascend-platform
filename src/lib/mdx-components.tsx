@@ -5,6 +5,7 @@ import { KeyIdea } from "@/components/lesson/key-idea";
 import { Visual } from "@/components/lesson/visual";
 import { CodeBlock } from "@/components/lesson/code-block";
 import { TruthTable } from "@/components/lesson/truth-table";
+import { SectionHeading } from "@/components/bookmarks/lesson-bookmarks";
 
 export const mdxComponents: MDXComponents = {
   MemoryDiagram,
@@ -14,8 +15,8 @@ export const mdxComponents: MDXComponents = {
   CodeBlock,
   TruthTable,
   h2: (props) => (
-    <h2
-      className="mt-9 mb-3 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight"
+    <SectionHeading
+      className="group/section mt-9 mb-3 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight"
       {...props}
     />
   ),

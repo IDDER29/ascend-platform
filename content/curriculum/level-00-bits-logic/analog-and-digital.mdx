@@ -1,0 +1,84 @@
+---
+title: "Analog and digital"
+level: level-00-bits-logic
+slug: analog-and-digital
+order: 21
+timeMin: 6
+learningOutcomes:
+- Contrast an analog quantity, which varies smoothly, with a digital one, which takes a few clear values
+- Explain how a digital circuit reads a whole range of voltages as one of two values
+- Explain why digital signals survive noise and copying better than analog ones
+primer:
+- title: "Hardware, software and firmware"
+  type: doc
+  meta: Reread · 2 min · this lesson looks at how hardware holds information.
+  essential: false
+knowledgeCheck:
+- question: What is the difference between an analog and a digital quantity?
+  answer: An analog quantity can take any value in a range, like the exact temperature or the height of a sound wave. A digital quantity takes only a few separate values, like the steps on a dial or the two values a computer uses.
+  jumpToId: smooth-or-in-steps
+  jumpToLabel: Smooth or in steps
+- question: Does digital mean a circuit's voltages are exactly 0 and exactly 5 volts (or 1 volt)?
+  answer: No. Real voltages wobble. A digital circuit agrees that any voltage in a low band counts as 0 and any voltage in a high band counts as 1, with a gap between the bands. Small wobbles stay inside a band, so the value read is still right.
+  jumpToId: a-range-counts-as-one-value
+  jumpToLabel: A range counts as one value
+- question: Why does a copy of a digital file come out identical, when a copy of a cassette tape gets worse?
+  answer: Each analog copy picks up a little noise, and the noise is copied along with the signal next time. A digital copy only has to tell which band each value is in, so small noise is thrown away and every copy reads back the same values.
+  jumpToId: why-computers-go-digital
+  jumpToLabel: Why computers go digital
+assignment:
+  instruction: "MIT 6.004's first lecture explains the digital abstraction with noise margins. Read its section on representing information with voltages, then draw two bands (low and high) with a gap, mark three wobbly voltages, and say what value each one is read as."
+  resourceName: 'MIT 6.004: Basics of Information'
+  resourceType: site
+  resourceUrl: 'https://computation-structures.github.io/course/lectures/L01_Basics_of_Information.html'
+additionalResources:
+- title: Analog signal (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Analog_signal'
+- title: Voltage bands on real chips (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Logic_level'
+- title: Noise margin (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Noise_margin'
+whyThisMatters: "The whole of digital computing rests on one agreement: treat a range of messy physical values as one clean value. That is why a file copied a million times is still perfect, why a chip can be built from billions of imperfect transistors, and why the next lesson can talk about bits as if they were exact."
+---
+
+The real world is smooth. A temperature can be 21.4 degrees or 21.43 or anything in between. Sound is a pressure that rises and falls continuously. Computers don't work that way, and the reason they don't is one of the most important ideas in this whole path.
+
+By the end you'll be able to explain the difference between analog and digital, how a circuit reads a messy voltage as a clean value, and why that makes computers reliable.
+
+## Smooth or in steps
+
+An <b>analog</b> quantity can take any value in a range. The hands of a clock sweep smoothly; the needle on an old speedometer can point anywhere between 0 and 200.
+
+A <b>digital</b> quantity takes only a few separate values, with nothing in between. A digital clock jumps from 10:41 to 10:42. A light switch is on or off.
+
+<TruthTable caption='Analog or digital?' rowsJson='[["thing", "kind", "why"], ["a dimmer knob", "analog", "any brightness in a range"], ["a light switch", "digital", "only on or off"], ["a vinyl record groove", "analog", "the groove follows the sound wave"], ["a song file", "digital", "a long list of whole numbers"]]' />
+
+## A range counts as one value
+
+Inside a computer, information is carried by voltages on wires. A wire's voltage is analog: it is never exactly the same twice, because of heat, interference and the parts themselves.
+
+So a digital circuit makes an agreement. Any voltage in a <b>low band</b> counts as 0. Any voltage in a <b>high band</b> counts as 1. Between the bands is a gap that a correct circuit never stays in. For a chip running at 3.3 volts, roughly 0 to 0.8 volts might count as 0 and 2 to 3.3 volts as 1.
+
+That is the <b>digital abstraction</b>: we pretend the wire holds a clean 0 or 1, and the pretence is safe because of the bands.
+
+<KeyIdea>Digital does not mean perfect voltages. It means a whole range of messy voltages is read as one clean value.</KeyIdea>
+
+## Why computers go digital
+
+The bands are what make digital machines reliable.
+
+- <b>Noise</b>: a little interference nudges a voltage, but it stays in its band, so the value read is unchanged. An analog signal just carries the noise along.
+- <b>Copying</b>: every analog copy adds a little noise, so a copy of a copy gets worse. A digital copy is read back as the same values, so the millionth copy is as good as the first.
+- <b>Building big</b>: each part only has to land in the right band, not hit an exact value, so billions of slightly different transistors can work together.
+
+The cost is that a digital value can't hold "a bit more than 0". To store something smooth, like sound, a computer measures it many times a second and writes each measurement down as a number. You'll see how in Binary & Data.
+
+<KeyIdea>Clean values in, clean values out: reading ranges as values is what lets digital machines ignore noise and copy perfectly.</KeyIdea>
+
+The next lesson, "What is a bit?", takes the simplest digital value of all, one with only two states, and shows why it is the building block of everything else.

@@ -110,27 +110,35 @@ test("a clean run needs at least 10 cards", () => {
 
 test("combination badges list their parts and are earned when the last part is", () => {
   // Every project lesson exists here, so every project can be shipped.
-  const tiny = { key: `${BITS}/project-tiny-cpu`, level: BITS, slug: "project-tiny-cpu", title: "", href: "" };
-  const lessons = [...LESSONS, tiny];
-  const all = [...done(...LESSONS.map((l) => l.slug)), { key: tiny.key, completedAt: daysAgo(5) }];
+  const extra = ["project-codebook", "project-machine-atlas", "project-tiny-cpu"].map((slug) => ({
+    key: `${BITS}/${slug}`,
+    level: BITS,
+    slug,
+    title: "",
+    href: "",
+  }));
+  const lessons = [...LESSONS, ...extra];
+  const all = [...done(...LESSONS.map((l) => l.slug)), ...extra.map((l) => ({ key: l.key, completedAt: daysAgo(5) }))];
   const model = (patch: Partial<AchievementsInput>) =>
     buildAchievementsModel({ lessons, completions: [], projectLinks: [], cards: [], history: [], now: NOW, ...patch });
   const links = [
+    { projectId: "codebook", repoUrl: "https://github.com/a/c", addedAt: daysAgo(4) },
+    { projectId: "machine-atlas", repoUrl: "https://github.com/a/m", addedAt: daysAgo(4) },
     { projectId: "half-adder", repoUrl: "https://github.com/a/h", addedAt: daysAgo(4) },
     { projectId: "tiny-cpu", repoUrl: "https://github.com/a/t", addedAt: daysAgo(3) },
     { projectId: "shellforge", repoUrl: "https://github.com/a/s", addedAt: daysAgo(2) },
   ];
   const m = model({ completions: all, projectLinks: links });
   const builder = badge(m, "builder");
-  assert.deepEqual(builder.criteria.map((c) => c.badgeId), ["gate-builder", "cpu-tracer", "ship-it"]);
+  assert.deepEqual(builder.criteria.map((c) => c.badgeId), ["code-maker", "cartographer", "gate-builder", "cpu-tracer", "ship-it"]);
   assert.equal(builder.earned, true);
   assert.equal(builder.earnedAt, daysAgo(2));
   assert.equal(badge(m, "whole-machine").earned, true);
 
   const half = model({ completions: all, projectLinks: links.slice(0, 1) });
-  assert.deepEqual(badge(half, "builder").criteria.map((c) => c.done), [true, false, false]);
+  assert.deepEqual(badge(half, "builder").criteria.map((c) => c.done), [true, false, false, false, false]);
   // A combination's next step is the next step of the first badge it still needs.
-  assert.deepEqual(badge(half, "builder").action, badge(half, "cpu-tracer").action);
+  assert.deepEqual(badge(half, "builder").action, badge(half, "cartographer").action);
   assert.equal(badge(half, "builder").action?.href, "/profile");
   assert.equal(badge(half, "whole-machine").earned, false);
 });

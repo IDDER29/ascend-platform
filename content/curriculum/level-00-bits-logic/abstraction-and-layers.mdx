@@ -1,0 +1,88 @@
+---
+title: "Abstraction: a machine in layers"
+level: level-00-bits-logic
+slug: abstraction-and-layers
+order: 26
+timeMin: 7
+learningOutcomes:
+- Explain abstraction as hiding how a part works behind what it does
+- Describe an interface as the promise a part makes to the parts that use it
+- Name the layers of a computer this path climbs, from bits to the operating system
+- Explain why a hidden detail can still matter, and why learning the layers below helps
+primer:
+- title: "State, time and step-by-step execution"
+  type: doc
+  meta: Reread · 2 min · each layer has its own state and steps.
+  essential: true
+- title: 'Early Computing: Crash Course Computer Science #1'
+  type: video
+  meta: Watch · 12 min · how each generation of machines built on the last.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=O5nskjZ_GoI'
+knowledgeCheck:
+- question: What is an interface, and why does it let you use a part without knowing how it works?
+  answer: An interface is what a part promises to the parts that use it, its inputs and outputs and what they mean. As long as the part keeps that promise, you can rely on it without knowing what's inside, and it can be rebuilt differently without breaking anything that uses it.
+  jumpToId: parts-with-interfaces
+  jumpToLabel: Parts with interfaces
+- question: Name the layers of a computer, from bottom to top, that this path climbs.
+  answer: "Bits and data; logic gates and circuits; state and memory; the CPU; assembly language; programs you write in a language like C; and the whole system with its operating system."
+  jumpToId: the-ladder-this-path-climbs
+  jumpToLabel: The ladder this path climbs
+- question: If abstraction hides the details, why learn the layers below?
+  answer: "Because hidden details still show through when something goes wrong or gets slow. A number that suddenly turns negative, a program that crashes on one input, a loop that runs slowly: each is explained by a layer below the one you were working in."
+  jumpToId: when-a-hidden-detail-shows-through
+  jumpToLabel: When a hidden detail shows through
+assignment:
+  instruction: "Choose a device you use every day. Describe it in three layers: what you see and do, what the software does, and what the hardware does. For each layer, write one thing it hides from the layer above, and one way that hidden thing could show through (for example, a phone getting slow when its storage is full)."
+  resourceName: 'CS50 Week 0: abstraction'
+  resourceType: site
+  resourceUrl: 'https://cs50.harvard.edu/x/weeks/0/'
+additionalResources:
+- title: Abstraction (computer science) (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Abstraction_(computer_science)'
+- title: Abstraction layer (Wikipedia)
+  type: doc
+  meta: reference, with examples of layers
+  url: 'https://en.wikipedia.org/wiki/Abstraction_layer'
+whyThisMatters: "No one can hold a whole computer in their head at once, so everyone works one layer at a time and trusts the layers below. That works until something leaks through: a strange crash, a wrong number, a slow program. This path climbs every layer so that when that happens to you, the layer below is somewhere you've already been, not a mystery."
+---
+
+A phone has billions of transistors, an operating system of millions of lines of code, and apps on top. No one designs, or understands, all of that at once. People manage it the same way you manage a car: you use the steering wheel and pedals and let the engine be someone else's problem.
+
+By the end you'll be able to explain what abstraction and interfaces are, name the layers of a computer this path climbs, and say why the hidden layers still matter.
+
+## Too much to hold at once
+
+To send a message on your phone, you tap a button. Underneath, the app calls the operating system, which talks to the network hardware, which is built from circuits, which are built from switches flipping between two states. If you had to think about all of it to send a message, you never would.
+
+<b>Abstraction</b> means using something by what it does, without dealing with how it does it. Each layer of a computer is an abstraction over the one below.
+
+## Parts with interfaces
+
+What makes abstraction work is an <b>interface</b>: the promise a part makes to the parts that use it. A car's interface is the wheel, the pedals and what they do. Petrol, electric or hybrid, the interface stays the same, so you can drive any of them.
+
+In a computer, a circuit that adds promises "two numbers in, their sum out". A memory promises "give me an address, I'll give you what's stored there". As long as each part keeps its promise, the parts above can rely on it, and the part itself can be rebuilt faster or cheaper without breaking anything.
+
+<KeyIdea>An interface is a promise. Keep the promise and nobody above needs to know how you keep it.</KeyIdea>
+
+## The ladder this path climbs
+
+Foundations climbs the layers of a computer from the bottom up. Each course builds one layer out of the one before it:
+
+<TruthTable caption='The layers of a computer, and where you meet each one' rowsJson='[["layer", "what it is", "course"], ["information", "signals, states and codes", "Computers and Information"], ["data", "numbers, text and media as bits", "Binary and Data"], ["logic", "gates and circuits that compute", "Logic and Circuits"], ["memory", "circuits that remember, and addressed memory", "State and Memory"], ["CPU", "a machine that runs instructions", "Build a CPU"], ["assembly", "programming the CPU in its own instructions", "Assembly Language"], ["programs", "code you write, turned into instructions", "From Source to Machine"], ["system", "memory, devices and the operating system", "The Complete System"]]' />
+
+By the end, you can follow a program from the code someone typed all the way down to bits moving between circuits, and back up to what appears on the screen.
+
+## When a hidden detail shows through
+
+Abstractions hide details; they don't remove them. Sometimes a detail from below shows through:
+
+- Add 1 to a large number and get a negative one: that is how numbers are stored as bits.
+- A program crashes only on a certain input: that is how memory is laid out.
+- A loop is slow for no visible reason: that is how the CPU reaches memory.
+
+Each of these makes no sense from the top layer alone, and complete sense once you know the layer below.
+
+<KeyIdea>Work at one layer at a time, but know the layers below. That's where the surprises come from.</KeyIdea>

@@ -23,6 +23,26 @@ export type CurriculumProject = {
 /** Curriculum project work, in curriculum order. Every `project-*` lesson must appear here. */
 export const CURRICULUM_PROJECTS: CurriculumProject[] = [
   {
+    id: "codebook",
+    title: "Codebook",
+    inSentence: "codebook",
+    proves: "Designs a code with the fewest bits, and shows meaning lives in the codebook, not the bits.",
+    level: "level-00-bits-logic",
+    requires: { kind: "lesson", level: "level-00-bits-logic", slug: "project-codebook" },
+    badgeId: "code-maker",
+    href: null,
+  },
+  {
+    id: "machine-atlas",
+    title: "Machine Atlas",
+    inSentence: "Machine Atlas",
+    proves: "Maps a real device into its five parts and traces one action through it, step by step.",
+    level: "level-00-bits-logic",
+    requires: { kind: "lesson", level: "level-00-bits-logic", slug: "project-machine-atlas" },
+    badgeId: "cartographer",
+    href: null,
+  },
+  {
     id: "half-adder",
     title: "Half adder",
     inSentence: "half adder",

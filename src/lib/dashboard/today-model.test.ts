@@ -69,7 +69,8 @@ test("standing: the newest badge, the title to aim for, and the open project", (
   assert.equal(t.standing?.badge?.earned, true);
   assert.equal(t.standing?.title, null);
   assert.equal(t.standing?.nextTitle?.label, "Genin");
-  assert.equal(t.standing?.project?.view.id, "gate-builder");
+  // Course 1's first project comes first now.
+  assert.equal(t.standing?.project?.view.id, "code-maker");
   assert.equal(t.standing?.shippedBoth, false);
 });
 

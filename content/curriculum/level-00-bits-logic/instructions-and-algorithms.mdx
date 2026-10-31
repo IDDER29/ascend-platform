@@ -1,0 +1,91 @@
+---
+title: "Instructions and algorithms"
+level: level-00-bits-logic
+slug: instructions-and-algorithms
+order: 24
+timeMin: 7
+learningOutcomes:
+- Define an algorithm as an exact, step-by-step procedure that finishes with an answer
+- Explain why a machine needs steps with no room for interpretation
+- Describe an instruction as one step a machine can recognise and carry out
+- Follow a short algorithm by hand, from its first step to its answer
+primer:
+- title: "Codes, symbols and meaning"
+  type: doc
+  meta: Reread · 2 min · instructions are one more thing we write as a code.
+  essential: true
+- title: 'Intro to Algorithms: Crash Course Computer Science #13'
+  type: video
+  meta: Watch · 11 min · searching and sorting as algorithms.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=rL8X2mlNHPM'
+knowledgeCheck:
+- question: What makes a procedure an algorithm rather than just advice?
+  answer: Every step is exact (there is only one way to carry it out), the steps come in a definite order, and the procedure finishes with an answer. "Add salt to taste" is advice; "add 5 grams of salt" is a step an algorithm could use.
+  jumpToId: what-makes-an-algorithm
+  jumpToLabel: What makes an algorithm
+- question: What is the difference between an algorithm and an instruction?
+  answer: An algorithm is the whole procedure for solving a problem. An instruction is a single step a particular machine can recognise and carry out. A machine runs an algorithm by working through it as a sequence of its own instructions.
+  jumpToId: instructions-steps-a-machine-recognises
+  jumpToLabel: "Instructions: steps a machine recognises"
+assignment:
+  instruction: "Write an algorithm, in numbered steps, for finding the smallest number in a list. Then trace it by hand on the list 6, 3, 8, 1, 5, writing down what you are holding after each step, as in the table in this lesson."
+  resourceName: 'CS50 Week 0: algorithms'
+  resourceType: site
+  resourceUrl: 'https://cs50.harvard.edu/x/weeks/0/'
+additionalResources:
+- title: Algorithm (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Algorithm'
+- title: 'Instructions & Programs: Crash Course Computer Science #8'
+  type: video
+  meta: 10 min, the instructions a real CPU follows
+  url: 'https://www.youtube.com/watch?v=zltgXvg6r3k'
+whyThisMatters: "A computer can't guess what you meant. Everything it does, from adding two numbers to showing a video, is an algorithm broken into instructions it was built to recognise. Thinking in exact steps is the core skill of programming, and the CPU you'll build later in this path is nothing more than a machine for carrying out instructions one at a time."
+---
+
+A computer is often called a machine that follows instructions. That is true, but it hides how literal the following is. A person can fill gaps, guess what you meant, or skip a step that looks silly. A machine does exactly what each step says, in order, and nothing else.
+
+By the end you'll be able to say what an algorithm is, what an instruction is, and follow a short algorithm by hand the way a machine would.
+
+## A recipe a machine could follow
+
+A recipe is a list of steps, but most recipes lean on the cook's judgement: "season to taste", "bake until golden". A machine has no taste and no idea what golden looks like. For a machine, every step has to be something it can check or do exactly.
+
+## What makes an algorithm
+
+An <b>algorithm</b> is a procedure with three properties:
+
+- <b>Exact steps</b>: each step can only be carried out one way.
+- <b>A definite order</b>: it is always clear which step comes next.
+- <b>An end</b>: it finishes, with an answer.
+
+Here is an algorithm for finding the largest number in a list:
+
+1. Hold the first number.
+2. Look at the next number. If it is bigger than the one you hold, hold it instead.
+3. If there are numbers left, go back to step 2.
+4. The number you hold is the answer.
+
+Trace it on the list 4, 9, 2, 7:
+
+<TruthTable caption='Finding the largest of 4, 9, 2, 7' rowsJson='[["step", "looking at", "holding"], ["1", "4", "4"], ["2", "9 (bigger)", "9"], ["2", "2 (not bigger)", "9"], ["2", "7 (not bigger)", "9"], ["4", "nothing left", "answer: 9"]]' />
+
+Notice step 3. Going back to an earlier step is how an algorithm repeats work without writing it out again.
+
+<KeyIdea>An algorithm is exact, ordered and finishes. If a step needs judgement, it isn't ready for a machine.</KeyIdea>
+
+## Instructions: steps a machine recognises
+
+An algorithm says what to do. A machine can only do the things it was built to do. Each of those built-in actions is an <b>instruction</b>: "add these two numbers", "copy this value", "if this is zero, go to that step".
+
+To run an algorithm, it has to be written as a sequence of the machine's own instructions. "Hold it if it is bigger" might become three instructions: compare, check the result, copy. Each one is simple; the algorithm comes from their order.
+
+Instructions are stored the same way as everything else: as bit patterns, read with a code the machine was built to understand. Later in this path you'll meet exactly such a code for a tiny CPU.
+
+## From steps to a running machine
+
+So there are two layers. The algorithm is the idea: find the largest number. The instructions are the machine's way of carrying it out, one small step at a time. The same algorithm can be written for very different machines, each with its own set of instructions.
+
+<KeyIdea>An algorithm is the plan. Instructions are the machine's own steps for carrying it out.</KeyIdea>

@@ -12,18 +12,21 @@ test("practiceTreeForPath maps live Foundations outline sections", () => {
   assert.ok(tree);
   assert.deepEqual(
     tree.sections.map((section) => section.id),
-    ["information", "bits", "logic", "memory", "storage", "isa", "machine-runs", "system"],
+    ["computers", "information", "instructions", "bits", "logic", "memory", "storage", "isa", "machine-runs", "system"],
   );
   assert.deepEqual(
-    tree.sections[0]?.lessons.map((lesson) => ({
+    tree.sections[1]?.lessons.map((lesson) => ({
       key: lesson.key,
       title: lesson.title,
     })),
     [
+      { key: "level-00-bits-logic/analog-and-digital", title: "Analog and digital" },
       {
         key: "level-00-bits-logic/what-is-a-bit",
         title: "What is a bit?",
       },
+      { key: "level-00-bits-logic/codes-and-meaning", title: "Codes, symbols and meaning" },
+      { key: "level-00-bits-logic/project-codebook", title: "Project: Make a codebook" },
     ],
   );
 });

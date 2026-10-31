@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { PATHS } from "@/lib/paths/catalog";
+import { courseHasLesson } from "@/lib/paths/course-lessons";
 import { PRACTICE_BANK } from "./bank";
 import { hasLengthCue, longestIsRightShare } from "./bank-quality";
 import { truthTable } from "./figures";
@@ -76,5 +78,13 @@ test("figureFrom always names a flashcard that has a diagram", () => {
     if (!q.figureFrom) continue;
     const source = byId.get(q.figureFrom);
     assert.ok(source?.kind === "flashcard" && source.figure, `${q.id} → ${q.figureFrom} has no diagram`);
+  }
+});
+
+test("every Foundations course with lessons has a Spot-the-bug card", () => {
+  for (const course of PATHS.find((p) => p.slug === "foundations")!.courses) {
+    const cards = PRACTICE_BANK.filter((q) => courseHasLesson(course, q.lessonLevel, q.lessonSlug));
+    if (cards.length === 0) continue;
+    assert.ok(cards.some((q) => q.kind === "bug"), `${course.title} has no bug card`);
   }
 });

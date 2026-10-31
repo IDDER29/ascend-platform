@@ -53,7 +53,7 @@ test("new learner: honest start, first project is next, journey is just joining"
   assert.equal(model.snapshot.lessonsDone, 0);
   assert.deepEqual(
     model.curriculumProjects.map((p) => [p.id, p.state]),
-    [["half-adder", "next"]],
+    [["codebook", "next"]],
   );
   assert.equal(model.journey.length, 1);
   assert.match(model.journey[0].text, /Joined Ascend/);
@@ -64,7 +64,7 @@ test("new learner: honest start, first project is next, journey is just joining"
 test("project lesson done without a link is ready for the owner and hidden from visitors", () => {
   const completions = done("what-is-a-bit", "project-half-adder");
   const owner = buildProfileModel(input({ completions }));
-  assert.equal(owner.curriculumProjects[0].state, "ready");
+  assert.equal(owner.curriculumProjects.find((p) => p.id === "half-adder")?.state, "ready");
   assert.equal(owner.eligibleBadges.length, 0);
 
   const visitor = buildProfileModel(input({ completions, viewer: "visitor" }));
@@ -79,7 +79,7 @@ test("lesson done + repo link ships the project and makes its badge eligible", (
       projectLinks: [{ projectId: "half-adder", repoUrl: "https://github.com/ada/half-adder", addedAt: daysAgo(2) }],
     }),
   );
-  const project = model.curriculumProjects[0];
+  const project = model.curriculumProjects.find((p) => p.id === "half-adder")!;
   assert.equal(project.state, "shipped");
   assert.equal(project.repoUrl, "https://github.com/ada/half-adder");
   assert.equal(project.badge?.label, "Gate Builder");

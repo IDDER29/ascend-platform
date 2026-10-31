@@ -50,6 +50,7 @@ import type {
 import type { PracticeItem } from "@/lib/practice/types";
 import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
+import { freshVariant } from "@/lib/practice/generated";
 import {
   KIND_LABELS,
   blankWidth,
@@ -638,8 +639,11 @@ export function PracticeCoachV2SessionLive({
       router.replace(PRACTICE_ROUTES.home);
       return;
     }
+    // Fresh-number cards get new numbers each time they come back (seeded by how often they've been answered).
+    const answered = new Map(cards.map((card) => [card.questionId, card.reps + card.lapses]));
+    const fresh = next.map((q) => freshVariant(q, answered.get(q.id) ?? 0));
     const nextOrders = Object.fromEntries(
-      next.flatMap((q) =>
+      fresh.flatMap((q) =>
         q.kind === "mcq"
           ? [[q.id, shuffledOrder(q.options.length)] as const]
           : q.kind === "order"
@@ -649,7 +653,7 @@ export function PracticeCoachV2SessionLive({
     );
     queueMicrotask(() => {
       setOrders(nextOrders);
-      setQuestions(next);
+      setQuestions(fresh);
     });
   }, [completed, initialCards, pickedIds, router, scope, size, unlocked, userId]);
 

@@ -1,0 +1,81 @@
+---
+title: "State, time and step-by-step execution"
+level: level-00-bits-logic
+slug: state-and-steps
+order: 25
+timeMin: 7
+learningOutcomes:
+- Define a machine's state as everything it remembers that affects what it does next
+- Explain why the same input can lead to different results in a machine with state
+- Trace a machine step by step, writing down its state before and after each input
+- Tell apart what changed in a step from what stayed the same
+primer:
+- title: "Instructions and algorithms"
+  type: doc
+  meta: Reread · 2 min · an algorithm runs one step at a time, and each step changes something.
+  essential: true
+knowledgeCheck:
+- question: Why can the same input give different results on the same machine?
+  answer: Because the result depends on the input and on the machine's current state. A turnstile that is locked stays locked when pushed; one that is unlocked lets you through and locks again. The input (a push) was the same; the state was different.
+  jumpToId: same-input-different-result
+  jumpToLabel: Same input, different result
+- question: A locked turnstile gets a coin, then a push, then a push. What state is it in after each input?
+  answer: "Unlocked after the coin, locked after the first push (you went through), and still locked after the second push (nothing happens)."
+  jumpToId: a-turnstile-step-by-step
+  jumpToLabel: A turnstile, step by step
+assignment:
+  instruction: "Pick a machine with state from daily life, such as a lift, a microwave or a traffic light. List its states, its inputs, and a table saying which state each input leads to from each state. Then trace five inputs in a row, writing the state before and after each one."
+  resourceName: 'Wikipedia: Finite-state machine (see the turnstile example)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Finite-state_machine'
+additionalResources:
+- title: State (computer science) (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/State_(computer_science)'
+- title: 'Basics of Information: MIT 6.004 Computation Structures'
+  type: doc
+  meta: lecture notes, for later
+  url: 'https://computation-structures.github.io/course/lectures/L01_Basics_of_Information.html'
+whyThisMatters: "A computer is a machine that moves from one state to the next, billions of times a second. Every bug you'll ever chase comes down to the state being different from what you expected at some step. The habit you start here, writing down the state before and after each step and finding the first step where it went wrong, is exactly how you'll debug circuits, CPUs and programs later in this path."
+---
+
+Press a button on a calculator and you know what you'll get. Press the button on a lift and what happens depends on where the lift already is. The difference is that the lift remembers something. That memory is called state, and every computer has it.
+
+By the end you'll be able to say what a machine's state is, explain why the same input can do different things, and trace a machine one step at a time.
+
+## What state means
+
+A machine's <b>state</b> is everything it remembers that affects what it does next. A light switch has two states, on and off. A lift's state includes which floor it is on and which way it is going. A computer's state is everything in its memory.
+
+An <b>input</b> is something that happens to the machine: a button press, a coin, a key. Each input moves the machine from its current state to a next state, and may produce an <b>output</b>.
+
+## Same input, different result
+
+It is tempting to think a machine always does the same thing for the same input. That is only true for machines without state. With state, the result depends on two things: the input, and the state it arrives in.
+
+<KeyIdea>Result = input + current state. The same input can do different things because the state is different.</KeyIdea>
+
+A coin-operated turnstile shows this. It has two states, locked and unlocked, and two inputs, a coin and a push:
+
+<TruthTable caption='The turnstile: next state for each state and input' rowsJson='[["state now", "input", "next state", "what happens"], ["locked", "coin", "unlocked", "it lets you through on the next push"], ["locked", "push", "locked", "nothing, it stays shut"], ["unlocked", "push", "locked", "you go through, it locks behind you"], ["unlocked", "coin", "unlocked", "nothing new, it is already open"]]' />
+
+A push does nothing to a locked turnstile and lets you through an unlocked one. Same input, different state, different result.
+
+## A turnstile, step by step
+
+To trace a machine, write its state before and after every input, one row per step:
+
+<TruthTable caption='Tracing five inputs' rowsJson='[["step", "state before", "input", "state after"], ["1", "locked", "push", "locked"], ["2", "locked", "coin", "unlocked"], ["3", "unlocked", "push", "locked"], ["4", "locked", "coin", "unlocked"], ["5", "unlocked", "coin", "unlocked"]]' />
+
+Each row starts from the state the row before ended in. That chain is what makes the trace honest: you can't jump to the end without going through every step.
+
+## Time: one step at a time
+
+A machine with state works in steps. Between steps its state stays the same; at each step it changes once. Most things stay the same in any one step. In step 3 only the lock changed; the turnstile, its coin box and its location did not.
+
+When a machine misbehaves, look for the <b>first</b> step where the state after differs from what you expected. Everything after that step is just a consequence.
+
+<KeyIdea>To understand a machine with state, trace it: state before, input, state after, one step at a time.</KeyIdea>
+
+Computers are built exactly this way. Later in this path you'll see circuits that hold state, a clock that decides when each step happens, and a CPU whose every instruction is one step from one state to the next.

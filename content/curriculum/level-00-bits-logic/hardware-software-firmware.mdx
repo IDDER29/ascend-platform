@@ -1,0 +1,70 @@
+---
+title: "Hardware, software and firmware"
+level: level-00-bits-logic
+slug: hardware-software-firmware
+order: 20
+timeMin: 6
+learningOutcomes:
+- Distinguish hardware (the physical circuits) from software (the instructions they run)
+- Explain why the same hardware can do many different jobs
+- Describe firmware as software stored inside a device to start it and control it
+primer:
+- title: "Input, processing, output and storage"
+  type: doc
+  meta: Reread · 2 min · the parts this lesson calls hardware.
+  essential: true
+knowledgeCheck:
+- question: What is the difference between hardware and software?
+  answer: Hardware is the physical machine, the circuits and parts you could touch. Software is the instructions and data the hardware runs. You can replace software without changing any hardware, which is why one machine can do many jobs.
+  jumpToId: the-machine-and-its-instructions
+  jumpToLabel: The machine and its instructions
+- question: Is firmware hardware or software?
+  answer: Software. Firmware is a program, made of instructions like any other, that is stored inside a device (often in a special memory chip) to start it up and control it. It is called firmware because it changes rarely, but it can usually be updated.
+  jumpToId: firmware-the-software-built-in
+  jumpToLabel: "Firmware: the software built in"
+assignment:
+  instruction: "Find out when your phone, router or games console last had a firmware update, and what it changed. Then explain in two sentences why the maker could fix a problem without you buying new hardware."
+  resourceName: 'Wikipedia: Firmware'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Firmware'
+additionalResources:
+- title: Software (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Software'
+- title: 'Electronic Computing: Crash Course Computer Science #2'
+  type: video
+  meta: 10 min
+  url: 'https://www.youtube.com/watch?v=LN0ucKNX0hc'
+whyThisMatters: "Knowing which layer a problem lives in is half of fixing it. A slow program might be bad software on good hardware; a laptop that won't start might have a firmware problem, not a broken chip. And the idea that software is just instructions stored as data is what makes a computer general-purpose at all."
+---
+
+A computer is a physical object you can drop on the floor. It is also a word processor, a game and a web browser, sometimes all in the same hour. Those are two different kinds of thing, and this lesson gives each its name.
+
+By the end you'll be able to tell hardware from software, explain why one machine can do so many jobs, and say what firmware is and where it lives.
+
+## The machine and its instructions
+
+<b>Hardware</b> is the physical machine: the CPU, memory chips, circuit boards, the screen and the wires between them. You could, in principle, touch every piece of it.
+
+<b>Software</b> is the instructions the hardware follows, together with the data they work on. A program is software. So is the operating system, a game, or the code behind a web page. Software has no weight; it is information, stored in memory or on a drive.
+
+<TruthTable caption='Hardware or software?' rowsJson='[["thing", "which"], ["the CPU chip", "hardware"], ["a music player app", "software"], ["the screen", "hardware"], ["the operating system", "software"], ["a saved song file", "software (data)"]]' />
+
+## Why one machine can do many jobs
+
+The hardware of a laptop is the same whether it is playing a film or checking your spelling. What changes is the software it is running. Swap the instructions and you swap the job.
+
+This is the idea that makes computers useful: the instructions are stored as information, just like the data, so they can be loaded, changed and replaced without rebuilding anything. You'll see exactly how a CPU reads its instructions from memory later in Foundations.
+
+<KeyIdea>Hardware is fixed; software is information. The same hardware becomes a different tool every time it runs different software.</KeyIdea>
+
+## Firmware: the software built in
+
+When you switch a computer on, something has to run before any app or operating system is loaded. That first program is <b>firmware</b>: software stored inside the device itself, usually in a memory chip on the circuit board that keeps its contents with the power off.
+
+Firmware starts the hardware, checks it, and hands over to the next program. In small devices such as a TV remote, a router or a washing machine, the firmware is often the only software there is.
+
+Firmware is software, not hardware. It is made of instructions like any other program. The name says it is "firm": it changes rarely and sits close to the hardware. Most devices can still update it, which is what a firmware update does.
+
+<KeyIdea>Firmware is software that lives inside the device and runs first. It is still just instructions.</KeyIdea>

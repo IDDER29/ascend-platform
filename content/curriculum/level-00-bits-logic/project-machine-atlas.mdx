@@ -1,0 +1,117 @@
+---
+title: "Project: The Machine Atlas"
+level: level-00-bits-logic
+slug: project-machine-atlas
+order: 27
+timeMin: 25
+learningOutcomes:
+- Map a real device into input, processing, memory, storage and output
+- Trace one action through that map as a list of steps, saying what changed and what stayed the same
+- Find a step that happens in the wrong order in a trace and put it right
+- Explain why a simple appliance with a chip in it is still a computer
+primer:
+- title: "Input, processing, output and storage"
+  type: doc
+  meta: Reread · 3 min · the four jobs this map is built from.
+  essential: true
+- title: "State, time and step-by-step execution"
+  type: doc
+  meta: Reread · 3 min · you'll write a before and after for each step.
+  essential: true
+knowledgeCheck:
+- question: In the phone example, which part keeps the message after the phone is switched off, and which part only holds it while it's being sent?
+  answer: Storage (the phone's flash memory) keeps it with the power off. Memory (RAM) holds it only while the phone is working on it; RAM forgets when the power goes.
+  jumpToId: part-1-map-a-phone
+  jumpToLabel: "Part 1: Map a phone"
+- question: What was wrong with the broken microwave trace, and how do you know?
+  answer: The display showed the time before the button press had been processed. Output can only show a result that the processing has already produced, so the processing step has to come first.
+  jumpToId: part-4-fix-the-trace
+  jumpToLabel: "Part 4: Fix the trace"
+assignment:
+  instruction: "Make a Machine Atlas for a device you use every day that isn't a phone or a microwave: a game console, a car's dashboard, a smartwatch, a washing machine. Draw its five boxes with the real parts in each, then trace one action you do with it, with what changed and what stayed the same at each step. Keep it: you'll add to it as the path goes on."
+  resourceName: 'CS50 Week 0: Scratch'
+  resourceType: site
+  resourceUrl: 'https://cs50.harvard.edu/x/weeks/0/'
+additionalResources:
+- title: Computer (Wikipedia)
+  type: doc
+  meta: reference, the main parts of a computer
+  url: 'https://en.wikipedia.org/wiki/Computer'
+- title: Embedded system (Wikipedia)
+  type: doc
+  meta: the computers hidden inside appliances
+  url: 'https://en.wikipedia.org/wiki/Embedded_system'
+whyThisMatters: "This map is the frame for the whole path. Every later course zooms into one of its boxes: bits and logic inside processing, flip-flops and RAM inside memory, the CPU itself, and finally the operating system that runs it all. When you can place a new idea on the map, it stops being a loose fact."
+---
+
+In this course you've met the four jobs every computer does, the difference between hardware and software, and the idea that a machine moves through states one step at a time. This project puts all of that on one map, a <b>Machine Atlas</b>, for real devices.
+
+For each part, write your answer first, then open "Check your answer".
+
+## Part 1: Map a phone
+
+Here is a phone, sorted into five boxes:
+
+<TruthTable caption='A phone, as a Machine Atlas' rowsJson='[["box", "the job", "the parts in a phone"], ["input", "takes information in", "touchscreen, microphone, camera, radio receiving"], ["processing", "works on information", "the CPU, following a program"], ["memory", "holds what is being worked on now", "RAM, which forgets when the power goes"], ["storage", "keeps information for later", "flash storage: photos, apps, messages"], ["output", "sends information out", "screen, speaker, radio sending"]]' />
+
+Notice that the radio appears twice. Receiving is input and sending is output. A part belongs to a box because of the job it's doing at that moment, not because of what it looks like.
+
+<details>
+<summary>Check your answer</summary>
+
+If you put the radio in only one box, look again at what it does: it brings messages in and sends them out, so it's both. The same goes for a touchscreen with haptic feedback: touch is input, and the buzz is output.
+
+</details>
+
+## Part 2: Trace one action
+
+Now follow one action through the map: you type "hi" and press send. Each step changes something and leaves everything else as it was.
+
+<TruthTable caption='Sending a message, step by step' rowsJson='[["step", "box", "what changes", "what stays the same"], ["1", "input", "the screen senses taps on h, i and send", "nothing is stored yet"], ["2", "processing", "the CPU turns the taps into the letters h and i", "storage is untouched"], ["3", "memory", "RAM now holds the message being sent", "the old messages in storage"], ["4", "output", "the radio sends the message", "RAM still holds a copy"], ["5", "storage", "the message is saved to the chat history", "the screen still shows the chat"], ["6", "output", "the screen shows the message as sent", "storage keeps it for later"]]' />
+
+Before you open the answer, say why step 5 matters if the phone is switched off right after step 6.
+
+<details>
+<summary>Check your answer</summary>
+
+Without step 5 the message would exist only in RAM, and RAM forgets when the power goes off. Because it was written to storage, it's still in your chat history when the phone turns back on. Memory is for now; storage is for later.
+
+</details>
+
+## Part 3: Map a microwave
+
+A microwave doesn't look like a computer, but it has a small chip inside running a program. Make its Machine Atlas: the five boxes, and the parts in each. Then trace this action: you press 3, 0, then start, and it heats for 30 seconds.
+
+<details>
+<summary>Check your answer</summary>
+
+- Input: the keypad, and the door switch.
+- Processing: a small chip, a microcontroller, running the microwave's program.
+- Memory: the chip's own small memory, holding the time left.
+- Storage: the program itself, kept in the chip so it survives a power cut.
+- Output: the display, the beeper, the light, and the heater (the magnetron).
+
+The trace: the keypad senses 3, 0 and start; the chip turns them into "30 seconds" and puts it in memory; the heater turns on; every second the chip takes 1 off the time in memory and the display shows it; at 0 the heater turns off and the beeper sounds.
+
+It follows instructions, keeps state (the time left) and changes it step by step. That makes it a computer, just one built for a single job.
+
+</details>
+
+## Part 4: Fix the trace
+
+Here is someone's trace for the microwave. One step is in the wrong place:
+
+<TruthTable caption='A broken trace' rowsJson='[["step", "box", "what changes"], ["1", "input", "the keypad senses 3 and 0"], ["2", "output", "the display shows 0:30"], ["3", "processing", "the chip turns 3, 0 into 30 seconds"], ["4", "memory", "the time left is set to 30 seconds"]]' />
+
+Which step is out of order, and why can't it happen there?
+
+<details>
+<summary>Check your answer</summary>
+
+Step 2. The display can't show 0:30 before the chip has worked out that the keys mean 30 seconds. Output only shows a result that processing has already produced. The right order is input, processing, memory, then output: keypad, chip, time left, display.
+
+</details>
+
+## Done when
+
+Your own Machine Atlas (the assignment) has all five boxes with real parts, and a trace where every step says what changed and what stayed the same. Keep it: each course from here zooms into one of its boxes.

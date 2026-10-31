@@ -77,9 +77,9 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "What a computer is",
     blurb: "What makes something a computer, its main parts, and how hardware and software differ.",
     items: [
-      soon("what-is-a-computer", "What is a computer?", 6, "What makes a device a computer: it takes in information, works on it, remembers, and follows instructions.", ["F001"]),
-      soon("input-processing-output", "Input, processing, output and storage", 7, "Follow one everyday task through the four jobs every computer does, and meet the CPU, memory and storage by their roles.", ["F002"]),
-      soon("hardware-software-firmware", "Hardware, software and firmware", 6, "The circuits, the programs that run on them and the software built into the chips, and why one machine can do many jobs.", ["F003"]),
+      live("what-is-a-computer", "What is a computer?", 6, "What makes a device a computer: it takes in information, works on it, remembers, and follows instructions.", ["F001"]),
+      live("input-processing-output", "Input, processing, output and storage", 7, "Follow one everyday task through the four jobs every computer does, and meet the CPU, memory and storage by their roles.", ["F002"]),
+      live("hardware-software-firmware", "Hardware, software and firmware", 6, "The circuits, the programs that run on them and the software built into the chips, and why one machine can do many jobs.", ["F003"]),
     ],
   },
   {
@@ -87,10 +87,10 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "Signals and information",
     blurb: "How the physical world becomes symbols a machine can store, and why meaning is something we agree on.",
     items: [
-      soon("analog-and-digital", "Analog and digital", 6, "Smoothly varying quantities versus a few clear states, and why a computer reads a whole range of voltages as just 0 or 1.", ["F004"]),
+      live("analog-and-digital", "Analog and digital", 6, "Smoothly varying quantities versus a few clear states, and why a computer reads a whole range of voltages as just 0 or 1.", ["F004"]),
       live("what-is-a-bit", "What is a bit?", 4, "The smallest piece of information: one of two states, why computers use two, and how bits combine to say more.", ["F005"]),
-      soon("codes-and-meaning", "Codes, symbols and meaning", 7, "Map bit patterns to messages, and see that a pattern means nothing until both sides agree on the code.", ["F006"]),
-      project("project-codebook", "Project: Make a codebook", 15, "Design a code for a small set of messages, encode a phrase, and decode someone else's using only the shared code.", ["P1-A"]),
+      live("codes-and-meaning", "Codes, symbols and meaning", 7, "Map bit patterns to messages, and see that a pattern means nothing until both sides agree on the code.", ["F006"]),
+      live("project-codebook", "Project: Make a codebook", 15, "Design a code for a small set of messages, encode a phrase, and decode someone else's using only the shared code.", ["P1-A"], "project"),
     ],
   },
   {
@@ -98,10 +98,10 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "Instructions, state and layers",
     blurb: "How a machine follows steps, what changes when it does, and how we understand it one layer at a time.",
     items: [
-      soon("instructions-and-algorithms", "Instructions and algorithms", 7, "An algorithm is an exact procedure; an instruction is one step a machine can recognise and carry out.", ["F007"]),
-      soon("state-and-steps", "State, time and step-by-step execution", 7, "Compare a machine before and after each step, and see why the same input can give different results in a different state.", ["F008"]),
-      soon("abstraction-and-layers", "Abstraction: a machine in layers", 7, "Why we study a computer as parts with clear interfaces, and the ladder this path climbs from bits to programs.", ["F009"]),
-      project("project-machine-atlas", "Project: The Machine Atlas", 25, "Map a computer you use into input, processing, memory, storage and output, then trace one action through it step by step.", ["P1-B"]),
+      live("instructions-and-algorithms", "Instructions and algorithms", 7, "An algorithm is an exact procedure; an instruction is one step a machine can recognise and carry out.", ["F007"]),
+      live("state-and-steps", "State, time and step-by-step execution", 7, "Compare a machine before and after each step, and see why the same input can give different results in a different state.", ["F008"]),
+      live("abstraction-and-layers", "Abstraction: a machine in layers", 7, "Why we study a computer as parts with clear interfaces, and the ladder this path climbs from bits to programs.", ["F009"]),
+      live("project-machine-atlas", "Project: The Machine Atlas", 25, "Map a computer you use into input, processing, memory, storage and output, then trace one action through it step by step.", ["P1-B"], "project"),
       project("project-noisy-channel", "Optional project: Bits through a noisy channel", 20, "Send bits over a line that sometimes flips them, and work out how sender and receiver can still agree.", ["P1-X"]),
     ],
   },

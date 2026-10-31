@@ -17,6 +17,8 @@ import { getFollowingMap } from "./selected-path";
 export const PATHS_INDEX_HREF = "/paths";
 
 const PROJECT_BADGE: Record<string, string> = {
+  "level-00-bits-logic/project-codebook": "code-maker",
+  "level-00-bits-logic/project-machine-atlas": "cartographer",
   "level-00-bits-logic/project-half-adder": "gate-builder",
   "level-00-bits-logic/project-tiny-cpu": "cpu-tracer",
   "/projects/shellforge": "ship-it",

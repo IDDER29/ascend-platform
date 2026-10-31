@@ -187,6 +187,15 @@ A later quick right answer clears it. Misses aren't shaky — they're misses.
 **Why:** a miss is the moment a learner is most open to the explanation (§1.3, feedback); words alone ("add the place values…") often don't land, and the bank already holds diagrams that show the answer.
 **How:** after a miss or "I don't know" on any non-flashcard card, a "Picture it" box appears under the card with the diagram that explains it — scrolled into view above the bar, never on a right answer. The diagram comes from the card's `figureFrom` (a flashcard id), or else from a diagram flashcard on the same `conceptId` (`buildMissFigures`). 76 cards have one (some by concept, the rest named with `figureFrom`). A test fails if a `figureFrom` names a card without a diagram.
 
+## 3h. Decision: fresh numbers, and a bug in every course (2026-11-01)
+**Problem.** A card with fixed numbers can be passed by remembering its answer ("1011 0110 is 182") rather than by converting. Spaced repetition then strengthens the memory of one answer, not the skill, which is exactly what the curriculum blueprint (`docs/curriculum/sugestion/01_foundations_overview.md`, section 3) warns against: "avoid using the exact same answer-bearing numerical examples repeatedly", and test with unseen transfer items.
+
+**Decision.** Fresh-number cards (`src/lib/practice/generated.ts`): binary to decimal, decimal to binary, hex to binary, two's complement, 8-bit wraparound, and a tiny CPU trace. Each keeps one card id, so SM-2 schedules it as usual, but its numbers come from a seed (the card's reps plus lapses), so every review is a problem the learner hasn't seen. The answer is computed, never stored; the CPU trace's output comes from the simulator itself. Consecutive reviews always differ (tested).
+
+Also from the blueprint: every Foundations course with lessons has at least one Spot-the-bug card (finding the first wrong step is a separate skill from tracing a correct one), enforced by `bank-quality.test.ts`.
+
+**Open.** Grading a fresh card still updates one schedule, so its interval reflects the skill across many problems, which is what we want; whether lapses on generated cards should count toward "shaky" the same way is untested.
+
 ## 4. Open ideas (ranked by value for effort)
 
 1. **Use the curve elsewhere** — Progress (the long view) and Practice home; per topic ("Bits & Logic: 88%").

@@ -1,0 +1,121 @@
+---
+title: "Project: Make a codebook"
+level: level-00-bits-logic
+slug: project-codebook
+order: 23
+timeMin: 15
+learningOutcomes:
+- Work out how many bits a code needs for a given number of messages
+- Design a codebook and use it to encode and decode a short message
+- Show that the same bit pattern decodes to different messages under different codebooks
+- Find and fix a codebook that can't be decoded because two messages share a pattern
+primer:
+- title: "Codes, symbols and meaning"
+  type: doc
+  meta: Reread · 3 min · this project puts that lesson into practice.
+  essential: true
+knowledgeCheck:
+- question: How many bits does a code need for 6 different messages, and why?
+  answer: "Three. Two bits give only 4 patterns (00, 01, 10, 11), which is too few; three bits give 8, enough for 6 with two left unused."
+  jumpToId: part-1-how-many-bits
+  jumpToLabel: "Part 1: How many bits?"
+- question: Why can the message 10 01 mean two different things?
+  answer: Bits carry no meaning of their own. Under one codebook 10 01 might read "rain, wind" and under another "yes, stop". The receiver has to use the same codebook as the sender.
+  jumpToId: part-3-same-bits-different-book
+  jumpToLabel: "Part 3: Same bits, different book"
+- question: What went wrong with the broken codebook in part 4?
+  answer: Two messages were given the same pattern, so a receiver who sees it can't tell which was meant. Every message in a codebook needs its own pattern.
+  jumpToId: part-4-fix-the-broken-codebook
+  jumpToLabel: "Part 4: Fix the broken codebook"
+assignment:
+  instruction: "Make a codebook for something you'd really send: a set of 5 to 8 messages for a friend (\"running late\", \"on my way\" and so on). Use the fewest bits that work, write one message as bits, and have someone decode it with your codebook and then with a different one you made up. Note what happens."
+  resourceName: 'Wikipedia: Morse code, a real codebook with patterns of different lengths'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Morse_code'
+additionalResources:
+- title: Code (Wikipedia)
+  type: doc
+  meta: reference, codes in general
+  url: 'https://en.wikipedia.org/wiki/Code'
+- title: 'CS50 Week 0: Scratch'
+  type: video
+  meta: the opening lecture on representing information with bits
+  url: 'https://cs50.harvard.edu/x/weeks/0/'
+whyThisMatters: "Every format you'll meet later is a codebook: ASCII for letters, two's complement for negative numbers, the opcodes of a CPU, the bytes of a picture. When bytes come out as garbage, it's almost always because the reader used a different codebook from the writer. Making one by hand is the quickest way to feel why that happens."
+---
+
+In the last lesson you saw that a pattern of bits means nothing until two sides agree on a code. In this project you make a code yourself, use it, and break it. There's nothing to install: a pencil and paper are enough.
+
+For each part, work out your answer first, then open "Check your answer".
+
+## Part 1: How many bits?
+
+You and a friend want to send each other the weather in as few bits as possible. There are four kinds of weather: sun, rain, snow and wind.
+
+Each extra bit doubles the number of patterns you can make:
+
+<TruthTable caption='Bits and patterns' rowsJson='[["bits", "patterns", "how many"], ["1", "0, 1", "2"], ["2", "00, 01, 10, 11", "4"], ["3", "000 to 111", "8"], ["4", "0000 to 1111", "16"]]' />
+
+How many bits do you need for four kinds of weather? And if you add fog and hail, so there are six?
+
+<details>
+<summary>Check your answer</summary>
+
+Four messages need 2 bits, because 2 bits make exactly 4 patterns. Six messages need 3 bits. Two bits give only 4 patterns, which is too few, and 3 bits give 8, so two patterns are left over.
+
+</details>
+
+## Part 2: Encode and decode
+
+Here is a codebook for the six kinds of weather:
+
+<TruthTable caption='Codebook A: the weather' rowsJson='[["pattern", "message"], ["000", "sun"], ["001", "rain"], ["010", "snow"], ["011", "wind"], ["100", "fog"], ["101", "hail"]]' />
+
+Encode this forecast for three days: rain, rain, sun.
+
+Then decode this one, which your friend sent: `011 100 000`.
+
+<details>
+<summary>Check your answer</summary>
+
+Rain, rain, sun is `001 001 000`. Your friend's forecast is wind, fog, sun.
+
+Notice that the receiver can split the bits into messages because every pattern is exactly 3 bits long. Morse code uses patterns of different lengths, so it needs short gaps between letters instead.
+
+</details>
+
+## Part 3: Same bits, different book
+
+Your friend has another codebook for a game, also with 3 bits:
+
+<TruthTable caption='Codebook B: a game' rowsJson='[["pattern", "message"], ["000", "start"], ["001", "stop"], ["010", "left"], ["011", "right"], ["100", "jump"], ["101", "pause"]]' />
+
+You send `011 100 000`, meaning wind, fog, sun. Your friend reads it with codebook B. What do they think you said?
+
+<details>
+<summary>Check your answer</summary>
+
+Right, jump, start. The bits arrived perfectly; not one of them changed. The message still went wrong, because the meaning was never in the bits. It was in the codebook, and the two of you used different ones.
+
+</details>
+
+<KeyIdea>Bits get from one place to another. Meaning only gets there if both sides use the same codebook.</KeyIdea>
+
+## Part 4: Fix the broken codebook
+
+Someone made this codebook for five messages, and it doesn't work:
+
+<TruthTable caption='A broken codebook' rowsJson='[["pattern", "message"], ["00", "yes"], ["01", "no"], ["10", "maybe"], ["11", "later"], ["11", "never"]]' />
+
+What's wrong, and what is the smallest fix?
+
+<details>
+<summary>Check your answer</summary>
+
+"Later" and "never" share the pattern 11, so a receiver who sees 11 can't tell which one was meant. Five messages don't fit in 2 bits, which only make 4 patterns. The fix is 3 bits: for example 000 yes, 001 no, 010 maybe, 011 later, 100 never.
+
+</details>
+
+## Done when
+
+You can say how many bits a set of messages needs, encode and decode with a codebook, and explain in one sentence why the same bits can mean two different things. Then do the assignment: make a codebook you'd really use.

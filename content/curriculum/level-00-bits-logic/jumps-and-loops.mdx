@@ -1,0 +1,87 @@
+---
+title: "Jumps and loops: how a CPU decides"
+level: level-00-bits-logic
+slug: jumps-and-loops
+order: 14
+timeMin: 8
+learningOutcomes:
+- Explain how a jump works by loading a new address into the program counter
+- Describe flags, and how the ALU sets the zero and carry flags from its last result
+- Trace a short loop that uses a conditional jump to stop
+- Explain why every if and every loop in a program becomes compares and jumps
+primer:
+- title: "An instruction set: the CPU's vocabulary"
+  type: doc
+  meta: Reread · 3 min · this lesson's program uses that tiny instruction set.
+  essential: true
+- title: 'Instructions & Programs: Crash Course Computer Science #8'
+  type: video
+  meta: Watch · 10 min · includes jumps, conditional jumps and an infinite loop.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=zltgXvg6r3k'
+knowledgeCheck:
+- question: What does a jump instruction actually change inside the CPU?
+  answer: The program counter. Normally the PC just moves on to the next address after each fetch; a jump loads a new address into it instead, so the next fetch comes from there.
+  jumpToId: a-jump-rewrites-the-program-counter
+  jumpToLabel: A jump rewrites the program counter
+- question: In the countdown program, why does the loop stop after showing 0?
+  answer: SUB 15 subtracts 1 each time. When A reaches 0 the ALU sets the zero flag, so JZ 5 jumps out to address 5 instead of falling through to JMP 1. Address 5 shows the 0 and the next instruction halts.
+  jumpToId: a-loop-that-counts-down
+  jumpToLabel: A loop that counts down
+assignment:
+  instruction: "nand2tetris Project 4 asks for a Mult program: multiply two numbers using only addition and a loop. Write it in the Hack language, with a counter and a conditional jump, and run it in the CPU emulator."
+  resourceName: 'nand2tetris.org: Project 4, Machine Language'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project04'
+additionalResources:
+- title: Branch (computer science) (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Branch_(computer_science)'
+- title: Status register (Wikipedia)
+  type: doc
+  meta: reference, the flags a CPU keeps
+  url: 'https://en.wikipedia.org/wiki/Status_register'
+whyThisMatters: "Every if, else, while and for you'll ever write turns into compares and jumps; there is no other way a CPU chooses. When you later read assembly, step through code in a debugger, or wonder why a mispredicted branch slows a loop down, you're looking at the program counter being rewritten by the instructions in this lesson."
+---
+
+So far every program ran in a straight line: address 0, then 1, then 2, until it hit HLT. Real programs repeat things and make choices. A CPU does both with one simple idea: an instruction that changes where the next instruction comes from.
+
+By the end you'll be able to explain how a jump works, what a flag is, and trace a loop that counts down and stops by itself.
+
+## A jump rewrites the program counter
+
+After each fetch, the program counter normally moves to the next address. A <b>jump</b> instruction overrides that: it loads a new address into the program counter, and the next fetch comes from there.
+
+In our tiny instruction set, JMP n (opcode 0110) does exactly this. A program that ends with JMP 0 starts over forever: that's the simplest loop, and also the simplest way to hang a computer.
+
+<KeyIdea>A jump doesn't do any work itself. It changes the program counter, so the CPU fetches from somewhere else next.</KeyIdea>
+
+## Flags: what happened last time
+
+To decide, the CPU needs to know something about the last result. After every add or subtract, the ALU sets a few one-bit registers called <b>flags</b>. Our tiny CPU has two:
+
+- The <b>zero flag</b> is 1 when the result was exactly 0.
+- The <b>carry flag</b> is 1 when the addition carried out of the top bit (in this design subtraction sets it too, to say no borrow was needed).
+
+## Conditional jumps
+
+A <b>conditional jump</b> jumps only when a flag is set, and otherwise lets the program carry straight on. Our CPU has JZ n (opcode 1000, jump if zero) and JC n (opcode 0111, jump if carry).
+
+That's all a CPU needs to choose. An if is "compute something, then jump past the code if the condition isn't met". A loop is "do the body, then jump back to the start unless we're done".
+
+<TruthTable caption='Three kinds of jump' rowsJson='[["instruction", "jumps when"], ["JMP n", "always"], ["JZ n", "the zero flag is set"], ["JC n", "the carry flag is set"]]' />
+
+## A loop that counts down
+
+This program shows 3, 2, 1, 0 and stops. Address 15 holds the number 1, used for counting down.
+
+<TruthTable caption='A countdown with a conditional jump' rowsJson='[["address", "instruction", "what it does"], ["0", "LDI 3", "A = 3"], ["1", "OUT", "show A"], ["2", "SUB 15", "A = A - 1, and set the flags"], ["3", "JZ 5", "if A is 0, jump to 5"], ["4", "JMP 1", "otherwise go back and show A"], ["5", "OUT", "show the final 0"], ["6", "HLT", "stop"], ["15", "1", "the number 1"]]' />
+
+Trace it: A starts at 3 and is shown. SUB makes it 2; the zero flag is 0, so JZ falls through and JMP goes back to show 2. The same happens for 1. The fourth SUB makes A 0, the zero flag is set, and JZ jumps out to address 5, which shows 0 and halts.
+
+## Every if and loop is a jump
+
+High-level languages hide this, but underneath it's always the same. A C `while (n != 0)` becomes a compare and a conditional jump out, plus an unconditional jump back to the top. An `if` becomes a compare and a conditional jump around the code inside it. Even calling a function is a jump, one that remembers where to come back to; you'll meet that in the call stack lesson.
+
+<KeyIdea>Compares set flags; conditional jumps read them. Every decision a program makes is built from those two steps.</KeyIdea>

@@ -49,7 +49,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
       { kind: "live", slug: "what-is-a-bit", title: "What is a bit?", timeMin: 4 },
       { kind: "live", slug: "binary-and-number-bases", title: "Binary & number bases", timeMin: 7 },
       { kind: "live", slug: "negative-numbers", title: "Negative numbers: two's complement", timeMin: 8 },
-      { kind: "soon", id: "bitwise-operations", title: "Bitwise operations: AND, OR, XOR, shifts and masks", timeMin: 9 },
+      { kind: "live", slug: "bitwise-operations", title: "Bitwise operations: AND, OR, XOR, shifts and masks", timeMin: 9 },
     ],
   },
   {
@@ -102,7 +102,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "Instructions",
     blurb: "The CPU's vocabulary, and programs stored as bits in memory.",
     items: [
-      { kind: "soon", id: "instruction-set", title: "An instruction set: the CPU's vocabulary", timeMin: 9 },
+      { kind: "live", slug: "instruction-set", title: "An instruction set: the CPU's vocabulary", timeMin: 9 },
     ],
   },
   {
@@ -111,7 +111,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     blurb: "The fetch-execute loop, branching, input and output, and a tiny CPU built from everything before it.",
     items: [
       { kind: "live", slug: "the-fetch-execute-loop", title: "The fetch-execute loop", timeMin: 9 },
-      { kind: "soon", id: "jumps-and-loops", title: "Jumps and loops: how a CPU decides", timeMin: 8 },
+      { kind: "live", slug: "jumps-and-loops", title: "Jumps and loops: how a CPU decides", timeMin: 8 },
       { kind: "soon", id: "from-gates-to-cpu", title: "From gates to a tiny CPU: datapath and control", timeMin: 12 },
       { kind: "soon", id: "input-and-output", title: "Input and output: talking to the outside world", timeMin: 8 },
       { kind: "soon", id: "project-tiny-cpu", title: "Project: Run a program on a tiny CPU", timeMin: 25, role: "project" },

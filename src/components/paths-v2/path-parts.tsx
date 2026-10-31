@@ -1,9 +1,10 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Route } from "lucide-react";
 import { CrestPatch } from "@/components/achievements/emblems";
 import { PATH_ICONS } from "@/components/paths/path-catalog";
 import { joinPathV2Action } from "@/lib/paths/actions";
-import { durationLabel, type PathView } from "@/lib/paths/paths-v2-model";
+import { durationLabel, type PathCourse, type PathView } from "@/lib/paths/paths-v2-model";
 
 export const CARD = "rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)]";
 export const PRIMARY =
@@ -31,6 +32,40 @@ export function PathIcon({ slug, size = "md", muted = false }: { slug: string; s
 export function PathGlyph({ slug, size = 24 }: { slug: string; size?: number }) {
   const Icon = PATH_ICONS[slug] ?? Route;
   return <Icon size={size} strokeWidth={2.2} aria-hidden />;
+}
+
+/** "18 lessons and 3 projects planned": a course none of whose lessons are written yet. */
+export function plannedSummary(course: PathCourse): string {
+  const soon = course.sections.flatMap((s) => s.upcoming);
+  const projects = soon.filter((i) => i.project).length;
+  const lessons = soon.length - projects;
+  const parts = [
+    lessons > 0 ? `${lessons} ${lessons === 1 ? "lesson" : "lessons"}` : null,
+    projects > 0 ? `${projects} ${projects === 1 ? "project" : "projects"}` : null,
+  ].filter(Boolean);
+  return `${parts.join(" and ")} planned`;
+}
+
+/**
+ * A course's outline. Once it has a written lesson, every row shows; until then it folds behind
+ * "See every lesson" (titles and descriptions one click away) so unwritten courses don't fill the page.
+ */
+export function OutlineFold({ course, children }: { course: PathCourse; children: ReactNode }) {
+  if (course.total > 0) return <>{children}</>;
+  return (
+    <details className="group rounded-xl border-2 border-dashed border-[var(--coach-border)] px-4 py-2">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-1.5 text-[14px] font-semibold text-[var(--coach-ink)] [&::-webkit-details-marker]:hidden">
+        <span>
+          See every lesson
+          <span className="ml-2 font-normal text-[var(--coach-ink-muted)]">{plannedSummary(course)}</span>
+        </span>
+        <span aria-hidden className="text-[var(--coach-ink-muted)] transition-transform group-open:rotate-180">
+          ▾
+        </span>
+      </summary>
+      <div className="pt-3 pb-2">{children}</div>
+    </details>
+  );
 }
 
 /** What to take first: "Foundations", or "Foundations, through Assembly Language" when only part of it is needed. */

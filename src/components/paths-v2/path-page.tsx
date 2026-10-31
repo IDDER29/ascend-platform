@@ -7,10 +7,16 @@ import type { BadgeView } from "@/lib/achievements/achievements-model";
 import { leavePathV2Action } from "@/lib/paths/actions";
 import { PRACTICE_PATH_TITLES } from "@/lib/practice/path-map";
 import { practiceSessionHref } from "@/lib/practice/routes";
-import { durationLabel, type PathCourse, type PathItem, type PathView, type UpcomingItem } from "@/lib/paths/paths-v2-model";
+import {
+  durationLabel,
+  type PathCourse,
+  type PathItem,
+  type PathView,
+  type UpcomingItem,
+} from "@/lib/paths/paths-v2-model";
 import { LessonMemory } from "./lesson-memory";
 import { TRACK_STAGES } from "./track-map";
-import { CARD, JoinButton, PathGlyph, pathMeta, requiresName, TopicBar } from "./path-parts";
+import { CARD, JoinButton, OutlineFold, PathGlyph, pathMeta, requiresName, TopicBar } from "./path-parts";
 
 /** Practice has a desk for this path (Foundations, Systems Programmer). */
 const practicePathSlugForPath = (slug: string) => (slug in PRACTICE_PATH_TITLES ? slug : null);
@@ -297,30 +303,32 @@ function CourseCard({ course, index }: { course: PathCourse; index: number }) {
         </div>
       </div>
       <p className="m-0 text-[14px] leading-relaxed text-[var(--coach-ink-secondary)]">{course.body}</p>
-      <div className="flex flex-col gap-4">
-        {course.sections.map((s) => (
-          <div key={s.id} className="flex flex-col gap-1">
-            <h3 className="m-0 flex items-baseline justify-between gap-3 text-[14.5px] font-bold">
-              {s.title}
-              {s.items.length > 0 ? (
-                <span className="text-[12px] font-medium tabular-nums text-[var(--coach-ink-muted)]">
-                  {s.done}/{s.items.length}
-                </span>
-              ) : null}
-            </h3>
-            {s.blurb && <p className="m-0 text-[13px] leading-snug text-[var(--coach-ink-muted)]">{s.blurb}</p>}
-            <ul className="m-0 mt-1 flex list-none flex-col gap-0.5 p-0">
-              {s.entries.map((e) =>
-                e.kind === "lesson" ? (
-                  <ItemRow key={e.item.key} item={e.item} />
-                ) : (
-                  <UpcomingRow key={e.item.id} item={e.item} />
-                ),
-              )}
-            </ul>
-          </div>
-        ))}
-      </div>
+      <OutlineFold course={course}>
+        <div className="flex flex-col gap-4">
+          {course.sections.map((s) => (
+            <div key={s.id} className="flex flex-col gap-1">
+              <h3 className="m-0 flex items-baseline justify-between gap-3 text-[14.5px] font-bold">
+                {s.title}
+                {s.items.length > 0 ? (
+                  <span className="text-[12px] font-medium tabular-nums text-[var(--coach-ink-muted)]">
+                    {s.done}/{s.items.length}
+                  </span>
+                ) : null}
+              </h3>
+              {s.blurb && <p className="m-0 text-[13px] leading-snug text-[var(--coach-ink-muted)]">{s.blurb}</p>}
+              <ul className="m-0 mt-1 flex list-none flex-col gap-0.5 p-0">
+                {s.entries.map((e) =>
+                  e.kind === "lesson" ? (
+                    <ItemRow key={e.item.key} item={e.item} />
+                  ) : (
+                    <UpcomingRow key={e.item.id} item={e.item} />
+                  ),
+                )}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </OutlineFold>
     </section>
   );
 }
@@ -374,10 +382,7 @@ export function PathPage({ path, earns, other }: { path: PathView; earns: BadgeV
             <Fragment key={c.id}>
               <CourseCard course={c} index={i} />
               {c.milestone && (
-                <MilestoneMark
-                  text={c.milestone}
-                  reached={path.courses.slice(0, i + 1).every((x) => x.finished)}
-                />
+                <MilestoneMark text={c.milestone} reached={path.courses.slice(0, i + 1).every((x) => x.finished)} />
               )}
             </Fragment>
           ))}

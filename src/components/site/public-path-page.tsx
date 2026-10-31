@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CrestArt } from "@/components/achievements/emblems";
 import { BadgeMark } from "@/components/achievements/marks";
-import { PathIcon, pathMeta } from "@/components/paths-v2/path-parts";
+import { OutlineFold, PathIcon, pathMeta } from "@/components/paths-v2/path-parts";
 import { TRACK_STAGES } from "@/components/paths-v2/track-map";
 import type { BadgeView } from "@/lib/achievements/achievements-model";
 import { durationLabel, type PathCourse, type PathView } from "@/lib/paths/paths-v2-model";
@@ -43,7 +43,10 @@ function TopicBlock({ course, index }: { course: PathCourse; index: number }) {
           {course.alongside && (
             <p className="m-0 mt-1 text-[13.5px] font-semibold text-[var(--coach-ink-secondary)]">
               Take alongside{" "}
-              <Link href={`${CATALOG_HREF}/${course.alongside.slug}`} className="text-[var(--coach-ink)] underline underline-offset-2">
+              <Link
+                href={`${CATALOG_HREF}/${course.alongside.slug}`}
+                className="text-[var(--coach-ink)] underline underline-offset-2"
+              >
                 {course.alongside.title}
               </Link>
             </p>
@@ -51,62 +54,68 @@ function TopicBlock({ course, index }: { course: PathCourse; index: number }) {
           <p className="m-0 mt-1.5 text-[15px] leading-relaxed text-[var(--coach-ink-secondary)]">{course.body}</p>
         </div>
       </div>
-      <div className="flex flex-col gap-5 p-5 sm:p-6">
-        {course.sections.map((section) => (
-          <div key={section.id}>
-            <h4 className="m-0 text-[15px] font-bold">{section.title}</h4>
-            {section.blurb && <p className="m-0 mt-0.5 text-[14px] text-[var(--coach-ink-muted)]">{section.blurb}</p>}
-            <ol className="m-0 mt-2 flex list-none flex-col p-0">
-              {section.entries.map((e) =>
-                e.kind === "lesson" ? (
-                  <li key={e.item.key}>
-                    <Link
-                      href={e.item.href}
-                      className="-mx-2 flex min-h-11 items-start justify-between gap-3 rounded-lg px-2 py-2 text-[15px] text-[var(--coach-ink)] no-underline hover:bg-[var(--coach-tint-neutral-bg)]"
-                    >
-                      <span className="min-w-0">
-                        {e.item.title.replace(/^Project: /, "")}
-                        {e.item.project && (
-                          <span className="ml-2 rounded-full bg-[var(--coach-tint-lime-bg)] px-2 py-0.5 text-[12px] font-semibold text-[var(--coach-tint-lime-ink)]">
-                            Project
+      <div className="p-5 sm:p-6">
+        <OutlineFold course={course}>
+          <div className="flex flex-col gap-5">
+            {course.sections.map((section) => (
+              <div key={section.id}>
+                <h4 className="m-0 text-[15px] font-bold">{section.title}</h4>
+                {section.blurb && (
+                  <p className="m-0 mt-0.5 text-[14px] text-[var(--coach-ink-muted)]">{section.blurb}</p>
+                )}
+                <ol className="m-0 mt-2 flex list-none flex-col p-0">
+                  {section.entries.map((e) =>
+                    e.kind === "lesson" ? (
+                      <li key={e.item.key}>
+                        <Link
+                          href={e.item.href}
+                          className="-mx-2 flex min-h-11 items-start justify-between gap-3 rounded-lg px-2 py-2 text-[15px] text-[var(--coach-ink)] no-underline hover:bg-[var(--coach-tint-neutral-bg)]"
+                        >
+                          <span className="min-w-0">
+                            {e.item.title.replace(/^Project: /, "")}
+                            {e.item.project && (
+                              <span className="ml-2 rounded-full bg-[var(--coach-tint-lime-bg)] px-2 py-0.5 text-[12px] font-semibold text-[var(--coach-tint-lime-ink)]">
+                                Project
+                              </span>
+                            )}
+                            {e.item.description && (
+                              <span className="mt-0.5 block text-[14px] leading-snug text-[var(--coach-ink-secondary)] [text-wrap:pretty]">
+                                {e.item.description}
+                              </span>
+                            )}
                           </span>
-                        )}
-                        {e.item.description && (
-                          <span className="mt-0.5 block text-[14px] leading-snug text-[var(--coach-ink-secondary)] [text-wrap:pretty]">
-                            {e.item.description}
+                          <span className="shrink-0 pt-0.5 text-[13px] tabular-nums text-[var(--coach-ink-muted)]">
+                            {e.item.timeMin} min
                           </span>
-                        )}
-                      </span>
-                      <span className="shrink-0 pt-0.5 text-[13px] tabular-nums text-[var(--coach-ink-muted)]">
-                        {e.item.timeMin} min
-                      </span>
-                    </Link>
-                  </li>
-                ) : (
-                  <li
-                    key={e.item.id}
-                    className="-mx-2 flex min-h-11 items-start justify-between gap-3 px-2 py-2 text-[15px] text-[var(--coach-ink-secondary)]"
-                  >
-                    <span className="min-w-0">
-                      {e.item.title.replace(/^(Optional project|Project|Capstone): /, "")}
-                      {e.item.project && (
-                        <span className="ml-2 rounded-full bg-[var(--coach-tint-neutral-bg)] px-2 py-0.5 text-[12px] font-semibold text-[var(--coach-ink-muted)]">
-                          {/^Optional/.test(e.item.title) ? "Optional project" : "Project"}
+                        </Link>
+                      </li>
+                    ) : (
+                      <li
+                        key={e.item.id}
+                        className="-mx-2 flex min-h-11 items-start justify-between gap-3 px-2 py-2 text-[15px] text-[var(--coach-ink-secondary)]"
+                      >
+                        <span className="min-w-0">
+                          {e.item.title.replace(/^(Optional project|Project|Capstone): /, "")}
+                          {e.item.project && (
+                            <span className="ml-2 rounded-full bg-[var(--coach-tint-neutral-bg)] px-2 py-0.5 text-[12px] font-semibold text-[var(--coach-ink-muted)]">
+                              {/^Optional/.test(e.item.title) ? "Optional project" : "Project"}
+                            </span>
+                          )}
+                          {e.item.description && (
+                            <span className="mt-0.5 block text-[14px] leading-snug text-[var(--coach-ink-muted)] [text-wrap:pretty]">
+                              {e.item.description}
+                            </span>
+                          )}
                         </span>
-                      )}
-                      {e.item.description && (
-                        <span className="mt-0.5 block text-[14px] leading-snug text-[var(--coach-ink-muted)] [text-wrap:pretty]">
-                          {e.item.description}
-                        </span>
-                      )}
-                    </span>
-                    <span className="shrink-0 pt-0.5 text-[13px] text-[var(--coach-ink-muted)]">Coming soon</span>
-                  </li>
-                ),
-              )}
-            </ol>
+                        <span className="shrink-0 pt-0.5 text-[13px] text-[var(--coach-ink-muted)]">Coming soon</span>
+                      </li>
+                    ),
+                  )}
+                </ol>
+              </div>
+            ))}
           </div>
-        ))}
+        </OutlineFold>
       </div>
     </li>
   );

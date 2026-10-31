@@ -13,7 +13,7 @@ Foundations is the shared base of every path (Systems/C, OS, Linux, networking, 
 All sources agree on the chain: representation → logic → combinational circuits → sequential state → registers/RAM/PC → ISA and machine language → fetch-decode-execute → assembly → compile/link/load → calls and the stack → I/O and the OS boundary. A common ordering mistake to avoid: teaching fetch-execute before registers, RAM and the PC.
 
 ## Decisions
-Five courses (a course is a group of outline sections in `src/lib/paths/foundations-outline.ts`, named in `catalog.ts`; lessons keep their level, slug and progress keys):
+Five courses, 35 items (a course is a group of outline sections in `src/lib/paths/foundations-outline.ts`, named in `catalog.ts`; lessons keep their level, slug and progress keys):
 
 1. **Bits & Data**: numbers in binary (bit, binary/hex, two's complement, *bitwise ops and masks*); text, sizes and fractions (bytes/words/types, ASCII/UTF-8, *floating point*).
 2. **Logic & Circuits**: logic & gates (Boolean, gates, half-adder project, full/4-bit adder); circuits that calculate (mux/decoder, *the ALU*, 4-bit calculator project).
@@ -26,6 +26,33 @@ Italic = added from the research.
 **Left out on purpose** (taught later, in other paths): performance formulas and pipelining; caches beyond a mention; real x86/ARM assembly; stack/heap and the address space in depth (Systems: Machine & Memory); OS internals; compiler construction; algorithms and data structures; transistor/CMOS physics (the digital abstraction is enough).
 
 **Overlap with Systems Programmer** is deliberate: Foundations teaches each idea on a tiny made-up CPU and at the concept level; Machine & Memory, C and Systems revisit assembly, the stack and system calls on a real machine.
+
+## Graduation standard (added from a third research pass)
+> Given a small program, the tiny CPU and a memory diagram, a learner can explain what every instruction does, where the data lives, how the machine's state changes, and why the program produces its result.
+
+Every lesson and project serves this. It is tested by the final project, "Trace a program end to end".
+
+## One machine all the way through
+Research on notional machines (Sorva's review of runtime models in introductory programming) supports teaching one explicit, simplified machine rather than leaving beginners to invent one. Foundations uses **one tiny CPU** throughout Build a CPU and From Hardware to Software: the instruction set of Ben Eater's 8-bit breadboard computer (LDA 0001, ADD 0010, SUB 0011, STA 0100, LDI 0101, JMP 0110, JC 0111, JZ 1000, OUT 1110, HLT 1111; ADD/SUB set the zero and carry flags), one register A (plus B for operands), 16 one-byte memory boxes. It is simulated in `src/lib/tiny-cpu/` (tested) and shown by the `<TinyCpu>` lesson component and the projects: predict, then step, then compare.
+
+## Projects: predict, then run
+- Bits & Data: **The Byte Lab** (one byte as 255, -1, 0xFF, a letter; overflow experiments).
+- Logic & Circuits: half-adder (live), **4-bit calculator**.
+- Memory & State: **A tiny memory machine** (predict the next register/memory state before the clock tick).
+- Build a CPU: **Run a program on a tiny CPU**.
+- Wrap-up: **Trace a program end to end** (the graduation standard).
+
+## Misconceptions to build cards around
+From the computing-education research cited in the third pass. Mark [E] = reported in studies, [H] = a plausible hazard to watch in our own data. Citations still to be checked before quoting them to learners.
+- [E] Place values stay the same when the base changes; hex digits carry decimal weights (number representation studies, Herman et al.).
+- [E] Negative binary is a sign bit plus the magnitude; arithmetic keeps the true result whatever the width (overflow).
+- [E] A combinational circuit has only one output (Trotskovsky and Sabag): introduce sum and carry early.
+- [E] RAM and disk storage do the same job (Kyriakou et al.).
+- [E] `x = x + 1` is a stored formula, not read, compute, write back (Kohn).
+- [E] Tracing failures: not tracing, tracing wrongly, uninformative test inputs (SIGCSE 2023): teach prediction and tracing as separate skills.
+- [H] A clocked register updates whenever its input changes; feedback means an uncontrolled loop; one character is always one byte.
+
+Two lessons were added for this: "Overflow: when numbers run out of bits" and "Variables in memory: x = x + 1, step by step".
 
 ## Constraints for new lessons
 - 5–10 minutes each, the same frontmatter as existing lessons (outcomes, Check yourself with headings that exist, assignment, resources with checked URLs).

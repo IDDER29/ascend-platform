@@ -50,6 +50,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
       { kind: "live", slug: "binary-and-number-bases", title: "Binary & number bases", timeMin: 7 },
       { kind: "live", slug: "negative-numbers", title: "Negative numbers: two's complement", timeMin: 8 },
       { kind: "live", slug: "bitwise-operations", title: "Bitwise operations: AND, OR, XOR, shifts and masks", timeMin: 9 },
+      { kind: "soon", id: "overflow", title: "Overflow: when numbers run out of bits", timeMin: 7 },
     ],
   },
   {
@@ -60,6 +61,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
       { kind: "soon", id: "bytes-words-meaning", title: "Bytes, words and types: how wide is a number?", timeMin: 8 },
       { kind: "soon", id: "text-ascii-utf8", title: "Text: ASCII and UTF-8", timeMin: 8 },
       { kind: "soon", id: "floating-point", title: "Fractions: floating point and why 0.1 + 0.2 isn't 0.3", timeMin: 9 },
+      { kind: "soon", id: "project-byte-lab", title: "Project: The Byte Lab", timeMin: 20, role: "project" },
     ],
   },
   // Course: Logic & Circuits
@@ -94,6 +96,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
       { kind: "live", slug: "clocks-and-registers", title: "The clock and registers", timeMin: 8 },
       { kind: "live", slug: "memory-and-addresses", title: "Memory as numbered boxes", timeMin: 8 },
       { kind: "soon", id: "state-machines", title: "State machines: circuits that follow steps", timeMin: 9 },
+      { kind: "soon", id: "project-memory-machine", title: "Project: A tiny memory machine", timeMin: 20, role: "project" },
     ],
   },
   // Course: Build a CPU
@@ -133,6 +136,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "Programs at run time",
     blurb: "Functions and the call stack, and the operating system every program runs on.",
     items: [
+      { kind: "soon", id: "variables-in-memory", title: "Variables in memory: x = x + 1, step by step", timeMin: 8 },
       { kind: "soon", id: "functions-and-the-stack", title: "Functions and the call stack", timeMin: 9 },
       { kind: "soon", id: "the-operating-system", title: "The operating system: processes and system calls", timeMin: 9 },
     ],
@@ -140,8 +144,9 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
   {
     id: "conclusion",
     title: "Wrap-up",
-    blurb: "Pick where to go next.",
+    blurb: "Trace a whole program on the tiny machine, then pick where to go next.",
     items: [
+      { kind: "soon", id: "project-trace-a-program", title: "Final project: Trace a program end to end", timeMin: 30, role: "project" },
       {
         kind: "link",
         id: "choose-path",

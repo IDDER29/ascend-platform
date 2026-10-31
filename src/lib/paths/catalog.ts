@@ -80,7 +80,7 @@ export const PATHS: PathDef[] = [
         title: "From Hardware to Software",
         body: "How code becomes instructions, how a program is built and loaded, and what the call stack and the OS do while it runs.",
         levelId: "level-00-bits-logic",
-        sections: ["software", "runtime"],
+        sections: ["software", "runtime", "conclusion"],
       },
     ],
   },

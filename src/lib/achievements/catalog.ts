@@ -81,6 +81,7 @@ export const ACHIEVEMENTS: Achievement[] = [
 
   // Building
   { id: "gate-builder", group: "building", label: "Gate Builder", glyph: "⊕", means: "Shipped the half adder", rules: [{ kind: "project", projectId: "half-adder" }] },
+  { id: "cpu-tracer", group: "building", label: "CPU Tracer", glyph: "▤", means: "Shipped a program for the tiny CPU", rules: [{ kind: "project", projectId: "tiny-cpu" }] },
   { id: "ship-it", group: "building", label: "Shell Smith", glyph: "◈", means: "Shipped ShellForge, a working shell", rules: [{ kind: "project", projectId: "shellforge" }] },
 
   // Remembering
@@ -94,9 +95,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "comeback", group: "habits", label: "Comeback", glyph: "✦", means: "Came back to Practice after two weeks away", rules: [{ kind: "comeback", gapDays: 14 }] },
 
   // Combinations: the parts are the rule, shown openly.
-  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped both curriculum projects", rules: [{ kind: "badges", ids: ["gate-builder", "ship-it"] }] },
+  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["gate-builder", "cpu-tracer", "ship-it"] }] },
   { id: "sharp-mind", group: "combination", label: "Sharp Mind", glyph: "✺", means: "Deep memory, a clean run and a week of practice", rules: [{ kind: "badges", ids: ["deep-memory", "clean-run", "week-of-practice"] }] },
-  { id: "whole-machine", group: "combination", label: "The Whole Machine", glyph: "✸", means: "Finished every lesson and shipped both projects", rules: [{ kind: "allLessons" }, { kind: "badges", ids: ["builder"] }] },
+  { id: "whole-machine", group: "combination", label: "The Whole Machine", glyph: "✸", means: "Finished every lesson and shipped every project", rules: [{ kind: "allLessons" }, { kind: "badges", ids: ["builder"] }] },
 ];
 
 /**

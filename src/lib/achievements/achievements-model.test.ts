@@ -109,22 +109,28 @@ test("a clean run needs at least 10 cards", () => {
 });
 
 test("combination badges list their parts and are earned when the last part is", () => {
-  const all = done(...LESSONS.map((l) => l.slug));
+  // Every project lesson exists here, so every project can be shipped.
+  const tiny = { key: `${BITS}/project-tiny-cpu`, level: BITS, slug: "project-tiny-cpu", title: "", href: "" };
+  const lessons = [...LESSONS, tiny];
+  const all = [...done(...LESSONS.map((l) => l.slug)), { key: tiny.key, completedAt: daysAgo(5) }];
+  const model = (patch: Partial<AchievementsInput>) =>
+    buildAchievementsModel({ lessons, completions: [], projectLinks: [], cards: [], history: [], now: NOW, ...patch });
   const links = [
     { projectId: "half-adder", repoUrl: "https://github.com/a/h", addedAt: daysAgo(4) },
+    { projectId: "tiny-cpu", repoUrl: "https://github.com/a/t", addedAt: daysAgo(3) },
     { projectId: "shellforge", repoUrl: "https://github.com/a/s", addedAt: daysAgo(2) },
   ];
   const m = model({ completions: all, projectLinks: links });
   const builder = badge(m, "builder");
-  assert.deepEqual(builder.criteria.map((c) => c.badgeId), ["gate-builder", "ship-it"]);
+  assert.deepEqual(builder.criteria.map((c) => c.badgeId), ["gate-builder", "cpu-tracer", "ship-it"]);
   assert.equal(builder.earned, true);
   assert.equal(builder.earnedAt, daysAgo(2));
   assert.equal(badge(m, "whole-machine").earned, true);
 
   const half = model({ completions: all, projectLinks: links.slice(0, 1) });
-  assert.deepEqual(badge(half, "builder").criteria.map((c) => c.done), [true, false]);
+  assert.deepEqual(badge(half, "builder").criteria.map((c) => c.done), [true, false, false]);
   // A combination's next step is the next step of the first badge it still needs.
-  assert.deepEqual(badge(half, "builder").action, badge(half, "ship-it").action);
+  assert.deepEqual(badge(half, "builder").action, badge(half, "cpu-tracer").action);
   assert.equal(badge(half, "builder").action?.href, "/profile");
   assert.equal(badge(half, "whole-machine").earned, false);
 });

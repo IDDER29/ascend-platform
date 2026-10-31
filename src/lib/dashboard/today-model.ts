@@ -123,7 +123,7 @@ function standing(model: AchievementsModel): Standing {
   const byId = new Map(model.parts.map((p) => [p.id, p]));
   const latest = model.earnedNewestFirst.map((id) => byId.get(id)).find(Boolean) ?? null;
   const closest = model.closest[0] ?? null;
-  const projects = ["gate-builder", "ship-it"].map((id) => byId.get(id)!).filter(Boolean);
+  const projects = ["gate-builder", "cpu-tracer", "ship-it"].map((id) => byId.get(id)!).filter(Boolean);
   const openProject = projects.find((p) => !p.earned) ?? null;
   const title = model.title ? KANJI[model.title.id] : null;
 

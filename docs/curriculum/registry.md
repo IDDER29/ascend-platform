@@ -67,8 +67,8 @@ Status: ✓ live · ○ planned in an outline · · not planned yet.
 | Instruction set (ISA), opcode/operand, stored program | F: Build a CPU | ✓ |
 | Fetch-decode-execute, PC, IR | F: Build a CPU | ✓ |
 | Jumps, flags, conditional branches, loops | F: Build a CPU | ✓ |
-| Datapath and control, buses | F: Build a CPU | ○ |
-| Input/output, memory-mapped I/O, interrupts (idea) | F: Build a CPU | ○ |
+| Datapath and control, buses | F: Build a CPU | ✓ |
+| Input/output, memory-mapped I/O, interrupts (idea) | F: Build a CPU | ✓ |
 | Real CPU registers, x86-64 assembly | SP: Machine & Memory | ✓ |
 | Addressing modes, RISC/CISC, RISC-V encodings | CA: A RISC-V core | ○ |
 | Hardwired vs microprogrammed control, single vs multi-cycle | CA: Pipelining | · |
@@ -175,7 +175,7 @@ Databases, distributed systems, ethics and history of computing (worth a short p
 Side paths: Python, Linux, Network and AI branch off Foundations; Security branches off Systems Programmer.
 
 ## What to write next, in order
-1. **Foundations' coming-soon lessons** (21 items), led by From Hardware to Software and the tiny-CPU project.
+1. **Foundations' coming-soon lessons** (18 items; Build a CPU is complete), led by From Hardware to Software.
 2. **C Basics**, so The C Language no longer assumes them.
 3. **Tools** (gcc, make, gdb, sanitizers), which every later C lesson leans on.
 4. **The C Contract** and the coming-soon lessons in The C Language.

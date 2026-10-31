@@ -33,6 +33,16 @@ export const CURRICULUM_PROJECTS: CurriculumProject[] = [
     href: null,
   },
   {
+    id: "tiny-cpu",
+    title: "Tiny CPU program",
+    inSentence: "tiny CPU program",
+    proves: "Plans, predicts and traces a program on a CPU, one instruction at a time.",
+    level: "level-00-bits-logic",
+    requires: { kind: "lesson", level: "level-00-bits-logic", slug: "project-tiny-cpu" },
+    badgeId: "cpu-tracer",
+    href: null,
+  },
+  {
     id: "shellforge",
     title: "ShellForge",
     inSentence: "ShellForge",

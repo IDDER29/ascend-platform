@@ -115,9 +115,9 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     items: [
       { kind: "live", slug: "the-fetch-execute-loop", title: "The fetch-execute loop", timeMin: 9 },
       { kind: "live", slug: "jumps-and-loops", title: "Jumps and loops: how a CPU decides", timeMin: 8 },
-      { kind: "soon", id: "from-gates-to-cpu", title: "From gates to a tiny CPU: datapath and control", timeMin: 12 },
-      { kind: "soon", id: "input-and-output", title: "Input and output: talking to the outside world", timeMin: 8 },
-      { kind: "soon", id: "project-tiny-cpu", title: "Project: Run a program on a tiny CPU", timeMin: 25, role: "project" },
+      { kind: "live", slug: "from-gates-to-cpu", title: "From gates to a tiny CPU: datapath and control", timeMin: 12 },
+      { kind: "live", slug: "input-and-output", title: "Input and output: talking to the outside world", timeMin: 8 },
+      { kind: "live", slug: "project-tiny-cpu", title: "Project: Run a program on a tiny CPU", timeMin: 25, role: "project" },
     ],
   },
   // Course: From Hardware to Software

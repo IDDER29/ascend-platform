@@ -1,0 +1,87 @@
+---
+title: "Input and output: talking to the outside world"
+level: level-00-bits-logic
+slug: input-and-output
+order: 16
+timeMin: 8
+learningOutcomes:
+- Explain that output is a register wired to something outside the CPU, and input is the reverse
+- Describe memory-mapped I/O, where a device answers at an address, and how it differs from port I/O
+- Compare polling and interrupts as two ways for a program to notice a device
+- Explain why a program that shows its result needs an output instruction or address at all
+primer:
+- title: "From gates to a tiny CPU: datapath and control"
+  type: doc
+  meta: Reread · 3 min · the output register is one of the parts on its bus.
+  essential: true
+knowledgeCheck:
+- question: How does the tiny CPU's OUT instruction get a number onto the display?
+  answer: OUT copies register A into the output register over the bus. The output register's wires don't go back into the CPU; they go to the display, which keeps showing that byte until the next OUT changes it.
+  jumpToId: output-is-a-register-with-wires-outside
+  jumpToLabel: Output is a register with wires outside
+- question: What is memory-mapped I/O?
+  answer: A device is wired so that it answers at a memory address. Reading that address reads from the device (switches, a keyboard) and writing it writes to the device (a screen), so ordinary load and store instructions do input and output.
+  jumpToId: devices-at-addresses
+  jumpToLabel: Devices at addresses
+- question: What is the difference between polling and an interrupt?
+  answer: With polling, the program keeps reading the device to ask whether anything happened. With an interrupt, the device sends a signal that makes the CPU stop what it's doing and jump to a piece of code that handles it, so the program doesn't waste time asking.
+  jumpToId: noticing-a-device-polling-and-interrupts
+  jumpToLabel: "Noticing a device: polling and interrupts"
+assignment:
+  instruction: "Read the overview of memory-mapped and port-mapped I/O. Then, in two or three sentences, explain how you would add eight input switches to the tiny CPU using memory-mapped I/O, and what a program would do to read them."
+  resourceName: 'Wikipedia: Memory-mapped I/O and port-mapped I/O'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Memory-mapped_I/O_and_port-mapped_I/O'
+additionalResources:
+- title: Interrupt (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Interrupt'
+- title: Polling (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Polling_(computer_science)'
+whyThisMatters: "A computer that can't take input or show output is just a warm box. Every keypress, network packet and pixel goes through one of the mechanisms in this lesson. Later, when you meet device drivers, system calls that read a file, or why a busy loop wastes a laptop's battery, you'll be looking at memory-mapped registers, polling and interrupts again."
+---
+
+Every program you've run on the tiny CPU ended by showing a number on the display. That display is the CPU's only connection to the outside world. Real computers have keyboards, screens, disks and networks, and they all use the same few ideas.
+
+By the end you'll be able to explain how a number leaves the CPU, how one gets in, and how a program notices that something outside has happened.
+
+## Output is a register with wires outside
+
+The tiny CPU's display is driven by the <b>output register</b>. OUT copies A into it over the bus, like any other register load. What's different is where its wires go. They don't lead back to the bus. They lead to the display, which shows whatever byte the register holds until the next OUT replaces it.
+
+<TinyCpu caption='Each OUT changes what the display shows' programJson='["LDI 1", "OUT", "ADD 15", "JMP 1"]' dataJson='{"15": 1}' />
+
+This program counts up forever, so the simulator stops it after 256 steps. Every number reached the display through one register.
+
+<KeyIdea>Output is a register whose wires leave the CPU. Input is the reverse: wires from outside that the CPU can read.</KeyIdea>
+
+## Devices at addresses
+
+The tiny CPU has an instruction just for output. Most CPUs don't add a new instruction for every device. Instead, a device is wired so that it answers at a memory address. This is called <b>memory-mapped I/O</b>:
+
+- Reading the device's address reads from the device: switches, a keyboard, a sensor.
+- Writing to it sends a value to the device: a screen, a speaker, a network card.
+
+The CPU doesn't know the difference. It runs an ordinary load or store, and the address decides whether the byte comes from memory or from a device.
+
+Imagine the tiny CPU's address 15 were wired to eight switches instead of memory. Then LDA 15 would read the switches, and this program would show double whatever you set them to. Here the "switches" are set to 21:
+
+<TinyCpu caption='Pretend address 15 is a row of switches' programJson='["LDA 15", "ADD 15", "OUT", "HLT"]' dataJson='{"15": 21}' />
+
+Some CPUs, including x86, also have <b>port I/O</b>: separate in and out instructions that talk to a separate set of device addresses. It's the same idea with a second address space.
+
+## Noticing a device: polling and interrupts
+
+A key gets pressed at a moment the program can't predict. There are two ways to notice it.
+
+- <b>Polling</b>: the program keeps reading the device's address in a loop, asking "anything yet?". It's simple, but the CPU is busy doing nothing useful while it waits.
+- <b>Interrupts</b>: the device sends a signal on a dedicated wire. The CPU finishes its current instruction, saves where it was, and jumps to a piece of code called an <b>interrupt handler</b>. When the handler is done, the CPU jumps back to where it stopped.
+
+An interrupt is a jump that the outside world causes, not the program. Your keyboard, your network card and the timer that lets an operating system share the CPU between programs all work this way.
+
+<KeyIdea>Polling: the program keeps asking. Interrupts: the device taps the CPU on the shoulder.</KeyIdea>
+
+The tiny CPU has neither input nor interrupts. It's kept small on purpose, so you can see every part. A real computer has the same pieces plus these: a register or address for each device, and a way for devices to interrupt.

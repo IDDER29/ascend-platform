@@ -13,6 +13,8 @@ test("gate truth tables", () => {
   assert.deepEqual(outs("NOT"), ["1", "0"]);
   assert.deepEqual(outs("HALF_ADDER"), ["00", "10", "10", "01"]);
   assert.deepEqual(truthTable("HALF_ADDER").outputs, ["Sum", "Carry"]);
+  // Full adder: Sum and carry-out for 000 … 111 (1 + 1 + 1 = 11 in binary).
+  assert.deepEqual(outs("FULL_ADDER"), ["00", "10", "10", "01", "10", "01", "01", "11"]);
 });
 
 test("n bits make 2ⁿ patterns, in counting order", () => {

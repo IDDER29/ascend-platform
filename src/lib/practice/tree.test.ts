@@ -28,6 +28,10 @@ test("practiceTreeForPath maps live Foundations outline sections", () => {
         key: "level-00-bits-logic/binary-and-number-bases",
         title: "Binary & number bases",
       },
+      {
+        key: "level-00-bits-logic/negative-numbers",
+        title: "Negative numbers: two's complement",
+      },
     ],
   );
 });

@@ -2,7 +2,7 @@
  * Small diagrams a card can carry on its back: the answer, drawn. Each is data (stored with the card in
  * the bank) and is rendered by `src/components/practice/card-figure.tsx`; the logic lives here and is tested.
  */
-export type Gate = "AND" | "OR" | "NOT" | "XOR" | "NAND" | "NOR" | "HALF_ADDER";
+export type Gate = "AND" | "OR" | "NOT" | "XOR" | "NAND" | "NOR" | "HALF_ADDER" | "FULL_ADDER";
 
 export type CardFigure =
   /** A row of bit boxes, optionally grouped (4 = nibbles). */
@@ -41,7 +41,7 @@ export type CardFigure =
 export type MemoryCell = { addr: string; name: string; value: string; pointsTo?: string };
 export type Field = { name: string; type: string; size: number };
 
-const GATE_FN: Record<Exclude<Gate, "NOT" | "HALF_ADDER">, (a: number, b: number) => number> = {
+const GATE_FN: Record<Exclude<Gate, "NOT" | "HALF_ADDER" | "FULL_ADDER">, (a: number, b: number) => number> = {
   AND: (a, b) => a & b,
   OR: (a, b) => a | b,
   XOR: (a, b) => a ^ b,
@@ -61,6 +61,15 @@ export function truthTable(gate: Gate): TruthTable {
     [1, 0],
     [1, 1],
   ];
+  if (gate === "FULL_ADDER") {
+    // Inputs A, B, carry-in in counting order 000 … 111; Sum = A ^ B ^ Cin, carry-out = majority.
+    const rows = Array.from({ length: 8 }, (_, n) => [(n >> 2) & 1, (n >> 1) & 1, n & 1]);
+    return {
+      inputs: ["A", "B", "Cin"],
+      outputs: ["Sum", "Cout"],
+      rows: rows.map(([a, b, c]) => ({ in: [a, b, c], out: [a ^ b ^ c, (a & b) | (c & (a ^ b))] })),
+    };
+  }
   if (gate === "HALF_ADDER") {
     return {
       inputs: ["A", "B"],

@@ -47,7 +47,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     items: [
       { kind: "live", slug: "what-is-a-bit", title: "What is a bit?", timeMin: 4 },
       { kind: "live", slug: "binary-and-number-bases", title: "Binary & number bases", timeMin: 7 },
-      { kind: "soon", id: "negative-numbers", title: "Negative numbers: two's complement", timeMin: 8 },
+      { kind: "live", slug: "negative-numbers", title: "Negative numbers: two's complement", timeMin: 8 },
       { kind: "soon", id: "bytes-words-meaning", title: "Bytes, words, and meaning", timeMin: 8 },
       { kind: "soon", id: "text-ascii-utf8", title: "Text: ASCII and UTF-8", timeMin: 8 },
     ],
@@ -60,7 +60,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
       { kind: "live", slug: "boolean-logic-and-truth-tables", title: "Boolean logic & truth tables", timeMin: 7 },
       { kind: "live", slug: "logic-gates-from-switches-to-circuits", title: "Logic gates, from switches to circuits", timeMin: 8 },
       { kind: "live", slug: "project-half-adder", title: "Project: Half-adder", timeMin: 25, role: "project" },
-      { kind: "soon", id: "full-adder", title: "Full adder and the 4-bit adder", timeMin: 9 },
+      { kind: "live", slug: "full-adder-and-4-bit-adder", title: "Full adder and the 4-bit adder", timeMin: 9 },
       { kind: "soon", id: "mux-decoder", title: "Choosing with gates: multiplexers and decoders", timeMin: 9 },
     ],
   },

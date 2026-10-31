@@ -1,0 +1,84 @@
+---
+title: Full adder and the 4-bit adder
+level: level-00-bits-logic
+slug: full-adder-and-4-bit-adder
+order: 7
+timeMin: 9
+learningOutcomes:
+- Explain why a half-adder can only add the lowest column of two numbers
+- Read the full adder's table, with its third input, the carry in
+- Trace how four full adders, each passing its carry to the next, add two 4-bit numbers
+- Explain how the same adder subtracts, using two's complement
+primer:
+- title: "Project: Half-adder"
+  type: doc
+  meta: Reread · 4 min · a full adder is two of these plus one gate.
+  essential: true
+- title: 'How Computers Calculate, the ALU: Crash Course Computer Science #5'
+  type: video
+  meta: Watch · 11 min · from half-adder to full adder to an ALU.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=1I5ZMmrOfnA'
+knowledgeCheck:
+- question: Why can't a half-adder add the second column of a multi-bit sum?
+  answer: Every column after the first can receive a carry from the column to its right, so it has three bits to add, A, B and the carry in. A half-adder only has two inputs, so it has nowhere to take that carry. The full adder adds the third input.
+  jumpToId: the-half-adders-missing-input
+  jumpToLabel: "The half-adder's missing input"
+- question: How does a ripple-carry adder add 0110 and 0111?
+  answer: "Four full adders work column by column from the right, each passing its carry out to the next one's carry in. 0 + 1 = 1. 1 + 1 = 0, carry 1. 1 + 1 + carry = 1, carry 1. 0 + 0 + carry = 1. The result is 1101, which is 13: 6 + 7."
+  jumpToId: four-in-a-row-the-ripple-carry-adder
+  jumpToLabel: "Four in a row: the ripple-carry adder"
+assignment:
+  instruction: 'On nand2tetris.org, do Project 2 (Boolean Arithmetic): build a half adder, a full adder, then a 16-bit adder from them. It is exactly this lesson, scaled up to real word size.'
+  resourceName: 'nand2tetris.org: Project 2, Boolean Arithmetic'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project02'
+additionalResources:
+- title: 'How Computers Calculate, the ALU: Crash Course Computer Science #5'
+  type: video
+  meta: 11 min
+  url: 'https://www.youtube.com/watch?v=1I5ZMmrOfnA'
+- title: Adder (electronics), Wikipedia
+  type: doc
+  meta: reference, including faster carry-lookahead adders
+  url: 'https://en.wikipedia.org/wiki/Adder_(electronics)'
+whyThisMatters: "The adder you build here is the heart of a CPU's arithmetic unit: adding, subtracting, comparing and even working out the next instruction's address all run through it. When you later see a processor described as 64-bit, one thing that means is an adder 64 full adders wide."
+---
+
+The half-adder added two single bits. Real numbers have many bits, and adding them column by column means carrying, just like adding on paper. This lesson adds the missing piece, the <b>carry in</b>, and then chains four adders together to add two 4-bit numbers.
+
+By the end you'll be able to read a full adder's table, trace a 4-bit addition with its carries, and explain how the same circuit subtracts.
+
+## The half-adder's missing input
+
+Add 0110 and 0111 by hand, right to left. The first column is 0 + 1: two bits, a half-adder can do that. The second column is 1 + 1 = 0, carry 1. Now the third column has <i>three</i> bits to add: 1, 1 and the carry coming in from the right.
+
+A half-adder has only two inputs. Every column except the first needs a circuit with three.
+
+## The full adder
+
+A <b>full adder</b> takes three bits, A, B and the <b>carry in</b>, and produces two: the <b>sum</b> bit for this column and the <b>carry out</b> for the next one. Inside it's two half-adders and an OR gate: the first adds A and B, the second adds the carry in to that result, and the OR combines their two carries.
+
+<TruthTable caption='Full adder: three bits in, sum and carry out' rowsJson='[["A", "B", "Cin", "Sum", "Cout"], ["0", "0", "0", "0", "0"], ["0", "0", "1", "1", "0"], ["0", "1", "0", "1", "0"], ["0", "1", "1", "0", "1"], ["1", "0", "0", "1", "0"], ["1", "0", "1", "0", "1"], ["1", "1", "0", "0", "1"], ["1", "1", "1", "1", "1"]]' />
+
+Read it as counting: the outputs are just how many 1s came in, written in binary. Three 1s in gives 11: sum 1, carry 1.
+
+<KeyIdea>A full adder adds three bits, the two digits and the carry from the column to its right, and passes its own carry on.</KeyIdea>
+
+## Four in a row: the ripple-carry adder
+
+Line up four full adders, one per column. Feed each one its pair of bits. Connect each adder's carry out to the next adder's carry in, and give the rightmost one a carry in of 0. That's a 4-bit adder.
+
+<Visual type='diagram' caption='A 4-bit ripple-carry adder' description='Four full adder boxes in a row, labeled bit 3, bit 2, bit 1, bit 0 from left to right. Each has inputs A and B from above and a sum output below. An arrow carries the carry out of each box into the carry in of the box to its left. The rightmost box has carry in 0; the leftmost box&#39;s carry out leaves the circuit.' />
+
+Trace 0110 + 0111 (6 + 7). Bit 0: 0 + 1 = 1. Bit 1: 1 + 1 = 0, carry 1. Bit 2: 1 + 1 + 1 = 1, carry 1. Bit 3: 0 + 0 + 1 = 1. The answer is 1101, which is 13.
+
+The carry has to <i>ripple</i> through every adder in turn, so a wider adder takes longer to settle. Real CPUs use cleverer carry-lookahead circuits to work out the carries faster, but the idea is the same.
+
+## The same adder subtracts
+
+From two's complement you know A - B is A + (-B), and -B is "flip every bit of B, then add 1". The adder does both at once: put NOT B on the B inputs and set the first carry in to 1 instead of 0. That 1 is the "add 1".
+
+So with a few NOT gates and one control wire, the same row of full adders adds or subtracts. That's the core of the <b>ALU</b>, the arithmetic unit at the centre of every processor.
+
+<KeyIdea>To subtract, feed the adder NOT B and a first carry in of 1. One circuit, both operations.</KeyIdea>

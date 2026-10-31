@@ -32,7 +32,7 @@ function answer(q: PracticeItem): string {
   return answerText(q);
 }
 
-export const metadata: Metadata = { title: "Card — Practice — Ascend" };
+export const metadata: Metadata = { title: "Card — Practice" };
 
 export default async function PracticeCardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

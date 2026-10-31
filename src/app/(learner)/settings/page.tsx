@@ -4,7 +4,7 @@ import { SettingsCard, SignInFirst } from "@/components/settings-v2/settings-car
 import { getCurrentUser } from "@/lib/auth/auth";
 import { getProfileSettings } from "@/lib/progress/queries";
 
-export const metadata: Metadata = { title: "Profile — Settings — Ascend" };
+export const metadata: Metadata = { title: "Profile — Settings" };
 
 export default async function SettingsProfilePage() {
   const user = await getCurrentUser();

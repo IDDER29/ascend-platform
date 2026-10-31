@@ -8,7 +8,7 @@ import { loadPublicPaths } from "@/lib/paths/paths-v2-data";
 import { getPracticeDailyGoal } from "@/lib/practice/queries";
 
 export const metadata: Metadata = {
-  title: "Get started — Ascend",
+  title: "Get started",
   robots: { index: false, follow: false },
 };
 

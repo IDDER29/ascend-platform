@@ -3,7 +3,7 @@ import { AccountPanel } from "@/components/settings-v2/account-panel";
 import { SignInFirst } from "@/components/settings-v2/settings-card";
 import { getCurrentUser } from "@/lib/auth/auth";
 
-export const metadata: Metadata = { title: "Account — Settings — Ascend" };
+export const metadata: Metadata = { title: "Account — Settings" };
 
 export default async function SettingsAccountPage() {
   const user = await getCurrentUser();

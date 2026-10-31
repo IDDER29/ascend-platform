@@ -4,7 +4,7 @@ import { LegalArticle } from "@/components/site/legal-article";
 import { SiteShell } from "@/components/site/site-shell";
 
 export const metadata: Metadata = {
-  title: "Terms — Ascend",
+  title: "Terms",
   description: "The few rules for using Ascend.",
 };
 

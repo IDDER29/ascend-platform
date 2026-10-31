@@ -5,7 +5,7 @@ import { SiteShell } from "@/components/site/site-shell";
 import { CONTENT_REPO_URL } from "@/lib/brand/repo";
 
 export const metadata: Metadata = {
-  title: "Privacy — Ascend",
+  title: "Privacy",
   description: "What Ascend keeps about you, why, and how to delete it.",
 };
 

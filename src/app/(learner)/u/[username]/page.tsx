@@ -23,10 +23,10 @@ async function visibleProfile(username: string): Promise<{ owner: ProfileOwner; 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
   const visible = await visibleProfile(username);
-  if (!visible) return { title: "Profile not found — Ascend" };
+  if (!visible) return { title: "Profile not found" };
   const { owner } = visible;
   return {
-    title: `${owner.name} (@${owner.username}) — Ascend`,
+    title: `${owner.name} (@${owner.username})`,
     description: owner.bio || `${owner.name}'s projects and progress on Ascend.`,
   };
 }

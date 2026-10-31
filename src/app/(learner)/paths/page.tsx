@@ -4,7 +4,7 @@ import { HUB_CONTENT_CLASS, PageHeader } from "@/components/ui/page-header";
 import { loadPathsV2 } from "@/lib/paths/paths-v2-data";
 
 export const metadata: Metadata = {
-  title: "Paths — Ascend",
+  title: "Paths",
   description: "Each path is a role you train toward: what it covers, how long it takes, and where you are on it.",
 };
 

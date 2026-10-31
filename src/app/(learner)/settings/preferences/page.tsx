@@ -6,7 +6,7 @@ import { DEFAULT_DAILY_GOAL, goalForPace } from "@/lib/practice/daily-goal";
 import { getPracticeDailyGoal } from "@/lib/practice/queries";
 import { getProfileSettings } from "@/lib/progress/queries";
 
-export const metadata: Metadata = { title: "Daily goal — Settings — Ascend" };
+export const metadata: Metadata = { title: "Daily goal — Settings" };
 
 export default async function SettingsGoalPage() {
   const user = await getCurrentUser();

@@ -9,7 +9,7 @@ import { loadToday } from "@/lib/dashboard/today-page-data";
 import { loadPracticePageData } from "@/lib/practice/server-page-data";
 
 export const metadata: Metadata = {
-  title: "Today — Ascend",
+  title: "Today",
   description: "Your next lesson, today's Practice, and where you stand.",
 };
 

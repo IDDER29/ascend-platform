@@ -5,7 +5,7 @@ import { SiteShell } from "@/components/site/site-shell";
 import { WRAP } from "@/components/site/site-ui";
 
 export const metadata: Metadata = {
-  title: "Reset link expired — Ascend",
+  title: "Reset link expired",
   robots: { index: false, follow: false },
 };
 

@@ -7,7 +7,7 @@ import { getProfileOwner } from "@/lib/profile/queries";
 import { loadProfileModel } from "@/lib/profile/server-page-data";
 
 export const metadata: Metadata = {
-  title: "Profile — Ascend",
+  title: "Profile",
   description: "Who you are as a learner, and what you have built.",
 };
 

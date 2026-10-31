@@ -8,8 +8,8 @@ export async function generateMetadata({ params }: { params: Promise<{ publicSlu
   const ref = resolveLessonPublicSlug((await params).publicSlug);
   const lesson = ref ? getLesson(ref.level, ref.slug) : null;
   return lesson
-    ? { title: `${lesson.meta.title} — Ascend`, description: lesson.meta.whyThisMatters.slice(0, 160) }
-    : { title: "Lesson — Ascend" };
+    ? { title: `${lesson.meta.title}`, description: lesson.meta.whyThisMatters.slice(0, 160) }
+    : { title: "Lesson" };
 }
 
 const MAIN =

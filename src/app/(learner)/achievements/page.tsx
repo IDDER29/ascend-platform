@@ -5,7 +5,7 @@ import { HUB_CONTENT_CLASS, PageHeader } from "@/components/ui/page-header";
 import { loadAchievementsModel } from "@/lib/achievements/server-page-data";
 
 export const metadata: Metadata = {
-  title: "Achievements — Ascend",
+  title: "Achievements",
   description: "Your decorations, worn on your chest, each with its citation.",
 };
 

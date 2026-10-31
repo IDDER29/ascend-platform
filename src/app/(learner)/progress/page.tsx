@@ -9,7 +9,7 @@ import type { ProgressLesson } from "@/lib/progress/progress-v2-model";
 import { getStreak, listCompletedLessons } from "@/lib/progress/queries";
 
 export const metadata: Metadata = {
-  title: "Progress — Ascend",
+  title: "Progress",
   description: "What you've learned, and how much of it is sticking.",
 };
 

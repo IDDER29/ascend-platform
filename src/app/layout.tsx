@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Hanken_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { getAllLessons } from "@/lib/content/lessons";
@@ -6,6 +6,7 @@ import { LEVELS } from "@/lib/content/schema";
 import { CommandPalette, type PaletteLesson } from "@/components/command-palette";
 import { lessonHref } from "@/lib/paths/lesson-urls";
 import { SITE_URL } from "@/lib/site/site-nav";
+import { ASCEND_BRAND } from "@/lib/brand/ascend-icon";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -25,15 +26,35 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600", "700"],
 });
 
+const DESCRIPTION =
+  "A free, open-source, bottom-up computer-science curriculum. Bits, logic, the CPU, memory, C, and operating systems — from a single bit up.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Ascend — Learn how computers really work",
-  description:
-    "A free, open-source, bottom-up computer-science curriculum. Bits, logic, the CPU, memory, C, and operating systems — from a single bit up.",
+  // Pages give just their own name ("Practice"); the template adds the brand.
+  title: { default: "Ascend — Learn how computers really work", template: "%s — Ascend" },
+  description: DESCRIPTION,
   applicationName: "Ascend",
+  // Listing icons here replaces Next's automatic tags, so every one is named: the SVG favicon first
+  // (sharp, and lime in dark tab bars), the PNG from icon.tsx as a fallback, and apple-icon.tsx.
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon/32", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-icon", sizes: "180x180" }],
   },
+  openGraph: { siteName: "Ascend", type: "website", locale: "en", description: DESCRIPTION },
+  twitter: { card: "summary_large_image" },
+};
+
+/** The phone's browser bar takes the page colour, in light and dark. */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: ASCEND_BRAND.bg },
+    { media: "(prefers-color-scheme: dark)", color: ASCEND_BRAND.bgDark },
+  ],
+  colorScheme: "light dark",
 };
 
 // Deliberately NOT reading cookies()/the session here: doing so would opt

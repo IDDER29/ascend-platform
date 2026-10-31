@@ -9,7 +9,7 @@ import { loadAchievementsInput } from "@/lib/achievements/server-page-data";
 import { SIGNIN_HREF } from "@/lib/routes";
 
 export const metadata: Metadata = {
-  title: "ShellForge — Build your own shell — Ascend",
+  title: "ShellForge — Build your own shell",
   description: "The capstone of Systems Programmer: a working shell in C.",
 };
 

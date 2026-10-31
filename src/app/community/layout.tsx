@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 // A preview, not part of the first version: kept out of search and unlinked.
 export const metadata: Metadata = {
-  title: "Community (preview) — Ascend",
+  title: "Community (preview)",
   robots: { index: false, follow: false },
 };
 

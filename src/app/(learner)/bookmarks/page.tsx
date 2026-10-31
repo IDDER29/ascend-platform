@@ -3,7 +3,7 @@ import { BookmarksPage } from "@/components/bookmarks/bookmarks-page";
 import { HUB_CONTENT_CLASS, PageHeader } from "@/components/ui/page-header";
 
 export const metadata: Metadata = {
-  title: "Bookmarks — Ascend",
+  title: "Bookmarks",
   description: "What you saved to come back to: lessons, sections, snippets, resources and Practice cards.",
 };
 

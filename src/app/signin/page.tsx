@@ -6,7 +6,7 @@ import { SiteShell } from "@/components/site/site-shell";
 import { WRAP } from "@/components/site/site-ui";
 
 export const metadata: Metadata = {
-  title: "Sign in — Ascend",
+  title: "Sign in",
   description: "Sign in or create a free Ascend account to keep your progress. Lessons stay open either way.",
   robots: { index: false, follow: true },
 };

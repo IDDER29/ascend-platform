@@ -7,7 +7,7 @@ import { LEVELS, LevelIdSchema } from "@/lib/content/schema";
 
 export async function generateMetadata({ params }: { params: Promise<{ level: string }> }): Promise<Metadata> {
   const parsed = LevelIdSchema.safeParse((await params).level);
-  return { title: parsed.success ? `${LEVELS[parsed.data].name} — Ascend` : "Topic — Ascend" };
+  return { title: parsed.success ? LEVELS[parsed.data].name : "Topic" };
 }
 
 export default async function TopicCompletePage({ params }: { params: Promise<{ level: string }> }) {

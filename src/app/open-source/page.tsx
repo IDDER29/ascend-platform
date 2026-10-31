@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { OpenSourcePage } from "@/components/site/open-source-page";
 
 export const metadata: Metadata = {
-  title: "Open source — Ascend",
+  title: "Open source",
   description: "Ascend's code and lessons are on GitHub. Fix a lesson, report a problem, or run your own copy.",
 };
 

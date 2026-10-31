@@ -5,7 +5,7 @@ import { SiteShell } from "@/components/site/site-shell";
 import { WRAP } from "@/components/site/site-ui";
 
 export const metadata: Metadata = {
-  title: "Choose a new password — Ascend",
+  title: "Choose a new password",
   robots: { index: false, follow: false },
 };
 

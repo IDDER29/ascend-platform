@@ -1,0 +1,97 @@
+---
+title: "Text: ASCII, Unicode and UTF-8"
+level: level-00-bits-logic
+slug: text-ascii-utf8
+order: 31
+timeMin: 8
+learningOutcomes:
+- Tell apart a character, its code point and the bytes that store it
+- Read and write a few ASCII codes in decimal and hex
+- Explain why Unicode needed more than one byte per character
+- Work out how many bytes UTF-8 uses for a character, and why "café" takes five bytes, not four
+primer:
+- title: "Codes, symbols and meaning"
+  type: doc
+  meta: Reread · 3 min · text is one particular code.
+  essential: true
+- title: 'Representing Numbers and Letters with Binary: Crash Course Computer Science #4'
+  type: video
+  meta: Watch · 11 min · ASCII and Unicode, from the beginning.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=1GSjbWt0c9M'
+knowledgeCheck:
+- question: What is the difference between a character, its code point and its bytes?
+  answer: "The character is the symbol, like é. Its code point is the number Unicode gives it, U+00E9 (233). Its bytes are how that number is stored, which depends on the encoding: in UTF-8, é is the two bytes C3 A9."
+  jumpToId: three-things-not-one
+  jumpToLabel: Three things, not one
+- question: How many bytes does UTF-8 use for A, for é, for € and for an emoji?
+  answer: "One for A (41), two for é (C3 A9), three for € (E2 82 AC) and four for an emoji such as 😀 (F0 9F 98 80). Code points up to 127 take one byte; bigger ones take two, three or four."
+  jumpToId: utf-8-one-to-four-bytes
+  jumpToLabel: "UTF-8: one to four bytes"
+- question: Why does a text full of é sometimes show up as Ã©?
+  answer: The bytes C3 A9 were written as UTF-8 but read as if each byte were one character in an older one-byte code, where C3 is Ã and A9 is ©. The bytes were fine; the reader used the wrong code.
+  jumpToId: when-text-turns-to-garbage
+  jumpToLabel: When text turns to garbage
+assignment:
+  instruction: "Read Joel Spolsky's article on Unicode. Then pick a short word in a language other than English, and work out its UTF-8 bytes using a Unicode table (or an online converter): how many characters does it have, and how many bytes?"
+  resourceName: 'Joel on Software: The Absolute Minimum Every Software Developer Must Know About Unicode'
+  resourceType: site
+  resourceUrl: 'https://www.joelonsoftware.com/2003/10/08/the-absolute-minimum-every-software-developer-absolutely-positively-must-know-about-unicode-and-character-sets-no-excuses/'
+additionalResources:
+- title: 'Characters, Symbols and the Unicode Miracle (Computerphile)'
+  type: video
+  meta: 9 min, how UTF-8 was designed
+  url: 'https://www.youtube.com/watch?v=MijmeoH9LT4'
+- title: ASCII (Wikipedia)
+  type: doc
+  meta: reference, with the full table
+  url: 'https://en.wikipedia.org/wiki/ASCII'
+- title: UTF-8 (Wikipedia)
+  type: doc
+  meta: reference, how the bytes are built
+  url: 'https://en.wikipedia.org/wiki/UTF-8'
+whyThisMatters: "Every program that reads a file, a web page or a message is decoding text, and the bugs are everywhere: names with accents turned to garbage, a string that's \"too long\" because it counted bytes instead of characters, an emoji split in half. In C you'll work with text as raw bytes, so knowing exactly how characters become bytes is what keeps those bugs out of your code."
+---
+
+In the last course you saw that a pattern of bits means nothing until two sides agree on a code. Text is the most important code there is. Every letter you've read on this page arrived as bytes and was turned back into letters by a shared agreement.
+
+By the end you'll be able to tell a character from the bytes that store it, read a few ASCII codes, and work out how many bytes a piece of text really takes.
+
+## ASCII: one byte, one letter
+
+The first widely shared code for text was <b>ASCII</b>, from 1963. It gives each of 128 characters a number from 0 to 127: the English letters, digits, punctuation, the space, and some control codes such as a new line. 128 numbers fit in 7 bits, so every ASCII character fits in one byte with a bit to spare.
+
+<TruthTable caption='A few ASCII codes' rowsJson='[["character", "decimal", "hex", "bits"], ["A", "65", "41", "0100 0001"], ["B", "66", "42", "0100 0010"], ["a", "97", "61", "0110 0001"], ["0", "48", "30", "0011 0000"], ["space", "32", "20", "0010 0000"]]' />
+
+Two patterns are worth noticing. The letters are in order, so B is A + 1. And a lowercase letter is its capital plus 32, which is one bit: 0100 0001 is A and 0110 0001 is a. The digit 0 is not the number 0: it is the character with code 48.
+
+<ByteLab caption='The word Hi, as ASCII' bytesJson='[72, 105]' />
+
+## Three things, not one
+
+ASCII has no é, no ñ, no Chinese or Arabic, no emoji. <b>Unicode</b> fixes that by giving every character in every writing system its own number, called a <b>code point</b>, written like U+00E9. There are over a million possible code points, far more than one byte can hold.
+
+That forces a distinction that ASCII let us ignore. For any character there are three separate things:
+
+<TruthTable caption='Character, code point, bytes' rowsJson='[["character", "code point", "UTF-8 bytes"], ["A", "U+0041 (65)", "41"], ["é", "U+00E9 (233)", "C3 A9"], ["€", "U+20AC (8364)", "E2 82 AC"], ["😀", "U+1F600 (128512)", "F0 9F 98 80"]]' />
+
+The character is what you see. The code point is the number Unicode gives it. The bytes are how that number is stored, and that depends on the <b>encoding</b>.
+
+<KeyIdea>A character is not a byte. It is a symbol, with a number, stored as one or more bytes.</KeyIdea>
+
+## UTF-8: one to four bytes
+
+<b>UTF-8</b> is the encoding almost the whole web uses. Its rule is simple to state:
+
+- Code points 0 to 127 (all of ASCII) take <b>one byte</b>, exactly as in ASCII.
+- Bigger code points take <b>two, three or four bytes</b>.
+
+So every old ASCII file is already valid UTF-8, which is a big part of why it won. The bytes of a longer character are easy to spot: the first byte starts with 110, 1110 or 11110 (saying how many bytes follow), and each byte after it starts with 10.
+
+That means text length has two answers. The word "café" has four characters but five bytes: 63 61 66 for c, a, f, then C3 A9 for é. A program that counts bytes and a person who counts letters will disagree.
+
+## When text turns to garbage
+
+If you've ever seen "cafÃ©" where "café" should be, you've seen the codebook problem from the last course. The bytes C3 A9 were written as UTF-8 but read by a program that assumed one byte per character, using an older code where C3 is Ã and A9 is ©. Not one bit was damaged. The reader used the wrong code.
+
+<KeyIdea>Text bytes only mean something together with their encoding. When text looks broken, ask which encoding wrote it and which one read it.</KeyIdea>

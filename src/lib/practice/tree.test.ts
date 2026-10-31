@@ -12,7 +12,7 @@ test("practiceTreeForPath maps live Foundations outline sections", () => {
   assert.ok(tree);
   assert.deepEqual(
     tree.sections.map((section) => section.id),
-    ["computers", "information", "instructions", "bits", "logic", "memory", "storage", "isa", "machine-runs", "system"],
+    ["computers", "information", "instructions", "bits", "data", "logic", "memory", "storage", "isa", "machine-runs", "system"],
   );
   assert.deepEqual(
     tree.sections[1]?.lessons.map((lesson) => ({

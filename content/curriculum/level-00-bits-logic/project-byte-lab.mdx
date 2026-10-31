@@ -1,0 +1,116 @@
+---
+title: "Project: The Byte Lab"
+level: level-00-bits-logic
+slug: project-byte-lab
+order: 35
+timeMin: 30
+learningOutcomes:
+- Show that one byte can be a number, a negative number, a letter and part of a colour, depending on how it's read
+- Change a letter's case and read a setting with a single bit operation
+- Explain why two bytes give different numbers in different byte orders
+- Work out what a mystery message means, and say what extra information you needed to be sure
+primer:
+- title: "Codes, symbols and meaning"
+  type: doc
+  meta: Reread · 3 min · the idea this whole project tests.
+  essential: true
+- title: "Bitwise operations: AND, OR, XOR, shifts and masks"
+  type: doc
+  meta: Reread · 3 min · you'll use masks in part 3.
+  essential: true
+knowledgeCheck:
+- question: How do you turn 'A' into 'a' with one operation, and why does it work?
+  answer: "XOR it with 32 (0010 0000), or flip the bit worth 32. In ASCII every lowercase letter is its capital plus 32, so that one bit is the case bit: 'A' is 65 and 'a' is 97."
+  jumpToId: part-2-the-case-bit
+  jumpToLabel: "Part 2: The case bit"
+- question: The bytes 34 12 (hex) make two different 16-bit numbers. Which, and why?
+  answer: "Read low byte first (little-endian) they are 0x1234, or 4660. Read high byte first (big-endian) they are 0x3412, or 13330. The bytes don't say which order was used; the format does."
+  jumpToId: part-4-which-byte-comes-first
+  jumpToLabel: "Part 4: Which byte comes first?"
+- question: Why couldn't you be sure what the mystery bytes meant until you were told the format?
+  answer: "The same three bytes are a valid number list (72, 105, 33), valid text (Hi!) and a valid colour (#486921). Every reading works; only the agreement between writer and reader picks one."
+  jumpToId: part-5-the-mystery-message
+  jumpToLabel: "Part 5: The mystery message"
+assignment:
+  instruction: "Find a real file's first bytes: open any PNG in a hex viewer (on Linux or macOS, run xxd picture.png | head -1 in a terminal; online hex viewers work too). Type its first four bytes into the Byte Lab and look at each byte's ASCII reading. What do they spell, why is the first byte not a letter at all, and why would a file format start that way?"
+  resourceName: 'Wikipedia: List of file signatures'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/List_of_file_signatures'
+additionalResources:
+- title: ASCII (Wikipedia)
+  type: doc
+  meta: the full table, with the case bit visible
+  url: 'https://en.wikipedia.org/wiki/ASCII'
+- title: Endianness (Wikipedia)
+  type: doc
+  meta: byte order in real machines and network protocols
+  url: 'https://en.wikipedia.org/wiki/Endianness'
+whyThisMatters: "Memory, files and network packets are all just bytes. Every time you debug a corrupted file, a garbled string or a number that's wildly wrong, you're doing what this project does: reading the same bytes several ways until one makes sense, then asking what format they were meant to be in."
+---
+
+The Byte Lab shows bytes and reads them several ways at once: as unsigned and signed numbers, as hex, as ASCII and UTF-8 text, as a colour, and as a 16-bit number. In this project you use it to investigate. For each part, predict first, then try it in the Lab, then open "Check your answer".
+
+<ByteLab caption='The Byte Lab' bytesJson='[65]' />
+
+## Part 1: One byte, five readings
+
+Set the first byte to 65. Predict what each reading will show: unsigned, signed, hex, binary and ASCII. Then set it to 255 and predict again.
+
+<details>
+<summary>Check your answer</summary>
+
+65 is 65 unsigned and signed, 0x41, 0100 0001, and the letter 'A'. 255 is 255 unsigned but -1 signed, 0xFF, 1111 1111, and no printable character at all.
+
+The bits are the only thing stored. The five readings are five codebooks applied to them.
+
+</details>
+
+## Part 2: The case bit
+
+With the byte at 65 ('A'), flip just the bit worth 32. What letter do you get? Now try the same with 90 ('Z'). Then use the "Try" row: XOR with 32 (type 0x20), and press "Keep it".
+
+<details>
+<summary>Check your answer</summary>
+
+65 becomes 97, 'a', and 90 becomes 122, 'z'. ASCII was designed so that every lowercase letter is its capital plus 32. That makes the bit worth 32 a case switch: XOR 32 flips the case, AND with 1101 1111 (0xDF) forces a capital, and OR with 32 forces lowercase.
+
+</details>
+
+## Part 3: Read a setting with a mask
+
+A program keeps eight on/off settings in one byte, one per bit. The byte is 0010 1101 (45). Setting number 2 (the bit worth 4) means "dark mode". Is dark mode on? Use AND with a mask to find out, then switch dark mode off without touching any other setting.
+
+<details>
+<summary>Check your answer</summary>
+
+45 AND 4 (0000 0100) is 4, not 0, so dark mode is on. To switch it off and keep everything else, AND with the opposite mask, 1111 1011 (0xFB): 45 AND 251 is 41, 0010 1001. Only the bit worth 4 changed.
+
+</details>
+
+## Part 4: Which byte comes first?
+
+Use the plus button to add a second byte. Set the two bytes to 0x34 and 0x12. Look at the 16-bit reading: it shows two numbers. Which is which, and which one is right?
+
+<details>
+<summary>Check your answer</summary>
+
+Low byte first (little-endian, as on x86 and most ARM machines), 34 12 is 0x1234, which is 4660. High byte first (big-endian, as in many network protocols), it's 0x3412, which is 13330. Neither is "right": the file format or the machine decides the order, and reading with the wrong one gives a wildly wrong number.
+
+</details>
+
+## Part 5: The mystery message
+
+Someone sends you three bytes: 72, 105, 33. Set them in the Lab. Read them as numbers, as text and as a colour. What did they mean?
+
+<details>
+<summary>Check your answer</summary>
+
+As numbers they're 72, 105 and 33. As text they say "Hi!". As a colour they're #486921, a dark olive green. All three readings are valid, and nothing in the bytes says which was meant. "Hi!" looks likely, but if the sender was a drawing app, it's a colour. You can only be sure once you know the format, which is the codebook lesson again.
+
+</details>
+
+<KeyIdea>Bytes don't say what they are. To read them right, you need to know the format they were written in.</KeyIdea>
+
+## Done when
+
+You've made all five predictions and checked each in the Lab, and you can explain, for any byte you're shown, why it might be a number, a letter or part of a colour. Then do the assignment: read the first bytes of a real PNG file.

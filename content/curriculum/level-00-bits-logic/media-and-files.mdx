@@ -1,0 +1,89 @@
+---
+title: "Pixels, colour, sound and files"
+level: level-00-bits-logic
+slug: media-and-files
+order: 32
+timeMin: 8
+learningOutcomes:
+- Describe a picture as a grid of pixels, each stored as red, green and blue bytes
+- Work out the size of an uncompressed image from its width, height and bytes per pixel
+- Explain how sound becomes numbers by sampling, and what sample rate and sample size mean
+- Explain how a program recognises a file's format from its first bytes, and why the file name alone isn't enough
+primer:
+- title: "Text: ASCII, Unicode and UTF-8"
+  type: doc
+  meta: Reread · 3 min · another code for the same kind of bytes.
+  essential: true
+- title: 'Representing Numbers and Letters with Binary: Crash Course Computer Science #4'
+  type: video
+  meta: Watch · 11 min · bytes standing for different things.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=1GSjbWt0c9M'
+knowledgeCheck:
+- question: How many bytes does an uncompressed 1920 by 1080 picture take with one byte each for red, green and blue?
+  answer: "1920 × 1080 pixels × 3 bytes = 6,220,800 bytes, about 6.2 MB. That's why image formats compress."
+  jumpToId: pictures-are-grids-of-numbers
+  jumpToLabel: Pictures are grids of numbers
+- question: What do sample rate and sample size mean for recorded sound?
+  answer: "The sample rate is how many times a second the sound's pressure is measured (44,100 for a CD). The sample size is how many bits each measurement gets (16 for a CD), which sets how finely loud and quiet can be told apart."
+  jumpToId: sound-is-a-list-of-measurements
+  jumpToLabel: Sound is a list of measurements
+- question: How can a program tell that a file is a PNG even if it's been renamed to photo.txt?
+  answer: Every PNG file starts with the same eight bytes, beginning 89 50 4E 47 (the last three are the letters PNG in ASCII). Programs check these first bytes, called a magic number or signature; the name is only a hint.
+  jumpToId: files-say-what-they-are-in-their-first-bytes
+  jumpToLabel: Files say what they are in their first bytes
+assignment:
+  instruction: "Pick three files on your computer of different kinds (a picture, a PDF, a zip or document). Open each in a hex viewer (on macOS or Linux, run xxd file | head; on Windows, use an online hex viewer) and compare the first bytes with the list of file signatures. Do they match what the name says?"
+  resourceName: 'Wikipedia: List of file signatures'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/List_of_file_signatures'
+additionalResources:
+- title: RGB colour model (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/RGB_color_model'
+- title: Pulse-code modulation (Wikipedia)
+  type: doc
+  meta: reference, how sound is sampled into numbers
+  url: 'https://en.wikipedia.org/wiki/Pulse-code_modulation'
+whyThisMatters: "Every photo, song and video you've used is bytes read under an agreement, exactly like text. Knowing that a pixel is three numbers and a second of sound is tens of thousands of them tells you why files are the size they are, why formats compress, and why a corrupted header makes a whole file unreadable. Later, reading and writing files in C means working with exactly these bytes."
+---
+
+Text is one code for bytes. Pictures, colours, sound and every file format are others. Nothing about the bytes changes from one to the next; only the agreement about how to read them does.
+
+By the end you'll be able to describe a picture and a sound as numbers, work out how big they are, and say how a program knows what kind of file it has opened.
+
+## Pictures are grids of numbers
+
+A digital picture is a grid of tiny squares called <b>pixels</b>. Each pixel is one colour, and a colour on a screen is a mix of red, green and blue light. The most common code gives each of the three one byte, from 0 (none) to 255 (full).
+
+<TruthTable caption='Colours as three bytes' rowsJson='[["colour", "red", "green", "blue", "hex"], ["black", "0", "0", "0", "000000"], ["white", "255", "255", "255", "FFFFFF"], ["red", "255", "0", "0", "FF0000"], ["orange", "255", "165", "0", "FFA500"], ["mid grey", "128", "128", "128", "808080"]]' />
+
+Three bytes of 256 values each make 256 × 256 × 256 = 16,777,216 possible colours. Those hex codes are the same ones web designers write, such as #FFA500.
+
+<ByteLab caption='Three bytes read as a colour' bytesJson='[255, 165, 0]' />
+
+Size follows directly. A 1920 × 1080 picture has 2,073,600 pixels; at 3 bytes each that's 6,220,800 bytes, over 6 MB for one picture. Formats like PNG and JPEG exist to store the same grid in fewer bytes.
+
+## Sound is a list of measurements
+
+Sound is air pressure rising and falling smoothly, an analog signal. To store it, a computer measures the pressure many times a second and writes each measurement down as a number. Each measurement is a <b>sample</b>.
+
+Two numbers describe the recording:
+
+- The <b>sample rate</b>: how many samples per second. A CD uses 44,100.
+- The <b>sample size</b>: how many bits per sample. A CD uses 16, so each sample is one of 65,536 values.
+
+A CD stores two channels (left and right), so one second takes 44,100 × 2 bytes × 2 channels = 176,400 bytes, and a minute takes 10,584,000 bytes, about 10.6 MB. Played back fast enough, the steps between samples are too small to hear.
+
+<KeyIdea>A picture is a grid of colour numbers; a sound is a list of pressure numbers. Both are bytes with an agreed way to read them.</KeyIdea>
+
+## Files say what they are in their first bytes
+
+A file is just a long row of bytes. How does a program know whether to read them as a picture, a document or a zip? The name's ending (.png, .pdf) is a hint, but it can be wrong or missing. Most formats start with a fixed <b>signature</b>, sometimes called a magic number:
+
+<TruthTable caption='The first bytes of some formats' rowsJson='[["format", "first bytes (hex)", "as ASCII"], ["PNG image", "89 50 4E 47", "a byte, then PNG"], ["PDF document", "25 50 44 46", "%PDF"], ["GIF image", "47 49 46 38", "GIF8"], ["ZIP archive", "50 4B", "PK"]]' />
+
+After the signature comes a <b>header</b>: the agreed facts a reader needs before the data, such as an image's width and height. Then comes the data itself. A file format is a codebook written down precisely enough that programs by different people can all read it.
+
+<KeyIdea>A file's format is an agreement about its bytes. The signature at the start says which agreement to use.</KeyIdea>

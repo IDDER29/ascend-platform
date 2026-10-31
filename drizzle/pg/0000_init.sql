@@ -1,3 +1,9 @@
+CREATE TABLE "auth_attempts" (
+	"id" text PRIMARY KEY NOT NULL,
+	"key" text NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "badges_earned" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
@@ -10,23 +16,7 @@ CREATE TABLE "bookmarks" (
 	"user_id" text NOT NULL,
 	"kind" text NOT NULL,
 	"ref_id" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "community_replies" (
-	"id" text PRIMARY KEY NOT NULL,
-	"thread_id" text NOT NULL,
-	"user_id" text NOT NULL,
-	"body" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "community_threads" (
-	"id" text PRIMARY KEY NOT NULL,
-	"user_id" text NOT NULL,
-	"category" text NOT NULL,
-	"title" text NOT NULL,
-	"body" text NOT NULL,
+	"data" text DEFAULT '{}' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -46,6 +36,16 @@ CREATE TABLE "own_projects" (
 	"url" text NOT NULL,
 	"tags" text DEFAULT '[]' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "password_reset_tokens" (
+	"id" text PRIMARY KEY NOT NULL,
+	"user_id" text NOT NULL,
+	"token_hash" text NOT NULL,
+	"expires_at" timestamp NOT NULL,
+	"used_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "password_reset_tokens_token_hash_unique" UNIQUE("token_hash")
 );
 --> statement-breakpoint
 CREATE TABLE "practice_cards" (
@@ -151,16 +151,15 @@ CREATE TABLE "users" (
 	"email" text NOT NULL,
 	"password_hash" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
+	"password_changed_at" timestamp,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
 ALTER TABLE "badges_earned" ADD CONSTRAINT "badges_earned_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "bookmarks" ADD CONSTRAINT "bookmarks_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "community_replies" ADD CONSTRAINT "community_replies_thread_id_community_threads_id_fk" FOREIGN KEY ("thread_id") REFERENCES "public"."community_threads"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "community_replies" ADD CONSTRAINT "community_replies_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "community_threads" ADD CONSTRAINT "community_threads_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "lesson_progress" ADD CONSTRAINT "lesson_progress_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "own_projects" ADD CONSTRAINT "own_projects_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "password_reset_tokens" ADD CONSTRAINT "password_reset_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "practice_cards" ADD CONSTRAINT "practice_cards_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "practice_decks" ADD CONSTRAINT "practice_decks_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "practice_sessions" ADD CONSTRAINT "practice_sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -171,7 +170,9 @@ ALTER TABLE "profiles" ADD CONSTRAINT "profiles_user_id_users_id_fk" FOREIGN KEY
 ALTER TABLE "project_links" ADD CONSTRAINT "project_links_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "shellforge_submissions" ADD CONSTRAINT "shellforge_submissions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "streaks" ADD CONSTRAINT "streaks_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "auth_attempts_key_time_idx" ON "auth_attempts" USING btree ("key","created_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "badges_earned_user_badge_idx" ON "badges_earned" USING btree ("user_id","badge_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "bookmarks_user_ref_idx" ON "bookmarks" USING btree ("user_id","ref_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "lesson_progress_user_lesson_idx" ON "lesson_progress" USING btree ("user_id","level","slug");--> statement-breakpoint
 CREATE INDEX "own_projects_user_idx" ON "own_projects" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "practice_cards_user_due_idx" ON "practice_cards" USING btree ("user_id","due_at");--> statement-breakpoint

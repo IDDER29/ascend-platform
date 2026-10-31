@@ -32,4 +32,8 @@ test("only this learner's browser progress is cleared; a deleted account also lo
     "ascend:check-yourself:level-00/what-is-a-bit",
   ]);
   assert.ok(storageKeysToClear(keys, "u1", "account").includes("ascend_practice_daily_goal_v1:u1"));
+  // Bookmarks belong to the account: a deletion clears them from this browser, a reset keeps them.
+  assert.ok(storageKeysToClear([...keys, "ascend:bookmarks-synced:u1"], "u1", "account").includes("ascend:bookmarks"));
+  assert.ok(storageKeysToClear([...keys, "ascend:bookmarks-synced:u1"], "u1", "account").includes("ascend:bookmarks-synced:u1"));
+  assert.ok(!storageKeysToClear(keys, "u1", "progress").includes("ascend:bookmarks"));
 });

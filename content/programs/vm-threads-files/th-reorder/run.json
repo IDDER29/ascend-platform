@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/th-reorder",
+  "sourceHash": "92c05534f6c164bc",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 -pthread main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "relaxed: both read 0 in 39078 of 200000 trials\nseq_cst: both read 0 in 0 of 200000 trials\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

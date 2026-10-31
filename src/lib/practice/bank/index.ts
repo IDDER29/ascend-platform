@@ -32,6 +32,9 @@ import { C_CONTRACT_B_BANK } from "./level-05-b";
 import { LEVEL_03_BANK } from "./level-03";
 import { SYSTEMS_B_BANK } from "./level-03-b";
 import { LEVEL_08_BANK } from "./level-08";
+import { VM_THREADS_A_BANK } from "./level-08-a";
+import { VM_THREADS_B_BANK } from "./level-08-b";
+import { LEVEL_09_BANK } from "./level-09";
 
 /**
  * Every Practice card, one file per curriculum level. Card ids are
@@ -71,5 +74,8 @@ export const PRACTICE_BANK: PracticeItem[] = [
   ...LEVEL_07_BANK,
   ...LEVEL_03_BANK,
   ...SYSTEMS_B_BANK,
+  ...VM_THREADS_A_BANK,
+  ...VM_THREADS_B_BANK,
   ...LEVEL_08_BANK,
+  ...LEVEL_09_BANK,
 ];

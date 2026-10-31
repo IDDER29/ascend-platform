@@ -1,0 +1,108 @@
+---
+title: "Condition variables"
+level: level-08-vm-threads-files
+slug: condition-variables
+order: 8
+timeMin: 11
+learningOutcomes:
+- Explain why busy-waiting on a flag wastes a whole core, and how a condition variable lets a thread sleep instead
+- Use pthread_cond_wait correctly, with the mutex held and the condition checked in a while loop
+- Build a bounded producer-consumer queue with one mutex and two condition variables
+- Explain why a woken thread must check its condition again, using broadcast and spurious wakeups as examples
+primer:
+- title: "Mutexes and locks"
+  type: doc
+  meta: Reread · 3 min · a condition variable always works with a mutex.
+  essential: true
+knowledgeCheck:
+- question: Why does pthread_cond_wait take the mutex as an argument?
+  answer: "It releases the mutex and puts the thread to sleep in one atomic step, so no signal can slip in between checking the condition and starting to wait. When the thread wakes, pthread_cond_wait takes the mutex back before returning, so the thread can safely look at the shared data again."
+  jumpToId: sleep-until-something-changes
+  jumpToLabel: Sleep until something changes
+- question: Why must the condition be checked in a while loop, not an if?
+  answer: "Waking up doesn't mean the condition is still true. Another woken thread may have taken the item first (as with broadcast in the lesson), and POSIX allows spurious wakeups with no signal at all. A while loop checks again after every wake-up and goes back to sleep if needed."
+  jumpToId: why-the-while-loop
+  jumpToLabel: Why the while loop
+assignment:
+  instruction: "Extend the bounded queue so there are 3 producers and 3 consumers, each producer adding the numbers 1 to 1000. Check that the total consumed is 3 × 500500 and the queue ends empty. Then make it shut down cleanly: a done flag, set when all producers finish, and broadcast so every consumer wakes and exits."
+  resourceName: 'OSTEP: Condition Variables'
+  resourceType: doc
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/threads-cv.pdf'
+additionalResources:
+- title: "pthread_cond_wait(3p)"
+  type: doc
+  meta: the exact rules, spurious wakeups included
+  url: 'https://man7.org/linux/man-pages/man3/pthread_cond_wait.3p.html'
+whyThisMatters: "Threads constantly wait for each other: for work to arrive, for space to free up, for a result. Condition variables are how they wait without burning CPU, and the producer-consumer queue you build here is the heart of thread pools, web servers and pipelines."
+---
+
+A mutex stops threads from touching shared data at the same time. Threads often also need to **wait** for each other: a consumer waits until there's something to take, a producer until there's room. This lesson is about waiting well.
+
+## Waiting by spinning
+
+The simplest way to wait is to check a flag over and over until it changes. That's **busy-waiting**. Here one thread busy-waits and another waits on a condition variable. Both wait for the same half second, and each reports how much CPU time it used. The numbers are real and vary a little between runs.
+
+<CRun program="vm-threads-files/th-cv-busy" caption='Spinning versus sleeping, for half a second' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The busy waiter used about 500 ms of CPU: a whole core, flat out, for the entire wait, doing nothing useful. The thread waiting on a condition variable used about 0.1 ms. It was asleep, off the CPU, until it was signalled. On a busy machine, the spinning core is a core other threads couldn't use.
+
+</details>
+
+## Sleep until something changes
+
+A **condition variable** is a place where threads sleep until another thread signals that something changed. It always works with a mutex that protects the shared data:
+
+```c
+pthread_mutex_lock(&lock);
+while (count == 0) {                  /* nothing to take yet */
+    pthread_cond_wait(&not_empty, &lock);
+}
+/* count > 0 here, and we hold the lock */
+```
+
+`pthread_cond_wait` **releases the mutex and sleeps, as one step**, so a signal can't slip in between the check and the sleep. When it wakes, it takes the mutex back before returning. On the other side, a thread that changes the data does so under the same mutex, then calls `pthread_cond_signal` (wake one waiter) or `pthread_cond_broadcast` (wake all of them).
+
+## A bounded queue
+
+Here's the classic **producer-consumer** queue: a ring buffer that holds at most 4 items, one mutex, and two condition variables. `not_full` is for producers waiting for room, and `not_empty` for consumers waiting for an item. A producer puts in the numbers 1 to 20 while a consumer adds up everything it takes. Predict the two lines.
+
+<CRun program="vm-threads-files/th-cv-queue" caption='A bounded queue of 4' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+All 20 items are consumed, they sum to 210, and the queue ends empty. On every run, even though the two threads interleave differently each time. The producer often finds the queue full and sleeps on `not_full`. The consumer often finds it empty and sleeps on `not_empty`. Each wakes the other after changing `count`.
+
+Each side signals the *other* side's condition: `put` signals `not_empty` and `take` signals `not_full`. Every change to `buffer`, `head`, `tail` and `count` happens with the mutex held.
+
+</details>
+
+## Why the while loop
+
+Here two consumers wait for an item. Main adds **one** item but wakes **both** with `pthread_cond_broadcast`. The consumers use `if` instead of `while` to decide whether to wait. Predict what they report.
+
+<CRun program="vm-threads-files/th-cv-if" caption='Waiting with if' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+One consumer took the item, and the other **woke up to an empty queue**. Both were woken. The first to get the mutex took the item. The second, having checked only once with `if`, carried on as if there were an item. In a real queue it would have read garbage from the buffer and made `count` negative.
+
+Here's the same program with `while`:
+
+<CRun program="vm-threads-files/th-cv-while" caption='Waiting with while' />
+
+The second consumer checks again, finds nothing, and goes back to sleep until a second item arrives.
+
+There's a second reason for `while`: POSIX allows **spurious wakeups**, where a wait returns with no signal at all. So the rule has no exceptions: always wait in a loop that re-checks the condition.
+
+</details>
+
+<KeyIdea>Lock the mutex, wait in a while loop on the condition, act, unlock. Signal after changing what someone may be waiting for, with the same mutex held.</KeyIdea>
+
+## Done when
+
+You can say what busy-waiting costs, write the lock, while, wait pattern, explain the two condition variables of a bounded queue, and say why `if` is a bug.

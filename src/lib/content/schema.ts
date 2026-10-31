@@ -6,9 +6,11 @@ export const levelIds = [
   "level-04-c-basics",
   "level-02-the-c-language",
   "level-05-c-contract",
+  "level-06-c-tools",
   "level-07-data-structures",
   "level-03-systems-software",
   "level-08-vm-threads-files",
+  "level-09-memory-allocator",
 ] as const;
 
 export const LevelIdSchema = z.enum(levelIds);
@@ -114,6 +116,12 @@ export const LEVELS: Record<
     totalConcepts: 8,
     timeLabel: "~2 hr",
   },
+  "level-06-c-tools": {
+    name: "Tools",
+    short: "The Workshop",
+    totalConcepts: 11,
+    timeLabel: "~2 hr",
+  },
   "level-07-data-structures": {
     name: "Data Structures in C",
     short: "The Toolbox",
@@ -131,5 +139,11 @@ export const LEVELS: Record<
     short: "The Engine Room",
     totalConcepts: 14,
     timeLabel: "~3 hr",
+  },
+  "level-09-memory-allocator": {
+    name: "Your own malloc",
+    short: "The Capstone",
+    totalConcepts: 1,
+    timeLabel: "~1 hr",
   },
 };

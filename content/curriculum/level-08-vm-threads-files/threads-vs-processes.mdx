@@ -1,0 +1,105 @@
+---
+title: "Threads vs processes"
+level: level-08-vm-threads-files
+slug: threads-vs-processes
+order: 5
+timeMin: 10
+learningOutcomes:
+- Explain what threads in one process share (memory, globals, the heap, open files) and what each has of its own (registers, stack)
+- Predict whether a change made by a child process or by a thread is visible to the parent
+- Start and join POSIX threads in C, passing each one its own argument and getting a result back
+- Compare the cost of creating a thread with the cost of creating a process, and say when each is the better choice
+primer:
+- title: "Programs, processes and address spaces"
+  type: doc
+  meta: "Foundations · a process is a running program with its own memory."
+  essential: true
+- title: "Context switching: how the OS takes turns"
+  type: doc
+  meta: Reread · 3 min · how the kernel shares cores between everything that runs.
+  essential: true
+knowledgeCheck:
+- question: After fork, the child adds 1 to a global and exits. After a thread does the same, the parent sees the change. Why the difference?
+  answer: "fork gives the child its own copy of the parent's address space, so the child changed its copy and the parent's counter stayed 0. A thread runs inside the same process and the same address space, so its counter++ changed the one and only counter."
+  jumpToId: one-address-space-or-two
+  jumpToLabel: One address space or two
+- question: Why can't a thread return a pointer to one of its local variables to main?
+  answer: "Locals live on the thread's own stack, which disappears when the thread ends. Return results through memory that outlives the thread: a struct passed in as the argument (as in the lesson), a global, or something malloc'd."
+  jumpToId: what-each-thread-has-of-its-own
+  jumpToLabel: What each thread has of its own
+assignment:
+  instruction: "Write a program that starts 4 threads, each summing a quarter of an array of 1000000 ints, and returns its partial sum through its own struct. Join them, add the four parts in main and check the total against a single loop. Build with gcc -Wall -Wextra -pthread."
+  resourceName: 'OSTEP: Interlude: Thread API'
+  resourceType: doc
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/threads-api.pdf'
+additionalResources:
+- title: "OSTEP: Concurrency: An Introduction"
+  type: pdf
+  meta: threads, shared data and why they're hard
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/threads-intro.pdf'
+- title: "pthreads(7)"
+  type: doc
+  meta: what POSIX threads share and what each has of its own
+  url: 'https://man7.org/linux/man-pages/man7/pthreads.7.html'
+whyThisMatters: "Every server, browser and game you use runs many threads at once. Knowing exactly what they share is the first step to using them well, and to understanding the bugs the next lessons are about, which all come from that sharing."
+---
+
+In Foundations you saw that a CPU core runs one thing at a time, and that the OS switches between programs so quickly they seem to run together. A program can also do several things at once *itself*. It can start more processes with `fork`, or more **threads**, which are several lines of execution inside one process. This lesson is about the difference, which comes down to one question: is the memory shared?
+
+## One address space or two
+
+This program changes a global `counter` twice: first in a child process made by `fork`, then in a thread made by `pthread_create`. After each, the parent prints its own `counter`. Predict the three lines.
+
+<CRun program="vm-threads-files/th-share" caption='A child process and a thread, each adding 1' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- The child prints 1: it added 1 to *its* counter.
+- The parent, after the child, still prints 0. `fork` gave the child a **copy** of the whole address space, globals included, so the child's change happened in memory the parent never sees.
+- The parent, after the thread, prints 1. The thread runs in the **same** address space. There is only one `counter`, and the thread changed it.
+
+Note the shape of the thread calls: `pthread_create(&t, NULL, add_one, NULL)` starts `add_one` running in a new thread, and `pthread_join(t, NULL)` waits for it to finish, just as `waitpid` waits for a child. Build with `-pthread`.
+
+</details>
+
+<KeyIdea>Processes each get their own address space; threads in one process share one. Sharing is what makes threads cheap and fast to communicate, and what makes them dangerous.</KeyIdea>
+
+## What each thread has of its own
+
+Threads share the code, the globals, the heap and the open files. Each thread has its own:
+
+- **registers**, including its own instruction pointer, so it can be at a different place in the code;
+- **stack**, so its local variables and calls are its own.
+
+Here three threads run the same function. Each gets a pointer to its own `job` struct, counts in a local variable, and writes its answer back into its struct. Predict what main prints.
+
+<CRun program="vm-threads-files/th-own-stack" caption='Three threads, one function, three stacks' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+103, 203 and 303. Each thread has its own `local` on its own stack, so they don't interfere, even though all three run the same code at once. The results come back through each thread's `job`, which lives in `main`'s frame and outlives the threads.
+
+Two habits are visible here. Each thread gets **its own** argument: passing all three a pointer to one shared variable would be a race, the subject of the next lesson. And results go into memory that outlives the thread, never into a pointer to the thread's own locals, which vanish when it ends.
+
+</details>
+
+## What each costs
+
+A process is a whole new address space for the kernel to set up and tear down, plus a page table to copy (cheaply, with copy-on-write, but not for free). A thread is mostly a new stack and a new set of registers inside an address space that already exists. Here are 2000 of each, created and waited for, timed with the real clock. Your numbers will differ by machine and from run to run; the ratio is what matters.
+
+<CRun program="vm-threads-files/th-cost" caption='Creating and waiting for 2000 of each' />
+
+<details>
+<summary>Check your answer</summary>
+
+On this machine a process took about 190 microseconds to create and wait for, and a thread about 30: around six times cheaper. Switching between threads of one process is cheaper too, because the address space doesn't change.
+
+So when do you choose a process? When you want **isolation**: a crash or a bug in one process can't corrupt another's memory, and processes can run different programs (that's how a shell runs commands). Choose threads when the parts must share a lot of data quickly, and you're ready to coordinate that sharing carefully.
+
+</details>
+
+## Done when
+
+You can say what threads share and what each has of its own, predict when a change is visible to the parent, and give one reason to choose a process and one to choose a thread.

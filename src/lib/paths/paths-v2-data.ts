@@ -48,6 +48,7 @@ const PROJECT_BADGE: Record<string, string> = {
   "level-05-c-contract/project-ub-hunt": "ub-hunter",
   "level-07-data-structures/project-hash-map": "map-maker",
   "level-08-vm-threads-files/project-thread-pool": "pool-keeper",
+  "level-09-memory-allocator/project-malloc": "allocator",
   "/projects/shellforge": "ship-it",
 };
 

@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/th-cv-busy",
+  "sourceHash": "baab8c4cd85e1e8d",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 -pthread main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "busy waiting used      500.2 ms of CPU\ncondition wait used      0.1 ms of CPU\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/pf-count",
+  "sourceHash": "406e80e3141fbd66",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "writing 1 byte in each of 1000 new pages: 1000 faults\nwriting to the same pages again: 0 faults\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

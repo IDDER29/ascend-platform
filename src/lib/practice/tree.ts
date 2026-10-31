@@ -36,6 +36,10 @@ const LEVEL_OWNERS: PracticeLevelOwner[] = [
     pathSlug: "systems-programmer",
   },
   {
+    level: "level-06-c-tools",
+    pathSlug: "systems-programmer",
+  },
+  {
     level: "level-07-data-structures",
     pathSlug: "systems-programmer",
   },
@@ -45,6 +49,10 @@ const LEVEL_OWNERS: PracticeLevelOwner[] = [
   },
   {
     level: "level-08-vm-threads-files",
+    pathSlug: "systems-programmer",
+  },
+  {
+    level: "level-09-memory-allocator",
     pathSlug: "systems-programmer",
   },
 ];

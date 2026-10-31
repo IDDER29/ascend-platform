@@ -1,0 +1,143 @@
+---
+title: "Journaling and crash safety"
+level: level-08-vm-threads-files
+slug: journaling
+order: 14
+timeMin: 11
+learningOutcomes:
+- Explain why one file operation updates several blocks, and what a crash between them can leave behind
+- Explain how a journal (write-ahead log) makes those updates all-or-nothing after a crash
+- Say what ext4's ordered mode protects and what it does not
+- Save a file crash-safely with a temporary file, fsync, rename and an fsync of the directory
+primer:
+- title: "How a file system finds your data"
+  type: doc
+  meta: Reread · 3 min · the blocks a write must update.
+  essential: true
+- title: "Buffered I/O: stdio and write"
+  type: doc
+  meta: "Systems & Software · data waiting in buffers before it reaches the disk."
+  essential: false
+knowledgeCheck:
+- question: Appending one block to a file changes the inode, a block bitmap and a data block. What can a crash between those writes leave behind, without a journal?
+  answer: "An inconsistent file system: for example a bitmap that says a block is used while no inode points at it (a leak), or an inode that points at a block the bitmap says is free, so it could be handed to another file. Only a full check of the disk (fsck) can find and repair that."
+  jumpToId: one-write-many-blocks
+  jumpToLabel: One write, many blocks
+- question: Why does the safe save write a temporary file, fsync it, then rename it over the real one?
+  answer: "rename replaces the name atomically: after a crash the name points at the complete old file or the complete new one, never a half-written mixture. The fsync before it makes sure the new file's data is on the disk before the name can point at it, and an fsync of the directory makes the rename itself durable."
+  jumpToId: saving-a-file-safely
+  jumpToLabel: Saving a file safely
+assignment:
+  instruction: "Find out how one program you use saves its files (a text editor's documentation, or strace -e trace=openat,write,fsync,rename while it saves). Does it overwrite in place, or write a temporary file and rename it? Does it call fsync? Write down what a power cut at the worst moment would leave."
+  resourceName: 'OSTEP: Crash Consistency: FSCK and Journaling'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/file-journaling.pdf'
+additionalResources:
+- title: "Linux man page: fsync(2)"
+  type: doc
+  meta: what fsync and fdatasync guarantee
+  url: 'https://man7.org/linux/man-pages/man2/fsync.2.html'
+- title: "LWN: ext4 and data loss"
+  type: doc
+  meta: the 2009 debate that made rename-without-fsync famous
+  url: 'https://lwn.net/Articles/322823/'
+whyThisMatters: "Every program that saves data can be interrupted by a crash or a power cut. Knowing what the file system guarantees, and what it leaves to you, is the difference between a program that loses a user's work and one that never does."
+---
+
+Saving a file feels like one action, but on the disk it's several separate writes. A crash can happen between any two of them. This lesson is about what the file system does to survive that, and what your program must do on top.
+
+## One write, many blocks
+
+Appending one 4 KiB block to a file changes at least three things on the disk:
+
+1. the **data block** itself;
+2. the **block bitmap**, which records that block as used;
+3. the **inode**: its size, and its extents pointing at the new block.
+
+The disk writes them one at a time, in whatever order is fastest. Suppose the power fails after the bitmap and inode reach the disk but not the data. What does the file contain afterwards? And what if only the bitmap was written?
+
+<details>
+<summary>Check your answer</summary>
+
+- **Inode and bitmap written, data not:** the file is a block longer, and that block holds whatever was there before: garbage, or someone else's old deleted data. The file system is consistent, but the file is wrong.
+- **Only the bitmap written:** the block is marked used, but no inode points at it. It's leaked: lost space until a full check repairs it.
+- **Only the inode written:** the inode points at a block the bitmap says is free, so the file system may later give the same block to another file, and two files will share it.
+
+Before journaling, after a crash the system ran **fsck**, which reads every inode and bitmap on the disk to find and fix these. On a large disk that takes hours.
+
+</details>
+
+## The journal
+
+A **journal** (a write-ahead log) avoids the long check. Before changing the real blocks, the file system writes the planned updates into a separate area of the disk, the journal, as a **transaction**:
+
+1. Write the transaction's blocks into the journal.
+2. Write a **commit** record. Once it's on the disk, the transaction counts.
+3. Write the blocks to their real places (**checkpoint**), then mark the transaction done.
+
+After a crash, the file system replays committed transactions from the journal and ignores uncommitted ones. Each transaction then happened completely or not at all, and replaying it takes seconds instead of a full disk check.
+
+ext4's journal is managed by a kernel layer called JBD2, which publishes statistics. On this machine:
+
+```
+$ cat /proc/fs/jbd2/nvme0n1p2-8/info
+82306 transactions (77856 requested), each up to 87381 blocks
+average:
+  0ms waiting for transaction
+  0ms request delay
+  1122ms running transaction
+  0ms transaction was being locked
+  0ms flushing data (in ordered mode)
+  2ms logging transaction
+  2394us average transaction commit time
+  49 handles per transaction
+  14 blocks per transaction
+  16 logged blocks per transaction
+```
+
+About 82 thousand transactions since boot, each grouping about 49 operations into 14 blocks, committed in about 2.4 ms. Note "in ordered mode".
+
+<KeyIdea>A journal writes planned changes to a log and commits them before touching the real blocks, so after a crash each change is replayed whole or not at all.</KeyIdea>
+
+## What ordered mode promises
+
+By default ext4 journals only **metadata** (inodes, bitmaps, directories), not your file data: logging every data block twice would halve write speed. **Ordered mode** adds one rule: a file's data blocks are written to their places **before** the metadata transaction that points at them commits. So the first crash above (an inode pointing at stale garbage) can't happen.
+
+What it does **not** promise:
+
+- that your data has reached the disk when `write` or `close` returns. Both only hand it to the page cache, and the kernel writes it back seconds later. Only `fsync` (or `fdatasync`) waits for it;
+- that overwriting a file in place is all-or-nothing. A crash mid-overwrite can leave old and new contents mixed, or an empty file.
+
+## Saving a file safely
+
+This program "crashes" mid-save in a child process, standing in for a power cut, and checks what the file holds afterwards. It compares overwriting in place with the safe pattern: write a temporary file, `fsync` it, `rename` it over the real name, then `fsync` the directory. Predict all four lines.
+
+<CRun program="vm-threads-files/jr-save" caption='Overwriting in place, and saving safely' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- **Unsafe save:** `open(..., O_TRUNC)` empties the file first, and the crash comes before the new contents are written, so the file is **empty**. The user's old settings are gone, and the new ones never arrived.
+- **Safe save, crash before rename:** the real file is untouched, `volume=7`. The temporary file is just left over.
+- **Safe save, finished:** `volume=9`.
+
+`rename` replaces a name atomically: the name always points at either the complete old file or the complete new one. This process crash only tests the order of operations, because the kernel's page cache survives a crashed process. A power cut is what makes the two `fsync` calls matter. Without the first, the rename could reach the disk before the new data does; without the second, the rename itself might not be on the disk yet.
+
+Here is the safe sequence as `strace` saw it in a small version of the program:
+
+```
+openat(AT_FDCWD, "/tmp/config.txt.tmp", O_WRONLY|O_CREAT|O_TRUNC, 0600) = 3
+write(3, "volume=9\n", 9)               = 9
+fsync(3)                                = 0
+close(3)                                = 0
+rename("/tmp/config.txt.tmp", "/tmp/config.txt") = 0
+openat(AT_FDCWD, "/tmp", O_RDONLY)      = 3
+fsync(3)                                = 0
+close(3)                                = 0
+```
+
+</details>
+
+## Done when
+
+You can say what a crash between block writes leaves, explain transactions and commit records, say what ordered mode does and doesn't promise, and write a crash-safe save.

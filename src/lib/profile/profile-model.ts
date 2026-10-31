@@ -20,9 +20,11 @@ const LEVEL_SKILLS: Record<LevelId, string> = {
   "level-04-c-basics": "Writes, compiles and debugs whole C programs with loops, functions and arrays",
   "level-02-the-c-language": "Writes C that manages its own memory with pointers",
   "level-05-c-contract": "Knows exactly what C promises, and finds and fixes undefined behaviour",
+  "level-06-c-tools": "Builds, inspects and debugs C with gcc, make, gdb, objdump, strace and sanitizers",
   "level-07-data-structures": "Builds dynamic arrays, lists, hash tables, trees and heaps in C, and knows what each costs",
   "level-03-systems-software": "Builds systems software with processes, pipes and signals",
   "level-08-vm-threads-files": "Explains virtual memory, writes correct multithreaded C, and knows how files reach the disk",
+  "level-09-memory-allocator": "Writes a working memory allocator and debugs heap corruption from the inside",
 };
 
 export type ProfileViewer = "owner" | "visitor";

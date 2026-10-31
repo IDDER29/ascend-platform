@@ -1,0 +1,109 @@
+---
+title: "The TLB"
+level: level-08-vm-threads-files
+slug: the-tlb
+order: 2
+timeMin: 10
+learningOutcomes:
+- Explain what the TLB caches and why most memory accesses never walk the page tables
+- Work out a TLB's reach from its number of entries and the page size
+- Read a measurement in which touching more pages than the TLB covers slows every access down
+- Explain how huge pages extend the TLB's reach, and what a context switch does to the TLB
+primer:
+- title: "Virtual addresses and page tables"
+  type: doc
+  meta: Reread · 3 min · the four-step walk the TLB saves.
+  essential: true
+- title: Caches & locality
+  type: doc
+  meta: "Machine & Memory · the TLB is a cache, and locality is why it works."
+  essential: false
+knowledgeCheck:
+- question: A TLB has 1536 entries for 4 KiB pages. What is its reach, and what happens to a program that touches more pages than that in a loop?
+  answer: "1536 × 4 KiB = 6 MiB. A loop over more distinct pages than that keeps evicting translations it will need again, so many accesses miss the TLB and need a page-table walk, and each access gets slower even if the data itself is in the cache."
+  jumpToId: measuring-it
+  jumpToLabel: Measuring it
+- question: Why do 2 MiB huge pages help a program with a large working set?
+  answer: "One TLB entry then covers 2 MiB instead of 4 KiB, 512 times as much, so the same number of entries reaches far more memory and the program misses the TLB far less."
+  jumpToId: huge-pages
+  jumpToLabel: Huge pages
+assignment:
+  instruction: "Run the measuring program from this lesson on your own machine (copy it from the page), with nothing else busy. Find the number of pages where the 4 KiB times first rise, multiply by 4 KiB, and compare with your processor's documented TLB sizes. Note that the exact numbers depend on the processor."
+  resourceName: 'OSTEP: Paging, Faster Translations (TLBs)'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/vm-tlbs.pdf'
+additionalResources:
+- title: "Translation lookaside buffer (Wikipedia)"
+  type: doc
+  meta: reference, with typical sizes
+  url: 'https://en.wikipedia.org/wiki/Translation_lookaside_buffer'
+- title: "Linux kernel docs: Transparent Hugepage Support"
+  type: doc
+  meta: how Linux hands out 2 MiB pages, and madvise
+  url: 'https://docs.kernel.org/admin-guide/mm/transhuge.html'
+whyThisMatters: "TLB misses are an invisible cost in programs with big, scattered data: databases, garbage collectors, scientific code. Knowing the TLB's reach explains why the same algorithm can be fast on small inputs and mysteriously slower on large ones, and why huge pages are a standard tuning knob."
+---
+
+The last lesson ended with a problem: translating one address can take four extra memory reads. If every load and store paid that, memory would be several times slower. Processors avoid it with one more cache.
+
+## A cache for translations
+
+The **translation lookaside buffer** (TLB) holds recent translations: virtual page number in, frame number and permission bits out. On every access the MMU looks there first:
+
+- **TLB hit:** the translation is there, and the access goes straight to the cache or memory. This takes no extra time worth counting.
+- **TLB miss:** the MMU walks the page tables, then stores the result in the TLB, evicting an older entry.
+
+Like other caches, the TLB works because of locality: a program that just used a page will probably use it again, and the 4096 bytes of a page hold many neighbouring variables. Modern x86-64 processors have a small first-level TLB (often 64 entries for data) and a larger second-level one (often 1500 to 3000 entries).
+
+## Reach
+
+A TLB's **reach** is how much memory its entries cover: entries × page size. With 4 KiB pages, 64 entries reach 256 KiB, and 2048 entries reach 8 MiB. A program whose hot data is spread over more pages than that keeps missing the TLB, however small the data itself.
+
+## Measuring it
+
+This program reads one cache line from each of N pages, round and round, 64 million times, and reports the average time per read. Each page contributes only one 64-byte line, so even 32768 pages are only 2 MiB of data, which fits in this machine's caches (though not all of it in the fastest ones). What grows with N is the number of different pages, so it measures translations, not data.
+
+It runs twice: once with ordinary 4 KiB pages, and once asking for 2 MiB **huge pages** (`madvise(MADV_HUGEPAGE)`). Before you run it, predict where the 4 KiB times go up.
+
+<CRun program="vm-threads-files/tlb-stride" caption='Time per read as the number of pages grows' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+With 4 KiB pages, the time is flat at about 1.5 ns for up to 2048 pages (8 MiB of address space), then more than doubles at 8192 pages. That's the point where the pages outnumber the second-level TLB's entries: most reads now miss and need a page-table walk. The data stays small (512 KiB at 8192 pages); what grew is the number of pages.
+
+With huge pages, 32768 small pages' worth of memory is only 64 huge pages, which the TLB covers easily, and the time stays flat at about 1.5 ns until the last row. That last rise is the data itself starting to outgrow the fastest caches, not the TLB.
+
+These are timings, so they vary from run to run and machine to machine. This run was on a laptop with other work going on, and an earlier run was noisier. The shape (flat, then a step past the TLB's reach) is what repeats.
+
+</details>
+
+<KeyIdea>The TLB caches translations. Its reach is entries × page size; touching more pages than that makes every access pay for a page-table walk.</KeyIdea>
+
+## Huge pages
+
+x86-64 page tables can stop one step early: an entry in the page directory can map a whole 2 MiB page directly (the walk is three steps, and the offset is 21 bits). One TLB entry then covers 512 times as much memory.
+
+Linux gives huge pages automatically where it can (**transparent huge pages**), or when a program asks with `madvise`. On this machine the setting is:
+
+```
+$ cat /sys/kernel/mm/transparent_hugepage/enabled
+always [madvise] never
+```
+
+`[madvise]` means: only where a program asks, which is why the measuring program asked. Huge pages have costs too. Each one needs 2 MiB of physically contiguous memory, which may not be free, and touching one byte commits the whole 2 MiB.
+
+## Context switches and the TLB
+
+Two processes can use the same virtual address for different frames. So what happens to the TLB when the kernel switches from one process to another?
+
+<details>
+<summary>Check your answer</summary>
+
+Its entries belong to the old process's page tables, so they mustn't be used for the new one. Older processors simply flushed the TLB when CR3 was loaded, so every switch was followed by a burst of misses. Modern x86-64 processors tag each entry with a **process-context identifier** (PCID), so entries of several processes can coexist and a switch doesn't have to throw them away. When the kernel changes a mapping, it must still invalidate the stale entry, on every core that might hold it. That cross-core "TLB shootdown" is one reason unmapping memory in a multithreaded program is expensive.
+
+</details>
+
+## Done when
+
+You can say what the TLB caches, compute its reach, read the measurement's step, and explain why huge pages and PCIDs exist.

@@ -58,6 +58,22 @@ export function CrestArt({ crest }: { crest: CrestId }) {
           <path d="M12 14h12M12 19h8M24 22h12M24 27h12M24 32h8" />
         </>
       );
+    // Your own malloc: heap blocks, each with its header.
+    case "heap":
+      return (
+        <>
+          <rect x="7" y="14" width="10" height="20" rx="1.5" />
+          <rect x="19" y="14" width="22" height="20" rx="1.5" />
+          <path d="M7 19h10M19 19h22" />
+        </>
+      );
+    // Tools: a wrench.
+    case "wrench":
+      return (
+        <>
+          <path d="M30.5 9.5a8 8 0 0 0-9.8 10.3L9.6 30.9a3.2 3.2 0 0 0 4.5 4.5l11.1-11.1a8 8 0 0 0 10.3-9.8l-4.8 4.8-4-1-1-4z" />
+        </>
+      );
     // The C Language: a pointer (*) aiming into a box.
     case "pointer":
       return (

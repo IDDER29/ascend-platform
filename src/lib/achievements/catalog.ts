@@ -39,7 +39,7 @@ export const TASK_RANKS: Record<MissionRank, string> = {
 };
 
 /** Original emblems for the four clans (one per topic). */
-export type CrestId = "page" | "tree" | "seal" | "gate" | "core" | "brace" | "pointer" | "shell";
+export type CrestId = "wrench" | "heap" | "page" | "tree" | "seal" | "gate" | "core" | "brace" | "pointer" | "shell";
 
 export type Achievement = {
   id: string;
@@ -68,10 +68,12 @@ const C_BASICS: LevelId = "level-04-c-basics";
 const C_CONTRACT: LevelId = "level-05-c-contract";
 const DATA_STRUCTURES: LevelId = "level-07-data-structures";
 const VM_THREADS: LevelId = "level-08-vm-threads-files";
+const ALLOCATOR: LevelId = "level-09-memory-allocator";
+const C_TOOLS: LevelId = "level-06-c-tools";
 const C: LevelId = "level-02-the-c-language";
 const SYSTEMS: LevelId = "level-03-systems-software";
 
-export const CREST_IDS = ["page-clan", "tree-clan", "seal-clan", "gate-clan", "core-clan", "brace-clan", "pointer-clan", "shell-clan"];
+export const CREST_IDS = ["wrench-clan", "heap-clan", "page-clan", "tree-clan", "seal-clan", "gate-clan", "core-clan", "brace-clan", "pointer-clan", "shell-clan"];
 
 /** Every badge Ascend awards, each with its own exact rule. Ids are stable: earned rows reference them. */
 export const ACHIEVEMENTS: Achievement[] = [
@@ -83,9 +85,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "first-compile", group: "learning", label: "First Compile", glyph: "❴", means: "Finished every lesson in C Basics", rules: [{ kind: "topic", topic: C_BASICS }] },
   { id: "pointer-wrangler", group: "learning", label: "Pointer Wrangler", glyph: "◆", means: "Finished every lesson in The C Language", rules: [{ kind: "topic", topic: C }] },
   { id: "rule-reader", group: "learning", label: "Rule Reader", glyph: "§", means: "Finished every lesson in The C Contract", rules: [{ kind: "topic", topic: C_CONTRACT }] },
+  { id: "toolsmith", group: "learning", label: "Toolsmith", glyph: "⚒", means: "Finished every lesson in Tools", rules: [{ kind: "topic", topic: C_TOOLS }] },
   { id: "structure-builder", group: "learning", label: "Structure Builder", glyph: "⋔", means: "Finished every lesson in Data Structures in C", rules: [{ kind: "topic", topic: DATA_STRUCTURES }] },
   { id: "systems-thinker", group: "learning", label: "Systems Thinker", glyph: "⬢", means: "Finished every lesson in Systems & Software", rules: [{ kind: "topic", topic: SYSTEMS }] },
-  { id: "kernel-insider", group: "learning", label: "Kernel Insider", glyph: "⊞", means: "Finished every lesson in Virtual Memory, Threads & Files", rules: [{ kind: "topic", topic: VM_THREADS }] },
+  { id: "kernel-insider", group: "learning", label: "Kernel Insider", glyph: "⧇", means: "Finished every lesson in Virtual Memory, Threads & Files", rules: [{ kind: "topic", topic: VM_THREADS }] },
+  { id: "heap-master", group: "learning", label: "Heap Master", glyph: "▥", means: "Finished every lesson in Your own malloc", rules: [{ kind: "topic", topic: ALLOCATOR }] },
 
   // Building
   { id: "code-maker", group: "building", label: "Code Maker", glyph: "⌗", means: "Made and broke a codebook", rules: [{ kind: "project", projectId: "codebook" }] },
@@ -103,7 +107,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "efficiency-expert", group: "building", label: "Efficiency Expert", glyph: "⏱", means: "Compared two designs of one instruction set by their ticks (optional project)", rules: [{ kind: "project", projectId: "two-designs" }] },
   { id: "puzzle-solver", group: "building", label: "Puzzle Solver", glyph: "⧩", means: "Solved the assembly puzzles on the tiny CPU, version 2", rules: [{ kind: "project", projectId: "assembly-puzzles" }] },
   { id: "assembler", group: "building", label: "Assembler", glyph: "⇲", means: "Ran both passes of an assembler by hand and wrote them as a procedure", rules: [{ kind: "project", projectId: "assembler" }] },
-  { id: "librarian", group: "building", label: "Librarian", glyph: "⧉", means: "Wrote a library of subroutines that call each other (optional project)", rules: [{ kind: "project", projectId: "subroutine-library" }] },
+  { id: "librarian", group: "building", label: "Librarian", glyph: "⧈", means: "Wrote a library of subroutines that call each other (optional project)", rules: [{ kind: "project", projectId: "subroutine-library" }] },
   { id: "memory-watcher", group: "building", label: "Memory Watcher", glyph: "◫", means: "Predicted variables and arrays in memory, and fixed a swap that didn't", rules: [{ kind: "project", projectId: "memory-visualizer" }] },
   { id: "translator", group: "building", label: "Translator", glyph: "⇆", means: "Translated a program by hand and diagnosed a translator bug", rules: [{ kind: "project", projectId: "translator" }] },
   { id: "compiler-reader", group: "building", label: "Compiler Reader", glyph: "⌬", means: "Annotated real gcc output and said what C, the compiler and the target each decide", rules: [{ kind: "project", projectId: "real-c" }] },
@@ -112,12 +116,13 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "system-tracer", group: "building", label: "System Tracer", glyph: "⟴", means: "Traced a program from source to output, and kept the toy and real pipelines apart", rules: [{ kind: "project", projectId: "trace-a-program" }] },
   { id: "trap-setter", group: "building", label: "Trap Setter", glyph: "⊡", means: "Audited system-call traces and designed a call of your own (optional project)", rules: [{ kind: "project", projectId: "system-call-model" }] },
   { id: "signal-keeper", group: "building", label: "Signal Keeper", glyph: "⌇", means: "Got a message through a noisy line with a threshold and a code (optional project)", rules: [{ kind: "project", projectId: "noisy-channel" }] },
-  { id: "format-maker", group: "building", label: "Format Maker", glyph: "▦", means: "Decoded a tiny image format and wrote its specification (optional project)", rules: [{ kind: "project", projectId: "file-format" }] },
+  { id: "format-maker", group: "building", label: "Format Maker", glyph: "▧", means: "Decoded a tiny image format and wrote its specification (optional project)", rules: [{ kind: "project", projectId: "file-format" }] },
   { id: "minimizer", group: "building", label: "Minimizer", glyph: "⊟", means: "Made circuits smaller and built a full adder from NAND only (optional project)", rules: [{ kind: "project", projectId: "smaller-circuit" }] },
   { id: "game-maker", group: "building", label: "Game Maker", glyph: "⚄", means: "Wrote a complete C guessing game that survives bad input", rules: [{ kind: "project", projectId: "guessing-game" }] },
-  { id: "ub-hunter", group: "building", label: "UB Hunter", glyph: "⌖", means: "Found and fixed five kinds of undefined behaviour with warnings and sanitizers", rules: [{ kind: "project", projectId: "ub-hunt" }] },
-  { id: "map-maker", group: "building", label: "Map Maker", glyph: "⌗", means: "Built and tested a growing hash map library in C", rules: [{ kind: "project", projectId: "hash-map" }] },
+  { id: "ub-hunter", group: "building", label: "UB Hunter", glyph: "⊘", means: "Found and fixed five kinds of undefined behaviour with warnings and sanitizers", rules: [{ kind: "project", projectId: "ub-hunt" }] },
+  { id: "map-maker", group: "building", label: "Map Maker", glyph: "⋈", means: "Built and tested a growing hash map library in C", rules: [{ kind: "project", projectId: "hash-map" }] },
   { id: "pool-keeper", group: "building", label: "Pool Keeper", glyph: "⫘", means: "Built a thread pool and found its race and its lost wakeup", rules: [{ kind: "project", projectId: "thread-pool" }] },
+  { id: "allocator", group: "building", label: "Allocator", glyph: "◧", means: "Explained and broke a working malloc and free from the inside", rules: [{ kind: "project", projectId: "malloc" }] },
   { id: "cpu-tracer", group: "building", label: "CPU Tracer", glyph: "▤", means: "Shipped a program for the tiny CPU", rules: [{ kind: "project", projectId: "tiny-cpu" }] },
   { id: "ship-it", group: "building", label: "Shell Smith", glyph: "◈", means: "Shipped ShellForge, a working shell", rules: [{ kind: "project", projectId: "shellforge" }] },
 
@@ -132,7 +137,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "comeback", group: "habits", label: "Comeback", glyph: "✦", means: "Came back to Practice after two weeks away", rules: [{ kind: "comeback", gapDays: 14 }] },
 
   // Combinations: the parts are the rule, shown openly.
-  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ub-hunter", "map-maker", "pool-keeper", "ship-it"] }] },
+  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ub-hunter", "map-maker", "pool-keeper", "allocator", "ship-it"] }] },
   { id: "sharp-mind", group: "combination", label: "Sharp Mind", glyph: "✺", means: "Deep memory, a clean run and a week of practice", rules: [{ kind: "badges", ids: ["deep-memory", "clean-run", "week-of-practice"] }] },
   { id: "whole-machine", group: "combination", label: "The Whole Machine", glyph: "✸", means: "Finished every lesson and shipped every project", rules: [{ kind: "allLessons" }, { kind: "badges", ids: ["builder"] }] },
 ];
@@ -149,9 +154,11 @@ export const INSIGNIA: Achievement[] = [
   { id: "brace-clan", group: "learning", label: "Brace Clan", glyph: "❴", means: "Joined the Brace Clan by finishing every lesson in C Basics", rules: [{ kind: "topic", topic: C_BASICS }], insignia: { kind: "crest", crest: "brace" } },
   { id: "pointer-clan", group: "learning", label: "Pointer Clan", glyph: "◆", means: "Joined the Pointer Clan by finishing every lesson in The C Language", rules: [{ kind: "topic", topic: C }], insignia: { kind: "crest", crest: "pointer" } },
   { id: "seal-clan", group: "learning", label: "Seal Clan", glyph: "§", means: "Joined the Seal Clan by finishing every lesson in The C Contract", rules: [{ kind: "topic", topic: C_CONTRACT }], insignia: { kind: "crest", crest: "seal" } },
+  { id: "wrench-clan", group: "learning", label: "Wrench Clan", glyph: "⚒", means: "Joined the Wrench Clan by finishing every lesson in Tools", rules: [{ kind: "topic", topic: C_TOOLS }], insignia: { kind: "crest", crest: "wrench" } },
   { id: "tree-clan", group: "learning", label: "Tree Clan", glyph: "⋔", means: "Joined the Tree Clan by finishing every lesson in Data Structures in C", rules: [{ kind: "topic", topic: DATA_STRUCTURES }], insignia: { kind: "crest", crest: "tree" } },
   { id: "shell-clan", group: "learning", label: "Shell Clan", glyph: "⬢", means: "Joined the Shell Clan by finishing every lesson in Systems & Software", rules: [{ kind: "topic", topic: SYSTEMS }], insignia: { kind: "crest", crest: "shell" } },
-  { id: "page-clan", group: "learning", label: "Page Clan", glyph: "⊞", means: "Joined the Page Clan by finishing every lesson in Virtual Memory, Threads & Files", rules: [{ kind: "topic", topic: VM_THREADS }], insignia: { kind: "crest", crest: "page" } },
+  { id: "page-clan", group: "learning", label: "Page Clan", glyph: "⧇", means: "Joined the Page Clan by finishing every lesson in Virtual Memory, Threads & Files", rules: [{ kind: "topic", topic: VM_THREADS }], insignia: { kind: "crest", crest: "page" } },
+  { id: "heap-clan", group: "learning", label: "Heap Clan", glyph: "▥", means: "Joined the Heap Clan by finishing every lesson in Your own malloc", rules: [{ kind: "topic", topic: ALLOCATOR }], insignia: { kind: "crest", crest: "heap" } },
 ];
 
 export type Title = Achievement & {

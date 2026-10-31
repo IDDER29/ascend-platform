@@ -212,9 +212,9 @@ export const PATHS: PathDef[] = [
       },
       {
         id: "vm-threads-files",
-        title: "Virtual Memory, Threads & Files",
+        title: LEVELS["level-08-vm-threads-files"].name,
         body: "How the OS gives each process its own memory, runs many things at once, and keeps files safe.",
-        outline: O.VM_THREADS_FILES,
+        levelId: "level-08-vm-threads-files",
       },
       {
         id: "shellforge",
@@ -227,7 +227,7 @@ export const PATHS: PathDef[] = [
         id: "memory-allocator",
         title: "Your own malloc",
         body: "Capstone: write the allocator every C program relies on, from free lists to mmap.",
-        outline: O.MEMORY_ALLOCATOR,
+        levelId: "level-09-memory-allocator",
       },
     ],
   },

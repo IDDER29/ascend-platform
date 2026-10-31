@@ -1,0 +1,125 @@
+---
+title: "How a file system finds your data"
+level: level-08-vm-threads-files
+slug: finding-data
+order: 13
+timeMin: 11
+learningOutcomes:
+- Turn a byte offset in a file into a logical block number
+- Explain how block pointers and ext4's extents map a file's logical blocks to disk blocks
+- Look up which disk block holds a given byte, using a real extent list from filefrag
+- Explain sparse files and holes, and find a file's data regions with SEEK_DATA and SEEK_HOLE
+primer:
+- title: "Files, directories and inodes"
+  type: doc
+  meta: Reread · 3 min · the inode, which holds the map this lesson reads.
+  essential: true
+knowledgeCheck:
+- question: In a file system with 4096-byte blocks, which logical block holds byte 10000 of a file, and how does ext4 find it on the disk?
+  answer: "Block 2 (10000 / 4096, rounded down). ext4 looks in the inode's extent list for the extent covering logical block 2, and adds 2 minus that extent's first logical block to its first physical block."
+  jumpToId: from-offset-to-disk-block
+  jumpToLabel: From offset to disk block
+- question: A file is 4100096 bytes long but uses only 28672 bytes of disk. How?
+  answer: "It's sparse: only 7 blocks were ever written, and the ranges in between are holes with no blocks allocated at all. Reading a hole returns zeros, and the file system stores nothing for it."
+  jumpToId: holes
+  jumpToLabel: Holes
+assignment:
+  instruction: "On a Linux machine with an ext4 disk, make a 50 MB file with dd from /dev/urandom, and a sparse one with truncate -s 1G. Run filefrag -v and ls -ls on both, and explain each line of the output: extents, lengths, and why one has none."
+  resourceName: 'OSTEP: File System Implementation'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/file-implementation.pdf'
+additionalResources:
+- title: "Linux kernel docs: ext4 data structures"
+  type: doc
+  meta: inodes, the extent tree and directories, in detail
+  url: 'https://docs.kernel.org/filesystems/ext4/dynamic.html'
+- title: "Linux man page: lseek(2)"
+  type: doc
+  meta: SEEK_DATA and SEEK_HOLE
+  url: 'https://man7.org/linux/man-pages/man2/lseek.2.html'
+whyThisMatters: "Every read of a file ends in this lookup: from an offset to a block on a device. It explains why fragmented files are slow on spinning disks, how a 1 GB virtual-machine image can take a few megabytes, and why copying a sparse file the wrong way can fill your disk."
+---
+
+The last lesson said the inode records where a file's data is. This one opens that up: how the file system turns "byte 10000 of this file" into "block 42847346 on the disk".
+
+## Blocks
+
+A file system divides its disk into **blocks**, usually 4096 bytes on ext4. A file's bytes are cut the same way: bytes 0 to 4095 are its **logical block** 0, bytes 4096 to 8191 are logical block 1, and so on. Finding a byte is two steps:
+
+1. **Offset to logical block:** `offset / 4096`, and the remainder is the position inside the block. That's arithmetic.
+2. **Logical block to disk block:** that's what the inode's map is for.
+
+## Block pointers and extents
+
+The classic Unix answer to step 2 is a list of **block pointers** in the inode: one disk-block number per logical block. To fit big files, the inode holds a few direct pointers and then pointers to blocks full of more pointers (indirect, double-indirect blocks), a small tree. That works, but a 1 GiB file needs 262144 pointers, even when its blocks sit side by side on the disk.
+
+ext4 instead stores **extents**: runs of the form "logical blocks L to L+n-1 are at disk blocks P to P+n-1". A file written in one go is often a single extent. `filefrag -v` lists a file's extents. Here it is on a 1 MB file on this machine's ext4 disk:
+
+```
+$ filefrag -v big.bin
+Filesystem type is: ef53
+File size of big.bin is 1000000 (245 blocks of 4096 bytes)
+ ext:     logical_offset:        physical_offset: length:   expected: flags:
+   0:        0..     244:   42290426..  42290670:    245:             last,eof
+big.bin: 1 extent found
+```
+
+245 blocks, one extent: logical 0 to 244 sit at disk blocks 42290426 to 42290670. Three numbers describe the whole file. (`ef53` is ext4's magic number. Your block numbers will differ.)
+
+When a file has many extents, ext4 keeps them in a small tree in the inode, so finding the extent for a block is quick even for huge files.
+
+## From offset to disk block
+
+This file on ext4 has three extents, because it was written in three separate places:
+
+```
+$ filefrag -v sparse.bin
+Filesystem type is: ef53
+File size of sparse.bin is 4100096 (1001 blocks of 4096 bytes)
+ ext:     logical_offset:        physical_offset: length:   expected: flags:
+   0:        0..       3:   42847344..  42847347:      4:
+   1:      100..     101:   21860959..  21860960:      2:   42847444:
+   2:     1000..    1000:   22953284..  22953284:      1:   21861859: last,eof
+sparse.bin: 3 extents found
+```
+
+This program does ext4's lookup with exactly these extents: offset to logical block, then a search for the extent covering it. Work out the answer for byte 10000 and byte 204800 before you run it.
+
+<CRun program="vm-threads-files/fd-extents" caption='Finding the disk block for a byte, with real extents' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Byte 10000 is in logical block 2 (10000 / 4096 = 2, remainder 1808). Extent 0 covers logical blocks 0 to 3 starting at disk block 42847344, so block 2 is at 42847344 + 2 = **42847346**. Byte 204800 is in logical block 50, which no extent covers: it's in a **hole**.
+
+The "expected" column in filefrag shows where the next extent would have been if the file were contiguous. The extents are far apart, so on a spinning disk reading this file in order would mean seeking.
+
+</details>
+
+<KeyIdea>Finding data is offset / block size to get the logical block, then the inode's extents to get the disk block. Logical blocks no extent covers are holes.</KeyIdea>
+
+## Holes
+
+`sparse.bin` is 4100096 bytes long, yet only 7 of its 1001 blocks were ever written. The others are **holes**: no extent, no disk block, nothing stored. Reading a hole returns zeros. `ls -ls` shows the space really used, in KiB, in its first column:
+
+```
+$ ls -ls sparse.bin
+28 -rw-rw-r-- 1 learner learner 4100096 Oct 31 13:13 sparse.bin
+```
+
+A program can ask where the data is, without knowing the file system: `lseek` with `SEEK_DATA` jumps to the next byte that has data, and `SEEK_HOLE` to the next hole. This program writes the same pattern (blocks 0 to 3, 100 and 101, and 1000), then asks. Predict the space used and the data ranges.
+
+<CRun program="vm-threads-files/fd-sparse" caption='A sparse file, explored with SEEK_DATA and SEEK_HOLE' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The size is 4100096 bytes, but only 28672 bytes (7 blocks) are used. The data is in blocks 0 to 3, 100 to 101 and 1000, exactly the three extents, and a byte in block 50 reads as 0.
+
+This program runs on `/tmp`, which here is a RAM file system (tmpfs), not ext4: holes and `SEEK_DATA` work the same way there, which is the point of the interface. Tools like `cp --sparse` and `tar` use it to copy only the data. Copying a sparse file with a plain loop of `read` and `write` fills every hole with real zero blocks.
+
+</details>
+
+## Done when
+
+You can turn an offset into a logical block, read a filefrag extent list, find the disk block for a byte by hand, and explain holes and SEEK_DATA.

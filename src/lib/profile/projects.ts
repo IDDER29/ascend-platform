@@ -333,6 +333,16 @@ export const CURRICULUM_PROJECTS: CurriculumProject[] = [
     href: null,
   },
   {
+    id: "malloc",
+    title: "Your own malloc",
+    inSentence: "own malloc",
+    proves: "A working allocator with headers, footers, splitting and coalescing, and its corruption bugs explained.",
+    level: "level-09-memory-allocator",
+    requires: { kind: "lesson", level: "level-09-memory-allocator", slug: "project-malloc" },
+    badgeId: "allocator",
+    href: null,
+  },
+  {
     id: "shellforge",
     title: "ShellForge",
     inSentence: "ShellForge",

@@ -478,6 +478,100 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       ],
     },
   ],
+  "level-08-vm-threads-files": [
+    {
+      id: "virtual-memory",
+      title: "Virtual memory",
+      blurb: "How every process gets its own address space.",
+      items: [
+        {
+          slug: "page-tables",
+          description: "How the CPU translates each virtual address into a physical one, using page tables kept by the kernel.",
+        },
+        {
+          slug: "the-tlb",
+          description: "How the TLB caches recent address translations so most memory accesses skip the slow page-table walk.",
+        },
+        {
+          slug: "page-faults",
+          description: "What happens when a program touches a page that is not in memory, and how the kernel loads pages only when needed.",
+        },
+        {
+          slug: "mmap",
+          description: "How mmap maps a file or fresh memory into the address space, so reading that memory reads the file.",
+        },
+      ],
+    },
+    {
+      id: "threads",
+      title: "Threads and concurrency",
+      blurb: "Several things at once, and the bugs that come with sharing.",
+      items: [
+        {
+          slug: "threads-vs-processes",
+          description: "How threads share one address space while processes each get their own, and what each choice costs.",
+        },
+        {
+          slug: "race-conditions",
+          description: "Why two threads updating shared data can lose work, and how to spot the read-modify-write that causes it.",
+        },
+        {
+          slug: "mutexes",
+          description: "How a mutex lets only one thread into a critical section at a time, and how to use pthread locks correctly.",
+        },
+        {
+          slug: "condition-variables",
+          description: "How a thread can sleep until another signals that something changed, without wasting CPU in a busy loop.",
+        },
+        {
+          slug: "deadlock",
+          description: "How threads waiting on each other's locks can freeze forever, and how taking locks in a fixed order prevents it.",
+        },
+        {
+          slug: "atomics",
+          description: "What atomic operations guarantee, and why CPUs and compilers can reorder memory accesses that threads share.",
+        },
+        {
+          slug: "project-thread-pool",
+          description: "Build a thread pool that runs queued tasks on a fixed set of workers, proving you can share work safely with locks.",
+          role: "project",
+        },
+      ],
+    },
+    {
+      id: "file-systems",
+      title: "File systems",
+      blurb: "How bytes on a disk become files and folders that survive a crash.",
+      items: [
+        {
+          slug: "inodes",
+          description: "How a file system stores a file's data and metadata in an inode, and how directories map names to inodes.",
+        },
+        {
+          slug: "finding-data",
+          description: "How a file system turns a path and an offset into disk blocks, using directories, block pointers and extents.",
+        },
+        {
+          slug: "journaling",
+          description: "How a journal records changes before applying them, so a file system stays consistent after a crash.",
+        },
+      ],
+    },
+  ],
+  "level-09-memory-allocator": [
+    {
+      id: "allocator",
+      title: "Capstone",
+      blurb: "Everything about memory, in one program you write yourself.",
+      items: [
+        {
+          slug: "project-malloc",
+          description: "Write your own malloc and free on top of raw memory from the OS, proving you understand the heap from the inside.",
+          role: "project",
+        },
+      ],
+    },
+  ],
 };
 
 export function courseOutlineForLevel(

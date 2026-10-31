@@ -1,0 +1,119 @@
+---
+title: "Atomics and memory ordering: a first look"
+level: level-08-vm-threads-files
+slug: atomics
+order: 10
+timeMin: 12
+learningOutcomes:
+- Use C11 atomic types and atomic_fetch_add to update a shared counter without a lock
+- Write a compare-and-swap loop that updates a shared value only if nobody changed it in between
+- Explain why the hardware can make two threads' memory accesses appear in a different order, using a real store-buffering test
+- Choose sequentially consistent ordering by default, and relaxed ordering only for things like independent counters
+primer:
+- title: "Race conditions"
+  type: doc
+  meta: Reread · 2 min · the read-modify-write that atomics make indivisible.
+  essential: true
+- title: "Mutexes and locks"
+  type: doc
+  meta: Reread · 2 min · the safe default this lesson is the alternative to.
+  essential: true
+knowledgeCheck:
+- question: What does atomic_compare_exchange_weak(&best, &seen, value) do, and why is it in a loop?
+  answer: "If best still holds seen, it stores value and returns true. If another thread changed best in the meantime, it stores best's current value in seen and returns false, so the loop compares again with fresh information (the weak version may also fail spuriously). The loop retries until the update succeeds or is no longer needed."
+  jumpToId: compare-and-swap
+  jumpToLabel: Compare and swap
+- question: In the store-buffering test, how can both threads read 0, when each wrote its own 1 first?
+  answer: "On x86 each core puts its stores in a store buffer and lets its later loads go ahead. With relaxed atomics, each thread's load of the other's flag ran before its own store left its buffer, so both saw 0: the accesses appeared out of program order. seq_cst stores use xchg, which drains the buffer first, so that outcome never happened."
+  jumpToId: when-order-isnt-program-order
+  jumpToLabel: "When order isn't program order"
+assignment:
+  instruction: "Write a lock-free stack of ints using a linked list and compare-and-swap on the head pointer: push and pop. Run 4 threads pushing and popping 100000 times each, check every pushed value is popped exactly once, and then read about the ABA problem (OSTEP or cppreference) and explain why your pop may be unsafe if nodes are freed and reused."
+  resourceName: 'cppreference: Atomic operations library'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/atomic'
+additionalResources:
+- title: "cppreference: memory_order"
+  type: doc
+  meta: every ordering, with what it guarantees
+  url: 'https://en.cppreference.com/w/c/atomic/memory_order'
+- title: "Jeff Preshing: Memory Reordering Caught in the Act"
+  type: doc
+  meta: the same store-buffering test, explained in depth
+  url: 'https://preshing.com/20120515/memory-reordering-caught-in-the-act/'
+whyThisMatters: "Atomics are what mutexes, reference counts and lock-free queues are built from. Even if you mostly use locks, knowing that hardware reorders memory, and that only atomics and locks restore order, explains bugs that otherwise look impossible."
+---
+
+A mutex makes a whole critical section one-thread-at-a-time. For a single variable there's a lighter tool: an **atomic** operation, which the hardware performs as one indivisible step. C11 provides them in `<stdatomic.h>`. This lesson is a first, practical look; the full memory model is a deep subject of its own.
+
+## An atomic counter
+
+The racy counter again, this time with an `atomic_long` and `atomic_fetch_add`. That's read, add and write as one step, which on x86 is a single `lock`-prefixed instruction. It counts twice: once with the default ordering, and once with `memory_order_relaxed`. Predict both totals.
+
+<CRun program="vm-threads-files/th-atomic-counter" caption='Two threads, atomic increments' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Both are exactly 2000000, on every run. The increment is indivisible, so no update is lost, with no lock at all.
+
+The two orderings differ in what *else* they promise. The default, `memory_order_seq_cst`, also keeps this access in order with the thread's other atomic accesses, and that order is the same for every thread. `memory_order_relaxed` promises only that the operation itself is atomic. For a counter that nothing else depends on, relaxed is enough, and it can be cheaper. Being sure you only need that much is the hard part, so start with the default.
+
+</details>
+
+## Compare and swap
+
+Not everything is an addition. To update a shared maximum without a lock, read it, decide, and write only **if nobody changed it in between**. That is **compare-and-swap** (CAS):
+
+```c
+int seen = atomic_load(&best);
+while (value > seen) {
+    if (atomic_compare_exchange_weak(&best, &seen, value)) {
+        return;                    /* best was still `seen`: now it's `value` */
+    }
+    /* someone else changed best: seen now holds its new value, so check again */
+}
+```
+
+Four threads each feed 100000 numbers through this. Then main finds the maximum again with a plain loop to check.
+
+<CRun program="vm-threads-files/th-atomic-cas" caption='A lock-free maximum' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The two agree: 1000002. When CAS fails, it hands back the value it found, and the loop decides again with fresh information. If another thread already stored something larger, the `while` condition becomes false and this thread gives up, which is correct. The `_weak` version may also fail now and then for no reason (a spurious failure), which the loop absorbs. It's what to use inside a loop.
+
+CAS is the building block of lock-free stacks, queues and reference counts. It's also easy to get wrong, so reach for a mutex unless you've measured that the lock is your bottleneck.
+
+</details>
+
+<KeyIdea>An atomic operation can't be torn or interleaved. atomic_fetch_add for counters, compare-and-swap in a loop for anything that depends on the old value.</KeyIdea>
+
+## When order isn't program order
+
+Here's something that looks impossible. Two threads, and two flags `x` and `y`, both starting at 0:
+
+| Thread 1 | Thread 2 |
+|---|---|
+| `x = 1;` | `y = 1;` |
+| `r1 = y;` | `r2 = x;` |
+
+If each thread's two lines happened in order, at least one of them would run its store before the other's load, so `r1` and `r2` can't **both** be 0. This program runs the test 200000 times with relaxed atomics, then 200000 times with the default seq_cst, and counts how often both read 0. The counts change from run to run and from machine to machine.
+
+<CRun program="vm-threads-files/th-reorder" caption='The store-buffering test' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+With relaxed atomics, both threads read 0 in about 39000 of 200000 trials on this run. With seq_cst, never.
+
+Each x86 core puts its stores in a **store buffer** and lets later loads go ahead without waiting for them to reach memory. With relaxed ordering, gcc compiles each store to a plain `mov`. So thread 1's load of `y` ran while its `x = 1` was still in its own buffer, invisible to thread 2, and the same happened the other way round. With seq_cst, gcc compiles the store to `xchg`, which waits for the buffer to drain before the load can go: the "impossible" outcome disappears. Compilers may reorder independent accesses too, unless the orderings forbid it.
+
+This is why ordinary variables shared between threads need a lock or atomics, even when "it's just a flag": without them, neither the compiler nor the CPU promises another thread sees your writes in the order you made them.
+
+</details>
+
+## Done when
+
+You can update a counter atomically, write a compare-and-swap loop and say why it retries, explain the store-buffering result, and say when relaxed ordering is enough.

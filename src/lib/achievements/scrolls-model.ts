@@ -16,9 +16,11 @@ export const CREST_OF: Record<LevelId, CrestId> = {
   "level-04-c-basics": "brace",
   "level-02-the-c-language": "pointer",
   "level-05-c-contract": "seal",
+  "level-06-c-tools": "wrench",
   "level-07-data-structures": "tree",
   "level-03-systems-software": "shell",
   "level-08-vm-threads-files": "page",
+  "level-09-memory-allocator": "heap",
 };
 
 export type Skill = {

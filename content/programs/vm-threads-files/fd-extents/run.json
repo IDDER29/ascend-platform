@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/fd-extents",
+  "sourceHash": "a7761bfba37d46d9",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "byte       0: file block    0, disk block 42847344\nbyte   10000: file block    2, disk block 42847346\nbyte  409700: file block  100, disk block 21860959\nbyte  204800: file block   50, in a hole (reads as zeros)\nbyte 4096000: file block 1000, disk block 22953284\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

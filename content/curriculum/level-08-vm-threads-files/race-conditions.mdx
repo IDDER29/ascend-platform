@@ -1,0 +1,113 @@
+---
+title: "Race conditions"
+level: level-08-vm-threads-files
+slug: race-conditions
+order: 6
+timeMin: 11
+learningOutcomes:
+- Explain why count++ in two threads loses updates, as an unprotected read-modify-write
+- Recognise a check-then-act race, where a condition can change between the check and the action
+- Explain why an optimised build can hide a race without fixing it
+- Use ThreadSanitizer to find a data race and read its report
+primer:
+- title: "Threads vs processes"
+  type: doc
+  meta: Reread · 2 min · threads share one address space.
+  essential: true
+- title: "Sharing one machine"
+  type: doc
+  meta: "Foundations · the lost update, first seen on the tiny CPU."
+  essential: false
+knowledgeCheck:
+- question: Two threads each do count++ a million times. Why is the total usually less than two million?
+  answer: "count++ is three steps: read count, add 1, write it back. If both threads read the same value before either writes, both write that value plus 1, and one increment is lost. Nothing stops the steps of two threads interleaving."
+  jumpToId: a-lost-update-for-real
+  jumpToLabel: A lost update, for real
+- question: The -O2 build printed exactly 2000000. Does that mean the race is gone?
+  answer: "No. gcc turned the whole loop into one addq $1000000 to count, so the read-modify-write window became tiny and the two threads happened not to overlap. It's still an unprotected read-modify-write from two threads, a data race and therefore undefined behaviour, and ThreadSanitizer still reports it."
+  jumpToId: the-optimiser-hides-it
+  jumpToLabel: The optimiser hides it
+assignment:
+  instruction: "Build the racy counter yourself and run it ten times at -O0, writing down each total. Then build it with -fsanitize=thread -g and run it once, and find the two source lines and the variable in the report."
+  resourceName: 'ThreadSanitizer manual'
+  resourceType: doc
+  resourceUrl: 'https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual'
+additionalResources:
+- title: "OSTEP: Concurrency: An Introduction"
+  type: pdf
+  meta: the race on a shared counter, instruction by instruction
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/threads-intro.pdf'
+whyThisMatters: "Race conditions are among the hardest bugs there are: they depend on timing, appear on one machine and not another, and vanish when you add a print statement. Knowing their shapes, and having a tool that finds them, is how you write threaded code you can trust."
+---
+
+Threads share memory, and that's the point of them. But when two threads touch the same data and at least one of them writes, the result can depend on exactly how their steps interleave. That's a **race condition**. In Foundations you stepped through a lost update by hand on the tiny CPU. Here it is in real C, with real threads, along with its cousins and a tool that catches them.
+
+## A lost update, for real
+
+Two threads each add 1 to a shared `count`, a million times. Predict the total, then run it. It's built with `-O0`, so every `count++` really happens.
+
+<CRun program="vm-threads-files/th-race-O0" caption='Two threads, one counter, -O0' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Far less than 2000000: this run got about 1.1 million, and every run gets a different number. `count++` is three machine steps: load `count` into a register, add 1, store it back. Thread A loads 500. Before it stores, thread B loads 500 too. Both store 501, so two increments produce one. With two cores running both threads truly at once, this happens hundreds of thousands of times.
+
+That three-step pattern is a **read-modify-write**, and the race is that nothing makes it indivisible.
+
+</details>
+
+## Check, then act
+
+A race doesn't need a counter. This program lets two people withdraw 80 from a balance of 100, each checking first that there's enough. A 1 ms pause between the check and the withdrawal stands in for a context switch, which could come at that moment in any real program. Predict the final balance.
+
+<CRun program="vm-threads-files/th-race-bank" caption='Two withdrawals, each checked first' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+-60: both withdrawals went through. Both threads checked `balance >= 80` while it was still 100, and both then subtracted. The check was true when it was made and false by the time the program acted on it. This is a **check-then-act** race, also called time-of-check to time-of-use (TOCTOU). Without the pause it would happen rarely, which is worse: a bug that passes every test and appears in production.
+
+The fix isn't a faster check. The check and the action must happen as **one** step that no other thread can interrupt: the next lesson's mutex.
+
+</details>
+
+## The optimiser hides it
+
+Here is the first program again, built with `-O2`. Predict the total.
+
+<CRun program="vm-threads-files/th-race-O2" caption='The same counter, -O2' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Exactly 2000000, which looks fixed. It isn't. With optimisation, gcc saw that each thread just adds 1 a million times and compiled `work` into a single instruction:
+
+```
+work:
+	addq	$1000000, count(%rip)
+	ret
+```
+
+Each thread now does one read-modify-write instead of a million, so the chance that the two overlap is tiny. But `addq` to memory is still a separate read and write (it has no `lock` prefix), and on another machine, with another load or another compiler, the threads could overlap and lose a whole million. In C, two threads accessing the same object without synchronisation, with at least one writing, is a **data race**, and a data race is undefined behaviour. A correct-looking answer proves nothing.
+
+</details>
+
+## Finding races with ThreadSanitizer
+
+You can't test a race away, because it depends on timing. **ThreadSanitizer** (`-fsanitize=thread`) watches every memory access while the program runs, and reports two threads touching the same location without synchronisation, even when the timing happened to be harmless. Here's the counter (1000 rounds, so it runs fast under the sanitizer). The addresses and thread numbers in the report change from run to run.
+
+<CRun program="vm-threads-files/th-race-tsan" caption='The counter under ThreadSanitizer' />
+
+<details>
+<summary>Check your answer</summary>
+
+The total came out right this time, but TSan still reports a **data race** in `work` at `main.c:10`, the `count++` line. It shows a read by one thread and a previous write by another, both to global `count`, and where each thread was created. That's everything you need to find and fix it. TSan finds races that didn't cause a wrong answer in this run, which is exactly what you want from a tool for timing bugs.
+
+</details>
+
+<KeyIdea>A race is shared data, at least one writer, and no synchronisation. Look for read-modify-write and check-then-act on shared data, and let ThreadSanitizer find what your eyes miss.</KeyIdea>
+
+## Done when
+
+You can explain the lost update step by step, spot a check-then-act race, say why the -O2 result proves nothing, and read a ThreadSanitizer report.

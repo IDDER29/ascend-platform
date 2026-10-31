@@ -1,0 +1,111 @@
+---
+title: "Deadlock"
+level: level-08-vm-threads-files
+slug: deadlock
+order: 9
+timeMin: 10
+learningOutcomes:
+- Explain how two threads that each hold one lock and wait for the other's can freeze forever
+- Name the four conditions that must all hold for a deadlock
+- Prevent deadlock by always taking locks in one fixed global order
+- Recognise other ways to break a deadlock condition, such as trylock with back-off or holding one lock at a time
+primer:
+- title: "Mutexes and locks"
+  type: doc
+  meta: Reread · 2 min · what waiting for a lock means.
+  essential: true
+knowledgeCheck:
+- question: Transfer A locks savings then checking; transfer B locks checking then savings. How can they freeze?
+  answer: "A locks savings and B locks checking at about the same time. A now waits for checking, which B holds, and B waits for savings, which A holds. Neither can go on, and neither will let go: a cycle of waiting, so both wait forever."
+  jumpToId: two-transfers-frozen
+  jumpToLabel: Two transfers, frozen
+- question: Why does locking the account with the smaller id first prevent the deadlock?
+  answer: "Both transfers now try savings (id 1) before checking (id 2). Whoever gets savings first can always get checking next, because nobody holds checking while waiting for savings. With one global order, no cycle of waiting can form."
+  jumpToId: one-order-for-every-lock
+  jumpToLabel: One order for every lock
+assignment:
+  instruction: "Write a transfer function for an array of 10 accounts, each with its own mutex, and start 8 threads doing 100000 random transfers between random pairs. First lock from then to and watch it freeze; then order the locks by account index and check that the total money never changes. What should happen when from and to are the same account?"
+  resourceName: 'OSTEP: Common Concurrency Problems'
+  resourceType: doc
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/threads-bugs.pdf'
+additionalResources:
+- title: "Deadlock (Wikipedia)"
+  type: doc
+  meta: the four Coffman conditions, and prevention versus avoidance
+  url: 'https://en.wikipedia.org/wiki/Deadlock_(computer_science)'
+- title: "Dining philosophers problem (Wikipedia)"
+  type: doc
+  meta: the classic deadlock puzzle and its solutions
+  url: 'https://en.wikipedia.org/wiki/Dining_philosophers_problem'
+whyThisMatters: "A deadlocked program doesn't crash or print an error: it just stops, often only under load and only sometimes. Knowing the four conditions, and making lock order a design rule from the start, keeps a program from freezing in production."
+---
+
+Mutexes fix races, but bring a new failure. A thread that waits for a lock can wait forever, if the thread holding it is waiting for something the first thread holds. That's a **deadlock**.
+
+## Two transfers, frozen
+
+Moving money between two accounts needs both accounts' locks, so neither balance changes halfway. This program runs two transfers at once: 30 from savings to checking, and 50 from checking to savings. Each locks the account it takes money **from** first, then the one it pays **to**. A 10 ms pause between the two locks makes the unlucky timing likely; in real code it would just be rare. Predict what happens.
+
+<CRun program="vm-threads-files/th-deadlock" caption='Lock "from", then "to"' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It printed "starting two transfers" and then nothing, and was stopped after 3 seconds. It would have waited forever:
+
+1. Transfer A locks **savings**. Transfer B locks **checking**.
+2. A tries to lock checking. B holds it, so A waits.
+3. B tries to lock savings. A holds it, so B waits.
+
+Each holds what the other needs, and neither will let go until it gets what it's waiting for. Nothing crashed and no error was printed. The program, or part of it, simply stopped. (It turns stdout's buffering off at the start, so that first line appeared even though the program never finished.)
+
+</details>
+
+## The four conditions
+
+A deadlock needs all four of these at once (they're often called the Coffman conditions):
+
+1. **Mutual exclusion:** a resource (here a lock) can be held by only one thread.
+2. **Hold and wait:** a thread holds one resource while waiting for another.
+3. **No preemption:** nobody can take a lock away from the thread holding it.
+4. **Circular wait:** there's a cycle of threads, each waiting for the next one's resource.
+
+Break any one, and deadlock is impossible. The first three come with how mutexes work. The fourth is the one you control.
+
+## One order for every lock
+
+Give every lock a place in one global order, and always take locks in that order. Here each account has a fixed id, and a transfer always locks the account with the smaller id first, whichever direction the money goes. Same pause, same two transfers. Predict the result.
+
+<CRun program="vm-threads-files/th-deadlock-ordered" caption='Always lock the smaller id first' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Both transfers complete: savings 120 and checking 80 (100 − 30 + 50 and 100 + 30 − 50). Both threads now try **savings** (id 1) first. Whichever gets it then takes checking, because nobody can be holding checking while waiting for savings. The other thread waits at its first lock, holding nothing, until the first is done. A cycle can't form.
+
+Why a stored id and not the accounts' addresses? Comparing pointers to two unrelated objects with `<` is undefined in C, as The C Contract showed. An explicit id is defined, and it's the same on every run.
+
+</details>
+
+<KeyIdea>Deadlock needs a cycle of threads each holding a lock and waiting for the next. Take every pair of locks in one fixed global order, and the cycle can't form.</KeyIdea>
+
+## Other ways out
+
+Lock ordering is the usual fix, but each of the other conditions can be broken too. Which condition does each of these break?
+
+- `pthread_mutex_trylock`: if the second lock is busy, release the first, wait a moment, and start again.
+- Hold at most one lock at a time, for example by copying what you need and then releasing it.
+- One big lock for both accounts.
+
+<details>
+<summary>Check your answer</summary>
+
+- **trylock and back off** breaks *hold and wait*. A thread never waits while holding a lock; it gives everything up and retries. It works, but it can **livelock**: two threads that keep backing off in step make no progress, which is why the wait before retrying is often random.
+- **One lock at a time** breaks *hold and wait* by design.
+- **One big lock** breaks *circular wait*, because there's only one lock to wait for. It's simple and deadlock-free, but every transfer now waits for every other, even between unrelated accounts: the granularity trade-off from the mutex lesson.
+
+</details>
+
+## Done when
+
+You can explain the frozen transfers step by step, name the four conditions, fix the program by ordering the locks, and say which condition each other fix breaks.

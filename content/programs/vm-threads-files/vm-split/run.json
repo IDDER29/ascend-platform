@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/vm-split",
+  "sourceHash": "fb55c0fd4dad9302",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog 0x401136 0x401137 0x402000 0x7ffd1234a678",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "0x000000401136  ->  PML4   0  PDPT   0  PD   2  PT   1  offset 0x136\n0x000000401137  ->  PML4   0  PDPT   0  PD   2  PT   1  offset 0x137\n0x000000402000  ->  PML4   0  PDPT   0  PD   2  PT   2  offset 0x000\n0x7ffd1234a678  ->  PML4 255  PDPT 500  PD 145  PT 330  offset 0x678\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

@@ -117,6 +117,7 @@ test("combination badges list their parts and are earned when the last part is",
     entry("level-05-c-contract", "project-ub-hunt"),
     entry("level-07-data-structures", "project-hash-map"),
     entry("level-08-vm-threads-files", "project-thread-pool"),
+    entry("level-09-memory-allocator", "project-malloc"),
   ];
   const lessons = [...LESSONS, ...extra];
   const all = [...done(...LESSONS.map((l) => l.slug)), ...extra.map((l) => ({ key: l.key, completedAt: daysAgo(5) }))];
@@ -145,18 +146,19 @@ test("combination badges list their parts and are earned when the last part is",
     { projectId: "ub-hunt", repoUrl: "https://github.com/a/ub", addedAt: daysAgo(4) },
     { projectId: "hash-map", repoUrl: "https://github.com/a/hm", addedAt: daysAgo(4) },
     { projectId: "thread-pool", repoUrl: "https://github.com/a/tp2", addedAt: daysAgo(4) },
+    { projectId: "malloc", repoUrl: "https://github.com/a/ma", addedAt: daysAgo(4) },
     { projectId: "tiny-cpu", repoUrl: "https://github.com/a/t", addedAt: daysAgo(3) },
     { projectId: "shellforge", repoUrl: "https://github.com/a/s", addedAt: daysAgo(2) },
   ];
   const m = model({ completions: all, projectLinks: links });
   const builder = badge(m, "builder");
-  assert.deepEqual(builder.criteria.map((c) => c.badgeId), ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ub-hunter", "map-maker", "pool-keeper", "ship-it"]);
+  assert.deepEqual(builder.criteria.map((c) => c.badgeId), ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ub-hunter", "map-maker", "pool-keeper", "allocator", "ship-it"]);
   assert.equal(builder.earned, true);
   assert.equal(builder.earnedAt, daysAgo(2));
   assert.equal(badge(m, "whole-machine").earned, true);
 
   const half = model({ completions: all, projectLinks: links.slice(0, 1) });
-  assert.deepEqual(badge(half, "builder").criteria.map((c) => c.done), [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]);
+  assert.deepEqual(badge(half, "builder").criteria.map((c) => c.done), [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]);
   // A combination's next step is the next step of the first badge it still needs.
   assert.deepEqual(badge(half, "builder").action, badge(half, "cartographer").action);
   assert.equal(badge(half, "builder").action?.href, "/profile");
@@ -280,4 +282,16 @@ test("every badge lists the missions behind it, newest first", () => {
   // A title lists the ranked missions that count toward it.
   const genin = m.titles[0];
   assert.deepEqual(genin.missions.map((x) => x.rank), ["B", "D", "D"]);
+});
+
+test("no two badges share a glyph, except a topic's badge and its clan", () => {
+  const topicOf = (a: (typeof ACHIEVEMENTS)[number]) => a.rules.find((r) => r.kind === "topic");
+  const byGlyph = new Map<string, string[]>();
+  for (const a of [...ACHIEVEMENTS, ...INSIGNIA]) byGlyph.set(a.glyph, [...(byGlyph.get(a.glyph) ?? []), a.id]);
+  for (const [glyph, ids] of byGlyph) {
+    if (ids.length === 1) continue;
+    const all = [...ACHIEVEMENTS, ...INSIGNIA].filter((a) => ids.includes(a.id));
+    const topics = new Set(all.map((a) => JSON.stringify(topicOf(a) ?? a.id)));
+    assert.equal(topics.size, 1, `${glyph} is shared by ${ids.join(", ")}`);
+  }
 });

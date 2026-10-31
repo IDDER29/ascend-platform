@@ -1,0 +1,111 @@
+---
+title: "Project: Register and counter lab"
+level: level-00-bits-logic
+slug: project-register-lab
+order: 50
+timeMin: 20
+learningOutcomes:
+- Build a register that loads its input only on a tick when LOAD is 1, and holds otherwise
+- Widen it to four bits and check that every bit loads together
+- Build a 3-bit counter with enable and reset, including its wraparound from 7 to 0
+- Find the first tick where a broken counter goes wrong, and fix the line that causes it
+primer:
+- title: "The clock and registers"
+  type: doc
+  meta: Reread · 3 min · load enables and the tick.
+  essential: true
+- title: "Counters: registers that count"
+  type: doc
+  meta: Reread · 3 min · you'll build one in part 3.
+  essential: true
+knowledgeCheck:
+- question: What does Q := (D AND LOAD) OR (Q AND NOT LOAD) mean in words?
+  answer: "On the next tick, Q takes D if LOAD is 1, and keeps its own value if LOAD is 0. It's a multiplexer in front of the flip-flop, choosing between the new value and the old one."
+  jumpToId: part-1-a-register-that-waits-for-load
+  jumpToLabel: "Part 1: A register that waits for LOAD"
+- question: In the broken counter, which tick is the first to go wrong, and why look for the first one?
+  answer: "Tick 1: Q1 flips on every tick instead of only when Q0 was 1. Everything after the first wrong tick starts from a wrong state, so later ticks look wrong too even though the cause is the same single line."
+  jumpToId: part-4-find-the-first-wrong-tick
+  jumpToLabel: "Part 4: Find the first wrong tick"
+assignment:
+  instruction: "Design a 3-bit counter that counts down: 7, 6, 5, and so on, wrapping from 0 to 7. Write its three := lines and test them in any Clock Lab on this page by replacing the circuit. Hint: a bit flips when every bit below it is 0."
+  resourceName: 'nand2tetris.org: Project 3, Memory'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project03'
+additionalResources:
+- title: Counter (digital) (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Counter_(digital)'
+- title: 'eater.net: Registers'
+  type: doc
+  meta: the 8-bit registers of a real breadboard computer
+  url: 'https://eater.net/8bit/registers'
+whyThisMatters: "Every register in a CPU, the program counter included, is one of the circuits in this project. When a value is wrong one step later than you expected, or a counter skips, the fix comes from exactly this skill: reading a timeline tick by tick and finding the first one that differs."
+---
+
+In this project you build the two most common clocked circuits in a computer: a register with a load input, and a counter. Each Clock Lab gives you the inputs for every tick and checks your registers after each one.
+
+Before each Tick, predict what every register will be. That's the point of the project: the lab only confirms what you worked out.
+
+## Part 1: A register that waits for LOAD
+
+A one-bit register Q should take the value of D on a tick when LOAD is 1, and keep its value on a tick when LOAD is 0. The starting line, `Q := D`, copies D on every tick. Fix it.
+
+<ClockLab caption='A one-bit register with LOAD' inputsJson='["LOAD","D"]' registersJson='["Q"]' startJson='["Q := D"]' targetJson='["Q := (D AND LOAD) OR (Q AND NOT LOAD)"]' ticksJson='[{"LOAD":1,"D":1},{"LOAD":0,"D":0},{"LOAD":0,"D":1},{"LOAD":1,"D":0},{"LOAD":0,"D":1}]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`Q := (D AND LOAD) OR (Q AND NOT LOAD)`. It's a multiplexer choosing between D and Q, with LOAD as the select. Q goes 1, 1, 1, 0, 0: it only changes on ticks 1 and 4, where LOAD is 1. With `Q := D`, ticks 2 and 5 are wrong, because the register follows D even when it shouldn't.
+
+</details>
+
+## Part 2: Four bits, loaded together
+
+A real register holds several bits that load on the same tick. Write four lines, one per bit, each with the same LOAD.
+
+<ClockLab caption='A 4-bit register' inputsJson='["LOAD","D3","D2","D1","D0"]' registersJson='["Q3","Q2","Q1","Q0"]' startJson='["Q3 := (D3 AND LOAD) OR (Q3 AND NOT LOAD)"]' targetJson='["Q3 := (D3 AND LOAD) OR (Q3 AND NOT LOAD)","Q2 := (D2 AND LOAD) OR (Q2 AND NOT LOAD)","Q1 := (D1 AND LOAD) OR (Q1 AND NOT LOAD)","Q0 := (D0 AND LOAD) OR (Q0 AND NOT LOAD)"]' ticksJson='[{"LOAD":1,"D3":1,"D2":0,"D1":1,"D0":0},{"LOAD":0,"D3":0,"D2":1,"D1":1,"D0":1},{"LOAD":1,"D3":0,"D2":1,"D1":1,"D0":0},{"LOAD":0,"D3":1,"D2":1,"D1":1,"D0":1}]' />
+
+<details>
+<summary>Check your answer</summary>
+
+The same line four times, one per bit. The register holds 1010, keeps it through tick 2, loads 0110 on tick 3 and keeps it through tick 4. Changing D without LOAD does nothing; that's what lets a register hold a value while other parts of the machine are busy.
+
+</details>
+
+## Part 3: A counter with enable and reset
+
+A 3-bit counter should add 1 on each tick when EN is 1, wrap from 7 back to 0, and go to 0 on any tick when RESET is 1. The starting lines count, but Q2 never changes and RESET is ignored.
+
+<ClockLab caption='A 3-bit counter' inputsJson='["EN","RESET"]' registersJson='["Q2","Q1","Q0"]' startJson='["Q0 := Q0 XOR EN","Q1 := Q1 XOR (Q0 AND EN)","Q2 := Q2"]' targetJson='["Q0 := NOT RESET AND (Q0 XOR EN)","Q1 := NOT RESET AND (Q1 XOR (Q0 AND EN))","Q2 := NOT RESET AND (Q2 XOR (Q1 AND Q0 AND EN))"]' ticksJson='[{"EN":1,"RESET":0},{"EN":1,"RESET":0},{"EN":1,"RESET":0},{"EN":0,"RESET":0},{"EN":1,"RESET":0},{"EN":1,"RESET":0},{"EN":1,"RESET":0},{"EN":1,"RESET":0},{"EN":1,"RESET":0},{"EN":1,"RESET":1},{"EN":1,"RESET":0}]' />
+
+<details>
+<summary>Check your answer</summary>
+
+- `Q0 := NOT RESET AND (Q0 XOR EN)`
+- `Q1 := NOT RESET AND (Q1 XOR (Q0 AND EN))`
+- `Q2 := NOT RESET AND (Q2 XOR (Q1 AND Q0 AND EN))`
+
+A bit flips when every bit below it is 1, which is how adding 1 carries in binary. The count goes 1, 2, 3, then holds at 3 (EN is 0 on tick 4), then 4, 5, 6, 7, wraps to 0, stays 0 on the reset tick, and starts again at 1.
+
+</details>
+
+## Part 4: Find the first wrong tick
+
+This counter has one wrong line. Press All ticks, and find the **first** tick that doesn't match before you look at the code.
+
+<ClockLab caption='A broken counter' inputsJson='["EN"]' registersJson='["Q2","Q1","Q0"]' startJson='["Q0 := Q0 XOR EN","Q1 := Q1 XOR EN","Q2 := Q2 XOR (Q1 AND Q0 AND EN)"]' targetJson='["Q0 := Q0 XOR EN","Q1 := Q1 XOR (Q0 AND EN)","Q2 := Q2 XOR (Q1 AND Q0 AND EN)"]' ticksJson='[{"EN":1},{"EN":1},{"EN":1},{"EN":1},{"EN":1},{"EN":1},{"EN":1},{"EN":1}]' />
+
+<details>
+<summary>Check your answer</summary>
+
+Tick 1: the counter shows 3 (011) instead of 1 (001), because Q1 flips on every tick. The fix is `Q1 := Q1 XOR (Q0 AND EN)`. After tick 1 every row is wrong, but they're all consequences of that one line: a wrong state at one tick makes every later tick start from the wrong place. That's why you look for the first difference, not the last.
+
+</details>
+
+<KeyIdea>A register changes only on the tick, and only as its := line says. To debug one, find the first tick that differs.</KeyIdea>
+
+## Done when
+
+All four labs say "Solved", you predicted each tick before pressing it, and you can say why the broken counter's first wrong tick was tick 1. Then do the assignment: a counter that counts down.

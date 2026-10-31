@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { chain, gateCount, inputRows, parseCircuit, runLab } from "./model";
+import { chain, gateCount, inputRows, parseCircuit, runClocked, runLab } from "./model";
 
 const table = (lines: string[], inputs: string[], out: string) =>
   runLab({ inputs, outputs: [out], lines }).ok
@@ -144,4 +144,54 @@ test("the gate workbench's NAND-only answers solve their labs", () => {
     nandOnly(["NS = S NAND S", "X = A NAND NS", "Y = B NAND S", "OUT = X NAND Y"], "(A AND NOT S) OR (B AND S)", ["A", "B", "S"]),
     4,
   );
+});
+
+test("clocked registers: a 2-bit counter with enable counts only on enabled ticks", () => {
+  const r = runClocked({
+    inputs: ["EN"],
+    registers: ["Q1", "Q0"],
+    lines: ["Q0 := Q0 XOR EN", "Q1 := Q1 XOR (Q0 AND EN)"],
+    ticks: [{ EN: 1 }, { EN: 1 }, { EN: 0 }, { EN: 1 }, { EN: 1 }],
+    target: ["Q0 := Q0 XOR EN", "Q1 := Q1 XOR (Q0 AND EN)"],
+  });
+  assert.ok(r.ok && r.solved);
+  if (r.ok) assert.deepEqual(r.rows.map((x) => x.after.Q1 * 2 + x.after.Q0), [1, 2, 2, 3, 0]);
+});
+
+test("every register changes at once on the tick, from the values before it", () => {
+  // A swap: A and B exchange values in one tick, which only works if both read the old values.
+  const r = runClocked({ inputs: [], registers: ["A", "B"], init: { A: 1, B: 0 }, lines: ["A := B", "B := A"], ticks: [{}, {}] });
+  assert.ok(r.ok);
+  if (r.ok) assert.deepEqual(r.rows.map((x) => [x.after.A, x.after.B]), [[0, 1], [1, 0]]);
+});
+
+test("a register with no := line keeps its value; mistakes are reported by line", () => {
+  const r = runClocked({ inputs: ["D"], registers: ["Q"], init: { Q: 1 }, lines: ["X = D"], ticks: [{ D: 0 }], watch: ["X"] });
+  assert.ok(r.ok);
+  if (r.ok) assert.deepEqual(r.rows[0].after, { Q: 1, X: 0 });
+  assert.ok(!parseCircuit(["Q = D"], ["D"], ["Q"]).ok);
+  assert.ok(!parseCircuit(["X := D"], ["D"], ["Q"]).ok);
+  assert.ok(!parseCircuit(["Q := D", "Q := 1"], ["D"], ["Q"]).ok);
+});
+
+test("a D register with load: holds unless LOAD is 1, and the target check catches a wrong tick", () => {
+  const ticks = [{ LOAD: 1, D: 1 }, { LOAD: 0, D: 0 }, { LOAD: 1, D: 0 }];
+  const target = ["Q := (D AND LOAD) OR (Q AND NOT LOAD)"];
+  const good = runClocked({ inputs: ["LOAD", "D"], registers: ["Q"], lines: target, ticks, target });
+  assert.ok(good.ok && good.solved);
+  const leaky = runClocked({ inputs: ["LOAD", "D"], registers: ["Q"], lines: ["Q := D"], ticks, target });
+  assert.ok(leaky.ok && !leaky.solved);
+  if (leaky.ok) assert.deepEqual(leaky.rows.map((x) => x.ok), [true, false, true]);
+});
+
+test("watched wires show the state after each tick, so a row reads as one moment", () => {
+  const r = runClocked({
+    inputs: ["GO"],
+    registers: ["S1", "S0"],
+    lines: ["S0 := GO AND NOT S1 AND NOT S0", "S1 := GO AND S0", "READ = NOT S1 AND NOT S0", "ADD = S0", "WRITE = S1"],
+    ticks: [{ GO: 1 }, { GO: 1 }, { GO: 1 }],
+    watch: ["READ", "ADD", "WRITE"],
+  });
+  assert.ok(r.ok);
+  if (r.ok) assert.deepEqual(r.rows.map((x) => [x.after.ADD, x.after.WRITE, x.after.READ]), [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
 });

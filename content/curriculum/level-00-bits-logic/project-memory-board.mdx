@@ -1,0 +1,107 @@
+---
+title: "Project: The memory board"
+level: level-00-bits-logic
+slug: project-memory-board
+order: 51
+timeMin: 30
+learningOutcomes:
+- Write and read a 256-byte memory using only an address, data in, write enable and a clock tick
+- Show that a write changes exactly one box and that a tick without write enable changes none
+- "Use memory as a scratch pad: copy a value from one box to another with only reads and writes"
+- Diagnose a faulty decoder from the timeline, and say which address bit it ignores
+primer:
+- title: "Memory as numbered boxes"
+  type: doc
+  meta: Reread · 3 min · addresses and the decoder.
+  essential: true
+- title: "Memory timing: a small memory system"
+  type: doc
+  meta: Reread · 3 min · writes happen on the tick.
+  essential: true
+knowledgeCheck:
+- question: How do you copy the value in box 0x10 to box 0x40 using only the memory's signals?
+  answer: "Set the address to 0x10 with write enable off and read data out. Then set the address to 0x40, put that value on data in, turn write enable on, and tick. Memory can't copy by itself; something outside it (later, the CPU) reads and then writes."
+  jumpToId: part-3-copy-a-value
+  jumpToLabel: "Part 3: Copy a value"
+- question: Writing to box 0x22 also changed box 0x23. What's wrong with the decoder?
+  answer: "It ignores address bit 0, the lowest bit. 0x22 is 0010 0010 and 0x23 is 0010 0011: they differ only in bit 0, so a decoder that doesn't look at that bit selects both."
+  jumpToId: part-4-a-board-with-a-fault
+  jumpToLabel: "Part 4: A board with a fault"
+assignment:
+  instruction: "Use the 256-byte board in part 2 to store the word HI as ASCII codes in boxes 0x80 and 0x81 (H is 72, I is 73), then store their sum in box 0x82. Note every tick you used, and explain why the sum needed a read before the write."
+  resourceName: 'eater.net: RAM module'
+  resourceType: site
+  resourceUrl: 'https://eater.net/8bit/ram'
+additionalResources:
+- title: 'nand2tetris.org: Project 3, Memory'
+  type: doc
+  meta: build RAM from registers in a hardware simulator
+  url: 'https://www.nand2tetris.org/project03'
+- title: Static random-access memory (Wikipedia)
+  type: doc
+  meta: how real RAM cells hold a bit
+  url: 'https://en.wikipedia.org/wiki/Static_random-access_memory'
+whyThisMatters: "The tiny CPU you'll build next reads its program and data from exactly this kind of memory, one address at a time. Knowing that memory only does what its signals tell it, on the tick, and that a decoder fault shows up as two boxes changing at once, is what lets you trust (and debug) everything built on top of it."
+---
+
+The memory board is 256 one-byte boxes, numbered 0x00 to 0xFF. You control it the way a CPU does, with four signals: an **address**, **data in**, **write enable**, and the clock **tick**. Data out always shows the box the address selects.
+
+For each part, plan your ticks first, then do them, then open "Check your answer".
+
+## Part 1: One write, one box
+
+Write 42 into box 5. Then tick once more with write enable off. Watch the timeline: which boxes changed on each tick?
+
+<MemoryBoard caption='Write one box' sizeJson='16' goalJson='{"5":42}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Address 5, data 42, write enable on, Tick: the timeline says "changed box 5", and only that box turns lime. The second tick, with write enable off, changes nothing. Data out shows 42 whenever the address is 5, with or without write enable: reading needs no tick.
+
+</details>
+
+## Part 2: Fill a row
+
+On the full 256-byte board, store 1, 2, 3, 4 in boxes 0x80 to 0x83 (128 to 131), without touching anything else.
+
+<MemoryBoard caption='The full board' sizeJson='256' goalJson='{"128":1,"129":2,"130":3,"131":4}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Four ticks, each with write enable on and a different address and data: (128, 1), (129, 2), (130, 3), (131, 4). One write per tick: a memory like this can change only one box at a time. The board says "Done" only if no other box changed, so a stray write on the wrong address would show.
+
+</details>
+
+## Part 3: Copy a value
+
+Box 0x10 (16) holds 99. Copy it into box 0x40 (64). You can only use the four signals: there's no "copy" button.
+
+<MemoryBoard caption='Copy box 16 to box 64' sizeJson='256' startJson='{"16":99}' goalJson='{"16":99,"64":99}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Set the address to 16 and read data out: 99. Then set the address to 64, data in to 99, write enable on, and Tick. Memory can't move a value by itself. Something outside it has to read and then write, and in a computer that something is the CPU, using exactly these two steps for every LDA and STA.
+
+</details>
+
+## Part 4: A board with a fault
+
+This board has a faulty decoder. Write 7 to box 0x22 (34) and watch the timeline. Then try a few other addresses. Which address bit does the decoder ignore?
+
+<MemoryBoard caption='A faulty board' sizeJson='256' faultJson='{"ignoreAddressBit":0}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Writing to 34 (0x22) changes boxes 34 and 35 together. Writing to 35 does the same. 34 is 0010 0010 and 35 is 0010 0011, which differ only in bit 0, the lowest bit. Every write lands on a pair of boxes that differ only in bit 0, so the decoder ignores bit 0. In real hardware this could be a broken wire from that address line. You found it from the timeline alone, without opening the box.
+
+</details>
+
+<KeyIdea>Memory only does what its signals say, on the tick, to the box the decoder picks. Two boxes changing at once means the decoder is picking two.</KeyIdea>
+
+## Done when
+
+Parts 1 to 3 say "Done", you've named the faulty bit in part 4 with a reason, and you can explain why copying a value takes a read and then a write. Then do the assignment.

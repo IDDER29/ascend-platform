@@ -46,8 +46,8 @@ Status: ✓ live · ○ planned in an outline · · not planned yet.
 |---|---|---|
 | Boolean logic, truth tables, gates, NAND universality | F: Logic & Circuits | ✓ |
 | Half adder, full adder, ripple-carry adder | F: Logic & Circuits | ✓ |
-| Multiplexers, decoders | F: Logic & Circuits | ○ |
-| ALU, status flags | F: Logic & Circuits | ○ |
+| Multiplexers, decoders | F: Logic & Circuits | ✓ |
+| ALU, status flags | F: Logic & Circuits | ✓ |
 | De Morgan, canonical forms, Karnaugh maps | CA: Verilog | · |
 | Comparators, shifters, carry-lookahead, multipliers | CA: Verilog | · |
 
@@ -57,7 +57,7 @@ Status: ✓ live · ○ planned in an outline · · not planned yet.
 | Feedback, SR latch, D flip-flop, edge triggering | F: State & Memory | ✓ |
 | Clock, registers, load enable | F: State & Memory | ✓ |
 | Addressed RAM, address/data/write, decoder | F: State & Memory | ✓ |
-| State machines, counters | F: State & Memory | ○ |
+| State machines, counters | F: State & Memory | ✓ |
 | RAM vs storage, the memory hierarchy (concept) | F: The Complete System; SP: Machine & Memory (on a real machine) | ○ |
 | Counters, shift registers, setup/hold, Moore/Mealy | CA: Verilog, RTL to silicon | ○ |
 | SRAM vs DRAM, ROM, multi-port memory | CA: Caches & memory systems | ○ (DRAM) |

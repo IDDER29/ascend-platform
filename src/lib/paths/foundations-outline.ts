@@ -170,11 +170,11 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "State and registers",
     blurb: "How a circuit remembers: latches, the clock, registers, counters and state machines.",
     items: [
-      soon("why-state", "Why a computer needs state", 6, "Circuits that only compute forget everything; a computer must keep a current state and work out the next one.", ["F037"]),
+      live("why-state", "Why a computer needs state", 6, "Circuits that only compute forget everything; a computer must keep a current state and work out the next one.", ["F037"]),
       live("latches-and-flip-flops", "Remembering a bit: latches and flip-flops", 9, "Feedback makes a circuit hold a bit; the SR latch and the D flip-flop control exactly when it changes.", ["F038", "F039"]),
       live("clocks-and-registers", "The clock and registers", 8, "A clock tells every part when to update, and a row of flip-flops with a load input becomes a register.", ["F040", "F041"]),
-      soon("counters", "Counters: registers that count", 7, "Feed a register through an adder and back into itself to make a counter, the circuit behind the program counter.", ["F042"]),
-      soon("state-machines", "State machines: circuits that follow steps", 9, "Describe a controller as states and transitions, then build it from a register and some logic.", ["F043"]),
+      live("counters", "Counters: registers that count", 7, "Feed a register through an adder and back into itself to make a counter, the circuit behind the program counter.", ["F042"]),
+      live("state-machines", "State machines: circuits that follow steps", 9, "Describe a controller as states and transitions, then build it from a register and some logic.", ["F043"]),
     ],
   },
   {
@@ -183,11 +183,11 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     blurb: "Addressed memory built from registers, and the different places data can live.",
     items: [
       live("memory-and-addresses", "Memory as numbered boxes", 8, "Memory is a row of numbered bytes: an address picks a box, a decoder finds it, and you read or write it.", ["F044", "F045", "F046"]),
-      soon("ram-rom-storage", "Registers, RAM, ROM and storage", 7, "Compare where data can live, from tiny fast registers to storage that survives the power going off.", ["F047"]),
-      soon("memory-timing", "Memory timing: a small memory system", 8, "Time writes to the clock and reads to the address, and put registers and RAM together ready for a CPU.", ["F048"]),
-      project("project-register-lab", "Project: Register and counter lab", 20, "Build an 8-bit register and a counter with load, reset and hold, and check they change only on the clock tick.", ["P4-A"]),
-      project("project-memory-board", "Project: The memory board", 30, "Build a 256-byte memory with address, data and write controls, and prove a write to one box leaves the rest alone.", ["P4-B"]),
-      project("project-sequencer", "Optional project: A tiny sequencer", 25, "Build a state machine that reads a byte from memory, changes it and writes it back, one clock tick per step.", ["P4-X"]),
+      live("ram-rom-storage", "Registers, RAM, ROM and storage", 7, "Compare where data can live, from tiny fast registers to storage that survives the power going off.", ["F047"]),
+      live("memory-timing", "Memory timing: a small memory system", 8, "Time writes to the clock and reads to the address, and put registers and RAM together ready for a CPU.", ["F048"]),
+      live("project-register-lab", "Project: Register and counter lab", 20, "Build an 8-bit register and a counter with load, reset and hold, and check they change only on the clock tick.", ["P4-A"], "project"),
+      live("project-memory-board", "Project: The memory board", 30, "Build a 256-byte memory with address, data and write controls, and prove a write to one box leaves the rest alone.", ["P4-B"], "project"),
+      live("project-sequencer", "Optional project: A tiny sequencer", 25, "Build a state machine that reads a byte from memory, changes it and writes it back, one clock tick per step.", ["P4-X"], "project"),
     ],
   },
 

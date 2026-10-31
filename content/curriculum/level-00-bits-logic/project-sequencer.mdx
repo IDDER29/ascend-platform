@@ -1,0 +1,77 @@
+---
+title: "Optional project: A tiny sequencer"
+level: level-00-bits-logic
+slug: project-sequencer
+order: 52
+timeMin: 25
+learningOutcomes:
+- Build a state machine that steps through READ, ADD and WRITE and then starts again
+- Drive a memory board by hand from the sequencer's outputs to add 1 to a box
+- Explain how a sequencer like this becomes a CPU's control unit
+primer:
+- title: "State machines: circuits that follow steps"
+  type: doc
+  meta: Reread · 3 min · you'll build one here.
+  essential: true
+- title: "Project: The memory board"
+  type: doc
+  meta: Reread · 2 min · part 2 uses the same board.
+  essential: false
+knowledgeCheck:
+- question: What do the two registers S1 and S0 hold, and what do READ, ADD and WRITE do?
+  answer: "S1 and S0 hold which step the sequencer is on: 00, 01 or 10. READ, ADD and WRITE are wires that are 1 in exactly one of those steps; they're the signals that tell the rest of the machine what to do now."
+  jumpToId: part-1-three-steps-then-repeat
+  jumpToLabel: "Part 1: Three steps, then repeat"
+assignment:
+  instruction: "Add a fourth step, OUT, that comes after WRITE and before going back to READ. Change the := lines so the state goes 00, 01, 10, 11, 00 and add an OUT wire. Test it in the Clock Lab by editing the circuit."
+  resourceName: 'Wikipedia: Finite-state machine'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Finite-state_machine'
+additionalResources:
+- title: 'eater.net: CPU control logic'
+  type: doc
+  meta: a real sequencer driving a real computer
+  url: 'https://eater.net/8bit/control'
+whyThisMatters: "A CPU's control unit is a sequencer: a small state machine that steps through fetch and execute and sends a signal to each part at the right moment. Building a three-step one and then doing its job by hand is the clearest way to see what that unit is for."
+---
+
+This is an optional extra. It puts a state machine and memory together: the state machine says what to do on each step, and you carry it out on the memory board.
+
+## Part 1: Three steps, then repeat
+
+Build a sequencer with a 2-bit state, S1 and S0. While GO is 1, it should step 00, 01, 10 and then back to 00. Three wires should say which step it's on: READ is 1 in step 00, ADD in step 01, WRITE in step 10.
+
+<ClockLab caption='A three-step sequencer' inputsJson='["GO"]' registersJson='["S1","S0"]' outputsJson='["READ","ADD","WRITE"]' startJson='["S0 := NOT S0","S1 := S1","READ = 1","ADD = 0","WRITE = 0"]' targetJson='["S0 := GO AND NOT S1 AND NOT S0","S1 := GO AND S0","READ = NOT S1 AND NOT S0","ADD = S0","WRITE = S1"]' ticksJson='[{"GO":1},{"GO":1},{"GO":1},{"GO":1},{"GO":1},{"GO":1}]' />
+
+Each row of the timeline shows the state after that tick, and the three wires for that state.
+
+<details>
+<summary>Check your answer</summary>
+
+- `S0 := GO AND NOT S1 AND NOT S0`: go to 01 only from 00.
+- `S1 := GO AND S0`: go to 10 only from 01.
+- From 10, both lines give 0, so it returns to 00.
+- `READ = NOT S1 AND NOT S0`, `ADD = S0`, `WRITE = S1`.
+
+The state runs 01, 10, 00, 01, 10, 00 after each tick, and in each step exactly one of READ, ADD and WRITE is 1.
+
+</details>
+
+## Part 2: Do what it says
+
+Box 5 holds 20. Follow your sequencer's steps on the memory board to add 1 to it: in the READ step, read box 5; in the ADD step, add 1 in your head (you're the ALU); in the WRITE step, write the result back. The goal is box 5 holding 21.
+
+<MemoryBoard caption='Read, add, write' sizeJson='16' startJson='{"5":20}' goalJson='{"5":21}' />
+
+<details>
+<summary>Check your answer</summary>
+
+READ: address 5, write enable off, data out shows 20. ADD: 20 + 1 = 21. WRITE: address 5, data in 21, write enable on, Tick. One trip round the sequencer is one read-modify-write.
+
+Now picture the sequencer's wires connected instead of you following them: READ turning on memory's output, ADD turning on the ALU, WRITE turning on write enable. That is a control unit, and it's what you'll build next, in Build a CPU.
+
+</details>
+
+## Done when
+
+The sequencer is solved, the board says "Done", and you can say what a control unit does in one sentence.

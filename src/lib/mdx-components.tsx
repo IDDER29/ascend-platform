@@ -9,6 +9,8 @@ import { TinyCpu } from "@/components/lesson/tiny-cpu";
 import { TinyCpu2 } from "@/components/lesson/tiny-cpu-2";
 import { ByteLab } from "@/components/lesson/byte-lab";
 import { GateLab } from "@/components/lesson/gate-lab";
+import { ClockLab } from "@/components/lesson/clock-lab";
+import { MemoryBoard } from "@/components/lesson/memory-board";
 import { SectionHeading } from "@/components/bookmarks/lesson-bookmarks";
 
 export const mdxComponents: MDXComponents = {
@@ -22,6 +24,8 @@ export const mdxComponents: MDXComponents = {
   TinyCpu2,
   ByteLab,
   GateLab,
+  ClockLab,
+  MemoryBoard,
   h2: (props) => (
     <SectionHeading
       className="group/section mt-9 mb-3 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight"

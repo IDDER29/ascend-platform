@@ -14,7 +14,11 @@ type Node =
   | { kind: "not"; arg: Node }
   | { kind: "bin"; op: Exclude<GateName, "NOT">; left: Node; right: Node };
 
-export type Circuit = { wires: { name: string; expr: Node; line: number }[] };
+export type Circuit = {
+  wires: { name: string; expr: Node; line: number }[];
+  /** Clocked registers' next values ("Q := expr"), taken all at once on each tick. */
+  next: { name: string; expr: Node; line: number }[];
+};
 export type ParseResult = { ok: true; circuit: Circuit } | { ok: false; line: number; message: string };
 
 const NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -70,26 +74,49 @@ function parseExpr(text: string, known: Set<string>): Node {
   return node;
 }
 
-/** Parse "NAME = expression" lines; blank lines and "#" comments are ignored. */
-export function parseCircuit(lines: string[], inputs: string[]): ParseResult {
-  const known = new Set(inputs);
+/**
+ * Parse circuit lines; blank lines and "#" comments are ignored. "NAME = expression" is a wire;
+ * "REG := expression" (registers only) is the value REG takes on the next clock tick.
+ */
+export function parseCircuit(lines: string[], inputs: string[], registers: string[] = []): ParseResult {
+  const known = new Set([...inputs, ...registers]);
   const wires: Circuit["wires"] = [];
+  const next: Circuit["next"] = [];
   for (let n = 0; n < lines.length; n++) {
     const text = lines[n].replace(/#.*/, "").trim();
     if (!text) continue;
-    const m = /^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/.exec(text);
-    if (!m) return { ok: false, line: n + 1, message: 'write each line as NAME = expression, like "SUM = A XOR B"' };
-    const [, name, body] = m;
-    if (inputs.includes(name)) return { ok: false, line: n + 1, message: `${name} is an input, so it can't be given a value` };
-    if (wires.some((w) => w.name === name)) return { ok: false, line: n + 1, message: `${name} is defined twice` };
-    try {
-      wires.push({ name, expr: parseExpr(body, known), line: n + 1 });
-    } catch (e) {
-      return { ok: false, line: n + 1, message: e instanceof Error ? e.message : "can't read this line" };
+    const m = /^([A-Za-z_][A-Za-z0-9_]*)\s*(:?=)\s*(.+)$/.exec(text);
+    if (!m) {
+      return {
+        ok: false,
+        line: n + 1,
+        message: registers.length
+          ? 'write each line as NAME = expression, or REG := expression for a register'
+          : 'write each line as NAME = expression, like "SUM = A XOR B"',
+      };
     }
-    known.add(name);
+    const [, name, assign, body] = m;
+    const fail = (message: string): ParseResult => ({ ok: false, line: n + 1, message });
+    if (assign === ":=") {
+      if (!registers.includes(name)) return fail(`${name} isn't a register, so use = for it, not :=`);
+      if (next.some((w) => w.name === name)) return fail(`${name} is given its next value twice`);
+    } else {
+      if (inputs.includes(name)) return fail(`${name} is an input, so it can't be given a value`);
+      if (registers.includes(name)) return fail(`${name} is a register: use ${name} := ... for its value after the tick`);
+      if (wires.some((w) => w.name === name)) return fail(`${name} is defined twice`);
+    }
+    try {
+      const expr = parseExpr(body, known);
+      if (assign === ":=") next.push({ name, expr, line: n + 1 });
+      else {
+        wires.push({ name, expr, line: n + 1 });
+        known.add(name);
+      }
+    } catch (e) {
+      return fail(e instanceof Error ? e.message : "can't read this line");
+    }
   }
-  return { ok: true, circuit: { wires } };
+  return { ok: true, circuit: { wires, next } };
 }
 
 function evalNode(node: Node, env: Map<string, number>): number {
@@ -135,7 +162,7 @@ export function gateCount(circuit: Circuit): { total: number; byGate: Partial<Re
       visit(node.right);
     }
   };
-  for (const w of circuit.wires) visit(w.expr);
+  for (const w of [...circuit.wires, ...circuit.next]) visit(w.expr);
   return { total: Object.values(byGate).reduce((a, b) => a + (b ?? 0), 0), byGate };
 }
 
@@ -230,4 +257,68 @@ export function chain(
     carry = out[opts.carryOut] ?? 0;
   }
   return { value: bitsOut.reduce((v, bit, b) => v | (bit << b), 0), carryOut: carry, bitsOut };
+}
+
+export type ClockRow = {
+  tick: number;
+  inputs: Record<string, number>;
+  /** Registers after the tick, and any watched wires for that new state. */
+  after: Record<string, number>;
+  want: Record<string, number> | null;
+  ok: boolean;
+};
+
+/** One clock tick: wires settle from the inputs and current registers, then every register takes its next value at once. */
+export function tick(circuit: Circuit, regs: Record<string, number>, inputs: Record<string, number>): {
+  regs: Record<string, number>;
+  wires: Record<string, number>;
+} {
+  const wires = evaluate(circuit, { ...inputs, ...regs });
+  const env = new Map(Object.entries(wires));
+  const next = { ...regs };
+  for (const n of circuit.next) next[n.name] = evalNode(n.expr, env);
+  return { regs: next, wires };
+}
+
+export type ClockResult =
+  | { ok: false; line: number; message: string }
+  | { ok: true; rows: ClockRow[]; gates: ReturnType<typeof gateCount>; solved: boolean };
+
+/** Run a clocked lab over its ticks, comparing every register (and watched wire) after each tick with the target's. */
+export function runClocked(lab: {
+  inputs: string[];
+  registers: string[];
+  init?: Record<string, number>;
+  lines: string[];
+  ticks: Record<string, number>[];
+  target?: string[];
+  watch?: string[];
+}): ClockResult {
+  const parsed = parseCircuit(lab.lines, lab.inputs, lab.registers);
+  if (!parsed.ok) return parsed;
+  let reference: Circuit | null = null;
+  if (lab.target) {
+    const ref = parseCircuit(lab.target, lab.inputs, lab.registers);
+    if (!ref.ok) throw new Error(`The lab's own target is invalid: line ${ref.line}, ${ref.message}`);
+    reference = ref.circuit;
+  }
+  const start = Object.fromEntries(lab.registers.map((r) => [r, lab.init?.[r] ?? 0]));
+  let mine = { ...start };
+  let theirs = { ...start };
+  const shown = [...lab.registers, ...(lab.watch ?? [])];
+  const rows = lab.ticks.map((inputs, i): ClockRow => {
+    // Watched wires are shown for the state after the tick, so each row reads as one moment.
+    const a = tick(parsed.circuit, mine, inputs);
+    mine = a.regs;
+    const wiresAfter = evaluate(parsed.circuit, { ...inputs, ...mine });
+    const after = Object.fromEntries(shown.map((n) => [n, n in mine ? mine[n] : (wiresAfter[n] ?? 0)]));
+    let want: Record<string, number> | null = null;
+    if (reference) {
+      theirs = tick(reference, theirs, inputs).regs;
+      const refWires = evaluate(reference, { ...inputs, ...theirs });
+      want = Object.fromEntries(shown.map((n) => [n, n in theirs ? theirs[n] : (refWires[n] ?? 0)]));
+    }
+    return { tick: i + 1, inputs, after, want, ok: want ? shown.every((n) => after[n] === want![n]) : true };
+  });
+  return { ok: true, rows, gates: gateCount(parsed.circuit), solved: reference !== null && rows.every((r) => r.ok) };
 }

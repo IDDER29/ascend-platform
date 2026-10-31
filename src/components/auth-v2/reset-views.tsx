@@ -7,7 +7,6 @@ import { CheckCircle2, Clock, KeyRound, Mail } from "lucide-react";
 import { CONTENT_REPO_URL } from "@/lib/brand/repo";
 import {
   MIN_PASSWORD_LENGTH,
-  RESET_EMAIL_ENABLED,
   RESET_HREF,
   RESET_LINK_TTL_MINUTES,
   RESET_RESEND_COOLDOWN_SEC,
@@ -91,7 +90,7 @@ function NotYet() {
 }
 
 /** /reset: ask for a link by email, then "check your inbox" with a resend timer. */
-export function ResetRequest() {
+export function ResetRequest({ enabled }: { enabled: boolean }) {
   const [email, setEmail] = useState("");
   const [tried, setTried] = useState(false);
   const [state, action, pending] = useActionState(requestPasswordResetAction, INITIAL);
@@ -103,7 +102,7 @@ export function ResetRequest() {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  if (!RESET_EMAIL_ENABLED) return <NotYet />;
+  if (!enabled) return <NotYet />;
 
   if (state.ok) {
     return (
@@ -192,14 +191,14 @@ export function ResetRequest() {
 }
 
 /** /reset/new-password?token=…: choose a new password from the emailed link. */
-export function NewPassword() {
+export function NewPassword({ enabled }: { enabled: boolean }) {
   const token = useSearchParams().get("token") ?? "";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [tried, setTried] = useState(false);
   const [state, action, pending] = useActionState(resetPasswordAction, INITIAL);
 
-  if (!RESET_EMAIL_ENABLED) return <NotYet />;
+  if (!enabled) return <NotYet />;
   if (!token) return <ResetExpired />;
 
   if (state.ok) {

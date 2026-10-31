@@ -14,6 +14,8 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  /** Sessions issued before this are no longer valid (set on a password change or reset). */
+  passwordChangedAt: timestamp("password_changed_at", { mode: "date" }),
 });
 
 export const profiles = pgTable("profiles", {
@@ -62,28 +64,38 @@ export const badgesEarned = pgTable(
   (t) => [uniqueIndex("badges_earned_user_badge_idx").on(t.userId, t.badgeId)],
 );
 
-export const bookmarks = pgTable("bookmarks", {
-  id: text("id").primaryKey(),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  kind: text("kind").notNull(),
-  refId: text("ref_id").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-});
+export const bookmarks = pgTable(
+  "bookmarks",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    refId: text("ref_id").notNull(),
+    /** The whole bookmark (title, href, reason, note, ...) as JSON, as the browser keeps it. */
+    data: text("data").notNull().default("{}"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("bookmarks_user_ref_idx").on(t.userId, t.refId)],
+);
 
-export const communityThreads = pgTable("community_threads", {
-  id: text("id").primaryKey(),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  category: text("category").notNull(),
-  title: text("title").notNull(),
-  body: text("body").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
-});
+/** Recent sign-in, sign-up and reset attempts, for rate limiting (old rows are pruned). */
+export const authAttempts = pgTable(
+  "auth_attempts",
+  {
+    id: text("id").primaryKey(),
+    key: text("key").notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [index("auth_attempts_key_time_idx").on(t.key, t.createdAt)],
+);
 
-export const communityReplies = pgTable("community_replies", {
+/** Password-reset links: only a hash of the token is stored; each one expires and works once. */
+export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: text("id").primaryKey(),
-  threadId: text("thread_id").notNull().references(() => communityThreads.id, { onDelete: "cascade" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  body: text("body").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+  usedAt: timestamp("used_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
 

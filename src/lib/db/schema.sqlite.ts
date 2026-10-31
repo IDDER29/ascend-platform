@@ -5,6 +5,7 @@ export const users = sqliteTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  passwordChangedAt: integer("password_changed_at", { mode: "timestamp" }),
 });
 
 export const profiles = sqliteTable("profiles", {
@@ -53,28 +54,35 @@ export const badgesEarned = sqliteTable(
   (t) => [uniqueIndex("badges_earned_user_badge_idx").on(t.userId, t.badgeId)],
 );
 
-export const bookmarks = sqliteTable("bookmarks", {
-  id: text("id").primaryKey(),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  kind: text("kind").notNull(),
-  refId: text("ref_id").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
+export const bookmarks = sqliteTable(
+  "bookmarks",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    refId: text("ref_id").notNull(),
+    data: text("data").notNull().default("{}"),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [uniqueIndex("bookmarks_user_ref_idx").on(t.userId, t.refId)],
+);
 
-export const communityThreads = sqliteTable("community_threads", {
-  id: text("id").primaryKey(),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  category: text("category").notNull(),
-  title: text("title").notNull(),
-  body: text("body").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-});
+export const authAttempts = sqliteTable(
+  "auth_attempts",
+  {
+    id: text("id").primaryKey(),
+    key: text("key").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [index("auth_attempts_key_time_idx").on(t.key, t.createdAt)],
+);
 
-export const communityReplies = sqliteTable("community_replies", {
+export const passwordResetTokens = sqliteTable("password_reset_tokens", {
   id: text("id").primaryKey(),
-  threadId: text("thread_id").notNull().references(() => communityThreads.id, { onDelete: "cascade" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  body: text("body").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  usedAt: integer("used_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });
 

@@ -4,10 +4,10 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth/auth";
+import { getCurrentUser, setNewPassword } from "@/lib/auth/auth";
 import { confirmationMatches, PROGRESS_TABLES } from "@/lib/auth/account-rules";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/reset-flow";
-import { clearSessionCookie } from "@/lib/auth/session";
+import { clearSessionCookie, setSessionCookie } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db/client";
 
 export type AccountActionState = { error: string | null; ok?: boolean };
@@ -33,10 +33,9 @@ export async function changePasswordAction(_prev: AccountActionState, formData: 
   if (!found || !db) return { error: OFFLINE };
   if (!(await bcrypt.compare(current, found.passwordHash))) return { error: "Your current password isn't right." };
 
-  await db
-    .update(schema.users)
-    .set({ passwordHash: await bcrypt.hash(next, 10) })
-    .where(eq(schema.users.id, found.user.id));
+  // Signs out every other device; this one gets a fresh session.
+  await setNewPassword(found.user.id, next);
+  await setSessionCookie(found.user.id, true);
   return { error: null, ok: true };
 }
 

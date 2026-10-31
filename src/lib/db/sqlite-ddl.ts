@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  password_changed_at INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS profiles (
@@ -58,25 +59,27 @@ CREATE TABLE IF NOT EXISTS bookmarks (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   kind TEXT NOT NULL,
   ref_id TEXT NOT NULL,
+  data TEXT NOT NULL DEFAULT '{}',
+  created_at INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS bookmarks_user_ref_idx ON bookmarks(user_id, ref_id);
+
+CREATE TABLE IF NOT EXISTS auth_attempts (
+  id TEXT PRIMARY KEY,
+  key TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS auth_attempts_key_time_idx ON auth_attempts(key, created_at);
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at INTEGER NOT NULL,
+  used_at INTEGER,
   created_at INTEGER NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS community_threads (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  category TEXT NOT NULL,
-  title TEXT NOT NULL,
-  body TEXT NOT NULL,
-  created_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS community_replies (
-  id TEXT PRIMARY KEY,
-  thread_id TEXT NOT NULL REFERENCES community_threads(id) ON DELETE CASCADE,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  body TEXT NOT NULL,
-  created_at INTEGER NOT NULL
-);
 
 CREATE TABLE IF NOT EXISTS shellforge_submissions (
   id TEXT PRIMARY KEY,
@@ -168,3 +171,12 @@ CREATE TABLE IF NOT EXISTS own_projects (
 );
 CREATE INDEX IF NOT EXISTS own_projects_user_idx ON own_projects(user_id);
 `;
+
+/**
+ * Columns added after a table first shipped. CREATE TABLE IF NOT EXISTS won't add them to an
+ * existing local.db, so each is added once if missing (see client.ts).
+ */
+export const SQLITE_ADDED_COLUMNS: { table: string; column: string; ddl: string }[] = [
+  { table: "users", column: "password_changed_at", ddl: "ALTER TABLE users ADD COLUMN password_changed_at INTEGER" },
+  { table: "bookmarks", column: "data", ddl: "ALTER TABLE bookmarks ADD COLUMN data TEXT NOT NULL DEFAULT '{}'" },
+];

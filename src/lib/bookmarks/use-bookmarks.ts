@@ -4,8 +4,9 @@ import { useSyncExternalStore } from "react";
 import type { Bookmark, BookmarkReason, BookmarkTarget } from "./model";
 
 /**
- * Bookmarks live in this browser for now (frontend-only phase). The
- * `bookmarks` table is waiting for a cross-device version.
+ * Bookmarks live in this browser first, so saving is instant and works signed out. When signed in,
+ * BookmarksSync (`src/components/bookmarks/bookmarks-sync.tsx`) registers a remote here, and every
+ * change is also sent to the account.
  */
 const KEY = "ascend:bookmarks";
 const EVENT = "ascend:bookmarks";
@@ -54,19 +55,42 @@ function write(list: Bookmark[]) {
 
 const current = () => parse(readRaw());
 
+type Remote = { save: (b: Bookmark) => void; remove: (ref: string) => void };
+let remote: Remote | null = null;
+
+/** Where changes are also sent (the signed-in account); null to stop. */
+export function setBookmarkRemote(r: Remote | null) {
+  remote = r;
+}
+
+/** Replace this browser's bookmarks without sending anything back (used when loading the account's). */
+export function replaceLocalBookmarks(list: Bookmark[]) {
+  write(list);
+}
+
+export function localBookmarks(): Bookmark[] {
+  return current();
+}
+
 export function saveBookmark(target: BookmarkTarget, reason: BookmarkReason = "later") {
   const list = current();
   const existing = list.find((b) => b.ref === target.ref);
   if (existing) return;
-  write([...list, { ...target, reason, note: "", savedAt: new Date().toISOString() }]);
+  const saved: Bookmark = { ...target, reason, note: "", savedAt: new Date().toISOString() };
+  write([...list, saved]);
+  remote?.save(saved);
 }
 
 export function updateBookmark(ref: string, patch: Partial<Pick<Bookmark, "reason" | "note">>) {
-  write(current().map((b) => (b.ref === ref ? { ...b, ...patch } : b)));
+  const list = current().map((b) => (b.ref === ref ? { ...b, ...patch } : b));
+  write(list);
+  const changed = list.find((b) => b.ref === ref);
+  if (changed) remote?.save(changed);
 }
 
 export function removeBookmark(ref: string) {
   write(current().filter((b) => b.ref !== ref));
+  remote?.remove(ref);
 }
 
 /** Every bookmark in this browser; `null` until the browser store has been read. */

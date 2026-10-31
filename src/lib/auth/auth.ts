@@ -3,7 +3,27 @@ import { MIN_PASSWORD_LENGTH } from "./reset-flow";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { db, schema } from "@/lib/db/client";
-import { getSessionUserId } from "./session";
+import { withRetry } from "@/lib/db/retry";
+import { getSession } from "./session";
+import { sessionStillValid } from "./session-rules";
+
+/** bcrypt work factor for new and changed passwords. */
+export const BCRYPT_COST = 12;
+
+/**
+ * A real bcrypt hash of a random string, compared against when an email has no account, so a sign-in
+ * takes the same time whether or not the account exists (no telling which emails are registered).
+ */
+const DUMMY_HASH = "$2b$12$db4ApfNwu/sgzZtXKN6LtuAyyO3COwrJEc5atna9rTOFmTUOrBeoe";
+
+/** Store a new password and end every older session (the caller re-issues this device's session). */
+export async function setNewPassword(userId: string, password: string): Promise<void> {
+  const conn = requireDb();
+  await conn
+    .update(schema.users)
+    .set({ passwordHash: await bcrypt.hash(password, BCRYPT_COST), passwordChangedAt: new Date() })
+    .where(eq(schema.users.id, userId));
+}
 
 export class AuthError extends Error {}
 
@@ -64,7 +84,7 @@ export async function signUp(input: { email: string; password: string; name: str
   const existing = await conn.query.users.findFirst({ where: eq(schema.users.email, email) });
   if (existing) throw new AuthError("An account with that email already exists.");
 
-  const passwordHash = await bcrypt.hash(input.password, 10);
+  const passwordHash = await bcrypt.hash(input.password, BCRYPT_COST);
   const userId = newId();
   const username = await uniqueUsername(name || email.split("@")[0]);
   const now = new Date();
@@ -80,7 +100,10 @@ export async function signIn(input: { email: string; password: string }): Promis
   const conn = requireDb();
   const email = input.email.trim().toLowerCase();
   const user = await conn.query.users.findFirst({ where: eq(schema.users.email, email) });
-  if (!user) throw new AuthError("Invalid email or password.");
+  if (!user) {
+    await bcrypt.compare(input.password, DUMMY_HASH);
+    throw new AuthError("Invalid email or password.");
+  }
 
   const valid = await bcrypt.compare(input.password, user.passwordHash);
   if (!valid) throw new AuthError("Invalid email or password.");
@@ -107,13 +130,16 @@ export async function getCurrentUser(): Promise<PublicUser | null> {
     // Next.js the route is request-dynamic. Checking `db` before this would
     // skip that signal whenever the db happens to be down (e.g. a transient
     // sqlite lock), letting a route get wrongly cached as static "logged out".
-    const userId = await getSessionUserId();
-    if (!userId) return null;
-    if (!db) return null;
+    const session = await getSession();
+    if (!session) return null;
+    const conn = db;
+    if (!conn) return null;
+    const { userId } = session;
 
-    const user = await db.query.users.findFirst({ where: eq(schema.users.id, userId) });
+    const user = await withRetry(() => conn.query.users.findFirst({ where: eq(schema.users.id, userId) }));
     if (!user) return null;
-    const profile = await db.query.profiles.findFirst({ where: eq(schema.profiles.userId, userId) });
+    if (!sessionStillValid(session.issuedAt, user.passwordChangedAt)) return null;
+    const profile = await withRetry(() => conn.query.profiles.findFirst({ where: eq(schema.profiles.userId, userId) }));
     if (!profile) return null;
 
     return {

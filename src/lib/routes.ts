@@ -10,7 +10,7 @@ export const FIRST_LESSON_HREF =
 export const SIGNIN_HREF = "/signin";
 export const SIGNUP_HREF = "/signin?mode=signup";
 
-/** Password reset flow (UI ready; email gated by RESET_EMAIL_ENABLED). */
+/** Password reset flow (on when email is configured: see src/lib/email.ts). */
 export {
   RESET_HREF,
   RESET_NEW_PASSWORD_HREF,

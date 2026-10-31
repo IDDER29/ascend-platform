@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { signIn, signUp, AuthError } from "@/lib/auth/auth";
 import { AFTER_SIGN_IN_HREF, AFTER_SIGN_UP_HREF, safeNextHref } from "@/lib/auth/next-href";
+import { hitRateLimit, requestIp } from "@/lib/auth/rate-limit";
+import { LIMITS, TOO_MANY } from "@/lib/auth/rate-limit-rules";
 import { setSessionCookie } from "@/lib/auth/session";
 
 export interface AuthActionState {
@@ -14,6 +16,8 @@ export async function signInAction(_prev: AuthActionState, formData: FormData): 
   const password = String(formData.get("password") || "");
   const keepSignedIn = formData.get("keepSignedIn") === "true";
   const next = safeNextHref(String(formData.get("next") || ""));
+
+  if (await hitRateLimit(LIMITS.signIn(email, await requestIp()))) return { error: TOO_MANY };
 
   let userId: string;
   try {
@@ -37,6 +41,7 @@ export async function signUpAction(_prev: AuthActionState, formData: FormData): 
   if (password !== confirm) {
     return { error: "Passwords don't match." };
   }
+  if (await hitRateLimit(LIMITS.signUp(await requestIp()))) return { error: TOO_MANY };
 
   let userId: string;
   try {

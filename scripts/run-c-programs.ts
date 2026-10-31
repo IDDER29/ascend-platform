@@ -45,7 +45,10 @@ const ids = named.length ? named : allProgramIds().filter((id) => all || stale(i
 for (const id of ids) {
   const dir = path.join(PROGRAMS_DIR, id);
   const meta = programMeta(id);
-  const flags = (meta.flags ?? DEFAULT_FLAGS).split(/\s+/).filter(Boolean);
+  const allFlags = (meta.flags ?? DEFAULT_FLAGS).split(/\s+/).filter(Boolean);
+  // Libraries (-lm, -lpthread) must come after the sources that use them, or the link fails.
+  const libs = allFlags.filter((f) => f.startsWith("-l"));
+  const flags = allFlags.filter((f) => !f.startsWith("-l"));
   const sources = programFiles(id).filter((f) => f.name.endsWith(".c")).map((f) => f.name);
   const out = mkdtempSync(path.join(tmpdir(), "ascend-c-"));
   const exe = path.join(out, "prog");
@@ -53,7 +56,7 @@ for (const id of ids) {
   // Compile inside the program's folder, so messages name files the way a learner would see them.
   // Messages must not leak this machine's paths: the program folder becomes ".", the build folder "/tmp/build".
   const clean = (text: string) => text.replaceAll(out, "/tmp/build").replaceAll(dir + "/", "./").replaceAll(dir, ".");
-  const cc = spawnSync("gcc", [...flags, ...sources, "-o", exe], { cwd: dir, encoding: "utf8" });
+  const cc = spawnSync("gcc", [...flags, ...sources, ...libs, "-o", exe], { cwd: dir, encoding: "utf8" });
   const compile = { ok: cc.status === 0, stderr: clean(cc.stderr) };
   let run: ProgramRun["run"] = null;
   if (compile.ok) {
@@ -77,7 +80,7 @@ for (const id of ids) {
     sourceHash: programHash(id),
     compiler,
     target,
-    compileCommand: ["gcc", ...flags, ...sources, "-o", "prog"].join(" "),
+    compileCommand: ["gcc", ...flags, ...sources, ...libs, "-o", "prog"].join(" "),
     runCommand: ["./prog", ...(meta.args ?? []).map(shellQuote)].join(" ") + (programStdin(id) !== null ? " < input.txt" : ""),
     compile,
     run,

@@ -1,0 +1,20 @@
+{
+  "id": "architect/cachesim-cols-padded",
+  "sourceHash": "f89168c2f89dce31",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog 512 32 2 < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "8 sets of 2 ways, 32-byte lines\n256 accesses: 167 hits, 89 misses (34 compulsory), hit rate 65.2%\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

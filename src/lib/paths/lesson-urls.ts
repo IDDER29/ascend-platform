@@ -65,6 +65,22 @@ const LEVEL_OWNER: Record<
     pathSlug: "systems-programmer",
     courseId: "memory-allocator",
   },
+  "level-10-performance": {
+    pathSlug: "computer-architect",
+    courseId: "performance",
+  },
+  "level-11-pipelining": {
+    pathSlug: "computer-architect",
+    courseId: "pipelining",
+  },
+  "level-12-advanced-execution": {
+    pathSlug: "computer-architect",
+    courseId: "advanced-execution",
+  },
+  "level-13-caches-memory": {
+    pathSlug: "computer-architect",
+    courseId: "caches-memory",
+  },
 };
 
 function joinPublicSlug(

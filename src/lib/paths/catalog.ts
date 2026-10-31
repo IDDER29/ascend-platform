@@ -346,27 +346,27 @@ export const PATHS: PathDef[] = [
   {
     slug: "computer-architect",
     kind: "role",
-    status: "soon",
+    status: "live",
     eyebrow: "Path",
     title: "Computer Architect",
     stage: 3,
     milestone: "Ready to design processors",
     pitch: "Go from understanding a CPU to designing one: pipelines, caches, parallel hardware, Verilog, and a RISC-V core of your own.",
-    body: "This path builds on Systems Programmer. Take the courses in order: measure performance, then see how real CPUs go fast (pipelines, out-of-order execution, caches, many cores and GPUs). Then describe hardware in Verilog, prove it works, and follow it to silicon. It ends with a small RISC-V processor you design and verify yourself.",
+    body: "This path builds on Systems Programmer. Take the courses in order: measure performance, then see how real CPUs go fast (pipelines, out-of-order execution, caches, many cores and GPUs). Then describe hardware in Verilog, prove it works, and follow it to silicon. It ends with a small RISC-V processor you design and verify yourself. Some courses are still being written; their lessons are listed so you can see where the path goes.",
     requiresLabel: "Requires Systems Programmer",
     requiresSlug: "systems-programmer",
     courses: [
       {
         id: "performance",
-        title: "Performance & trade-offs",
+        title: LEVELS["level-10-performance"].name,
         body: "What makes a computer fast, how to measure it, and what it costs in power.",
-        outline: O.PERFORMANCE,
+        levelId: "level-10-performance",
       },
       {
         id: "pipelining",
-        title: "Pipelining",
+        title: LEVELS["level-11-pipelining"].name,
         body: "Overlapping instructions like an assembly line, and the hazards that come with it.",
-        outline: O.PIPELINING,
+        levelId: "level-11-pipelining",
       },
       {
         id: "advanced-execution",

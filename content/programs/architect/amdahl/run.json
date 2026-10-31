@@ -1,0 +1,20 @@
+{
+  "id": "architect/amdahl",
+  "sourceHash": "fd4fe2f1292205bc",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 -pthread main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "1 thread: 0.367 s, of which serial 0.071 s, so p = 0.81\nthreads  predicted  measured\n      2      1.68x     1.61x\n      4      2.54x     1.89x\n      8      3.41x     2.28x\nlimit with infinite threads: 5.20x\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

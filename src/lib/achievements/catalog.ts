@@ -39,7 +39,7 @@ export const TASK_RANKS: Record<MissionRank, string> = {
 };
 
 /** Original emblems for the four clans (one per topic). */
-export type CrestId = "wrench" | "heap" | "page" | "tree" | "seal" | "gate" | "core" | "brace" | "pointer" | "shell";
+export type CrestId = "cache" | "lanes" | "stages" | "gauge" | "wrench" | "heap" | "page" | "tree" | "seal" | "gate" | "core" | "brace" | "pointer" | "shell";
 
 export type Achievement = {
   id: string;
@@ -70,10 +70,14 @@ const DATA_STRUCTURES: LevelId = "level-07-data-structures";
 const VM_THREADS: LevelId = "level-08-vm-threads-files";
 const ALLOCATOR: LevelId = "level-09-memory-allocator";
 const C_TOOLS: LevelId = "level-06-c-tools";
+const PERFORMANCE: LevelId = "level-10-performance";
+const PIPELINING: LevelId = "level-11-pipelining";
+const ADVANCED: LevelId = "level-12-advanced-execution";
+const CACHES: LevelId = "level-13-caches-memory";
 const C: LevelId = "level-02-the-c-language";
 const SYSTEMS: LevelId = "level-03-systems-software";
 
-export const CREST_IDS = ["wrench-clan", "heap-clan", "page-clan", "tree-clan", "seal-clan", "gate-clan", "core-clan", "brace-clan", "pointer-clan", "shell-clan"];
+export const CREST_IDS = ["cache-clan", "lanes-clan", "stages-clan", "gauge-clan", "wrench-clan", "heap-clan", "page-clan", "tree-clan", "seal-clan", "gate-clan", "core-clan", "brace-clan", "pointer-clan", "shell-clan"];
 
 /** Every badge Ascend awards, each with its own exact rule. Ids are stable: earned rows reference them. */
 export const ACHIEVEMENTS: Achievement[] = [
@@ -90,6 +94,10 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "systems-thinker", group: "learning", label: "Systems Thinker", glyph: "⬢", means: "Finished every lesson in Systems & Software", rules: [{ kind: "topic", topic: SYSTEMS }] },
   { id: "kernel-insider", group: "learning", label: "Kernel Insider", glyph: "⧇", means: "Finished every lesson in Virtual Memory, Threads & Files", rules: [{ kind: "topic", topic: VM_THREADS }] },
   { id: "heap-master", group: "learning", label: "Heap Master", glyph: "▥", means: "Finished every lesson in Your own malloc", rules: [{ kind: "topic", topic: ALLOCATOR }] },
+  { id: "measurer", group: "learning", label: "Measurer", glyph: "◔", means: "Finished every lesson in Performance & trade-offs", rules: [{ kind: "topic", topic: PERFORMANCE }] },
+  { id: "pipeliner", group: "learning", label: "Pipeliner", glyph: "⫼", means: "Finished every lesson in Pipelining", rules: [{ kind: "topic", topic: PIPELINING }] },
+  { id: "juggler", group: "learning", label: "Juggler", glyph: "⇶", means: "Finished every lesson in Advanced execution", rules: [{ kind: "topic", topic: ADVANCED }] },
+  { id: "cache-keeper", group: "learning", label: "Cache Keeper", glyph: "⧠", means: "Finished every lesson in Caches & memory systems", rules: [{ kind: "topic", topic: CACHES }] },
 
   // Building
   { id: "code-maker", group: "building", label: "Code Maker", glyph: "⌗", means: "Made and broke a codebook", rules: [{ kind: "project", projectId: "codebook" }] },
@@ -123,6 +131,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "map-maker", group: "building", label: "Map Maker", glyph: "⋈", means: "Built and tested a growing hash map library in C", rules: [{ kind: "project", projectId: "hash-map" }] },
   { id: "pool-keeper", group: "building", label: "Pool Keeper", glyph: "⫘", means: "Built a thread pool and found its race and its lost wakeup", rules: [{ kind: "project", projectId: "thread-pool" }] },
   { id: "allocator", group: "building", label: "Allocator", glyph: "◧", means: "Explained and broke a working malloc and free from the inside", rules: [{ kind: "project", projectId: "malloc" }] },
+  { id: "pipe-sim", group: "building", label: "Pipe Simulator", glyph: "⧖", means: "Simulated a five-stage pipeline cycle by cycle and scheduled a loop faster", rules: [{ kind: "project", projectId: "pipeline-sim" }] },
+  { id: "cache-sim", group: "building", label: "Cache Simulator", glyph: "⊛", means: "Built a cache simulator and explained a column walk that never hits", rules: [{ kind: "project", projectId: "cache-sim" }] },
   { id: "cpu-tracer", group: "building", label: "CPU Tracer", glyph: "▤", means: "Shipped a program for the tiny CPU", rules: [{ kind: "project", projectId: "tiny-cpu" }] },
   { id: "ship-it", group: "building", label: "Shell Smith", glyph: "◈", means: "Shipped ShellForge, a working shell", rules: [{ kind: "project", projectId: "shellforge" }] },
 
@@ -137,7 +147,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "comeback", group: "habits", label: "Comeback", glyph: "✦", means: "Came back to Practice after two weeks away", rules: [{ kind: "comeback", gapDays: 14 }] },
 
   // Combinations: the parts are the rule, shown openly.
-  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ub-hunter", "map-maker", "pool-keeper", "allocator", "ship-it"] }] },
+  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ub-hunter", "map-maker", "pool-keeper", "allocator", "pipe-sim", "cache-sim", "ship-it"] }] },
   { id: "sharp-mind", group: "combination", label: "Sharp Mind", glyph: "✺", means: "Deep memory, a clean run and a week of practice", rules: [{ kind: "badges", ids: ["deep-memory", "clean-run", "week-of-practice"] }] },
   { id: "whole-machine", group: "combination", label: "The Whole Machine", glyph: "✸", means: "Finished every lesson and shipped every project", rules: [{ kind: "allLessons" }, { kind: "badges", ids: ["builder"] }] },
 ];
@@ -159,6 +169,10 @@ export const INSIGNIA: Achievement[] = [
   { id: "shell-clan", group: "learning", label: "Shell Clan", glyph: "⬢", means: "Joined the Shell Clan by finishing every lesson in Systems & Software", rules: [{ kind: "topic", topic: SYSTEMS }], insignia: { kind: "crest", crest: "shell" } },
   { id: "page-clan", group: "learning", label: "Page Clan", glyph: "⧇", means: "Joined the Page Clan by finishing every lesson in Virtual Memory, Threads & Files", rules: [{ kind: "topic", topic: VM_THREADS }], insignia: { kind: "crest", crest: "page" } },
   { id: "heap-clan", group: "learning", label: "Heap Clan", glyph: "▥", means: "Joined the Heap Clan by finishing every lesson in Your own malloc", rules: [{ kind: "topic", topic: ALLOCATOR }], insignia: { kind: "crest", crest: "heap" } },
+  { id: "gauge-clan", group: "learning", label: "Gauge Clan", glyph: "◔", means: "Joined the Gauge Clan by finishing every lesson in Performance & trade-offs", rules: [{ kind: "topic", topic: PERFORMANCE }], insignia: { kind: "crest", crest: "gauge" } },
+  { id: "stages-clan", group: "learning", label: "Stage Clan", glyph: "⫼", means: "Joined the Stage Clan by finishing every lesson in Pipelining", rules: [{ kind: "topic", topic: PIPELINING }], insignia: { kind: "crest", crest: "stages" } },
+  { id: "lanes-clan", group: "learning", label: "Lane Clan", glyph: "⇶", means: "Joined the Lane Clan by finishing every lesson in Advanced execution", rules: [{ kind: "topic", topic: ADVANCED }], insignia: { kind: "crest", crest: "lanes" } },
+  { id: "cache-clan", group: "learning", label: "Cache Clan", glyph: "⧠", means: "Joined the Cache Clan by finishing every lesson in Caches & memory systems", rules: [{ kind: "topic", topic: CACHES }], insignia: { kind: "crest", crest: "cache" } },
 ];
 
 export type Title = Achievement & {

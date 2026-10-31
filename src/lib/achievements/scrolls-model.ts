@@ -21,6 +21,10 @@ export const CREST_OF: Record<LevelId, CrestId> = {
   "level-03-systems-software": "shell",
   "level-08-vm-threads-files": "page",
   "level-09-memory-allocator": "heap",
+  "level-10-performance": "gauge",
+  "level-11-pipelining": "stages",
+  "level-12-advanced-execution": "lanes",
+  "level-13-caches-memory": "cache",
 };
 
 export type Skill = {

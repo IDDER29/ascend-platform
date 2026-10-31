@@ -1,0 +1,178 @@
+---
+title: "Measuring performance: time, CPI and clock rate"
+level: level-10-performance
+slug: cpi-and-clock-rate
+order: 1
+timeMin: 11
+learningOutcomes:
+- Write CPU time as instruction count × CPI × clock period, and use it to compare two designs
+- Compute an average CPI from a mix of instruction classes
+- Explain why a faster clock or fewer instructions doesn't always mean a faster program
+- Estimate instructions per element and ticks per instruction from real measurements and the compiler's assembly
+primer:
+- title: "Reading what the compiler wrote"
+  type: doc
+  meta: "Machine & Memory · you'll count instructions in a loop."
+  essential: true
+- title: "Inside the CPU: registers & the ALU"
+  type: doc
+  meta: "Machine & Memory · the clock that drives every step."
+  essential: false
+knowledgeCheck:
+- question: Design A runs a program in 2 billion instructions at CPI 1.5 and 3 GHz. Design B runs the same instructions at CPI 2.25 and 4 GHz. Which is faster?
+  answer: "A. Time is instructions × CPI ÷ clock rate. A: 2e9 × 1.5 ÷ 3e9 = 1.0 s. B: 2e9 × 2.25 ÷ 4e9 = 1.125 s. B's faster clock is outweighed by its higher CPI."
+  jumpToId: the-cpu-time-equation
+  jumpToLabel: The CPU time equation
+- question: The -O2 sum ran about 4.4 times faster than -O0. Where did that come from?
+  answer: "Both factors. The -O0 loop runs 11 instructions per element and the -O2 loop 4, which is 2.75 times fewer. Each -O2 instruction also took fewer clock ticks, about 0.46 against 0.74, because it keeps the sum in a register instead of memory. 2.75 × 1.59 is about 4.4."
+  jumpToId: measuring-it-for-real
+  jumpToLabel: Measuring it for real
+assignment:
+  instruction: "Take any small C loop you wrote in Systems Programmer, compile it at -O0 and -O2, and count the instructions in its loop with gcc -S. Time both versions over many iterations with clock_gettime, and work out time per iteration and ticks per instruction. Say which factor of the CPU time equation changed most."
+  resourceName: 'Wikipedia: Cycles per instruction'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Cycles_per_instruction'
+additionalResources:
+- title: "Time Stamp Counter (Wikipedia)"
+  type: doc
+  meta: the tick counter used for the measurements here
+  url: 'https://en.wikipedia.org/wiki/Time_Stamp_Counter'
+- title: "Linux intel_pstate driver"
+  type: doc
+  meta: how the kernel changes the CPU's clock speed
+  url: 'https://www.kernel.org/doc/html/latest/admin-guide/pm/intel_pstate.html'
+whyThisMatters: "Every claim about a faster chip, compiler or algorithm comes down to three numbers: how many instructions run, how many cycles each takes, and how long a cycle is. Knowing which one moved, and that improving one often worsens another, is the first tool of a computer architect."
+---
+
+"Faster" needs a number. For a processor running one program, the number that matters is how long the program takes. This lesson splits that time into three factors, measures them on real hardware, and shows why improving one can make another worse.
+
+## The CPU time equation
+
+The time a program spends running on the CPU is:
+
+**CPU time = instruction count × CPI × clock period**
+
+- **Instruction count:** how many instructions actually run. It depends on the program, the compiler and the instruction set.
+- **CPI, cycles per instruction:** the average number of clock cycles each instruction takes. It depends on the processor's design and on which instructions run.
+- **Clock period:** the length of one cycle, the inverse of the clock rate. At 3 GHz a cycle lasts 1 ÷ 3e9 seconds, about 0.33 ns.
+
+Equivalently, CPU time = instructions × CPI ÷ clock rate.
+
+Design A runs a program in 2 billion instructions with an average CPI of 1.5 at 3 GHz. Design B runs the same instructions at 4 GHz, but its deeper pipeline makes the average CPI 2.25. Which finishes first?
+
+<details>
+<summary>Check your answer</summary>
+
+- A: 2e9 × 1.5 ÷ 3e9 = **1.0 s**.
+- B: 2e9 × 2.25 ÷ 4e9 = **1.125 s**.
+
+A is faster even though B's clock is a third faster. Clock rate alone says nothing until you know the CPI. Chip makers once competed on gigahertz until designs like this made the number meaningless.
+
+</details>
+
+## Average CPI from a mix
+
+Different instructions take different numbers of cycles, so CPI is an average weighted by how often each kind runs. A program's instructions are 50% ALU operations (1 cycle each), 30% loads (2 cycles) and 20% branches (3 cycles). What is the average CPI?
+
+<details>
+<summary>Check your answer</summary>
+
+CPI = 0.5 × 1 + 0.3 × 2 + 0.2 × 3 = 0.5 + 0.6 + 0.6 = **1.7**.
+
+This weighting is why "the CPI" of a processor doesn't exist on its own: change the program's mix, and the average changes.
+
+</details>
+
+## Trade-offs between the factors
+
+A new compiler cuts the program's instruction count by 20%, from 2 billion to 1.6 billion, but the instructions it chooses are slower, raising CPI from 1.5 to 1.8. The clock stays at 3 GHz. Is the program faster, and by how much?
+
+<details>
+<summary>Check your answer</summary>
+
+New time: 1.6e9 × 1.8 ÷ 3e9 = **0.96 s**, against 1.0 s before. It is faster, but only by 1.0 ÷ 0.96, about **1.04 times**, not the 1.25 times the instruction count suggests. The 20% fewer instructions were mostly eaten by the 20% higher CPI.
+
+</details>
+
+<KeyIdea>CPU time = instructions × CPI × clock period. A design that improves one factor but worsens another can come out ahead, behind or even.</KeyIdea>
+
+## Measuring it for real
+
+This program adds up a 64 KiB array of numbers 5000 times: 82 million additions. It times itself, and also reads the processor's **time stamp counter** (TSC), which ticks at a constant rate. The same program is built twice: at `-O0`, then at `-O2`. Predict how much faster `-O2` will be.
+
+<CRun program="architect/cpi-sum-O0" caption='Summing an array, built with -O0' />
+
+<CRun program="architect/cpi-sum-O2" caption='The same program, built with -O2' predict />
+
+Here are the two loops from `gcc -S`. At `-O0`, each element runs these 11 instructions (the loop body at `.L3`, then the test at `.L2`):
+
+```
+.L3:
+	movl	-4(%rbp), %eax
+	cltq
+	leaq	0(,%rax,4), %rdx
+	movq	-24(%rbp), %rax
+	addq	%rdx, %rax
+	movl	(%rax), %eax
+	addl	%eax, -8(%rbp)
+	addl	$1, -4(%rbp)
+.L2:
+	movl	-4(%rbp), %eax
+	cmpl	-28(%rbp), %eax
+	jl	.L3
+```
+
+At `-O2`, just 4:
+
+```
+.L3:
+	addl	(%rdi), %eax
+	addq	$4, %rdi
+	cmpq	%rdx, %rdi
+	jne	.L3
+```
+
+Using the measurements, work out the ticks per instruction for each build, and show that the two factors multiply to the speedup.
+
+<details>
+<summary>Check your answer</summary>
+
+In this run, `-O0` took 8.10 ticks per element and `-O2` took 1.85:
+
+- **Instructions per element:** 11 against 4, so `-O2` runs 2.75 times fewer.
+- **Ticks per instruction:** `-O0` is 8.10 ÷ 11 ≈ 0.74, and `-O2` is 1.85 ÷ 4 ≈ 0.46, so each `-O2` instruction is about 1.59 times cheaper.
+- **Together:** 2.75 × 1.59 ≈ 4.4, matching the measured times: 0.266 s ÷ 0.061 s ≈ 4.4.
+
+Why is each `-O0` instruction slower? Its sum lives in memory: `addl %eax, -8(%rbp)` reads the sum, adds and writes it back. The next iteration must wait for that store before reading it again. `-O2` keeps the sum in `%eax`, a register, so the additions follow each other far more quickly.
+
+Your numbers will differ: these vary from run to run and machine to machine.
+
+</details>
+
+## Ticks are not quite cycles
+
+The TSC counts at a constant rate, which the program measured as 2.50 GHz. The core's real clock is not constant. This laptop's fast cores can run anywhere from 0.4 GHz to 4.6 GHz, moving many times a second with load and temperature:
+
+```
+$ lscpu
+...
+Model name:                              13th Gen Intel(R) Core(TM) i5-1335U
+CPU max MHz:                             4600.0000
+CPU min MHz:                             400.0000
+...
+```
+
+So "ticks per instruction" is CPI measured against a steady reference clock, not against the core's own cycles. Converting needs the core's actual frequency during the run: true CPI = ticks per instruction × (core clock ÷ 2.50 GHz). Tools like `perf stat` read the core's own cycle and instruction counters directly, but they need permission that this machine doesn't grant to ordinary users, which is common on shared and locked-down systems.
+
+What would the `-O2` loop's true CPI be if the core ran at 3.7 GHz during the measurement?
+
+<details>
+<summary>Check your answer</summary>
+
+0.46 × (3.7 ÷ 2.50) = 0.46 × 1.48 ≈ **0.68 cycles per instruction**: fewer than one, because a modern core runs several instructions in the same cycle. CPI below 1 is normal today, so architects often quote its inverse, **IPC** (instructions per cycle): about 1.5 here.
+
+</details>
+
+## Done when
+
+You can compute CPU time from the three factors, average a CPI over an instruction mix, explain a trade-off between factors, and split a measured speedup into its instruction-count and per-instruction parts.

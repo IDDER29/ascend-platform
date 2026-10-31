@@ -21,69 +21,6 @@ const project = (id: string, title: string, description: string): PlannedItem =>
 
 // Computer Architect
 
-export const PERFORMANCE: PlannedSection[] = [
-  {
-    id: "measuring",
-    title: "Measuring performance",
-    items: [
-      lesson(
-        "cpi-and-clock-rate",
-        "Measuring performance: time, CPI and clock rate",
-        "How run time depends on instruction count, cycles per instruction and clock rate, and how to measure each one.",
-      ),
-      lesson(
-        "amdahls-law",
-        "Amdahl's law",
-        "Why speeding up one part of a program helps only as much as that part's share of the total time.",
-      ),
-      lesson(
-        "benchmarks",
-        "Benchmarks and what they hide",
-        "How benchmarks measure performance, and how averages, warm-up and chosen workloads can mislead you.",
-      ),
-      lesson(
-        "power-and-energy",
-        "Power and energy",
-        "Why power and heat limit how fast a chip can run, and how voltage and clock rate affect the energy it uses.",
-      ),
-    ],
-  },
-];
-
-export const PIPELINING: PlannedSection[] = [
-  {
-    id: "pipeline",
-    title: "The pipeline",
-    items: [
-      lesson(
-        "five-stage-pipeline",
-        "A five-stage pipeline",
-        "How splitting each instruction into five stages lets a CPU work on several instructions at once.",
-      ),
-      lesson(
-        "data-hazards",
-        "Data hazards and forwarding",
-        "Why an instruction can need a result that is not ready yet, and how forwarding passes it along early.",
-      ),
-      lesson(
-        "control-hazards",
-        "Control hazards and stalls",
-        "Why branches leave a pipeline unsure what to fetch next, and how stalls keep it correct at a cost.",
-      ),
-      lesson(
-        "branch-prediction",
-        "Branch prediction",
-        "How a CPU guesses which way a branch will go to keep the pipeline full, and what a wrong guess costs.",
-      ),
-      project(
-        "project-pipeline-sim",
-        "Project: Simulate a pipeline",
-        "Build a simulator of a five-stage pipeline with hazards and forwarding, proving you can count its cycles exactly.",
-      ),
-    ],
-  },
-];
-
 export const ADVANCED_EXECUTION: PlannedSection[] = [
   {
     id: "beyond-the-pipeline",

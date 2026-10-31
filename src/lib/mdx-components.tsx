@@ -23,6 +23,7 @@ import { CRun } from "@/components/lesson/c-run";
 import { PipelineLab } from "@/components/lesson/pipeline-lab";
 import { CacheLab } from "@/components/lesson/cache-lab";
 import { PredictorLab } from "@/components/lesson/predictor-lab";
+import { OooLab } from "@/components/lesson/ooo-lab";
 import { SectionHeading } from "@/components/bookmarks/lesson-bookmarks";
 
 export const mdxComponents: MDXComponents = {
@@ -50,6 +51,7 @@ export const mdxComponents: MDXComponents = {
   PipelineLab,
   CacheLab,
   PredictorLab,
+  OooLab,
   h2: (props) => (
     <SectionHeading
       className="group/section mt-9 mb-3 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight"

@@ -1,0 +1,122 @@
+---
+title: "A five-stage pipeline"
+level: level-11-pipelining
+slug: five-stage-pipeline
+order: 1
+timeMin: 10
+learningOutcomes:
+- Name the five stages of a classic RISC pipeline and say what each one does to an instruction
+- Read a pipeline diagram cycle by cycle, and predict how many cycles n independent instructions take
+- Explain why a pipeline improves throughput but not the time one instruction takes
+- Explain why the slowest stage, not the average one, sets the clock
+primer:
+- title: "The fetch-execute loop"
+  type: doc
+  meta: "Foundations · the loop a pipeline overlaps."
+  essential: true
+- title: "Calls and returns in assembly"
+  type: doc
+  meta: "Machine & Memory · registers, loads and stores in a real instruction set."
+  essential: false
+knowledgeCheck:
+- question: How many cycles do 8 independent instructions take in a five-stage pipeline, and why?
+  answer: "12. The first instruction needs 5 cycles to go through all five stages; after that, one more instruction finishes every cycle, so the other 7 add 7 cycles. In general, n instructions take n + 4 cycles with no stalls."
+  jumpToId: watch-it-fill
+  jumpToLabel: Watch it fill
+- question: Does a pipeline make each instruction finish sooner?
+  answer: "No. Each instruction still passes through all five stages, so its own latency is five cycles, and with the clock set by the slowest stage it can even be longer than a single-cycle design. What improves is throughput: once the pipeline is full, one instruction finishes every cycle."
+  jumpToId: faster-but-not-quicker
+  jumpToLabel: Faster, but not quicker
+assignment:
+  instruction: "Pick a sequence of 6 RISC-V instructions with no dependences between them, and draw its pipeline diagram by hand: one row per instruction, one column per cycle, with IF, ID, EX, MEM and WB in the right cells. Count the total cycles and compare with n + 4."
+  resourceName: 'Wikipedia: Classic RISC pipeline'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Classic_RISC_pipeline'
+additionalResources:
+- title: "Instruction pipelining (Wikipedia)"
+  type: doc
+  meta: the idea, its history and its limits
+  url: 'https://en.wikipedia.org/wiki/Instruction_pipelining'
+- title: "RISC-V ratified specifications"
+  type: doc
+  meta: the real instruction set this course's examples use
+  url: 'https://riscv.org/specifications/ratified/'
+whyThisMatters: "Every processor you use, from a phone to a server, is pipelined. Understanding the five-stage pipeline is the key to everything that follows in this course: hazards, branch prediction, out-of-order execution, and why some code runs much faster than other code that does the same work."
+---
+
+The tiny CPU from Foundations did one instruction completely before starting the next: fetch it, decode it, execute it, then fetch the next. A **pipeline** overlaps that work. While one instruction executes, the next is being decoded and the one after that fetched, like an assembly line where each station works on a different car.
+
+## A small instruction set
+
+This course uses a small part of **RISC-V**, a real, open instruction set:
+
+- 32 registers, `x0` to `x31`. `x0` always reads 0, and writing to it does nothing.
+- `add x3, x1, x2` sets x3 = x1 + x2. `sub`, `and`, `or` and `slt` (set if less than) work the same way.
+- `addi x1, x0, 5` adds a constant: here x1 = 0 + 5.
+- `lw x2, 8(x1)` loads the 4-byte word at address x1 + 8 into x2; `sw x2, 8(x1)` stores x2 there.
+- `beq x1, x2, done` jumps to the label `done` if x1 equals x2; `bne` jumps if they differ.
+
+The destination comes first, then the sources: the opposite of the AT&T syntax gcc prints for x86-64.
+
+## The five stages
+
+Each instruction goes through five stages, one per clock cycle:
+
+| Stage | Name | What happens |
+|---|---|---|
+| IF | Instruction fetch | Read the instruction at PC from instruction memory; PC moves on by 4 |
+| ID | Instruction decode | Work out what it is, and read its source registers |
+| EX | Execute | The ALU computes: the sum, the address for a load or store, or the branch comparison |
+| MEM | Memory | A load reads data memory, a store writes it; other instructions pass through |
+| WB | Write back | The result is written into the destination register |
+
+Between stages sit **pipeline registers** that hold each instruction's values as it moves on, so every stage can work on a different instruction in the same cycle.
+
+## Watch it fill
+
+Five independent instructions: none uses a result of another. Each row is an instruction; each column is a clock cycle.
+
+<PipelineLab fixed caption='Five independent instructions' programJson='["addi x1, x0, 1", "addi x2, x0, 2", "addi x3, x0, 3", "addi x4, x0, 4", "addi x5, x0, 5"]' />
+
+In cycle 5 all five stages are busy at once: the first instruction is in WB and the fifth is in IF. How many cycles would 8 such instructions take? And 1000?
+
+<details>
+<summary>Check your answer</summary>
+
+The first instruction takes 5 cycles to get through. After that, one instruction finishes every cycle. So:
+
+- 5 instructions take 5 + 4 = **9** cycles, as the lab shows.
+- 8 take 8 + 4 = **12**.
+- 1000 take 1000 + 4 = **1004**.
+
+The 4 extra cycles are the time to fill the pipeline. Cycles per instruction (**CPI**) is 9 / 5 = 1.8 for the short program, but 1004 / 1000 is about 1.004 for the long one: an ideal pipeline approaches a CPI of 1.
+
+</details>
+
+<KeyIdea>A pipeline starts a new instruction every cycle and finishes one every cycle once it's full: n independent instructions take n + 4 cycles in five stages.</KeyIdea>
+
+## Faster, but not quicker
+
+Suppose, as an illustration, the stages take 200, 100, 200, 200 and 100 picoseconds. A single-cycle CPU does all five in one long cycle of 800 ps. A pipelined one needs a clock slow enough for its **slowest** stage, 200 ps, since every stage must finish within one cycle.
+
+For 1000 instructions, which is faster, and how long does one instruction take in each?
+
+<details>
+<summary>Check your answer</summary>
+
+- Single cycle: 1000 × 800 ps = **800 ns**.
+- Pipelined: (1000 + 4) × 200 ps = **200.8 ns**, almost 4 times faster.
+
+But one instruction takes 5 × 200 = **1000 ps** in the pipeline, longer than the 800 ps of the single-cycle design. The pipeline doesn't make an instruction quicker; it makes more of them finish per second. That's **throughput** versus **latency**.
+
+It isn't 5 times faster, because the stages aren't equal: the 100 ps stages waste half of each cycle. Real pipelines also lose a little time in the pipeline registers between stages. That's why designers work hard to balance the stages.
+
+</details>
+
+## The catch
+
+The diagram above is the ideal case. Real programs have instructions that depend on each other, and branches whose direction isn't known until EX. Look at the lab's numbers: **stalls**, **branch bubbles** and **flushed** are all 0 here. The next three lessons are about what makes them grow, and what hardware does about it.
+
+## Done when
+
+You can name the five stages, read a pipeline diagram, predict n + 4 for independent instructions, and explain throughput, latency and why the slowest stage sets the clock.

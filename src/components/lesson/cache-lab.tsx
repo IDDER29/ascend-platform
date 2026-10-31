@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState } from "react";
 import { FastForward, RotateCcw, StepForward } from "lucide-react";
-import { parseTrace, simulate, strided, type Access, type CacheConfig, type Policy, type WritePolicy } from "@/lib/cache/model";
+import { matrixWalk, parseTrace, simulate, strided, type Access, type CacheConfig, type Policy, type WritePolicy } from "@/lib/cache/model";
 
 const MONO = "font-[family-name:var(--font-plex-mono)]";
 const hex = (n: number) => `0x${n.toString(16).toUpperCase()}`;
@@ -23,8 +23,9 @@ function parseJson<T>(text: string | undefined, fallback: T): T {
  * The Cache Lab: a trace of loads and stores through a set-associative cache (src/lib/cache/model.ts),
  * step by step: each address split into tag, index and offset, hit or miss (compulsory, capacity or
  * conflict), and the sets' contents. JSON-string props: configJson ('{"sizeBytes":256,"lineBytes":16,
- * "ways":1,"policy":"LRU","write":"write-back"}'), traceJson (["R 0x40","W 0x80"]) or patternJson
- * ('{"start":0,"stride":4,"count":64,"repeat":2}'), goalJson ('{"maxMisses":8}' or '{"minHitRate":0.9}').
+ * "ways":1,"policy":"LRU","write":"write-back"}'), traceJson (["R 0x40","W 0x80"]), patternJson
+ * ('{"start":0,"stride":4,"count":64,"repeat":2}') or matrixJson ('{"start":4096,"rows":16,"cols":16,
+ * "elemBytes":4,"order":"cols","rowBytes":68}'), goalJson ('{"maxMisses":8}' or '{"minHitRate":0.9}').
  * With `fixed` the configuration is locked; with `editable` the learner edits the trace.
  */
 export function CacheLab({
@@ -32,6 +33,7 @@ export function CacheLab({
   configJson,
   traceJson,
   patternJson,
+  matrixJson,
   goalJson,
   fixed = false,
   editable = false,
@@ -40,6 +42,7 @@ export function CacheLab({
   configJson?: string;
   traceJson?: string;
   patternJson?: string;
+  matrixJson?: string;
   goalJson?: string;
   fixed?: boolean;
   editable?: boolean;
@@ -50,9 +53,11 @@ export function CacheLab({
   );
   const startTrace = useMemo(() => {
     const pattern = parseJson<Pattern | null>(patternJson, null);
-    const lines = pattern ? strided(pattern).map((a) => `${a.op} ${hex(a.addr)}`) : parseJson<string[]>(traceJson, []);
+    const matrix = parseJson<Parameters<typeof matrixWalk>[0] | null>(matrixJson, null);
+    const generated = matrix ? matrixWalk(matrix) : pattern ? strided(pattern) : null;
+    const lines = generated ? generated.map((a) => `${a.op} ${hex(a.addr)}`) : parseJson<string[]>(traceJson, []);
     return lines.join("\n");
-  }, [traceJson, patternJson]);
+  }, [traceJson, patternJson, matrixJson]);
   const goal = useMemo(() => parseJson<Goal | null>(goalJson, null), [goalJson]);
   const [config, setConfig] = useState<CacheConfig>(startConfig);
   const [text, setText] = useState(startTrace);

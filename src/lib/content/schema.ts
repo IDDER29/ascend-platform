@@ -11,6 +11,10 @@ export const levelIds = [
   "level-03-systems-software",
   "level-08-vm-threads-files",
   "level-09-memory-allocator",
+  "level-10-performance",
+  "level-11-pipelining",
+  "level-12-advanced-execution",
+  "level-13-caches-memory",
 ] as const;
 
 export const LevelIdSchema = z.enum(levelIds);
@@ -144,6 +148,30 @@ export const LEVELS: Record<
     name: "Your own malloc",
     short: "The Capstone",
     totalConcepts: 1,
+    timeLabel: "~1 hr",
+  },
+  "level-10-performance": {
+    name: "Performance & trade-offs",
+    short: "The Measure",
+    totalConcepts: 4,
+    timeLabel: "~45 min",
+  },
+  "level-11-pipelining": {
+    name: "Pipelining",
+    short: "The Assembly Line",
+    totalConcepts: 5,
+    timeLabel: "~1.5 hr",
+  },
+  "level-12-advanced-execution": {
+    name: "Advanced execution",
+    short: "The Juggler",
+    totalConcepts: 4,
+    timeLabel: "~45 min",
+  },
+  "level-13-caches-memory": {
+    name: "Caches & memory systems",
+    short: "The Memory Wall",
+    totalConcepts: 5,
     timeLabel: "~1 hr",
   },
 };

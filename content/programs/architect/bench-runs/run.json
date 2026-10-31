@@ -1,0 +1,20 @@
+{
+  "id": "architect/bench-runs",
+  "sourceHash": "e160ba297356bafa",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "run times (ms): 20.9 6.5 6.4 6.4 6.4 6.1 6.2 6.2 6.0 5.9 5.9 6.0 6.2 6.1 6.2\nmean 7.2, median 6.2, min 5.9, max 20.9, std dev 3.8\nmean without the first run: 6.2\n(checksum 527765518417920)\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

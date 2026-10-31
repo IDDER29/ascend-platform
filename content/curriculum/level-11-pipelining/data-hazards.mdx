@@ -1,0 +1,117 @@
+---
+title: "Data hazards and forwarding"
+level: level-11-pipelining
+slug: data-hazards
+order: 2
+timeMin: 11
+learningOutcomes:
+- Spot a read-after-write data hazard between instructions in a pipeline
+- Explain how forwarding passes an ALU result straight to the next instruction, and count the stalls without it
+- Explain why a load followed at once by a use of its result still costs one stall with forwarding
+- Reorder independent instructions to hide a load-use stall without changing the program's results
+primer:
+- title: "A five-stage pipeline"
+  type: doc
+  meta: Reread · 3 min · which stage reads registers, and which writes them.
+  essential: true
+knowledgeCheck:
+- question: "Without forwarding, why does add x2, x1, x1 wait two cycles after addi x1, x0, 5?"
+  answer: "add reads its registers in ID, but addi only writes x1 in WB, three stages later. With the write done in the first half of a cycle and the read in the second, add's ID must line up with addi's WB, which is two cycles later than it would otherwise be, so add waits two cycles."
+  jumpToId: the-hazard
+  jumpToLabel: The hazard
+- question: Why can't forwarding remove the stall after a load?
+  answer: "A load's value only comes out of data memory at the end of its MEM stage. The next instruction wants it at the start of its EX, which is the same cycle as the load's MEM. The value doesn't exist yet, so the next instruction must wait one cycle, then take the value forwarded from MEM."
+  jumpToId: loads-are-late
+  jumpToLabel: Loads are late
+assignment:
+  instruction: "Write a 6-instruction RISC-V sequence with two loads whose results are used straight away, run it in the scheduling lab with forwarding on, and count the stalls. Then reorder it by hand to remove every stall without changing the final registers, and explain in two sentences why compilers do this scheduling for you."
+  resourceName: 'Wikipedia: Hazard (computer architecture)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Hazard_(computer_architecture)'
+additionalResources:
+- title: "Operand forwarding (Wikipedia)"
+  type: doc
+  meta: the bypass paths, in more detail
+  url: 'https://en.wikipedia.org/wiki/Operand_forwarding'
+whyThisMatters: "Most instructions use a result computed just before them. Without forwarding, a pipeline would spend much of its time waiting; with it, almost all of that waiting disappears. The one case that remains, a load used at once, is why compilers reorder your code, and why a cache miss on a load hurts so much."
+---
+
+In the last lesson, every instruction was independent. Real code isn't: `x = a + b; y = x * 2` uses `x` straight away. In a pipeline, the instruction that needs `x` may reach the stage that reads it before the instruction that computes `x` has written it. That's a **data hazard**.
+
+## The hazard
+
+Look at this chain: each instruction uses the result of the one before it.
+
+```
+addi x1, x0, 5     # x1 = 5
+add  x2, x1, x1    # needs x1
+sub  x3, x2, x1    # needs x2 (and x1)
+```
+
+Registers are read in **ID** and written in **WB**, three stages later. Run it below with forwarding **off** first. The lab draws a `-` for every cycle an instruction waits, and says which register it waited for. Then switch forwarding **on**.
+
+<PipelineLab caption='A chain of dependent instructions' programJson='["addi x1, x0, 5", "add x2, x1, x1", "sub x3, x2, x1"]' forwardingJson='false' />
+
+How many cycles does each setting take, and where do the stalls come from?
+
+<details>
+<summary>Check your answer</summary>
+
+- **Forwarding off: 11 cycles, 4 stalls.** `add` reaches ID in cycle 3, but `addi` only writes x1 in its WB, cycle 5. The register file is written in the first half of a cycle and read in the second, so `add` can read x1 in cycle 5 at the earliest: it waits 2 cycles in ID. `sub` then waits 2 more for x2.
+- **Forwarding on: 7 cycles, no stalls**, the same as three independent instructions (3 + 4).
+
+The data `add` needs was ready long before WB: `addi` computed it at the end of its EX, in cycle 3. Waiting for WB just wastes time.
+
+</details>
+
+## Forwarding
+
+**Forwarding** (also called bypassing) adds wires from the pipeline registers after EX and after MEM straight back to the ALU's inputs, with multiplexers to choose them. When the instruction in EX needs a register that an instruction one or two ahead of it is about to write, the hardware takes the value from the pipeline register instead of the register file.
+
+A **hazard detection** unit compares register numbers: is a source of the instruction entering EX the destination of an instruction now in MEM or WB? If so, it switches the multiplexer. That's a few comparators and wires, and it removes most stalls.
+
+<KeyIdea>A result exists as soon as it's computed, not when it's written back. Forwarding sends it straight to the instruction that needs it.</KeyIdea>
+
+## Loads are late
+
+A load is different. `lw` computes its address in EX, but the data only comes out of memory at the end of **MEM**.
+
+<PipelineLab fixed caption='A load used at once, with forwarding on' programJson='["lw x1, 0(x0)", "add x2, x1, x1"]' dataJson='{"0":21}' forwardingJson='true' />
+
+Why does `add` still wait one cycle, even with forwarding?
+
+<details>
+<summary>Check your answer</summary>
+
+`add` wants x1 at the start of its EX. Without a stall, that would be cycle 4, the same cycle `lw` is in MEM, reading memory. The value doesn't exist until the end of cycle 4, so `add` waits one cycle in ID and enters EX in cycle 5, taking x1 forwarded from the MEM/WB pipeline register. Two instructions take 7 cycles instead of 6. That one cycle is the **load-use hazard**, and no forwarding wire can remove it: you can't forward a value back in time.
+
+</details>
+
+## Hide the stall
+
+A compiler can't make the load faster, but it can give it something else to do. This program has two load-use stalls. Reorder its five instructions so it runs in **9 cycles** (5 + 4, no stalls) and leaves the same values in x3, x4 and x5.
+
+<PipelineLab editable fixed caption='Schedule the loads' programJson='["lw x1, 0(x0)", "add x3, x1, x1", "lw x2, 4(x0)", "add x4, x2, x2", "addi x5, x0, 1"]' dataJson='{"0":10,"4":20}' forwardingJson='true' goalJson='{"maxCycles":9,"regs":{"x3":20,"x4":40,"x5":1}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+The program starts at 11 cycles: each `add` waits one cycle for the load just before it. Put independent work between each load and its use, for example:
+
+```
+lw   x1, 0(x0)
+lw   x2, 4(x0)
+addi x5, x0, 1
+add  x3, x1, x1
+add  x4, x2, x2
+```
+
+Now every use is at least one instruction after its load, so forwarding covers it: 9 cycles, x3 = 20, x4 = 40, x5 = 1. Moving `add x3` up to just after `lw x2` also works. The rule is that you may reorder only independent instructions: `add x3` must still come after `lw x1`.
+
+This is **instruction scheduling**, and optimising compilers do it for you. It's one reason `-O2` code looks shuffled compared with the source.
+
+</details>
+
+## Done when
+
+You can spot a read-after-write hazard, count stalls with and without forwarding, explain the load-use stall, and schedule instructions to hide it.

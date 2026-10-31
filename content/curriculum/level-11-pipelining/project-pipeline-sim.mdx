@@ -1,0 +1,136 @@
+---
+title: "Project: Simulate a pipeline"
+level: level-11-pipelining
+slug: project-pipeline-sim
+order: 5
+timeMin: 50
+learningOutcomes:
+- Write the timing rules of a five-stage pipeline as equations, and turn them into a simulator
+- Check a simulator against an independent model, cycle for cycle
+- Schedule a loop by hand to remove a load-use stall, and predict the saving per iteration
+- Extend a simulator to forwarding off, and explain every extra stall it reports
+primer:
+- title: "Data hazards and forwarding"
+  type: doc
+  meta: Reread · 4 min · when a result can be used, with and without forwarding.
+  essential: true
+- title: "Control hazards and stalls"
+  type: doc
+  meta: Reread · 3 min · what a taken branch costs.
+  essential: true
+knowledgeCheck:
+- question: "In the simulator, why is EX of instruction i at least MEM of instruction i - 1?"
+  answer: "The pipeline is in order and each stage holds one instruction. Instruction i can enter EX only when i - 1 has left EX, which happens when i - 1 enters MEM. If i - 1 was delayed, i is delayed behind it."
+  jumpToId: part-1-the-rules-as-equations
+  jumpToLabel: "Part 1: The rules as equations"
+- question: Moving addi x1 between the lw and the add saves one cycle per iteration. Why exactly one?
+  answer: "The add needs x3 from the lw. With forwarding, a load's value reaches EX one cycle late, so an add right after the lw stalls for one cycle. With one independent instruction in between, the value is ready in time: no stall. Each iteration had exactly one such stall, so each saves one cycle (7 to 6)."
+  jumpToId: part-3-schedule-the-loop
+  jumpToLabel: "Part 3: Schedule the loop"
+assignment:
+  instruction: "Write your own pipeline timer in C (or extend the one here) that reads a dynamic trace and supports forwarding on and off and both branch policies. Test it on the three programs in this project and on two of your own, and make it print exactly the cycle counts the Pipeline Lab shows. Then add a branch-target-buffer option where taken branches cost nothing when predicted correctly, and measure the loop again."
+  resourceName: 'Patterson and Hennessy: Computer Organization and Design RISC-V Edition, chapter 4'
+  resourceType: doc
+  resourceUrl: 'https://www.elsevier.com/books/computer-organization-and-design-risc-v-edition/patterson/978-0-12-820331-6'
+additionalResources:
+- title: "Classic RISC pipeline (Wikipedia)"
+  type: doc
+  meta: the five stages and their hazards
+  url: 'https://en.wikipedia.org/wiki/Classic_RISC_pipeline'
+whyThisMatters: "Simulators are how architects test ideas before building them, and timing a pipeline by hand is how you learn to read one. Writing the rules as code, then checking it against a second model, is the same discipline used to design real processors."
+---
+
+In this project you turn the pipeline rules from this course into a simulator, check it against the Pipeline Lab, and then use both to make a loop faster.
+
+## Part 1: The rules as equations
+
+For the instructions a program actually runs, in order, with forwarding on and branches predicted not taken and resolved in EX, each instruction i enters each stage at:
+
+```
+IF[i]  = the cycle after i - 1 left IF (= ID[i-1]), or, after a taken branch, EX[branch] + 1
+ID[i]  = max(IF[i] + 1, EX[i-1])
+EX[i]  = max(ID[i] + 1, MEM[i-1], ready[i])
+MEM[i] = EX[i] + 1
+WB[i]  = MEM[i] + 1
+```
+
+`ready[i]` is when i's sources are available to its EX: after the producer's EX for an ALU result (`EX[p] + 1`), after its MEM for a load (`MEM[p] + 1`). Any cycles i spends waiting in ID are stalls. Where does each rule come from?
+
+<details>
+<summary>Check your answer</summary>
+
+- **`ID[i] ≥ EX[i-1]`, `EX[i] ≥ MEM[i-1]`:** an in-order pipeline holds one instruction per stage, so i can't enter a stage until i - 1 has left it.
+- **`IF[i] = ID[i-1]`:** the next instruction is fetched when the previous one moves on to decode. If i - 1 stalls in ID, i waits in IF.
+- **`ready[i]`:** the data hazard. Forwarding delivers an ALU result to the next EX directly; a load's value only exists after MEM, so a dependent instruction straight after a load stalls one cycle.
+- **After a taken branch,** the two instructions fetched on the guess "not taken" are thrown away, and the target is fetched once the branch has resolved in EX.
+
+</details>
+
+## Part 2: A simulator and a second opinion
+
+This C program applies exactly those equations to a dynamic trace: the instructions a loop really ran, two iterations of adding a loaded value into x2, each line giving the kind, the registers and whether a branch was taken. Predict the total cycles, then run it.
+
+<CRun program="architect/pipesim" caption='A pipeline timer in C' predict />
+
+Now the same program in the Pipeline Lab, a separate model written in a different language, with the real loop rather than a trace:
+
+<PipelineLab caption='The same loop in the Pipeline Lab' programJson='["addi x1, x0, 2","addi x2, x0, 0","loop: lw x3, 0(x0)","add x2, x2, x3","addi x1, x1, -1","bne x1, x0, loop"]' dataJson='{"0":5}' fixed />
+
+<details>
+<summary>Check your answer</summary>
+
+Both say **18 cycles** for 10 instructions, with 2 stall cycles and 2 flushed instructions, and the lab shows x2 = 10 (5 added twice).
+
+- Each `add x2, x2, x3` straight after its `lw x3` waits one cycle: that's the 2 stall cycles. The lab marks it "waits for x3".
+- The first `bne` is taken, so the two instructions fetched after it are flushed, and the loop's `lw` is fetched again at cycle 10, the cycle after the branch's EX.
+- The last `bne` falls through, which costs nothing when you predict not taken.
+
+Two independent implementations agreeing cycle for cycle is strong evidence both are right. It's the same idea as checking a hardware design against a reference model.
+
+</details>
+
+## Part 3: Schedule the loop
+
+The `add` stalls because it comes straight after the `lw` it depends on. Reorder the loop body, without changing what it computes, so it finishes in at most 16 cycles with x2 still 10.
+
+<PipelineLab editable caption='Remove the load-use stall' programJson='["addi x1, x0, 2","addi x2, x0, 0","loop: lw x3, 0(x0)","add x2, x2, x3","addi x1, x1, -1","bne x1, x0, loop"]' dataJson='{"0":5}' goalJson='{"maxCycles":16,"regs":{"x2":10}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Move `addi x1, x1, -1` between the load and the add:
+
+```
+loop: lw   x3, 0(x0)
+      addi x1, x1, -1
+      add  x2, x2, x3
+      bne  x1, x0, loop
+```
+
+The `addi` doesn't use x3, so it fills the slot the stall used to waste, and by the time the `add` reaches EX the loaded value can be forwarded. 16 cycles, no stalls. The `bne` still reads the new x1, because the `addi` is still before it.
+
+Per iteration, the original loop costs 7 cycles: 4 instructions, 1 stall and 2 flushed. The scheduled loop costs 6. For 10 iterations that's 74 cycles against 64. Compilers do this **instruction scheduling** for you; that's one of the things `-O2` does.
+
+</details>
+
+## Part 4: Turn forwarding off
+
+Switch forwarding off in the lab above (reset it first to get the original loop back). Before you look, predict the cycles for the original and the scheduled loop. Then say what you'd change in the C simulator to match.
+
+<details>
+<summary>Check your answer</summary>
+
+Without forwarding, a value is read from the register file in ID, so a consumer's ID must come after the producer's WB:
+
+- **The original loop takes 24 cycles,** with 8 stall cycles: every back-to-back dependency now waits, including `addi x1` then `bne` and the first two `addi`s feeding the loop.
+- **The scheduled loop takes 18 cycles,** with 2 stall cycles. Scheduling helps even more when forwarding is missing.
+
+In the simulator, only `ready[i]` changes: instead of `EX[p] + 1` or `MEM[p] + 1`, a source is ready for i's EX at `WB[p] + 1`. That one line is the whole difference forwarding makes.
+
+</details>
+
+<KeyIdea>A pipeline's timing is a handful of rules, and code that applies them exactly is a simulator. Check it against a second model, then use it to find the stalls worth removing.</KeyIdea>
+
+## Done when
+
+You've derived each rule, predicted and confirmed the 18 cycles, got the loop to 16 by scheduling it, and predicted the no-forwarding counts and the one-line change. Then do the assignment: write or extend your own timer until it matches the lab.

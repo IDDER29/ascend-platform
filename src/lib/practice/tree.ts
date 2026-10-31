@@ -55,6 +55,22 @@ const LEVEL_OWNERS: PracticeLevelOwner[] = [
     level: "level-09-memory-allocator",
     pathSlug: "systems-programmer",
   },
+  {
+    level: "level-10-performance",
+    pathSlug: "computer-architect",
+  },
+  {
+    level: "level-11-pipelining",
+    pathSlug: "computer-architect",
+  },
+  {
+    level: "level-12-advanced-execution",
+    pathSlug: "computer-architect",
+  },
+  {
+    level: "level-13-caches-memory",
+    pathSlug: "computer-architect",
+  },
 ];
 
 export type PracticeTreeLesson = {

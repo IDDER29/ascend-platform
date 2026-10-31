@@ -123,7 +123,7 @@ function standing(model: AchievementsModel): Standing {
   const byId = new Map(model.parts.map((p) => [p.id, p]));
   const latest = model.earnedNewestFirst.map((id) => byId.get(id)).find(Boolean) ?? null;
   const closest = model.closest[0] ?? null;
-  const projects = ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ub-hunter", "map-maker", "pool-keeper", "allocator", "ship-it"].map((id) => byId.get(id)!).filter(Boolean);
+  const projects = ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ub-hunter", "map-maker", "pool-keeper", "allocator", "pipe-sim", "cache-sim", "ship-it"].map((id) => byId.get(id)!).filter(Boolean);
   const openProject = projects.find((p) => !p.earned) ?? null;
   const title = model.title ? KANJI[model.title.id] : null;
 

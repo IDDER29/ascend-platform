@@ -1,0 +1,122 @@
+---
+title: "Project: A cache simulator"
+level: level-13-caches-memory
+slug: project-cache-sim
+order: 5
+timeMin: 50
+learningOutcomes:
+- Implement a set-associative cache simulator with LRU replacement in C, and check it against an independent model
+- Generate address traces from array walks and predict their hit rates before simulating them
+- Explain why a column walk can miss on every access even when the data would fit in the cache
+- Fix a conflict problem by changing the layout (padding) or the cache (more ways or more sets), and compare the results
+primer:
+- title: "Cache organisation: sets, ways and lines"
+  type: doc
+  meta: Reread · 4 min · tag, index, offset and associativity.
+  essential: true
+- title: "Replacement and write policies"
+  type: doc
+  meta: Reread · 3 min · LRU, which the simulator uses.
+  essential: true
+knowledgeCheck:
+- question: The column walk over a 16 by 16 int matrix missed all 256 times in a 512-byte, 2-way cache. Why, when 512 bytes is enough for the 16 lines a column walk needs?
+  answer: "Each row is 64 bytes, so moving down a column jumps 64 bytes: two lines. With 8 sets, the 16 rows land in only 4 sets (every other one), 4 lines per set, but each set has only 2 ways. LRU evicts each line before the walk comes back to it, so every access is a conflict miss after the first touch."
+  jumpToId: part-2-the-same-data-two-walks
+  jumpToLabel: "Part 2: The same data, two walks"
+- question: Padding each row to 17 ints lifted the hit rate to 65.2%. Why does a 4-byte pad help so much?
+  answer: "With 68-byte rows, moving down a column no longer jumps a whole number of lines, so successive rows map to different sets. The 16 lines of a column spread across all 8 sets instead of 4, so far fewer of them fight over the same two ways."
+  jumpToId: part-3-fix-it-two-ways
+  jumpToLabel: "Part 3: Fix it two ways"
+assignment:
+  instruction: "Extend the simulator on your own machine: add FIFO replacement and write-back with dirty bits, then classify misses into compulsory, capacity and conflict by also running a fully associative LRU cache of the same size. Generate a trace from a real program (print the address of every array access in a matrix multiply, for example) and report how the misses change between the i-j-k and i-k-j loop orders."
+  resourceName: 'CMU 15-213 Cache Lab'
+  resourceType: pdf
+  resourceUrl: 'https://www.cs.cmu.edu/afs/cs/academic/class/15213-f15/www/labs/cachelab.pdf'
+additionalResources:
+- title: "CPU cache (Wikipedia)"
+  type: doc
+  meta: organisation, policies and the 3Cs
+  url: 'https://en.wikipedia.org/wiki/CPU_cache'
+whyThisMatters: "Cache behaviour decides the speed of most real programs, and simulators are how architects and performance engineers reason about it. Building one, checking it against a second model and then explaining a 0% hit rate is the kind of work that turns cache theory into intuition."
+---
+
+In this project you build intuition with a simulator: a C program that plays a trace of addresses through a set-associative cache. You'll check it against the Cache Lab, then use both to explain a surprising result and fix it.
+
+## Part 1: The simulator
+
+The program takes the cache's size, line size and ways on its command line, and reads `R address` lines. For each access it:
+
+- splits the address into offset, index and tag;
+- looks for the tag in that set's ways;
+- on a miss, evicts the least recently used way, and counts the miss as compulsory if this line has never been seen before.
+
+The first trace walks a 16 by 16 matrix of 4-byte ints **row by row**, from address 0x1000, through a 512-byte, 2-way cache with 32-byte lines. Predict the hits and misses.
+
+<CRun program="architect/cachesim-rows" caption='Row by row' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+256 accesses, 224 hits and 32 misses, all of them compulsory: 87.5% hits. Each 32-byte line holds 8 ints, so a row walk misses on the first int of each line and hits on the next 7. The matrix is 1 KiB, which is 32 lines and twice the cache, but a row walk never comes back to a line, so evicting old lines costs nothing. That's spatial locality at work.
+
+</details>
+
+## Part 2: The same data, two walks
+
+Now the same matrix **column by column**: all 16 rows of column 0, then column 1, and so on. Same cache. Predict the hit rate before you run it.
+
+<CRun program="architect/cachesim-cols" caption='Column by column' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+**0 hits.** Every one of the 256 accesses misses.
+
+- **Ideally:** a column walk touches 16 lines, one per row, and then the next column needs the same 16 lines again (column 1 is in the same lines as column 0). 16 lines of 32 bytes is 512 bytes, so they'd just fit.
+- **But:** each row is 64 bytes, two lines, so going down a column jumps two lines at a time. The index is the line number mod 8, so the 16 rows land in only sets 0, 2, 4 and 6, four lines per set, and each set has only 2 ways. LRU throws each line out before the walk comes back to it.
+
+These are **conflict misses**: the data would fit, but the mapping crams it into too few sets.
+
+</details>
+
+## Part 3: Fix it two ways
+
+**Change the layout.** Pad each row to 17 ints, 68 bytes, so moving down a column no longer jumps a whole number of lines:
+
+<CRun program="architect/cachesim-cols-padded" caption='Column by column, rows padded to 17 ints' predict />
+
+**Change the cache.** In the lab below the same unpadded column walk starts at 0% hits. Change the cache's ways or size to reach at least 85% hits. Before each change, predict the result.
+
+<CacheLab caption='Fix the column walk with a different cache' configJson='{"sizeBytes":512,"lineBytes":32,"ways":2,"policy":"LRU","write":"write-back"}' matrixJson='{"start":4096,"rows":16,"cols":16,"elemBytes":4,"order":"cols"}' goalJson='{"minHitRate":0.85}' />
+
+<details>
+<summary>Check your answer</summary>
+
+**Padding** gives 167 hits, 89 misses: 65.2%. The rows now map to all 8 sets, so the 16 lines of a column are spread out instead of piled into four sets. It isn't perfect, because those 16 lines are the whole cache, and the next column's lines arrive before every line has been reused.
+
+**Changing the cache:**
+
+- **16 ways:** the cache is fully associative (one set of 16 lines). All 16 lines of a column fit, and every column after the first hits: 224 hits, 87.5%.
+- **1 KiB with 2 ways:** 16 sets, so the rows use 8 sets with 2 lines each. That fits exactly, and you also get 87.5%.
+- **4 ways, 512 bytes:** still 0%. With 4 sets the rows land in only 2 of them, 8 lines per set, still too many for 4 ways. More ways only helps once there are enough of them for the lines that collide.
+
+In real code you can rarely change the cache, but you can change the layout or the loop order. That's why matrix code is written to walk rows in C.
+
+</details>
+
+## Part 4: Trust, but check
+
+The C simulator and the Cache Lab are separate implementations, one in C, one in TypeScript. On the row walk, column walk and padded walk they agree exactly: 224, 0 and 167 hits. Why is it worth having both, and what would you test next if they disagreed?
+
+<details>
+<summary>Check your answer</summary>
+
+Two independent implementations rarely share the same bug, so agreement is strong evidence both apply the rules correctly. If they disagreed, compare them access by access on a tiny trace: the first access where the hit or miss differs points to the bug. Typical culprits are the address split (off by one bit), LRU bookkeeping (updating the time on a hit), or which way is chosen when a set has an empty way. Architects check a new design against a reference model in exactly this way.
+
+</details>
+
+<KeyIdea>Caches reward the right walk through memory. When the data fits but still misses, look at the mapping: too many lines fighting over too few sets. Fix the layout, the loop order or the cache, then measure.</KeyIdea>
+
+## Done when
+
+You've predicted all three runs, explained the 0% column walk from the address bits, reached 85% in the lab with two different cache changes, and said how you'd debug two simulators that disagreed. Then do the assignment: add FIFO, write-back and the 3Cs, and trace a real matrix multiply.

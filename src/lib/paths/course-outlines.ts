@@ -644,6 +644,59 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       ],
     },
   ],
+  "level-10-performance": [
+    {
+      id: "measuring",
+      title: "Measuring performance",
+      items: [
+        {
+          slug: "cpi-and-clock-rate",
+          description: "How run time depends on instruction count, cycles per instruction and clock rate, and how to measure each one.",
+        },
+        {
+          slug: "amdahls-law",
+          description: "Why speeding up one part of a program helps only as much as that part's share of the total time.",
+        },
+        {
+          slug: "benchmarks",
+          description: "How benchmarks measure performance, and how averages, warm-up and chosen workloads can mislead you.",
+        },
+        {
+          slug: "power-and-energy",
+          description: "Why power and heat limit how fast a chip can run, and how voltage and clock rate affect the energy it uses.",
+        },
+      ],
+    },
+  ],
+  "level-11-pipelining": [
+    {
+      id: "pipeline",
+      title: "The pipeline",
+      items: [
+        {
+          slug: "five-stage-pipeline",
+          description: "How splitting each instruction into five stages lets a CPU work on several instructions at once.",
+        },
+        {
+          slug: "data-hazards",
+          description: "Why an instruction can need a result that is not ready yet, and how forwarding passes it along early.",
+        },
+        {
+          slug: "control-hazards",
+          description: "Why branches leave a pipeline unsure what to fetch next, and how stalls keep it correct at a cost.",
+        },
+        {
+          slug: "branch-prediction",
+          description: "How a CPU guesses which way a branch will go to keep the pipeline full, and what a wrong guess costs.",
+        },
+        {
+          slug: "project-pipeline-sim",
+          description: "Build a simulator of a five-stage pipeline with hazards and forwarding, proving you can count its cycles exactly.",
+          role: "project",
+        },
+      ],
+    },
+  ],
 };
 
 export function courseOutlineForLevel(

@@ -137,3 +137,21 @@ export function strided(p: { start: number; stride: number; count: number; repea
   for (let r = 0; r < (p.repeat ?? 1); r++) for (let i = 0; i < p.count; i++) out.push({ op: p.op ?? "R", addr: p.start + i * p.stride });
   return out;
 }
+
+/** Every element of a rows x cols matrix, row by row or column by column. rowBytes pads each row. */
+export function matrixWalk(m: {
+  start: number;
+  rows: number;
+  cols: number;
+  elemBytes: number;
+  rowBytes?: number;
+  order: "rows" | "cols";
+  op?: "R" | "W";
+}): Access[] {
+  const rowBytes = m.rowBytes ?? m.cols * m.elemBytes;
+  const at = (r: number, c: number) => ({ op: m.op ?? "R", addr: m.start + r * rowBytes + c * m.elemBytes });
+  const out: Access[] = [];
+  if (m.order === "rows") for (let r = 0; r < m.rows; r++) for (let c = 0; c < m.cols; c++) out.push(at(r, c));
+  else for (let c = 0; c < m.cols; c++) for (let r = 0; r < m.rows; r++) out.push(at(r, c));
+  return out;
+}

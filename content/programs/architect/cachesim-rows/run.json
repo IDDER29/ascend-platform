@@ -1,0 +1,20 @@
+{
+  "id": "architect/cachesim-rows",
+  "sourceHash": "183b958e85350774",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog 512 32 2 < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "8 sets of 2 ways, 32-byte lines\n256 accesses: 224 hits, 32 misses (32 compulsory), hit rate 87.5%\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { parseTrace, shape, simulate, split, strided, type CacheConfig } from "./model";
+import { matrixWalk, parseTrace, shape, simulate, split, strided, type CacheConfig } from "./model";
 
 const DM: CacheConfig = { sizeBytes: 256, lineBytes: 16, ways: 1, policy: "LRU", write: "write-back" };
 
@@ -74,4 +74,14 @@ test("parseTrace reads R/W, hex and decimal, and names bad lines", () => {
   ]);
   const bad = parseTrace(["X 1"]);
   assert.equal(bad.ok ? 0 : bad.line, 1);
+});
+
+test("a column walk over a 16x16 int matrix thrashes 4 sets; padding each row spreads it out", () => {
+  const c: CacheConfig = { sizeBytes: 512, lineBytes: 32, ways: 2, policy: "LRU", write: "write-back" };
+  const rows = sim(c, matrixWalk({ start: 0x1000, rows: 16, cols: 16, elemBytes: 4, order: "rows" }));
+  assert.equal(rows.stats.hits, 224);
+  const cols = sim(c, matrixWalk({ start: 0x1000, rows: 16, cols: 16, elemBytes: 4, order: "cols" }));
+  assert.equal(cols.stats.hits, 0);
+  const padded = sim(c, matrixWalk({ start: 0x1000, rows: 16, cols: 16, elemBytes: 4, rowBytes: 68, order: "cols" }));
+  assert.equal(padded.stats.hits, 167);
 });

@@ -74,6 +74,39 @@ export function CrestArt({ crest }: { crest: CrestId }) {
           <path d="M30.5 9.5a8 8 0 0 0-9.8 10.3L9.6 30.9a3.2 3.2 0 0 0 4.5 4.5l11.1-11.1a8 8 0 0 0 10.3-9.8l-4.8 4.8-4-1-1-4z" />
         </>
       );
+    // Performance & trade-offs: a gauge with its needle.
+    case "gauge":
+      return (
+        <>
+          <path d="M9 32a15 15 0 0 1 30 0" />
+          <path d="M24 32l7-10" />
+          <path d="M14 24l2 1.5M24 17v2.5M34 24l-2 1.5" />
+        </>
+      );
+    // Pipelining: instructions staggered through pipeline stages.
+    case "stages":
+      return (
+        <>
+          <path d="M8 14h14M14 22h14M20 30h14M26 38h14" />
+          <path d="M8 10v8M26 34v8" />
+        </>
+      );
+    // Advanced execution: instructions overtaking each other in parallel lanes.
+    case "lanes":
+      return (
+        <>
+          <path d="M8 16h22M8 24h28M8 32h16" />
+          <path d="M26 12l4 4-4 4M32 20l4 4-4 4M20 28l4 4-4 4" />
+        </>
+      );
+    // Caches & memory systems: cache lines in sets and ways.
+    case "cache":
+      return (
+        <>
+          <rect x="9" y="10" width="30" height="28" rx="2" />
+          <path d="M9 17h30M9 24h30M9 31h30M24 10v28" />
+        </>
+      );
     // The C Language: a pointer (*) aiming into a box.
     case "pointer":
       return (

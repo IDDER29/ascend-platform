@@ -25,6 +25,10 @@ const LEVEL_SKILLS: Record<LevelId, string> = {
   "level-03-systems-software": "Builds systems software with processes, pipes and signals",
   "level-08-vm-threads-files": "Explains virtual memory, writes correct multithreaded C, and knows how files reach the disk",
   "level-09-memory-allocator": "Writes a working memory allocator and debugs heap corruption from the inside",
+  "level-10-performance": "Measures and reasons about performance with CPI, Amdahl's law and honest benchmarks",
+  "level-11-pipelining": "Explains pipelines, hazards, forwarding and branch prediction, and counts cycles exactly",
+  "level-12-advanced-execution": "Explains superscalar, out-of-order execution, renaming and speculation, and schedules code for them",
+  "level-13-caches-memory": "Predicts cache hits and misses, and explains the hierarchy from L1 to DRAM",
 };
 
 export type ProfileViewer = "owner" | "visitor";

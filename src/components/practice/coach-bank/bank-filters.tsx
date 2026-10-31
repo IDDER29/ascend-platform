@@ -1,3 +1,4 @@
+import type { MasterySkill } from "@/lib/practice/mastery";
 import type {
   BankFilters as Filters,
   BankFormat,
@@ -10,6 +11,7 @@ export const EMPTY_BANK_FILTERS: Filters = {
   lesson: null,
   format: null,
   strength: null,
+  skill: null,
 };
 
 export function hasBankFilters(filters: Filters): boolean {
@@ -17,7 +19,8 @@ export function hasBankFilters(filters: Filters): boolean {
     filters.query.trim() !== "" ||
     filters.lesson !== null ||
     filters.format !== null ||
-    filters.strength !== null
+    filters.strength !== null ||
+    Boolean(filters.skill)
   );
 }
 
@@ -64,7 +67,7 @@ export function BankFilters({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_200px_160px] sm:gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_190px_160px_150px] sm:gap-3">
         <label className="relative col-span-2 sm:col-span-1">
           <span className="sr-only">Search cards</span>
           <svg
@@ -119,6 +122,24 @@ export function BankFilters({
             {model.formats.map((format) => (
               <option key={format.value} value={format.value}>
                 {format.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown />
+        </label>
+        <label className="relative col-span-2 min-w-0 sm:col-span-1">
+          <span className="sr-only">Skill</span>
+          <select
+            value={filters.skill ?? ""}
+            onChange={(event) =>
+              onChange({ ...filters, skill: (event.target.value || null) as MasterySkill | null })
+            }
+            className={`${FIELD} w-full appearance-none pr-9`}
+          >
+            <option value="">All skills</option>
+            {model.skills.map((skill) => (
+              <option key={skill.value} value={skill.value}>
+                {skill.label} ({skill.count})
               </option>
             ))}
           </select>

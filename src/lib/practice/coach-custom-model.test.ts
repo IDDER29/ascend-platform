@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { masteryOf } from "./mastery";
 import type { BankRow, BankStrength } from "./coach-bank-model";
 import {
   buildCustomLessons,
@@ -29,6 +30,8 @@ function row(
     text: id,
     format,
     formatLabel: format,
+    skill: masteryOf(format),
+    skillLabel: format,
     lessonKey,
     lessonTitle: lessonKey,
     strength,

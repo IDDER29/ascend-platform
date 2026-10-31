@@ -1,6 +1,7 @@
 import { dueCards, type NewDayMeta } from "./cards";
 import { cardStrength, type CardStrength } from "./coach-home-model";
 import type { PracticeSessionRecord } from "./history";
+import { MASTERY_SKILLS, masteryLabel, masteryOf, type MasterySkill } from "./mastery";
 import { completionKey, unlockedQuestions } from "./session";
 import type { PracticeCard } from "./sm2";
 import { practiceLessonTitle } from "./tree";
@@ -27,6 +28,9 @@ export type BankRow = {
   text: string;
   format: BankFormat;
   formatLabel: string;
+  /** What the card asks of you: recognise, explain, predict, build or debug. */
+  skill: MasterySkill;
+  skillLabel: string;
   lessonKey: string;
   lessonTitle: string;
   strength: BankStrength;
@@ -46,6 +50,8 @@ export type CoachBankModel = {
   strengthCounts: Record<BankStrength, number>;
   lessons: { key: string; title: string }[];
   formats: { value: BankFormat; label: string }[];
+  /** The skills present, with how many cards each. */
+  skills: { value: MasterySkill; label: string; count: number }[];
 };
 
 export type BankFilters = {
@@ -53,6 +59,7 @@ export type BankFilters = {
   lesson: string | null;
   format: BankFormat | null;
   strength: BankStrength | null;
+  skill?: MasterySkill | null;
 };
 
 export type CoachBankInput = {
@@ -110,6 +117,8 @@ export function buildCoachBankModel({
       text: cardText(question),
       format: question.kind,
       formatLabel: BANK_FORMAT_LABELS[question.kind],
+      skill: masteryOf(question.kind),
+      skillLabel: masteryLabel(masteryOf(question.kind)),
       lessonKey,
       lessonTitle: practiceLessonTitle(lessonKey) ?? question.lessonSlug,
       strength,
@@ -157,6 +166,9 @@ export function buildCoachBankModel({
     formats: (Object.keys(BANK_FORMAT_LABELS) as BankFormat[])
       .filter((value) => formats.has(value))
       .map((value) => ({ value, label: BANK_FORMAT_LABELS[value] })),
+    skills: MASTERY_SKILLS.map((s) => ({ ...s, count: rows.filter((row) => row.skill === s.value).length })).filter(
+      (s) => s.count > 0,
+    ),
   };
 }
 
@@ -169,6 +181,7 @@ export function filterBankRows(rows: BankRow[], filters: BankFilters): BankRow[]
         row.lessonTitle.toLowerCase().includes(query)) &&
       (!filters.lesson || row.lessonKey === filters.lesson) &&
       (!filters.format || row.format === filters.format) &&
-      (!filters.strength || row.strength === filters.strength),
+      (!filters.strength || row.strength === filters.strength) &&
+      (!filters.skill || row.skill === filters.skill),
   );
 }

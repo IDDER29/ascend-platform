@@ -32,12 +32,18 @@ type RowProps = {
   onToggle: (id: string) => void;
 };
 
-function FormatBadge({ row }: { row: BankRow }) {
+function FormatBadge({ row, inline = false }: { row: BankRow; inline?: boolean }) {
   return (
-    <span
-      className={`inline-flex h-6 items-center rounded-md px-2 text-[12px] font-semibold whitespace-nowrap ${FORMAT_TINTS[row.format]}`}
-    >
-      {row.formatLabel}
+    <span className={`inline-flex ${inline ? "items-center gap-2" : "flex-col items-start gap-0.5"}`}>
+      <span
+        className={`inline-flex h-6 items-center rounded-md px-2 text-[12px] font-semibold whitespace-nowrap ${FORMAT_TINTS[row.format]}`}
+      >
+        {row.formatLabel}
+      </span>
+      <span className="text-[11.5px] whitespace-nowrap text-[var(--coach-ink-muted)]">
+        <span className="sr-only">Skill: </span>
+        {row.skillLabel}
+      </span>
     </span>
   );
 }
@@ -174,7 +180,7 @@ function StackedRow(props: RowProps) {
           <LessonLink row={row} href={href} />
         </span>
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px]">
-          <FormatBadge row={row} />
+          <FormatBadge row={row} inline />
           <StrengthMeter strength={row.strength} />
           <DueLabel row={row} />
           <span className="ml-auto">

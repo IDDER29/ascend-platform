@@ -1,0 +1,106 @@
+---
+title: "Testbenches"
+level: level-16-verification
+slug: testbenches
+order: 1
+timeMin: 11
+learningOutcomes:
+- Write a self-checking testbench that drives a design's inputs and compares its outputs with a reference model
+- Test a small block exhaustively, and say when exhaustive testing stops being possible
+- Use random stimulus with a fixed seed so a failing test can be run again exactly
+- Read a failing testbench run and trace the failure back to a bug in the design
+primer:
+- title: "Describing hardware in Verilog"
+  type: doc
+  meta: "Digital design with Verilog · modules, wires and the always block you'll test here."
+  essential: true
+- title: "Writing small tests in C"
+  type: doc
+  meta: "Tools · the same idea in software: a check per behaviour, a non-zero result on failure."
+  essential: false
+knowledgeCheck:
+- question: Why does a good testbench compute the expected answer itself instead of printing the outputs for you to read?
+  answer: "A person reading 256 lines of output will miss the wrong one; a comparison won't. A self-checking testbench has a reference model (here, a few lines of ordinary arithmetic), compares every output against it and reports only the mismatches and a total, so a pass or a fail is unambiguous and the test can run on every change."
+  jumpToId: a-testbench-that-checks-itself
+  jumpToLabel: A testbench that checks itself
+- question: The random testbench uses seed = 42. Why fix the seed?
+  answer: "So the same \"random\" inputs come out on every run. When a random test finds a failure, you can rerun it, add a print, fix the design and check that exactly that case now passes. A different seed explores different inputs; a fixed one makes a failure reproducible."
+  jumpToId: random-stimulus-with-a-fixed-seed
+  jumpToLabel: Random stimulus with a fixed seed
+assignment:
+  instruction: "Write a self-checking testbench for a 4-bit unsigned comparator (outputs lt, eq and gt) that tests all 256 input pairs against a reference model and prints the number of failures. Then put a bug in the comparator on purpose, for example by swapping two outputs, and check that your testbench reports it. Install Icarus Verilog (apt install iverilog) or use EDA Playground in a browser."
+  resourceName: 'Icarus Verilog documentation'
+  resourceType: site
+  resourceUrl: 'https://steveicarus.github.io/iverilog/'
+additionalResources:
+- title: "Verilog testbench (ChipVerify)"
+  type: doc
+  meta: the parts of a testbench, with examples
+  url: 'https://www.chipverify.com/verilog/verilog-testbench'
+- title: "Functional verification (Wikipedia)"
+  type: doc
+  meta: why verification takes most of a chip project's effort
+  url: 'https://en.wikipedia.org/wiki/Functional_verification'
+whyThisMatters: "On a real chip project, more engineers check the design than write it, because a bug found after manufacture can cost millions. Every verification method starts here: drive inputs, compute what should happen, compare, and make a failure impossible to miss."
+---
+
+In the Verilog course you simulated designs and read their outputs. That works for a counter. It doesn't work for an adder with 256 input pairs, or a processor with billions of states. This lesson is about making the simulator check the design for you.
+
+A **testbench** is a Verilog module with no ports. It contains the design under test (`dut`), drives its inputs, and checks its outputs. It's never built into hardware: it only exists in simulation, so it may use everything Verilog has, including loops, integers and `$display`.
+
+## A testbench that checks itself
+
+Here is a small block: a 4-bit **saturating** adder. It adds `a + b`, but where an ordinary 4-bit adder would wrap around (15 + 1 = 0), it sticks at 15. Saturating arithmetic is used in audio and image hardware, where wrapping from loud to silent would be much worse than clipping.
+
+The testbench tries **every** pair of inputs, 16 × 16 = 256 cases. For each one it computes the right answer with a **reference model**, `(i + j > 15) ? 15 : i + j`, in plain integer arithmetic, and compares. It prints the first few failures and a total. Predict whether this design passes.
+
+<HdlRun design="verification/tb-exhaustive-bug" caption='The saturating adder, tested exhaustively' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It fails 120 of the 256 cases, and the testbench shows exactly which: 1 + 15 gave 0, not 15.
+
+The bug is in the width of `s`. `wire [3:0] s = a + b;` keeps only 4 bits of the sum, so 1 + 15 = 16 becomes 0, and a 4-bit value can never be greater than 15, so `s > 15` is always false and the adder never saturates. Every case whose true sum is 16 or more fails: that's 120 of the 256 pairs. This bug compiles without a single warning. Only a check of the outputs finds it.
+
+</details>
+
+The fix gives `s` a fifth bit for the carry, and saturates when that bit is set:
+
+<HdlRun design="verification/tb-exhaustive-fixed" caption='The fixed adder, same testbench' show="sat_add.v" />
+
+0 of 256 failed. Because the testbench tried every possible input, that's not a sample: this block is correct for all inputs, as far as the reference model is.
+
+<KeyIdea>A self-checking testbench drives inputs, computes the expected outputs with an independent reference model, compares them, and reports a count. A pass or a fail should never depend on someone reading the output.</KeyIdea>
+
+## When exhaustive stops working
+
+Two 4-bit inputs give 256 cases. How many cases does exhaustive testing need for a 32-bit adder (two 32-bit inputs), and how long would that take at a billion tests a second?
+
+<details>
+<summary>Check your answer</summary>
+
+2 to the 64, about 1.8 × 10<sup>19</sup> cases. At 10<sup>9</sup> a second that's about 1.8 × 10<sup>10</sup> seconds: over 580 years. And a simulator manages far fewer than a billion tests a second.
+
+So exhaustive testing only works for small blocks. Bigger ones are tested with carefully chosen cases (directed tests), with random inputs, and, as you'll see two lessons from now, with formal proofs that cover every input without trying them one by one.
+
+</details>
+
+## Random stimulus with a fixed seed
+
+For big blocks, a testbench can try random inputs. This one runs 20 random tests on the buggy adder. `$urandom(seed)` produces a pseudo-random number and updates `seed`, so the same starting seed always produces the same sequence.
+
+<HdlRun design="verification/tb-random-bug" caption='Twenty random tests on the buggy adder' show="tb.v" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+7 of the 20 random tests fail, and the first failure is test 3: 10 + 14 gave 8, expected 15. Random testing found the bug quickly here because it's common: almost half of all inputs trigger it.
+
+Because the seed is fixed at 42, every run tries exactly the same 20 pairs, so this failure can be reproduced, debugged and turned into a permanent directed test. Real verification runs the same random testbench with many seeds (often thousands, overnight), and records the seed of any failing run. A bug that only appears for rare inputs is a different problem, and the next lesson is about it.
+
+</details>
+
+## Done when
+
+You can say what a testbench, a design under test and a reference model are, why the 4-bit width bug failed 120 cases, why exhaustive testing doesn't scale, and why random tests use a fixed seed.

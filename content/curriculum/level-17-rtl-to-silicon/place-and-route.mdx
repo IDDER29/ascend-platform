@@ -1,0 +1,122 @@
+---
+title: "Place, route and the finished chip"
+level: level-17-rtl-to-silicon
+slug: place-and-route
+order: 3
+timeMin: 11
+learningOutcomes:
+- Explain what placement and routing do with a synthesised netlist, and why their quality changes speed
+- Read a utilisation report, and say what happens when a design doesn't fit
+- Explain congestion, and why a design that fits can still fail to route or meet timing
+- Describe the checks an ASIC passes before tape-out (DRC and LVS) and how an ASIC flow differs from an FPGA flow
+primer:
+- title: "Timing: setup, hold and the critical path"
+  type: doc
+  meta: Reread · 3 min · logic and routing delay on the same path.
+  essential: true
+- title: "Synthesis: from code to gates"
+  type: doc
+  meta: Reread · 2 min · the netlist these steps start from.
+  essential: true
+knowledgeCheck:
+- question: The 32 x 32 multiplier needed 2,813 logic cells on a chip with 1,280. What did nextpnr do, and what are the options?
+  answer: "It reported 219% utilisation and stopped with an error: no logic cell was left to place one of the cells. The options are a bigger device, a smaller design (for example a multiplier that takes several cycles and reuses one smaller multiplier, or a chip with DSP blocks that do multiplies in dedicated hardware), or splitting the work differently."
+  jumpToId: when-it-doesnt-fit
+  jumpToLabel: When it doesn't fit
+- question: What do DRC and LVS check before an ASIC is manufactured?
+  answer: "Design rule checking (DRC) checks the physical layout against the factory's rules: minimum widths and spacings, overlaps and densities, so the shapes can actually be made. Layout versus schematic (LVS) extracts the circuit from the layout and checks it matches the netlist, so what will be built is what was designed."
+  jumpToId: from-layout-to-tape-out
+  jumpToLabel: From layout to tape-out
+assignment:
+  instruction: "Run nextpnr on any small design of yours with --placed-svg placed.svg --routed-svg routed.svg added, open the two pictures, and find where your logic ended up on the chip. Then read the OpenLane 2 documentation's overview and list the steps an ASIC flow adds after routing that an FPGA flow doesn't need."
+  resourceName: 'OpenLane 2 documentation'
+  resourceType: site
+  resourceUrl: 'https://openlane2.readthedocs.io/en/latest/'
+additionalResources:
+- title: "Place and route (Wikipedia)"
+  type: doc
+  meta: placement, routing and the steps around them
+  url: 'https://en.wikipedia.org/wiki/Place_and_route'
+- title: "Design rule checking (Wikipedia)"
+  type: doc
+  meta: the physical checks before manufacture
+  url: 'https://en.wikipedia.org/wiki/Design_rule_checking'
+- title: "Layout versus schematic (Wikipedia)"
+  type: doc
+  meta: proving the layout is the circuit you designed
+  url: 'https://en.wikipedia.org/wiki/Layout_Versus_Schematic'
+whyThisMatters: "A netlist is still only a list. Placement and routing turn it into positions and wires on real silicon, and they decide whether a design fits, how fast it runs and, for an ASIC, whether it can be manufactured at all. It's the last step before hardware exists."
+---
+
+Synthesis gave a netlist: cells and the connections between them. Two more steps turn it into something a chip can be: **placement** decides where each cell goes, and **routing** decides which wires connect them. On an FPGA the cells and wires already exist and these steps choose which to use; on an ASIC they decide where the transistors and metal will be manufactured. The reports below are from nextpnr on an iCE40 HX1K FPGA.
+
+## Placement and routing
+
+- **Placement** assigns every cell to a site on the chip: here, one of 1,280 logic cells (each a 4-input lookup table, a carry bit and a flip-flop), 112 input/output pins, 16 RAM blocks and 8 global clock buffers. A good placement keeps connected cells close, because distance becomes delay.
+- **Routing** connects them through the chip's wires and switches, so that every connection exists and no wire is used twice.
+
+Both are search problems far too big to solve exactly, so tools use heuristics (nextpnr's default placer solves an analytic approximation, then refines it), then measure timing on the result. That's why the report has a frequency estimate after placement and the real figure after routing.
+
+Here is the 16 × 16 multiplier from the last lesson again. Find how full the chip is.
+
+<HdlRun design="rtl/timing-mult" caption='The multiplier, placed and routed' show="mult.v" />
+
+<details>
+<summary>Check your answer</summary>
+
+The **utilisation** report says 698 of 1,280 logic cells (54%): 631 used only as lookup tables, 50 as a lookup table and a flip-flop, and 15 as flip-flops only. Only 2 of 112 pins are used (the clock and the parity output), and 1 of 8 global buffers, for the clock. No RAM blocks are used.
+
+There's no hardware multiplier on this small FPGA, so the multiply is built entirely from lookup tables, which is why it's so big.
+
+</details>
+
+## When it doesn't fit
+
+Now a 32 × 32 multiplier on the same chip. Predict what happens.
+
+<HdlRun design="rtl/pnr-too-big" caption='A 32 x 32 multiplier on the same chip' show="mult.v" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It needs 2,813 logic cells, **219%** of the chip, and placement stops with an error: no logic cell (BEL, basic element) is left for one of the cells. A multiplier's size grows with the square of its width, so doubling the width needs about four times the logic: 698 to 2,813 here.
+
+The options are a bigger device; a different design, such as a multiplier that takes several cycles and reuses one smaller unit; or a chip with **DSP blocks**, dedicated multiplier hardware that many FPGAs include for exactly this reason.
+
+</details>
+
+## Congestion
+
+A design that fits can still fail: the cells fit, but there aren't enough wires in one region to connect them, or the detours make paths too slow. Explain why a design at 90% utilisation is much harder to place and route than one at 50%.
+
+<details>
+<summary>Check your answer</summary>
+
+At high utilisation the placer has little freedom: connected cells end up far apart, and the busiest regions need more wires than pass through them. That's **congestion**. The router has to detour around full channels, which makes paths longer, so timing gets worse, or it fails to route at all.
+
+That's why designers usually aim well below 100%, often at about 70 to 80% on an FPGA. On an ASIC they leave room for routing and add buffers on long wires.
+
+</details>
+
+## From layout to tape-out
+
+An FPGA flow ends with a **bitstream** that configures the existing chip; it can be changed in seconds. An ASIC flow ends with **layout**: the exact shapes of every transistor and wire on every layer, sent to a factory. After that, nothing can be fixed without making new masks, which costs a fortune. List the checks you'd want before sending it.
+
+<details>
+<summary>Check your answer</summary>
+
+- **Static timing analysis** on the final layout, with the real wire lengths, at the slowest and fastest process corners, voltages and temperatures: every setup and hold check must pass.
+- **DRC (design rule checking):** every shape obeys the factory's rules (minimum widths, spacings, overlaps, metal densities), so it can actually be made.
+- **LVS (layout versus schematic):** the circuit extracted from the layout matches the netlist exactly, with no missing or extra connections.
+- **Power and signal checks:** voltage drop across the power grid, current density in the wires (electromigration) and crosstalk between neighbouring wires.
+- **Equivalence checking:** the final netlist still behaves like the RTL after every optimisation.
+
+When everything passes, the design is **taped out**: the layout is sent for mask making, a name kept from the days when it went on magnetic tape. Open-source flows such as OpenLane run all of these steps (synthesis with Yosys, placement and routing, timing analysis, DRC and LVS) with open process kits such as SkyWater's 130 nm.
+
+</details>
+
+<KeyIdea>Placement chooses where every cell goes and routing wires them together, and their quality sets the real speed. A design must fit, route and meet timing; an ASIC must also pass DRC and LVS before tape-out, because after that nothing can be fixed.</KeyIdea>
+
+## Done when
+
+You can say what placement and routing do, read a utilisation report, explain the 219% failure and congestion, and list the checks before tape-out.

@@ -1,0 +1,110 @@
+---
+title: "Coverage: how much have you tested?"
+level: level-16-verification
+slug: coverage
+order: 2
+timeMin: 11
+learningOutcomes:
+- Explain line, toggle, FSM-state and functional coverage, and what each one measures
+- Add functional coverage counters to a testbench and read a coverage report
+- Explain why passing tests with a coverage hole prove little, using a real bug that random tests missed
+- Close a coverage hole with directed tests, and say what coverage still can't tell you
+primer:
+- title: "Testbenches"
+  type: doc
+  meta: Reread · 3 min · self-checking testbenches and random stimulus.
+  essential: true
+knowledgeCheck:
+- question: The random testbench passed 100 tests, yet the adder had a bug. What did the coverage report show, and why did that matter?
+  answer: "It showed the case \"sum wraps to exactly zero\" was hit 0 times. The bug was only in that case (the zero flag compared the 9-bit total with 0), so passing tests meant nothing for it. Coverage told us what the tests never exercised."
+  jumpToId: a-pass-that-proves-little
+  jumpToLabel: A pass that proves little
+- question: Can 100% coverage guarantee a design has no bugs?
+  answer: "No. Coverage says which cases were exercised, not whether the checks were right or the cases complete. A wrong reference model passes with full coverage, and a bug that needs a combination nobody listed as a coverage bin can still hide. Coverage finds holes in testing; it doesn't prove correctness."
+  jumpToId: what-coverage-cant-tell-you
+  jumpToLabel: What coverage can't tell you
+assignment:
+  instruction: "Take the comparator testbench from the last lesson's assignment and switch it to 50 random tests with a fixed seed. Add functional coverage counters for eq true, a equal to 0, b equal to 15, and a greater than b by exactly 1, and print them. Find a seed that leaves a bin at 0, then add directed tests until every bin is hit."
+  resourceName: 'Wikipedia: Code coverage'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Code_coverage'
+additionalResources:
+- title: "Functional verification (Wikipedia)"
+  type: doc
+  meta: where coverage fits in a verification plan
+  url: 'https://en.wikipedia.org/wiki/Functional_verification'
+whyThisMatters: "A test suite that passes says nothing about the cases it never tried. Coverage is how verification engineers know when they're done, and every chip project tracks it, because the bug that escapes is almost always in a case nobody exercised."
+---
+
+Random tests found the saturating adder's bug at once, because almost half of all inputs triggered it. Real bugs are rarely that common. They hide in corners: one input value, one sequence, one combination. This lesson is about measuring which corners your tests actually reached.
+
+## Kinds of coverage
+
+**Coverage** measures what a set of tests exercised. The common kinds:
+
+| Kind | What it counts | Measured by |
+|---|---|---|
+| Line (statement) | which lines of the design ran | the simulator |
+| Toggle | which signals went both 0 to 1 and 1 to 0 | the simulator |
+| FSM state and transition | which states and transitions of a state machine were visited | the simulator |
+| Functional | which cases *you* said matter (bins) were hit | your testbench |
+
+The first three are **code coverage**: a tool collects them automatically, with no knowledge of what the design is for. **Functional coverage** encodes intent: "an add that overflows", "a full FIFO being written". Commercial simulators collect all of these and merge them across thousands of runs; Icarus Verilog doesn't collect coverage, so here the testbench counts its own functional coverage bins. The idea is the same.
+
+## A pass that proves little
+
+This design is an 8-bit adder with two flags: `carry` (the sum needed a ninth bit) and `zero` (the 8-bit result is 0). The testbench runs 100 random tests against a reference model and counts four coverage bins. Predict whether it passes, and which bins you expect to be rare.
+
+<HdlRun design="verification/cov-random" caption='100 random tests, with coverage counters' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+All 100 tests pass. The coverage line is the important part:
+
+- `carry` was hit 48 times, about half, as expected for random 8-bit operands.
+- `sum wraps to zero` was hit **0** times.
+- `a == b` was hit once, and `an operand is 255` twice.
+
+A sum that wraps to exactly zero needs `a + b` to be 0 or 256: 256 of 65,536 input pairs (0 + 0, and 255 pairs that add up to 256), about 0.4%. In 100 tests you expect less than one. So "all tests pass" says nothing about the zero flag on a wrap.
+
+</details>
+
+## Close the hole
+
+The next testbench keeps the 100 random tests and adds **directed tests**, chosen by hand, for every bin random stimulus missed: 200 + 56, 0 + 0, 77 + 77 and 255 + 1.
+
+<HdlRun design="verification/cov-directed" caption='The same tests, plus four directed ones' show="tb.v" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Now it fails, on 200 + 56: sum 0, carry 1, but `zero` is 0. 255 + 1 fails the same way, which is why it reports 2 failures. Every bin is now covered.
+
+The bug is in `assign zero = (a + b == 0);`. In Verilog the comparison widens `a + b` to 32 bits, so 200 + 56 is 256, not 0, and the flag says "not zero" while the 8-bit result is 0. Comparing the 8-bit result instead fixes it:
+
+<HdlRun design="verification/cov-fixed" caption='The fixed adder, same tests' show="add8.v" />
+
+0 failures, every bin hit. The bug lived in exactly the bin that random testing never reached, which is the usual story.
+
+</details>
+
+<KeyIdea>Passing tests only speak for what they exercised. Coverage shows what that was: when a bin you care about is at zero, the passing result says nothing about it, so close the hole with directed tests.</KeyIdea>
+
+## What coverage can't tell you
+
+Your testbench reports 100% coverage on every bin and no failures. Name two ways the design could still be wrong.
+
+<details>
+<summary>Check your answer</summary>
+
+- **The checks are wrong.** If the reference model has the same mistake as the design (say, both compare the 32-bit total with 0), every test passes with full coverage.
+- **The bins are incomplete.** Coverage only counts the cases someone listed. A bug that needs an untracked combination, such as a carry together with equal operands at a particular value, can stay hidden.
+
+Coverage measures the testing, not the design. That's why verification combines independent reference models, coverage, many seeds and, for the most important properties, the formal proofs in the next lesson.
+
+</details>
+
+## Done when
+
+You can name four kinds of coverage, explain why 100 passing random tests missed the zero-flag bug, close a hole with directed tests, and say why full coverage still isn't a proof.

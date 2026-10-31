@@ -1,0 +1,17 @@
+{
+  "id": "rtl/synth-ripple",
+  "sourceHash": "ba5cc9f4d110fd87",
+  "tool": "synth",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "yosys -p \"read_verilog -sv add8.v; synth -top add8; stat\""
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "=== add8 ===\n\n   Number of wires:                  4\n   Number of wire bits:             34\n   Number of public wires:           4\n   Number of public wire bits:      34\n   Number of ports:                  3\n   Number of port bits:             25\n   Number of memories:               0\n   Number of memory bits:            0\n   Number of processes:              0\n   Number of cells:                  8\n     full_adder                      8\n\n=== full_adder ===\n\n   Number of wires:                  8\n   Number of wire bits:              8\n   Number of public wires:           5\n   Number of public wire bits:       5\n   Number of ports:                  5\n   Number of port bits:              5\n   Number of memories:               0\n   Number of memory bits:            0\n   Number of processes:              0\n   Number of cells:                  5\n     $_ANDNOT_                       1\n     $_AND_                          1\n     $_OR_                           1\n     $_XNOR_                         2\n\n=== design hierarchy ===\n\n   add8                              1\n     full_adder                      8\n\n   Number of wires:                 68\n   Number of wire bits:             98\n   Number of public wires:          44\n   Number of public wire bits:      74\n   Number of ports:                 43\n   Number of port bits:             65\n   Number of memories:               0\n   Number of memory bits:            0\n   Number of processes:              0\n   Number of cells:                 40\n     $_ANDNOT_                       8\n     $_AND_                          8\n     $_OR_                           8\n     $_XNOR_                        16",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

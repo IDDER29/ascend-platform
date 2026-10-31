@@ -1,0 +1,135 @@
+---
+title: "Synthesis: from code to gates"
+level: level-17-rtl-to-silicon
+slug: synthesis
+order: 1
+timeMin: 11
+learningOutcomes:
+- Explain what a synthesis tool does to turn RTL into a netlist of gates and flip-flops
+- Read a synthesis report's cell counts, and find the flip-flops a clocked always block becomes
+- Explain why the same function written two ways can give different netlists, and why fewer gates isn't always better
+- Explain what a cell library is, and map a design onto a chosen set of gates
+primer:
+- title: "Combinational logic in Verilog"
+  type: doc
+  meta: "Digital design with Verilog · the descriptions synthesis turns into gates."
+  essential: true
+- title: "Optional project: Make the circuit smaller"
+  type: doc
+  meta: "Foundations · gate counts and the longest path, by hand."
+  essential: false
+knowledgeCheck:
+- question: Written as a + b, the 8-bit adder became 49 cells; written as a chain of full adders, 40. Why didn't Yosys pick the smaller one for a + b?
+  answer: "For the + operator Yosys builds a Brent-Kung parallel-prefix carry network, which computes the carries in a tree instead of a chain. That takes more gates, but the longest path grows with the logarithm of the width instead of the width, so the adder is faster. Synthesis trades area for speed, and gate count alone doesn't say which design is better."
+  jumpToId: the-same-adder-two-ways
+  jumpToLabel: The same adder, two ways
+- question: What is a cell library, and why does the same design synthesise differently for an FPGA and an ASIC?
+  answer: "A cell library is the set of building blocks the target offers, with their size, delay and power: an ASIC library has hundreds of gates and flip-flops in several strengths; an FPGA offers lookup tables, carry logic and flip-flops. Synthesis maps the design onto whatever cells the target has, so the netlist depends on the target."
+  jumpToId: cell-libraries
+  jumpToLabel: Cell libraries
+assignment:
+  instruction: "Install Yosys (apt install yosys), synthesise a 4-to-1 multiplexer and a 4-bit counter of your own with yosys -p \"read_verilog x.v; synth -top x; stat\", and record the cell counts. Then add abc -g NAND before stat and compare. Write two sentences on what changed and why."
+  resourceName: 'Yosys documentation'
+  resourceType: site
+  resourceUrl: 'https://yosyshq.readthedocs.io/projects/yosys/en/latest/'
+additionalResources:
+- title: "Logic synthesis (Wikipedia)"
+  type: doc
+  meta: from RTL to a gate-level netlist
+  url: 'https://en.wikipedia.org/wiki/Logic_synthesis'
+- title: "Brent-Kung adder (Wikipedia)"
+  type: doc
+  meta: the carry network Yosys uses for +
+  url: 'https://en.wikipedia.org/wiki/Brent%E2%80%93Kung_adder'
+whyThisMatters: "Synthesis is the step where your Verilog stops being a description and becomes a circuit. Knowing what it builds from each construct is how hardware engineers write code that turns into small, fast logic, and how they read the reports that say whether a design will fit and run fast enough."
+---
+
+In the Verilog course you described hardware and simulated it. A simulation runs your description; it doesn't build anything. **Synthesis** does: it turns the register-transfer level (RTL) description into a **netlist**, a list of gates and flip-flops and the wires between them, using the building blocks the target offers. Every report below is real output from Yosys, an open-source synthesis tool.
+
+## What synthesis does
+
+`synth` runs a sequence of passes:
+
+1. **Elaborate.** Read the Verilog, build the hierarchy and resolve parameters and generate loops.
+2. **Recognise.** Turn `+`, `*`, `case`, comparisons and clocked always blocks into generic cells: adders, multiplexers and flip-flops.
+3. **Optimise.** Remove logic that doesn't affect an output, share common terms and simplify constants.
+4. **Map.** Replace the generic cells with the target's real cells. Here that's Yosys's built-in gate library: `$_AND_`, `$_XOR_`, `$_MUX_`, flip-flops such as `$_SDFF_PP0_`, and so on.
+
+Here is a 4-bit counter. Predict how many flip-flops it needs, then read the report.
+
+<HdlRun design="rtl/synth-counter" caption='Synthesising a 4-bit counter' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+4 flip-flops, listed as `$_SDFF_PP0_`: a D flip-flop with a **s**ynchronous reset (SDFF), clocked on the **p**ositive edge, reset when the reset is high (**P**), to **0**. Each clocked `count <= ...` bit became one. The `+ 1` became 3 XOR gates, 2 AND gates and 1 NOT gate: the carry chain of an incrementer. That's 10 cells in all.
+
+Every `always @(posedge clk)` assignment that keeps a value becomes a flip-flop; everything else becomes gates.
+
+</details>
+
+## The same adder, two ways
+
+Two descriptions of the same 8-bit adder. The first says what it does: `assign sum = a + b;`. The second says how to build it: eight full adders in a ripple-carry chain, exactly as you built it in Foundations.
+
+<HdlRun design="rtl/synth-operator" caption='a + b' predict />
+
+<HdlRun design="rtl/synth-ripple" caption='Eight full adders in a chain' predict />
+
+Which is smaller, and why do you think the tool didn't build the smaller one for `a + b`?
+
+<details>
+<summary>Check your answer</summary>
+
+`a + b` became **49** cells; the ripple chain became **40**: 8 full adders of 5 cells each. The report for the chain lists the full adder once and the whole design hierarchy at the end.
+
+For `+`, Yosys doesn't build a ripple chain. It builds a **Brent-Kung parallel-prefix** carry network (its techmap file calls it `_90_lcu_brent_kung`). Instead of each carry waiting for the one before it, carries are combined in a tree, so the longest path grows with the logarithm of the width, about 2 × log<sub>2</sub>(n) levels, instead of with the width itself. That costs extra gates: 49 instead of 40 here, and the gap grows with the width.
+
+So fewer gates is not automatically better. A synthesis tool balances **area** (gates), **delay** (the longest path) and **power**, and you'll measure the delay side in the next lesson.
+
+</details>
+
+## Same function, different netlists
+
+A 4-to-1 multiplexer of bytes, written with `case` and then as a chain of `if` and `else`:
+
+<HdlRun design="rtl/synth-mux-case" caption='With case' />
+
+<HdlRun design="rtl/synth-mux-if" caption='With if and else' />
+
+The two do exactly the same thing. Why are the netlists so different (52 cells against 27)?
+
+<details>
+<summary>Check your answer</summary>
+
+Synthesis starts from your structure. The `if` chain became a chain of 2-to-1 multiplexers (24 `$_MUX_` cells: 3 per output bit), which suits it well. The `case` was turned into decoding logic that compares `sel` with each value and ORs the selected inputs together, and the optimiser didn't find the multiplexer form. Both are correct; neither is "the" circuit for a 4-to-1 multiplexer.
+
+Real tools are good, not perfect, and their results depend on how the description is written. Engineers check synthesis reports rather than assume, and rewrite the parts whose results are poor.
+
+</details>
+
+## Cell libraries
+
+The target decides which cells exist. Here is the `a + b` adder again, this time mapped onto NAND gates only, with Yosys's ABC tool (`abc -g NAND`):
+
+<HdlRun design="rtl/synth-gates" caption='a + b, mapped to NAND gates only' show="add8.v" />
+
+<details>
+<summary>Check your answer</summary>
+
+90 cells: 53 NAND gates and 37 NOT gates (each a NAND with its inputs joined, in real hardware). It's the same function as the 49-cell version, built from a smaller set of cell types.
+
+A **cell library** describes what a target can build:
+
+- **ASIC library:** hundreds of standard cells, gates and flip-flops in several sizes, each with its exact area, delay and power. Synthesis picks the cells that meet the timing with the least area.
+- **FPGA:** lookup tables (LUTs) that can be any function of 4 to 6 inputs, carry chains and flip-flops. Synthesis maps to those instead of gates.
+
+The same Verilog becomes a different netlist for each, which is why a synthesis report always names its target.
+
+</details>
+
+<KeyIdea>Synthesis turns RTL into a netlist of the target's cells: clocked assignments become flip-flops, the rest becomes gates or LUTs. It trades area against speed, and the result depends on how the design is written. Read the report.</KeyIdea>
+
+## Done when
+
+You can say what synthesis does in its four steps, read the counter's report, explain why `a + b` gave more gates than the ripple chain, and say what a cell library is.

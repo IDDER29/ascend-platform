@@ -16,7 +16,11 @@ export const levelIds = [
   "level-12-advanced-execution",
   "level-13-caches-memory",
   "level-14-multicore-gpus",
+  "level-15-verilog",
+  "level-16-verification",
+  "level-17-rtl-to-silicon",
   "level-18-compilers-theory",
+  "level-19-riscv-core",
 ] as const;
 
 export const LevelIdSchema = z.enum(levelIds);
@@ -125,8 +129,8 @@ export const LEVELS: Record<
   "level-06-c-tools": {
     name: "Tools",
     short: "The Workshop",
-    totalConcepts: 9,
-    timeLabel: "~1 hr 40 min",
+    totalConcepts: 11,
+    timeLabel: "~2.5 hr",
   },
   "level-07-data-structures": {
     name: "Data Structures in C",
@@ -182,10 +186,34 @@ export const LEVELS: Record<
     totalConcepts: 5,
     timeLabel: "~1 hr",
   },
+  "level-15-verilog": {
+    name: "Digital design with Verilog",
+    short: "The Describer",
+    totalConcepts: 5,
+    timeLabel: "~1.5 hr",
+  },
+  "level-16-verification": {
+    name: "Verification",
+    short: "The Prover",
+    totalConcepts: 3,
+    timeLabel: "~35 min",
+  },
+  "level-17-rtl-to-silicon": {
+    name: "From RTL to silicon",
+    short: "The Fab",
+    totalConcepts: 3,
+    timeLabel: "~35 min",
+  },
   "level-18-compilers-theory": {
     name: "Compilers & theory",
     short: "The Translator",
     totalConcepts: 4,
     timeLabel: "~45 min",
+  },
+  "level-19-riscv-core": {
+    name: "A RISC-V core",
+    short: "The Capstone Core",
+    totalConcepts: 2,
+    timeLabel: "~1.5 hr",
   },
 };

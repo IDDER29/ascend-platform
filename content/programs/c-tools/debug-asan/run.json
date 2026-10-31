@@ -1,0 +1,20 @@
+{
+  "id": "c-tools/debug-asan",
+  "sourceHash": "45d5121e0caaaa72",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=address,undefined main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "=================================================================\n==641494==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x6d8c42de0010 at pc 0x56c18d01e89e bp 0x7ffc4b0b44f0 sp 0x7ffc4b0b44e0\nWRITE of size 8 at 0x6d8c42de0010 thread T0\n    #0 0x56c18d01e89d in add ./main.c:22\n    #1 0x56c18d01ed03 in main ./main.c:33\n    #2 0x716c43e2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #3 0x716c43e2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #4 0x56c18d01e324 in _start (/tmp/build/prog+0x3324) (BuildId: 9216ca37369fd4a6074eec8245575c66656a2625)\n\n0x6d8c42de0012 is located 0 bytes after 2-byte region [0x6d8c42de0010,0x6d8c42de0012)\nallocated by thread T0 here:\n    #0 0x716c44b2a6cf in realloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:81\n    #1 0x56c18d01e6dd in add ./main.c:20\n    #2 0x56c18d01ed03 in main ./main.c:33\n    #3 0x716c43e2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #4 0x716c43e2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #5 0x56c18d01e324 in _start (/tmp/build/prog+0x3324) (BuildId: 9216ca37369fd4a6074eec8245575c66656a2625)\n\nSUMMARY: AddressSanitizer: heap-buffer-overflow ./main.c:22 in add\nShadow bytes around the buggy address:\n  0x6d8c42ddfd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6d8c42ddfe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6d8c42ddfe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6d8c42ddff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6d8c42ddff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x6d8c42de0000: fa fa[02]fa fa fa 06 fa fa fa fa fa fa fa fa fa\n  0x6d8c42de0080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x6d8c42de0100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x6d8c42de0180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x6d8c42de0200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x6d8c42de0280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==641494==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

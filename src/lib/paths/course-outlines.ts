@@ -387,6 +387,10 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
           description: "How AddressSanitizer and UndefinedBehaviorSanitizer catch memory errors and undefined behaviour as your program runs.",
         },
         {
+          slug: "valgrind",
+          description: "How valgrind finds memory leaks, invalid reads and uninitialised values in a program without recompiling it.",
+        },
+        {
           slug: "git",
           description: "How to track a C project with git: commits, branches, ignoring build output and finding the change that broke it.",
         },
@@ -394,18 +398,10 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
           slug: "tests-in-c",
           description: "How to write small, fast tests for C functions with assert and a simple runner, and run them on every build.",
         },
-      ],
-      upcoming: [
         {
-          id: "valgrind",
-          title: "valgrind and memory checking",
-          description: "How valgrind finds memory leaks, invalid reads and uninitialised values in a program without recompiling it.",
-        },
-        {
-          id: "project-debug-a-program",
-          title: "Project: Debug a broken program",
+          slug: "project-debug-a-program",
           description: "Use gdb, sanitizers and valgrind to find and fix the bugs in a broken program, proving you can debug with tools.",
-          project: true,
+          role: "project",
         },
       ],
     },
@@ -778,6 +774,75 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       ],
     },
   ],
+  "level-15-verilog": [
+    {
+      id: "hdl",
+      title: "Describing hardware",
+      items: [
+        {
+          slug: "verilog-basics",
+          description: "How Verilog describes hardware as modules, wires and registers that all work at once, not as steps run in order.",
+        },
+        {
+          slug: "combinational-verilog",
+          description: "How to describe gates, multiplexers and adders in Verilog, whose outputs depend only on their current inputs.",
+        },
+        {
+          slug: "sequential-verilog",
+          description: "How to describe registers and state machines in Verilog that change only on a clock edge.",
+        },
+        {
+          slug: "fpga",
+          description: "How a Verilog design is synthesised and loaded onto an FPGA, so your description becomes working hardware.",
+        },
+        {
+          slug: "project-verilog-alu",
+          description: "Build an ALU in Verilog and test it in simulation, proving you can turn a logic design into working hardware code.",
+          role: "project",
+        },
+      ],
+    },
+  ],
+  "level-16-verification": [
+    {
+      id: "checking",
+      title: "Proving a design works",
+      items: [
+        {
+          slug: "testbenches",
+          description: "How a testbench drives inputs into a hardware design and checks its outputs automatically in simulation.",
+        },
+        {
+          slug: "coverage",
+          description: "How coverage measures which lines, states and cases your tests have exercised, and what it still misses.",
+        },
+        {
+          slug: "assertions-and-formal",
+          description: "How assertions state rules a design must always follow, and how formal tools prove them for every input.",
+        },
+      ],
+    },
+  ],
+  "level-17-rtl-to-silicon": [
+    {
+      id: "physical",
+      title: "Making the chip",
+      items: [
+        {
+          slug: "synthesis",
+          description: "How a synthesis tool turns Verilog into a netlist of gates and flip-flops from a cell library.",
+        },
+        {
+          slug: "timing",
+          description: "Why signals must arrive before the clock edge and stay steady after it, and how the slowest path sets the clock rate.",
+        },
+        {
+          slug: "place-and-route",
+          description: "How gates are placed on the chip and wired together, and the checks a design passes before it is manufactured.",
+        },
+      ],
+    },
+  ],
   "level-18-compilers-theory": [
     {
       id: "compilers",
@@ -798,6 +863,24 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
         {
           slug: "computability",
           description: "Which problems a computer can solve at all, and why no program can decide whether every program halts.",
+        },
+      ],
+    },
+  ],
+  "level-19-riscv-core": [
+    {
+      id: "core",
+      title: "Capstone",
+      blurb: "Design a real processor, then prove it runs real programs.",
+      items: [
+        {
+          slug: "riscv-isa",
+          description: "How the RISC-V instruction set is organised: its registers, its instruction formats, and its loads and stores.",
+        },
+        {
+          slug: "project-riscv-core",
+          description: "Design a small RISC-V processor in Verilog and verify it runs real programs, proving you can build a CPU end to end.",
+          role: "project",
         },
       ],
     },

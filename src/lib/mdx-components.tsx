@@ -24,6 +24,7 @@ import { PipelineLab } from "@/components/lesson/pipeline-lab";
 import { CacheLab } from "@/components/lesson/cache-lab";
 import { PredictorLab } from "@/components/lesson/predictor-lab";
 import { OooLab } from "@/components/lesson/ooo-lab";
+import { HdlRun } from "@/components/lesson/hdl-run";
 import { SectionHeading } from "@/components/bookmarks/lesson-bookmarks";
 
 export const mdxComponents: MDXComponents = {
@@ -52,6 +53,7 @@ export const mdxComponents: MDXComponents = {
   CacheLab,
   PredictorLab,
   OooLab,
+  HdlRun,
   h2: (props) => (
     <SectionHeading
       className="group/section mt-9 mb-3 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight"

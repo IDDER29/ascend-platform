@@ -26,6 +26,8 @@ import { C_LANGUAGE_C_BANK } from "./level-02-c";
 import { LEVEL_05_BANK } from "./level-05";
 import { C_TOOLS_A_BANK } from "./level-06-a";
 import { C_TOOLS_B_BANK } from "./level-06-b";
+import { C_TOOLS_C_BANK } from "./level-06-c";
+import { C_TOOLS_PROJECT_BANK } from "./level-06-project";
 import { LEVEL_07_BANK } from "./level-07";
 import { DATA_STRUCTURES_A_BANK } from "./level-07-a";
 import { DATA_STRUCTURES_B_BANK } from "./level-07-b";
@@ -43,6 +45,12 @@ import { ADVANCED_BANK } from "./level-12";
 import { LEVEL_13_BANK } from "./level-13";
 import { MULTICORE_BANK } from "./level-14";
 import { COMPILERS_BANK } from "./level-18";
+import { RISCV_A_BANK } from "./level-19-a";
+import { RISCV_PROJECT_BANK } from "./level-19-project";
+import { VERILOG_BANK } from "./level-15";
+import { VERILOG_PROJECT_BANK } from "./level-15-project";
+import { VERIFICATION_BANK } from "./level-16";
+import { RTL_BANK } from "./level-17";
 import { CACHES_A_BANK } from "./level-13-a";
 import { PIPELINING_A_BANK } from "./level-11-a";
 
@@ -81,6 +89,8 @@ export const PRACTICE_BANK: PracticeItem[] = [
   ...LEVEL_05_BANK,
   ...C_TOOLS_A_BANK,
   ...C_TOOLS_B_BANK,
+  ...C_TOOLS_C_BANK,
+  ...C_TOOLS_PROJECT_BANK,
   ...DATA_STRUCTURES_A_BANK,
   ...DATA_STRUCTURES_B_BANK,
   ...LEVEL_07_BANK,
@@ -97,5 +107,11 @@ export const PRACTICE_BANK: PracticeItem[] = [
   ...CACHES_A_BANK,
   ...LEVEL_13_BANK,
   ...MULTICORE_BANK,
+  ...VERILOG_BANK,
+  ...VERILOG_PROJECT_BANK,
+  ...VERIFICATION_BANK,
+  ...RTL_BANK,
   ...COMPILERS_BANK,
+  ...RISCV_A_BANK,
+  ...RISCV_PROJECT_BANK,
 ];

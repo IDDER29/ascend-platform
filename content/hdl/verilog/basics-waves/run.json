@@ -1,0 +1,103 @@
+{
+  "id": "verilog/basics-waves",
+  "sourceHash": "39235e7ca862be06",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp gates.v tb.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "VCD info: dumpfile waves.vcd opened for output.\ntb.v:13: $finish called at 60 (1s)\n",
+  "exitCode": 0,
+  "waves": {
+    "timescale": "1s",
+    "end": 60,
+    "waves": [
+      {
+        "name": "tb.a",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "0"
+          ],
+          [
+            10,
+            "1"
+          ],
+          [
+            30,
+            "0"
+          ]
+        ]
+      },
+      {
+        "name": "tb.b",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "0"
+          ],
+          [
+            20,
+            "1"
+          ],
+          [
+            50,
+            "0"
+          ]
+        ]
+      },
+      {
+        "name": "tb.c",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "0"
+          ],
+          [
+            40,
+            "1"
+          ],
+          [
+            50,
+            "0"
+          ]
+        ]
+      },
+      {
+        "name": "tb.y",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "0"
+          ],
+          [
+            20,
+            "1"
+          ],
+          [
+            30,
+            "0"
+          ],
+          [
+            40,
+            "1"
+          ],
+          [
+            50,
+            "0"
+          ]
+        ]
+      }
+    ]
+  },
+  "generated": "2026-10-31"
+}

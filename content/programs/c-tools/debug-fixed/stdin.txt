@@ -1,0 +1,4 @@
+bolts,120
+nuts,300
+washers 75
+screws,90

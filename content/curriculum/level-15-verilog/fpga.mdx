@@ -1,0 +1,127 @@
+---
+title: "From Verilog to an FPGA"
+level: level-15-verilog
+slug: fpga
+order: 4
+timeMin: 11
+learningOutcomes:
+- Explain what an FPGA is built from (lookup tables, flip-flops, carry logic and programmable routing) and how a LUT can be any small gate
+- Describe the flow from Verilog to a working FPGA (synthesis, place and route, timing analysis, bitstream)
+- Read a real utilisation report and maximum-frequency result, and explain why the final figure comes after routing
+- Predict how a design's size and the length of its logic paths affect the cells it uses and the clock it can reach
+primer:
+- title: "Sequential logic and state machines"
+  type: doc
+  meta: Reread · 3 min · the counter you'll put on a chip.
+  essential: true
+- title: "Testing circuits, delay and trade-offs"
+  type: doc
+  meta: "Foundations · the longest path sets the speed."
+  essential: false
+knowledgeCheck:
+- question: A 4-input LUT is 16 bits of memory and a multiplexer. How can it act as any gate with four inputs?
+  answer: "The four inputs select one of the 16 stored bits. Loading the 16 bits with a function's truth table makes the LUT output that function for every input combination, so a single LUT can be an AND, an XOR, a mux, or any other 4-input function."
+  jumpToId: what-an-fpga-is-made-of
+  jumpToLabel: What an FPGA is made of
+- question: For the blink design nextpnr printed 200.24 MHz and then 194.36 MHz. Which is the design's real limit, and why are there two?
+  answer: "194.36 MHz. The first figure is an estimate after placement, before the wires are routed; the second is measured after routing with the real wire delays. Routing can make paths slower or, as with the accumulator here, slightly faster, so only the final figure counts."
+  jumpToId: placed-and-routed-on-a-real-chip
+  jumpToLabel: Placed and routed on a real chip
+assignment:
+  instruction: "Take your counter or FSM from the last lesson and run the same open-source flow on your own machine (sudo apt install yosys nextpnr-ice40 fpga-icestorm, then yosys -p 'synth_ice40 -top counter -json c.json' counter.v and nextpnr-ice40 --hx1k --package tq144 --json c.json --pcf-allow-unconstrained). Record the LCs used and the final max frequency, then make the counter 32 bits wide and compare."
+  resourceName: 'Project IceStorm'
+  resourceType: site
+  resourceUrl: 'https://prjicestorm.readthedocs.io/en/latest/'
+additionalResources:
+- title: "Field-programmable gate array (Wikipedia)"
+  type: doc
+  meta: LUTs, routing and the history of FPGAs
+  url: 'https://en.wikipedia.org/wiki/Field-programmable_gate_array'
+- title: "nextpnr"
+  type: doc
+  meta: the open-source place-and-route tool used here
+  url: 'https://github.com/YosysHQ/nextpnr'
+whyThisMatters: "An FPGA turns Verilog into real, running hardware in minutes, with no factory. It's how processors are prototyped before they're made, how networks and data centres get custom accelerators, and how a learner can run a CPU of their own design."
+---
+
+So far your Verilog has only run in a simulator. An **FPGA** (field-programmable gate array) lets it run as real hardware: a chip full of small, configurable logic blocks that tools wire up to become your design. Here you'll follow real designs through the same open-source flow people use with real boards.
+
+## What an FPGA is made of
+
+The chip used here, a Lattice iCE40 HX1K, is a grid of 1280 **logic cells**. Each cell has:
+
+- A **4-input lookup table (LUT)**: 16 bits of memory plus a multiplexer. The four inputs choose one of the 16 bits. Load the bits with any truth table, and the LUT *is* that function: an AND, an XOR, a mux, anything with four inputs or fewer.
+- A **flip-flop**, so the cell can hold state.
+- **Carry logic**, a fast dedicated path to the next cell for adders and counters.
+
+Programmable **routing**, a mesh of wires and switches, connects the cells to each other and to the I/O pins.
+
+## From Verilog to a chip
+
+Four steps turn a design into a configured FPGA:
+
+1. **Synthesis** (Yosys, `synth_ice40`) turns the Verilog into a netlist of this chip's primitives: LUTs, flip-flops and carry cells.
+2. **Place and route** (nextpnr) chooses a cell for each primitive (placement), then picks wires to connect them (routing).
+3. **Timing analysis** (also nextpnr) adds up the delays along every path between flip-flops and reports the fastest clock the design can run at.
+4. A **bitstream** (IcePack) encodes every LUT's bits and every switch setting. Loading it into the chip, usually from a small flash memory at power-on, configures the hardware.
+
+## Placed and routed on a real chip
+
+The classic first FPGA design: blink an LED by using the top bit of a 24-bit counter driven by a 12 MHz board clock. Predict roughly how many logic cells it needs, then see what synthesis and place and route on a real HX1K report.
+
+<HdlRun design="verilog/fpga-blink" caption='Blink, placed and routed on an iCE40 HX1K' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+27 of the 1280 logic cells. The breakdown lists:
+
+- **24** used as "LUT4 and DFF": one per counter bit, a flip-flop with a LUT computing its next value, with the increment running along the dedicated carry path.
+- **1** used "to legalise carry chains": the chain needs a cell to start it.
+
+That's 25. The report's breakdown doesn't name the other 2, so don't read more into them than "packing needed two more". It uses 2 I/O pins (the clock and the LED) and 1 global clock buffer.
+
+Timing reports **200.24 MHz**, then **194.36 MHz**. The first figure is an estimate after placement, before the wires exist; the second is measured after routing, with the real wire delays. The final, routed figure is the one that counts. Both are far above the 12 MHz board clock, so the design passes easily, with about 16 times the speed to spare.
+
+</details>
+
+## A wider path is a slower clock
+
+Now a 32-bit accumulator: on every edge it adds an 8-bit input into a 32-bit total. The target is 100 MHz. Predict whether it's faster or slower than the blinker.
+
+<HdlRun design="verilog/fpga-acc32" caption='A 32-bit accumulator, placed and routed' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Slower: **158.20 MHz** after routing (the placement estimate was 155.59; routing improved it a little here). It still passes the 100 MHz target. It uses 34 logic cells, but 42 I/O pins (8 in, 32 out, plus clock and reset): wide ports are often what fills a small FPGA.
+
+The longer the carry chain the signal has to ripple through between two flip-flops, the longer the critical path and the slower the clock:
+
+| Design | Carry chain | Logic on the critical path | Final max frequency |
+|---|---|---|---|
+| Blink | 24 bits | 3.91 ns | 194.36 MHz |
+| Accumulator | 32 bits, plus an adder input | 4.89 ns | 158.20 MHz |
+
+Both use the dedicated carry logic, a short, fast path from each cell to the next. Without it, each carry would have to go through a LUT and the general routing, which is slower. That's why FPGAs have carry chains.
+
+</details>
+
+<KeyIdea>An FPGA is a grid of lookup tables, flip-flops and carry logic joined by programmable routing. Synthesis maps Verilog onto them, place and route fixes their positions and wires, and timing after routing tells you the fastest clock the design can really run at.</KeyIdea>
+
+## Try it
+
+A design is synthesised for the HX1K and routing reports a final maximum frequency of 85 MHz, but the board clock is 100 MHz. What does that mean, and name two things you could do.
+
+<details>
+<summary>Check your answer</summary>
+
+Some path between two flip-flops takes longer than 10 ns (one 100 MHz period), so the design would fail at 100 MHz: a value could arrive after the next edge. Options:
+
+- **Shorten the path:** pipeline it, adding a register in the middle so each half fits in a cycle, at the cost of a cycle of latency.
+- **Simplify the logic** on the critical path, or use the dedicated resources (carry chains, block RAM).
+- **Run at a slower clock,** for example 50 MHz from a clock divider or PLL.
+
+You'll see this as **timing closure** in the course on RTL to silicon.
+
+</details>

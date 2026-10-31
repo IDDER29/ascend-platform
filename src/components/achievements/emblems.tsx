@@ -127,6 +127,39 @@ export function CrestArt({ crest }: { crest: CrestId }) {
           <path d="M10 36h8M30 36h8" />
         </>
       );
+    // Digital design with Verilog: a module with its ports.
+    case "module":
+      return (
+        <>
+          <rect x="13" y="10" width="22" height="28" rx="2" />
+          <path d="M7 17h6M7 24h6M7 31h6M35 20h6M35 28h6" />
+        </>
+      );
+    // Verification: a shield with a check mark.
+    case "proof":
+      return (
+        <>
+          <path d="M24 8l13 5v10c0 8-6 14-13 17-7-3-13-9-13-17V13z" />
+          <path d="M18 24l4.5 4.5L31 20" />
+        </>
+      );
+    // From RTL to silicon: a silicon wafer cut into dies.
+    case "wafer":
+      return (
+        <>
+          <circle cx="24" cy="24" r="15" />
+          <path d="M14 19h20M12 24h24M14 29h20M19 13v22M24 9v30M29 13v22" />
+        </>
+      );
+    // A RISC-V core: a processor die marked with a V.
+    case "riscv":
+      return (
+        <>
+          <rect x="11" y="11" width="26" height="26" rx="3" />
+          <path d="M17 18l7 13 7-13" />
+          <path d="M17 6v5M24 6v5M31 6v5M17 37v5M24 37v5M31 37v5" />
+        </>
+      );
     // The C Language: a pointer (*) aiming into a box.
     case "pointer":
       return (

@@ -1,0 +1,329 @@
+---
+title: "valgrind and memory checking"
+level: level-06-c-tools
+slug: valgrind
+order: 8
+timeMin: 11
+learningOutcomes:
+- Run a program you already built under valgrind's memcheck, and read an invalid read or write report
+- Find where an uninitialised value came from with --track-origins=yes
+- Tell the four kinds of leak apart (definitely, indirectly, possibly lost, still reachable) and say which ones to fix
+- Write a suppression, and explain why a broad one can hide real bugs
+- Choose between valgrind and the sanitizers for a given bug, knowing what each one misses
+primer:
+- title: "Sanitizers: ASan and UBSan"
+  type: doc
+  meta: Reread · 3 min · the tool this lesson keeps comparing against.
+  essential: true
+- title: "Ownership: who frees what"
+  type: doc
+  meta: "The C Language · leaks are a broken ownership story."
+  essential: false
+knowledgeCheck:
+- question: Why can valgrind check a program you didn't rebuild, when ASan can't?
+  answer: "ASan works by adding checks to the machine code when the program is compiled. Valgrind instead runs the existing binary on a synthetic CPU and watches every memory access as it happens. Building with -g only adds the line numbers to its reports; without it you get addresses and function names."
+  jumpToId: memcheck-runs-the-program-you-already-built
+  jumpToLabel: Memcheck runs the program you already built
+- question: A leak report says "32 (16 direct, 16 indirect) bytes in 1 blocks are definitely lost". What happened?
+  answer: "A 16-byte block lost its last pointer (definitely lost), and it was the only thing pointing at another 16-byte block (indirectly lost). Freeing the first block properly, for example freeing a whole list from its head, fixes both."
+  jumpToId: four-kinds-of-leak
+  jumpToLabel: Four kinds of leak
+- question: The out-of-bounds read of a local array produced no "Invalid read" from valgrind. Why?
+  answer: "Memcheck tracks which bytes are allocated and initialised, and a stack frame is one region it considers valid. Reading scores[4] lands on other bytes of the same frame, so it isn't an invalid address; valgrind only noticed later that the value was uninitialised. ASan puts poisoned gaps around each local array, so it reports the overflow at the exact line."
+  jumpToId: valgrind-or-sanitizers
+  jumpToLabel: Valgrind or sanitizers?
+assignment:
+  instruction: "Take a C program you wrote earlier in this path (the hash map or the guessing game) and run it under valgrind --leak-check=full --track-origins=yes on a few inputs. Fix everything reported, then run it under callgrind and find the function where it spends most of its instructions."
+  resourceName: 'Valgrind User Manual: Memcheck'
+  resourceType: doc
+  resourceUrl: 'https://valgrind.org/docs/manual/mc-manual.html'
+additionalResources:
+- title: "Valgrind Quick Start Guide"
+  type: doc
+  meta: the essentials on one page
+  url: 'https://valgrind.org/docs/manual/quick-start.html'
+- title: "Valgrind User Manual: Callgrind"
+  type: doc
+  meta: call graphs and instruction counts
+  url: 'https://valgrind.org/docs/manual/cl-manual.html'
+whyThisMatters: "Valgrind checks a program as it is, without a special build, which is exactly what you need for a binary you can't rebuild easily or a bug that disappears when you add instrumentation. Knowing what it catches that the sanitizers don't, and the other way round, means you reach for the right tool first."
+---
+
+The sanitizers in the last lesson check memory by compiling extra code into your program. **Valgrind** works the other way round: it runs your existing program on a synthetic CPU and watches every load, store, allocation and free as it happens. Its default tool, **memcheck**, finds bad memory accesses, uses of uninitialised values and leaks, without recompiling anything.
+
+The sessions below are real valgrind 3.26 runs on x86-64 Linux. Each line starts with `==PID==`, the process id, which changes on every run. Build with `-g` so reports name source lines.
+
+## Memcheck runs the program you already built
+
+This loop writes and then reads one `int` past a 5-element array on the heap. Built normally, it runs without complaint:
+
+<CRun program="c-tools/valgrind-invalid" caption='One past the end, run normally' />
+
+Now the same binary under memcheck. Predict how many errors it reports, and on which lines.
+
+```
+$ valgrind --leak-check=full ./prog
+==641666== Memcheck, a memory error detector
+==641666== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
+==641666== Using Valgrind-3.26.0 and LibVEX; rerun with -h for copyright info
+==641666== Command: ./prog
+==641666== 
+==641666== Invalid write of size 4
+==641666==    at 0x40011DE: main (main.c:10)
+==641666==  Address 0x4aa0054 is 0 bytes after a block of size 20 alloc'd
+==641666==    at 0x4850858: malloc (vg_replace_malloc.c:447)
+==641666==    by 0x400119E: main (main.c:5)
+==641666== 
+==641666== Invalid read of size 4
+==641666==    at 0x400120E: main (main.c:14)
+==641666==  Address 0x4aa0054 is 0 bytes after a block of size 20 alloc'd
+==641666==    at 0x4850858: malloc (vg_replace_malloc.c:447)
+==641666==    by 0x400119E: main (main.c:5)
+==641666== 
+total = 150
+==641666== 
+==641666== HEAP SUMMARY:
+==641666==     in use at exit: 0 bytes in 0 blocks
+==641666==   total heap usage: 2 allocs, 2 frees, 4,116 bytes allocated
+==641666== 
+==641666== All heap blocks were freed -- no leaks are possible
+==641666== 
+==641666== For lists of detected and suppressed errors, rerun with: -s
+==641666== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)
+```
+
+<details>
+<summary>Check your answer</summary>
+
+Two: an **invalid write** of 4 bytes at `main.c:10` (`scores[i] = i * 10` with i = 5) and an **invalid read** at `main.c:14`. Each report says where the bad address is relative to a block, "0 bytes after a block of size 20", and where that block was allocated (`main.c:5`). Twenty bytes is 5 ints, so offset 20 is the first byte past the end.
+
+Unlike ASan, memcheck doesn't stop at the first error: the program finishes, prints `total = 150`, and memcheck counts 2 errors. The second malloc in "2 allocs" is `printf`'s output buffer, freed at exit.
+
+Without `-g` the same binary still works under valgrind; the frames just say `main (in /tmp/vgdemo/prog)` instead of `main (main.c:10)`. That's the point: no special build is needed.
+
+</details>
+
+## Uninitialised values
+
+Here `counts[3]` is never set, and the loop compares it anyway:
+
+<CRun program="c-tools/valgrind-uninit" caption='Reading a value nobody wrote' />
+
+```
+$ valgrind ./prog
+...
+==641676== Conditional jump or move depends on uninitialised value(s)
+==641676==    at 0x4001203: main (main.c:14)
+==641676== 
+best = 5
+...
+==641676== Use --track-origins=yes to see where uninitialised values come from
+==641676== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+```
+
+(The header and heap summary are trimmed here.) Memcheck doesn't complain when you *copy* an uninitialised value, only when it decides something: a branch, an address, or a system call argument. Line 14 is the `if (counts[i] > best)`. To find where the value came from, ask:
+
+```
+$ valgrind --track-origins=yes ./prog
+...
+==641679== Conditional jump or move depends on uninitialised value(s)
+==641679==    at 0x4001203: main (main.c:14)
+==641679==  Uninitialised value was created by a heap allocation
+==641679==    at 0x4850858: malloc (vg_replace_malloc.c:447)
+==641679==    by 0x400119E: main (main.c:5)
+```
+
+`--track-origins=yes` is slower, but it names the allocation the garbage came from. This is valgrind's strongest point over gcc's sanitizers: the same program built with `-fsanitize=address,undefined` prints `best = 5` and exits 0, because gcc has no checker for uninitialised reads (Clang's MemorySanitizer has one).
+
+## Four kinds of leak
+
+At exit, memcheck looks for every block still allocated, then searches memory for pointers to it. What it finds decides the kind:
+
+<CRun program="c-tools/valgrind-leaks" caption='Five allocations, none freed' />
+
+```
+$ valgrind --leak-check=full --show-leak-kinds=all ./prog
+...
+==641688== HEAP SUMMARY:
+==641688==     in use at exit: 144 bytes in 5 blocks
+==641688==   total heap usage: 5 allocs, 0 frees, 144 bytes allocated
+==641688== 
+==641688== 16 bytes in 1 blocks are indirectly lost in loss record 1 of 5
+==641688==    at 0x4850858: malloc (vg_replace_malloc.c:447)
+==641688==    by 0x40011C1: main (main.c:22)
+==641688== 
+==641688== 16 bytes in 1 blocks are definitely lost in loss record 2 of 5
+==641688==    at 0x4850858: malloc (vg_replace_malloc.c:447)
+==641688==    by 0x4001189: main (main.c:16)
+==641688== 
+==641688== 32 bytes in 1 blocks are possibly lost in loss record 3 of 5
+==641688==    at 0x4850858: malloc (vg_replace_malloc.c:447)
+==641688==    by 0x40011FC: main (main.c:27)
+==641688== 
+==641688== 32 (16 direct, 16 indirect) bytes in 1 blocks are definitely lost in loss record 4 of 5
+==641688==    at 0x4850858: malloc (vg_replace_malloc.c:447)
+==641688==    by 0x40011A9: main (main.c:20)
+==641688== 
+==641688== 64 bytes in 1 blocks are still reachable in loss record 5 of 5
+==641688==    at 0x4850858: malloc (vg_replace_malloc.c:447)
+==641688==    by 0x400115E: main (main.c:13)
+==641688== 
+==641688== LEAK SUMMARY:
+==641688==    definitely lost: 32 bytes in 2 blocks
+==641688==    indirectly lost: 16 bytes in 1 blocks
+==641688==      possibly lost: 32 bytes in 1 blocks
+==641688==    still reachable: 64 bytes in 1 blocks
+==641688==         suppressed: 0 bytes in 0 blocks
+```
+
+| Kind | Meaning | Here |
+|---|---|---|
+| **definitely lost** | No pointer to the block anywhere. A real leak. | `name` (line 16), set to NULL; the list head (line 20) |
+| **indirectly lost** | Only reachable from a lost block. Fixed by freeing that block properly. | the list's second node (line 22) |
+| **possibly lost** | Only a pointer into its middle survives. Often a bug, sometimes deliberate pointer tricks. | `buffer`, of which only `buffer + 8` is kept (line 27) |
+| **still reachable** | A pointer still exists at exit, typically a global. Not freed, but not lost. | `config` (line 13) |
+
+<KeyIdea>Fix definitely and indirectly lost leaks; look hard at possibly lost; still reachable memory at exit is usually harmless, as long as it doesn't grow while the program runs.</KeyIdea>
+
+## Suppressing what you can't fix
+
+Sometimes a report comes from code you can't change, such as a library that keeps a cache until exit. Valgrind can print a **suppression** for any report:
+
+```
+$ valgrind --leak-check=full --gen-suppressions=all ./prog
+...
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   fun:main
+}
+```
+
+Save it in a file with a name of your own, here `known.supp` with `known-leak-in-main`, and pass it back in:
+
+```
+$ valgrind --leak-check=full --suppressions=known.supp ./prog
+...
+==641706== LEAK SUMMARY:
+==641706==    definitely lost: 0 bytes in 0 blocks
+==641706==    indirectly lost: 16 bytes in 1 blocks
+==641706==      possibly lost: 32 bytes in 1 blocks
+==641706==    still reachable: 64 bytes in 1 blocks
+==641706==         suppressed: 32 bytes in 2 blocks
+```
+
+The suppression was generated from the `name` leak, but it hid **both** definite leaks: a suppression matches any report with the same call stack, and both blocks came from `malloc` called by `main`. A suppression this broad hides new bugs too. Real suppression files name the library's own functions in the `fun:` lines, so they match only that library's allocations.
+
+## Valgrind or sanitizers?
+
+Here's a local array read one past its end. Predict what memcheck says.
+
+<CRun program="c-tools/valgrind-stack" caption='scores[4] on the stack' />
+
+```
+$ valgrind --track-origins=yes ./prog
+...
+==641700== Use of uninitialised value of size 8
+==641700==    at 0x48DF062: _itoa_word (_fitoa_word.c:38)
+==641700==    by 0x48EA61C: __printf_buffer (vfprintf-process-arg.c:155)
+==641700==    by 0x48EC767: __vfprintf_internal (vfprintf-internal.c:1548)
+==641700==    by 0x48E0132: printf (printf.c:33)
+==641700==    by 0x40011E8: main (main.c:10)
+==641700==  Uninitialised value was created by a stack allocation
+==641700==    at 0x4001169: main (main.c:3)
+...
+==641697== ERROR SUMMARY: 8 errors from 4 contexts (suppressed: 0 from 0)
+```
+
+The same program built with `-fsanitize=address`:
+
+```
+$ ./prog-asan
+=================================================================
+==641781==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x752174cf0030 at pc 0x5c077a43c42f bp 0x7ffc72f77860 sp 0x7ffc72f77850
+READ of size 4 at 0x752174cf0030 thread T0
+    #0 0x5c077a43c42e in main /tmp/vgdemo/stack/main.c:8
+```
+
+<details>
+<summary>Check your answer</summary>
+
+There's no "Invalid read". Memcheck knows which *blocks* are allocated, and the whole stack frame is valid memory to it, so `scores[4]` reading the next bytes of the same frame isn't an invalid address. It only noticed, deep inside `printf`, that the total depended on an uninitialised value, and `--track-origins` traced that back to `main`'s stack frame. ASan surrounds each local array with poisoned bytes, so it stops at `main.c:8`, the bad read itself. (The ERROR SUMMARY line comes from the run without `--track-origins`; the count is the same.)
+
+</details>
+
+| | memcheck | ASan + UBSan |
+|---|---|---|
+| Rebuild needed | No (`-g` for line numbers) | Yes, with `-fsanitize=...` |
+| Speed | Much slower: a nested loop that took 0.06 s natively took 1.26 s under memcheck here | About 2× (see the last lesson) |
+| Heap out of bounds | Yes | Yes |
+| Stack and global array bounds | No | Yes |
+| Uninitialised reads | Yes, with origins | No (in gcc) |
+| Undefined behaviour (overflow, shifts) | No | Yes (UBSan) |
+| Leaks | Yes, four kinds | Yes (LeakSanitizer) |
+
+In practice: run your tests under the sanitizers on every build, and reach for valgrind when you can't rebuild, when you suspect uninitialised memory, or when you want a second opinion.
+
+## Other tools: callgrind and massif
+
+Valgrind is a framework; memcheck is just its default tool. **Callgrind** counts the instructions each function executes. Here it runs this program, `hot.c`, built as `prog`:
+
+```c
+#include <stdio.h>
+
+static long slow_sum(int n) {
+    long s = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            s += i ^ j;
+        }
+    }
+    return s;
+}
+
+static long fast_sum(int n) {
+    long s = 0;
+    for (int i = 0; i < n; i++) {
+        s += i;
+    }
+    return s;
+}
+
+int main(void) {
+    printf("%ld %ld\n", slow_sum(1000), fast_sum(1000));
+    return 0;
+}
+```
+
+```
+$ valgrind --tool=callgrind --callgrind-out-file=callgrind.out ./prog
+...
+==641272== I   refs:      8,156,685
+$ callgrind_annotate callgrind.out
+...
+8,156,685 (100.0%)  PROGRAM TOTALS
+...
+8,009,013 (98.19%)  hot.c:slow_sum [/tmp/vgdemo/prog]
+...
+8,009,013 (98.19%)  => hot.c:slow_sum (1x)
+    7,013 ( 0.09%)  => hot.c:fast_sum (1x)
+```
+
+`slow_sum` runs a nested loop (a million iterations) and `fast_sum` a single one. 98% of all instructions are in `slow_sum`, which is where any optimisation effort belongs. Instruction counts are exact and repeatable, unlike timings. **Massif** (`--tool=massif`, then `ms_print`) does the same for heap memory over time, showing which allocation sites hold the most memory at the peak.
+
+## Try it
+
+A program reads a config file, and valgrind reports `Invalid read of size 1 ... Address 0x... is 0 bytes after a block of size 9 alloc'd`, at a line that calls `strlen(value)`. The block was allocated with `malloc(strlen(text))` and filled with `memcpy(value, text, strlen(text))`. What's the bug?
+
+<details>
+<summary>Check your answer</summary>
+
+The copy has no room for the terminating `'\0'`: `malloc(strlen(text))` allocates one byte too few, and `memcpy` copies only the characters. `strlen(value)` then walks past the 9 bytes looking for a zero, the first byte "0 bytes after" the block. Allocate `strlen(text) + 1` bytes and copy the terminator too (or use `strdup`).
+
+</details>
+
+## Done when
+
+You can run memcheck on an unmodified binary, read an invalid-access report, trace an uninitialised value to its origin, name the four leak kinds, write a narrow suppression, and say which tool catches which bug.

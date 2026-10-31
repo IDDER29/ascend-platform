@@ -1,0 +1,134 @@
+---
+title: "Describing hardware in Verilog"
+level: level-15-verilog
+slug: verilog-basics
+order: 1
+timeMin: 10
+learningOutcomes:
+- Write a Verilog module with input and output ports, internal wires and continuous assignments
+- Explain why the order of assign statements doesn't matter, because each one is a piece of hardware that always exists
+- Tell a wire from a reg, and say what each one is for
+- Write a simple testbench that drives inputs, waits, and prints or dumps the outputs
+primer:
+- title: "Logic gates, from switches to circuits"
+  type: doc
+  meta: "Foundations · the AND, OR and NOT gates this lesson writes as code."
+  essential: true
+- title: "Project: Logic gate workbench"
+  type: doc
+  meta: "Foundations · GateLab's gate expressions, which Verilog's assign generalises."
+  essential: false
+knowledgeCheck:
+- question: In the gates module, assign y = t | c comes before assign t = a & b. Why does the circuit still work?
+  answer: "Each assign describes a piece of hardware that exists all the time, wired to its inputs. There is no first or second: whenever a, b or c changes, t and y settle to their new values. The order of the lines in the file has no effect."
+  jumpToId: hardware-not-steps
+  jumpToLabel: Hardware, not steps
+- question: What is a testbench, and why isn't it hardware?
+  answer: "A testbench is a Verilog module with no ports that instantiates the design, drives its inputs over simulated time (with delays like #10) and checks or prints the outputs. It only exists in simulation: delays and $display have no meaning on a chip, so it is never synthesised."
+  jumpToId: testing-it-with-a-testbench
+  jumpToLabel: Testing it with a testbench
+assignment:
+  instruction: "Write a module majority(input a, b, c, output y) whose output is 1 when at least two inputs are 1, using one assign. Write a testbench that prints its whole truth table, and run it with Icarus Verilog (iverilog -g2012 -o sim majority.v tb.v && vvp sim) or on HDLBits. Then solve HDLBits' first ten Verilog problems."
+  resourceName: 'HDLBits: Verilog practice'
+  resourceType: site
+  resourceUrl: 'https://hdlbits.01xz.net/wiki/Main_Page'
+additionalResources:
+- title: "Icarus Verilog documentation"
+  type: doc
+  meta: install, iverilog and vvp
+  url: 'https://steveicarus.github.io/iverilog/'
+- title: "Verilog (Wikipedia)"
+  type: doc
+  meta: history and the main constructs
+  url: 'https://en.wikipedia.org/wiki/Verilog'
+whyThisMatters: "Every modern chip, from a phone's processor to a GPU, is designed as text in a hardware description language and then turned into transistors by tools. Learning to read and write Verilog is the step from understanding a CPU to building one."
+---
+
+In Foundations you built gates, adders and a CPU in the Gate Lab, writing lines like `SUM = A XOR B`. Verilog is the same idea at full strength: a language for describing hardware as text, which a simulator can run and a synthesis tool can turn into real gates. The design for every chip you use started out like this.
+
+The big change from C: **Verilog code is not a list of steps.** It describes pieces of hardware that all exist, and all work, at the same time.
+
+## A module
+
+The unit of design is a **module**: a block of hardware with named ports. This one computes `y = (a AND b) OR c`:
+
+```verilog
+module gates(input a, input b, input c, output y);
+  wire t;
+  assign y = t | c;
+  assign t = a & b;
+endmodule
+```
+
+- `input` and `output` are the ports, the wires that connect the module to the outside.
+- `wire t;` is an internal wire, like a labelled connection on a breadboard.
+- `assign` is a **continuous assignment**: it connects a wire to a piece of logic, permanently. `&` is AND, `|` OR, `^` XOR and `~` NOT, bit by bit, as in C.
+
+## Hardware, not steps
+
+Look at the order: `y` uses `t` before the line that sets `t`. In C that would read an unset variable. In Verilog it's fine, because the two `assign`s are two gates wired together, not two steps. Whenever `a`, `b` or `c` changes, `t` and `y` settle to their new values, whatever order the lines are written in.
+
+This is the most important habit to unlearn from C. A Verilog file is a **circuit diagram written as text**. Everything in it runs in parallel, all the time.
+
+## Testing it with a testbench
+
+A **testbench** is a second module, with no ports, that creates the design (an **instance**), drives its inputs, and watches its outputs. It only ever runs in a simulator: `#1` means "wait one time unit", and `$display` prints like `printf`. Neither means anything on a chip.
+
+Here is a testbench that tries all eight inputs, run by Icarus Verilog, a free Verilog simulator. Predict the truth table first.
+
+<HdlRun design="verilog/basics-gates" caption='The gates module and its testbench' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`y` is 1 whenever `c` is 1, and also when `a` and `b` are both 1: rows 001, 011, 101, 110 and 111. That's the truth table of `(a & b) | c`, even though the `assign`s are written "backwards".
+
+Notice how the testbench works:
+
+- `reg a, b, c;` declares the inputs it drives.
+- `gates dut(.a(a), ...)` makes an instance named `dut` ("device under test"), connecting each port by name.
+- `{a, b, c} = i;` sets all three from the bits of a counter: `{...}` **concatenates** signals into one bus.
+- `#1` waits one time unit for the outputs to settle before printing.
+
+</details>
+
+## wire and reg
+
+Two kinds of signal appear above:
+
+- A **wire** is a connection. It has no memory: its value is whatever drives it, here an `assign`.
+- A **reg** is a variable that holds the last value it was given inside a procedural block (`initial` or `always`). In the testbench, `a`, `b` and `c` are `reg`s because the `initial` block sets them.
+
+Despite the name, a `reg` is not always a hardware register. You'll see in the next lessons that a `reg` assigned in a combinational block becomes plain gates, and only one assigned on a clock edge becomes flip-flops. In SystemVerilog, `logic` replaces both names.
+
+## Watching it change
+
+Simulators can also record every change of every signal, as a **waveform**. This testbench flips the inputs every 10 time units and dumps the signals with `$dumpfile` and `$dumpvars`. Read the waveform: when does `y` go high, and why?
+
+<HdlRun design="verilog/basics-waves" caption='The same circuit, as a waveform' show="tb.v" />
+
+<details>
+<summary>Check your answer</summary>
+
+`y` goes high at time 20, when `b` joins `a` (both 1, so `a & b` is 1). It drops at 30, when `a` goes low, and comes back at 40 when `c` goes high on its own. At 50 `c` and `b` fall together, and `y` returns to 0. Each change of `y` happens in the same time step as the input change that caused it: an ideal simulation has no gate delays unless you write them in.
+
+</details>
+
+<KeyIdea>A Verilog module is a circuit described as text: every assign is hardware that always exists and works in parallel. A testbench, which never becomes hardware, drives it in simulation.</KeyIdea>
+
+## Try it
+
+Change `gates` so that `y = (a OR b) AND NOT c`, using two `assign`s and one internal wire. Write the lines, and say what `y` is for a = 1, b = 0, c = 1.
+
+<details>
+<summary>Check your answer</summary>
+
+```verilog
+wire t;
+assign t = a | b;
+assign y = t & ~c;
+```
+
+For a = 1, b = 0, c = 1: `t = 1`, `~c = 0`, so `y = 0`. The two lines can again be in either order.
+
+</details>

@@ -51,6 +51,9 @@ const PROJECT_BADGE: Record<string, string> = {
   "level-09-memory-allocator/project-malloc": "allocator",
   "level-11-pipelining/project-pipeline-sim": "pipe-sim",
   "level-13-caches-memory/project-cache-sim": "cache-sim",
+  "level-06-c-tools/project-debug-a-program": "bug-hunter",
+  "level-15-verilog/project-verilog-alu": "rtl-alu",
+  "level-19-riscv-core/project-riscv-core": "core-designer",
   "/projects/shellforge": "ship-it",
 };
 

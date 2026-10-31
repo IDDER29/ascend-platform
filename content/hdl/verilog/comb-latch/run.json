@@ -1,0 +1,17 @@
+{
+  "id": "verilog/comb-latch",
+  "sourceHash": "66059d01718fc6a8",
+  "tool": "synth",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "yosys -p \"read_verilog -sv hold.v; synth -top pass; stat\""
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "=== pass ===\n\n   Number of wires:                  3\n   Number of wire bits:              9\n   Number of public wires:           3\n   Number of public wire bits:       9\n   Number of ports:                  3\n   Number of port bits:              9\n   Number of memories:               0\n   Number of memory bits:            0\n   Number of processes:              0\n   Number of cells:                  4\n     $_DLATCH_P_                     4",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

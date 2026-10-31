@@ -1,0 +1,120 @@
+---
+title: "Assertions and formal checking"
+level: level-16-verification
+slug: assertions-and-formal
+order: 3
+timeMin: 12
+learningOutcomes:
+- Write immediate assertions that state a rule a design must always follow, and read an assertion failure in simulation
+- Use a formal tool to prove an assertion for every possible input, and read a counterexample when it fails
+- Explain the difference between simulation, which checks the inputs you try, and formal verification, which checks them all
+- Explain bounded and unbounded proofs, and what tools like SymbiYosys add
+primer:
+- title: "Coverage: how much have you tested?"
+  type: doc
+  meta: Reread · 2 min · why tests only speak for the cases they reach.
+  essential: true
+- title: "Testbenches"
+  type: doc
+  meta: Reread · 2 min · the saturating adder used again here.
+  essential: true
+knowledgeCheck:
+- question: The formal check of the buggy adder reported a = 6, b = 10, y = 0. What does that counterexample tell you?
+  answer: "It's one concrete input for which the assertion y >= a and y >= b is false: 6 + 10 = 16, which the 4-bit sum wraps to 0, so y is 0, smaller than both inputs. The solver found it by reasoning about all 256 inputs at once, without running them, and it's exactly the kind of case to add as a directed test."
+  jumpToId: a-proof-that-fails
+  jumpToLabel: A proof that fails
+- question: Why is a SAT solver's "SUCCESS" stronger than 256 passing simulation tests for this adder, and what is the catch for sequential designs?
+  answer: "For this combinational block both cover every input, but the proof doesn't depend on someone choosing or listing the inputs, and the same method scales to 2^64 inputs where simulation can't. The catch is time: for a design with state, a bounded proof only checks the first N clock cycles from the reset state, and proving it for every cycle needs induction (an unbounded proof)."
+  jumpToId: bounded-and-unbounded-proofs
+  jumpToLabel: Bounded and unbounded proofs
+assignment:
+  instruction: "Write a 4-bit saturating subtractor (a - b, but never below 0) with assertions that y is never more than a, and that y equals a - b whenever b is not more than a. Prove it with Yosys (yosys -p \"read_verilog -formal -sv sat_sub.sv; prep -top sat_sub; chformal -lower; sat -prove-asserts -show-inputs\"). Then break it on purpose and read the counterexample."
+  resourceName: 'ZipCPU: An introduction to formal verification'
+  resourceType: doc
+  resourceUrl: 'https://zipcpu.com/blog/2017/10/19/formal-intro.html'
+additionalResources:
+- title: "SymbiYosys documentation"
+  type: doc
+  meta: the open-source formal flow built on Yosys
+  url: 'https://yosyshq.readthedocs.io/projects/sby/en/latest/'
+- title: "Formal verification (Wikipedia)"
+  type: doc
+  meta: model checking, theorem proving and where each is used
+  url: 'https://en.wikipedia.org/wiki/Formal_verification'
+whyThisMatters: "Formal tools can show a design is right for every input, which no amount of simulation can, and they hand you the exact input that breaks it when it isn't. Processor and protocol teams use them on the parts where a missed corner case costs the most, such as arithmetic, caches and bus protocols."
+---
+
+Testbenches and coverage check the cases you run. This lesson is about stating what must *always* be true, then having a tool check it for every case at once.
+
+## Assertions say what must be true
+
+An **assertion** states a rule that should always hold, inside the design or the testbench. A saturating adder has an obvious one: adding never makes the result smaller than either input. In SystemVerilog:
+
+```verilog
+assert (y >= a && y >= b) else $error("y = %0d is smaller than an input", y);
+```
+
+If the condition is false when the line runs, the simulator reports an error with the time and place. Here it is in a testbench for the buggy adder from the Testbenches lesson, which only tries two input pairs:
+
+<HdlRun design="verification/assert-sim" caption='An assertion in simulation' show="tb.sv" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+3 + 4 passes. 9 + 9 fails: the assertion fires with `y = 2 is smaller than an input (a = 9, b = 9)`, at time 2 in scope `tb`. 9 + 9 = 18 wraps to 2 in the 4-bit sum. The simulation carries on and finishes, because `$error` reports without stopping.
+
+An assertion only fires for the inputs that reach it, so a simulation still needs the right inputs. Formal tools remove that limit.
+
+</details>
+
+## A proof for every input
+
+**Formal verification** doesn't run inputs. It turns the design and its assertions into a logic formula and asks a solver whether *any* input makes an assertion false. Here, Yosys converts the circuit and the assertions into a Boolean satisfiability (SAT) problem, and a SAT solver searches all 256 input pairs at once by reasoning, not by trying them.
+
+This is the fixed adder, with two assertions written inside the design: never smaller than an input, and exactly the saturated sum.
+
+<HdlRun design="verification/formal-good" caption='Proving the fixed adder' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`SAT proof finished - no model found: SUCCESS!` The solver looked for an input, a **model**, that violates an assertion, and found none: both rules hold for every one of the 256 input pairs. The problem had 234 variables and 640 clauses, and it took a fraction of a second. For a 32-bit adder the formula is bigger, but nothing like 2<sup>64</sup> tests.
+
+</details>
+
+## A proof that fails
+
+The same assertion on the buggy adder (the 4-bit sum):
+
+<HdlRun design="verification/formal-bug" caption='Proving the buggy adder' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`model found: FAIL!`, with a **counterexample**: a = 6, b = 10, y = 0. 6 + 10 = 16, which a 4-bit sum wraps to 0, so y is smaller than both inputs.
+
+Nobody chose that input: the solver found it. A counterexample is the most useful output a verification tool can give, because it's a concrete case you can simulate, debug and keep as a regression test.
+
+</details>
+
+<KeyIdea>Simulation checks the inputs you run; a formal proof checks them all. When the proof fails, the counterexample is a real input that breaks the rule, ready to debug.</KeyIdea>
+
+## Bounded and unbounded proofs
+
+The adder has no state, so one check covers everything. A design with registers, like a counter, changes over time. Write down what a proof has to cover for such a design, and why it is harder.
+
+<details>
+<summary>Check your answer</summary>
+
+For a sequential design, an assertion must hold in every reachable state, after any number of clock cycles.
+
+- A **bounded** proof (bounded model checking) starts from the reset state and checks every possible input sequence for the first N cycles. If it fails, it gives a counterexample trace. If it passes, the rule holds for N cycles, which is not the same as forever.
+- An **unbounded** proof uses **induction**: it shows the rule holds after reset, and that if it holds for k cycles in a row, it holds in the next one. That covers every cycle. Induction sometimes needs extra assertions to rule out unreachable states the solver would otherwise consider.
+
+SymbiYosys (`sby`) wraps Yosys and several solvers into this flow: bounded checks, induction proofs, cover statements that show a state is reachable, and counterexample traces as waveforms. Commercial tools such as Cadence Jasper do the same at a larger scale.
+
+</details>
+
+## Done when
+
+You can write an assertion and read its simulation failure, say what SUCCESS and FAIL mean in a SAT proof, explain the 6 + 10 counterexample, and explain bounded and unbounded proofs.

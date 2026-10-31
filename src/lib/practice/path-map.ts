@@ -19,7 +19,11 @@ const LEVEL_TO_PATH: Record<string, string> = {
   "level-12-advanced-execution": "computer-architect",
   "level-13-caches-memory": "computer-architect",
   "level-14-multicore-gpus": "computer-architect",
+  "level-15-verilog": "computer-architect",
+  "level-16-verification": "computer-architect",
+  "level-17-rtl-to-silicon": "computer-architect",
   "level-18-compilers-theory": "computer-architect",
+  "level-19-riscv-core": "computer-architect",
 };
 
 export const PRACTICE_PATH_TITLES: Record<string, string> = {

@@ -1,0 +1,18 @@
+{
+  "id": "verilog-project/alu-bug",
+  "sourceHash": "6cdcea7f317c41ca",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp alu.v tb_alu.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "FAIL op=5 a=0 b=128: y=1 carry=0, want y=0 carry=0\nFAIL op=5 a=0 b=129: y=1 carry=0, want y=0 carry=0\nFAIL op=5 a=0 b=130: y=1 carry=0, want y=0 carry=0\nFAIL op=5 a=0 b=131: y=1 carry=0, want y=0 carry=0\nFAIL op=5 a=0 b=132: y=1 carry=0, want y=0 carry=0\n524288 checks, 32768 errors\ntb_alu.v:38: $finish called at 524288 (1s)\n",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

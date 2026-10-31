@@ -1,0 +1,179 @@
+---
+title: "Project: Debug a broken program"
+level: level-06-c-tools
+slug: project-debug-a-program
+order: 11
+timeMin: 50
+learningOutcomes:
+- Debug a real C program with gdb, AddressSanitizer and valgrind, choosing the tool that fits each symptom
+- Find a crash from a backtrace, a heap overflow from a sanitizer report, an uninitialised read and a leak from valgrind
+- Explain why a memory bug can produce a plausible wrong answer instead of a crash
+- Fix every bug for every input, and prove the fix with a clean sanitizer run and a clean valgrind run
+primer:
+- title: "gdb: breakpoints, stepping and backtraces"
+  type: doc
+  meta: Reread · 3 min · backtraces and printing variables.
+  essential: true
+- title: "Sanitizers: ASan and UBSan"
+  type: doc
+  meta: Reread · 3 min · reading an ASan report.
+  essential: true
+- title: "valgrind and memory checking"
+  type: doc
+  meta: Reread · 3 min · memcheck, origins and leaks.
+  essential: true
+knowledgeCheck:
+- question: "The plain build printed \"largest: nuts (301)\" for an input that said nuts,300. How can a memory bug produce a wrong number instead of a crash?"
+  answer: "realloc was given a byte count of 2 instead of room for 2 items, so the program wrote item data past the end of a 2-byte block, into heap memory belonging to something else (the allocator's bookkeeping and the next blocks). Nothing checks those writes, so later reads find altered bytes and compute with them. The result is plausible and wrong, which is worse than a crash."
+  jumpToId: part-1-it-looks-fine
+  jumpToLabel: "Part 1: It looks fine"
+- question: Why did valgrind find the uninitialised read when ASan didn't?
+  answer: "ASan finds bad addresses: out of bounds, freed or leaked memory. It doesn't track whether a value was ever written. valgrind's memcheck tracks definedness for every bit, so it reports a branch that depends on a value nobody set, and --track-origins says where that value came from. (MemorySanitizer does this too, but only clang has it.)"
+  jumpToId: part-4-the-empty-file
+  jumpToLabel: "Part 4: The empty file"
+assignment:
+  instruction: "Take a C program of your own (the hash map or the thread pool from earlier courses will do) and plant two bugs: an off-by-one write and a missing free. Hand it to someone else, or come back a day later, and find both with the tools only, noting which tool caught each and what its first line said. Then write down which bug each tool can't see."
+  resourceName: 'Debugging with GDB (manual)'
+  resourceType: doc
+  resourceUrl: 'https://sourceware.org/gdb/current/onlinedocs/gdb.html/'
+additionalResources:
+- title: "Valgrind Quick Start Guide"
+  type: doc
+  meta: memcheck in five minutes
+  url: 'https://valgrind.org/docs/manual/quick-start.html'
+whyThisMatters: "Real bugs don't announce themselves; they show up as a crash on one input, a wrong number on another and nothing at all on a third. Knowing which tool to reach for, and reading its first report carefully, is most of what makes someone fast at debugging C."
+---
+
+`inventory` reads lines like `bolts,120` and reports how many items there are, the total quantity and the largest item. It compiles without a single warning. It also has four bugs. In this project you find them with the tools from this course, one tool per symptom, then fix them all.
+
+## Part 1: It looks fine
+
+Here's the program with three items. Read the input and work out the right answer first, then run it.
+
+<CRun program="c-tools/debug-plain" caption='inventory, with three items' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It should print `3 items, 495 in total` and `largest: nuts (300)`. It prints **496** and **301**. No crash, no message, just a wrong number that looks believable. Something wrote where it shouldn't have.
+
+A test that only checked "did it run?" would pass. That's why the next step isn't staring at the code, but running a tool that watches memory.
+
+</details>
+
+## Part 2: The crash
+
+A line without a comma, `nuts 300`, makes it crash. The output says only "Segmentation fault", so ask gdb where. This is a real session on the same program, built with `-g`:
+
+```
+$ gdb -q ./inv
+(gdb) run < nocomma.txt
+Program received signal SIGSEGV, Segmentation fault.
+0x000055555555535f in main () at main.c:32
+32	        *comma = '\0';
+(gdb) bt
+#0  0x000055555555535f in main () at main.c:32
+(gdb) print comma
+$1 = 0x0
+```
+
+<CRun program="c-tools/debug-nocomma" caption='The same program, given a line with no comma' show="main.c" />
+
+What went wrong, and what should the program do with such a line?
+
+<details>
+<summary>Check your answer</summary>
+
+`strchr` returns `NULL` when there's no comma, and line 32 writes through that null pointer. The backtrace pins it to one line, and `print comma` shows the 0. The fix is to check: skip the line with a message on `stderr` (or reject the whole file), but never dereference the result of `strchr` unchecked.
+
+</details>
+
+## Part 3: Watching memory
+
+Back to the wrong number. The same program, with the same three items, built with AddressSanitizer:
+
+<CRun program="c-tools/debug-asan" caption='inventory under AddressSanitizer' show="main.c" predict />
+
+Then valgrind, on a build with no instrumentation at all (first lines of a real run):
+
+```
+$ valgrind --leak-check=full ./inv < good.txt
+==641601== Invalid write of size 8
+==641601==    at 0x40012C2: add (main.c:22)
+==641601==    by 0x400138F: main (main.c:33)
+==641601==  Address 0x4aa1080 is 0 bytes inside a block of size 2 alloc'd
+==641601==    at 0x485807F: realloc (vg_replace_malloc.c:1804)
+==641601==    by 0x4001297: add (main.c:20)
+==641601==    by 0x400138F: main (main.c:33)
+...
+valgrind: m_mallocfree.c:304 (get_bszB_as_is): Assertion 'bszB_lo == bszB_hi' failed.
+valgrind: Heap block lo/hi size mismatch: lo = 80, hi = 75.
+```
+
+Both point at the same line. What's the bug, and why does valgrind itself give up at the end?
+
+<details>
+<summary>Check your answer</summary>
+
+Line 20 is `realloc(l->items, l->capacity)`. It asks for `capacity` **bytes**, 2 then 4, when it needs room for `capacity` **items** of 16 bytes each. Every item written goes past the end of a tiny block: ASan stops at the first such write ("heap-buffer-overflow ... 0 bytes after 2-byte region"), and valgrind reports "Invalid write of size 8 ... inside a block of size 2". The fix is `realloc(l->items, l->capacity * sizeof *l->items)`, and checking that `realloc` didn't return `NULL`.
+
+valgrind keeps running after an error, so it saw more invalid writes, until they overwrote the bookkeeping of its own heap and its internal check failed. Its message says what to do: fix the first invalid write, and the rest go away. Always fix the first report first: later ones are often its echoes.
+
+</details>
+
+## Part 4: The empty file
+
+With the overflow fixed, an empty input file looks fine too: `0 items, 0 in total`. valgrind disagrees:
+
+```
+$ valgrind --track-origins=yes ./inv < empty.txt
+==641600== Conditional jump or move depends on uninitialised value(s)
+==641600==    at 0x400147F: main (main.c:45)
+==641600==  Uninitialised value was created by a stack allocation
+==641600==    at 0x4001304: main (main.c:27)
+0 items, 0 in total
+```
+
+Find line 45 in the code above. Why is it a bug when the output is right?
+
+<details>
+<summary>Check your answer</summary>
+
+`best` is only set inside the loop, which never runs for an empty file, so `if (best < l.count)` reads a variable nobody wrote. That's undefined behaviour. Here the garbage happened to make the test false; on another day or build it could be true, and the program would print `l.items[best]` from an empty list. `--track-origins=yes` traced it back to the stack allocation at line 27, the start of `main` where `best` lives. The fix: start `best` at 0, and only print the largest item when `l.count > 0`.
+
+ASan didn't report this one: it tracks bad addresses, not values that were never set. Each tool sees a different class of bug.
+
+</details>
+
+## Part 5: The leak, and the fix
+
+After the first fix, valgrind's leak check reports, for the three-item input:
+
+```
+==641607== 19 bytes in 3 blocks are definitely lost in loss record 1 of 1
+==641607==    at 0x4850858: malloc (vg_replace_malloc.c:447)
+==641607==    by 0x493796E: strdup (strdup.c:42)
+==641607==    by 0x40012C8: add (main.c:22)
+==641607==    by 0x4001396: main (main.c:33)
+```
+
+Why 19 bytes? Then compare your fixes with this version, run under both sanitizers on an input with a bad line, and on an empty one:
+
+<CRun program="c-tools/debug-fixed" caption='The fixed program, with a bad line in its input' predict />
+
+<CRun program="c-tools/debug-fixed-empty" caption='The fixed program, with an empty input' show="main.c" />
+
+<details>
+<summary>Check your answer</summary>
+
+The names are copied with `strdup`, which allocates "bolts", "nuts" and "washers" plus their terminating zeros: 6 + 5 + 8 = 19 bytes in 3 blocks, and the program only freed the array. `free_list` now frees each name, then the array.
+
+The fixed version handles all four: it skips `washers 75` with a message on `stderr` (line 3: no comma), sizes `realloc` in items and checks it, starts `best` at 0 and prints the largest item only when there is one, and frees everything. Both sanitizers stay silent for both inputs, and the total is right: 120 + 300 + 90 = 510. A valgrind run of the same code on the same input reports `ERROR SUMMARY: 0 errors` and "All heap blocks were freed".
+
+</details>
+
+<KeyIdea>Match the tool to the symptom: gdb for where it crashed, ASan for bad addresses, valgrind for uninitialised values and leaks without rebuilding. Fix the first report first, then prove the fix on the inputs that broke it.</KeyIdea>
+
+## Done when
+
+You've found all four bugs with the tools, explained the wrong-but-plausible 301, the null `comma`, the uninitialised `best` and the 19 lost bytes, and checked the fixed program's clean runs. Then do the assignment: plant and hunt bugs in your own code.

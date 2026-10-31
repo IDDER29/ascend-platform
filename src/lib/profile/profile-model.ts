@@ -30,7 +30,11 @@ const LEVEL_SKILLS: Record<LevelId, string> = {
   "level-12-advanced-execution": "Explains superscalar, out-of-order execution, renaming and speculation, and schedules code for them",
   "level-13-caches-memory": "Predicts cache hits and misses, and explains the hierarchy from L1 to DRAM",
   "level-14-multicore-gpus": "Explains coherence, memory ordering, SIMD and GPUs, and what work suits each",
+  "level-15-verilog": "Describes combinational and sequential hardware in Verilog and simulates it",
+  "level-16-verification": "Writes self-checking testbenches, measures coverage and proves properties formally",
+  "level-17-rtl-to-silicon": "Explains synthesis, timing closure and place and route, from Verilog to a placed design",
   "level-18-compilers-theory": "Explains how a compiler parses, optimises and allocates registers, and what no program can compute",
+  "level-19-riscv-core": "Designs, simulates and verifies a small RISC-V processor that runs compiled programs",
 };
 
 export type ProfileViewer = "owner" | "visitor";

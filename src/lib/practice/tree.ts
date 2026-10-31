@@ -76,7 +76,23 @@ const LEVEL_OWNERS: PracticeLevelOwner[] = [
     pathSlug: "computer-architect",
   },
   {
+    level: "level-15-verilog",
+    pathSlug: "computer-architect",
+  },
+  {
+    level: "level-16-verification",
+    pathSlug: "computer-architect",
+  },
+  {
+    level: "level-17-rtl-to-silicon",
+    pathSlug: "computer-architect",
+  },
+  {
     level: "level-18-compilers-theory",
+    pathSlug: "computer-architect",
+  },
+  {
+    level: "level-19-riscv-core",
     pathSlug: "computer-architect",
   },
 ];

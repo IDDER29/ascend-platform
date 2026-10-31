@@ -1,0 +1,131 @@
+---
+title: "Project: An ALU in Verilog"
+level: level-15-verilog
+slug: project-verilog-alu
+order: 5
+timeMin: 50
+learningOutcomes:
+- Describe an 8-bit ALU with eight operations and zero and carry flags in synthesisable Verilog
+- Write a self-checking testbench that compares every operation on every input pair against a reference model
+- Find a signed-versus-unsigned bug from the testbench's failures, and explain the pattern in them
+- Synthesise the ALU, place and route it on a real FPGA, and read its size and maximum clock frequency
+primer:
+- title: "Combinational logic in Verilog"
+  type: doc
+  meta: Reread · 3 min · always @* and case, which the ALU uses.
+  essential: true
+- title: "Project: Build an 8-bit ALU"
+  type: doc
+  meta: "Foundations · the same ALU, built from gate slices in the Gate Lab."
+  essential: false
+knowledgeCheck:
+- question: The buggy ALU failed exactly 32768 of its SLT checks. Why that number?
+  answer: "Comparing as unsigned instead of signed only gives a different answer when a and b have different sign bits. For 8-bit inputs that's half of all 65536 pairs: 128 × 128 pairs with a negative and b non-negative, plus the same the other way round, 32768 in all."
+  jumpToId: part-3-a-bug-the-testbench-catches
+  jumpToLabel: "Part 3: A bug the testbench catches"
+- question: Why can the tools report a maximum frequency for alu_clocked but only a path delay for the bare ALU?
+  answer: "A frequency is a limit on a clock: how fast registers can capture results. The bare ALU has no registers, only a delay from inputs to outputs. Putting it between registers turns that delay (plus the registers' own timing) into a clock period, and the frequency is one over it."
+  jumpToId: part-4-real-hardware
+  jumpToLabel: "Part 4: Real hardware"
+assignment:
+  instruction: "Extend the ALU on your own machine: add a signed overflow flag for ADD and SUB, and extend the testbench's reference model to check it for every input pair. Then add a register stage in the middle of the adder (a pipelined ALU) and compare the maximum frequency nextpnr reports with this project's 107.90 MHz. Install Icarus Verilog, Yosys and nextpnr-ice40 with your package manager, or use EDA Playground for the simulation."
+  resourceName: 'HDLBits: Verilog practice problems'
+  resourceType: site
+  resourceUrl: 'https://hdlbits.01xz.net/wiki/Main_Page'
+additionalResources:
+- title: "Icarus Verilog documentation"
+  type: doc
+  meta: the simulator used here
+  url: 'https://steveicarus.github.io/iverilog/'
+- title: "nextpnr"
+  type: doc
+  meta: the open place-and-route tool used here
+  url: 'https://github.com/YosysHQ/nextpnr'
+whyThisMatters: "An ALU is the heart of every CPU, and this is the first one you've written the way real hardware is written: in an HDL, checked exhaustively, synthesised and placed on a real chip. The workflow (describe, test against a model, synthesise, check timing) is exactly the one used for the RISC-V core at the end of this path."
+---
+
+In Foundations you built an 8-bit ALU from gate slices in the Gate Lab. Now you'll write one in Verilog, test it against a reference model on every possible input, then turn it into real hardware with the same open tools used for real FPGA designs.
+
+## Part 1: The ALU
+
+Eight operations, chosen by a 3-bit `op`:
+
+| op | operation | carry |
+|---|---|---|
+| 0 | ADD: a + b | the carry out of bit 7 |
+| 1 | SUB: a - b | 1 when it borrows (a is smaller) |
+| 2, 3, 4 | AND, OR, XOR | 0 |
+| 5 | SLT: 1 if a is less than b, as signed numbers | 0 |
+| 6, 7 | SHL, SHR: shift a by b's low 3 bits | 0 |
+
+`zero` is 1 when the result is 0. Read `alu.v` in the run below, then find two things: how ADD produces 9 bits from two 8-bit inputs, and why SLT needs `$signed`.
+
+<details>
+<summary>Check your answer</summary>
+
+- `{carry, y} = {1'b0, a} + {1'b0, b}` widens both operands to 9 bits first, so the sum has room for a ninth bit, and the concatenation on the left splits it into the carry and the 8-bit result. Without the widening, Verilog would size the addition to 8 bits and the carry would be lost.
+- `<` on two plain 8-bit values compares them as **unsigned** numbers, so 128 (that is, -128 as signed) would count as larger than 1. `$signed(a) < $signed(b)` compares them as two's complement numbers, which is what "set if less than" means in a CPU's SLT instruction.
+
+</details>
+
+## Part 2: Check every input
+
+A testbench doesn't have to guess which inputs matter. This ALU has 8 operations × 256 × 256 inputs, 524,288 cases, and a simulator checks them in moments. The testbench computes the expected answer with ordinary Verilog arithmetic (the **reference model**) and compares every output, including the flags. Predict what it prints.
+
+<HdlRun design="verilog-project/alu-test" caption='The ALU and an exhaustive testbench' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`524288 checks, 0 errors`. Every operation agrees with the reference model on every input pair, flags included. For a block this small, **exhaustive testing** is possible and it's proof: there's no input left that could be wrong. For wider designs (a 32-bit ALU has 2 to the power 64 input pairs) it isn't, which is what the Verification course is about.
+
+</details>
+
+## Part 3: A bug the testbench catches
+
+Now one line changes: SLT compares with a plain `<`.
+
+```verilog
+SLT: y = {7'd0, a < b};                      // set if a < b
+```
+
+Predict which operation fails, for which inputs, and roughly how many times.
+
+<HdlRun design="verilog-project/alu-bug" caption='The same testbench, with SLT changed' show="alu.v" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Only op 5, SLT, fails: **32768** errors. The first failures show the pattern: `a=0 b=128`, where unsigned 0 is less than 128, but signed 0 is not less than -128. An unsigned and a signed comparison disagree exactly when a and b have different sign bits. That's 128 × 128 pairs one way plus 128 × 128 the other, half of the 65536.
+
+The count is a clue in itself. Exactly half of one operation's cases failing points straight at the sign bit. Notice too how the testbench prints only the first five failures, then a total: enough to diagnose without drowning in output.
+
+</details>
+
+## Part 4: Real hardware
+
+Two tools turn the Verilog into hardware. First **Yosys** synthesises it to generic gates:
+
+<HdlRun design="verilog-project/alu-synth" caption='Synthesis: the ALU as gates' show="alu.v" />
+
+Then the ALU is placed between registers, as it would be inside a CPU, and **nextpnr** places and routes it on a real FPGA, a Lattice iCE40 HX1K with 1280 logic cells:
+
+<HdlRun design="verilog-project/alu-clocked" caption='Placed and routed on an iCE40 HX1K' show="alu_clocked.v" predict />
+
+How many logic cells does it take, and how fast can it be clocked?
+
+<details>
+<summary>Check your answer</summary>
+
+- **Size:** Yosys turned the ALU into 290 generic gates, mostly AND-NOT, OR and multiplexer cells. On the FPGA the whole design fits in **157 of 1280 logic cells** (12%). Each logic cell has a 4-input lookup table (LUT4) and a flip-flop, so many gates collapse into one LUT. The registers around the ALU need 29 flip-flops (8 + 8 + 3 bits in, 8 + 1 + 1 out): 26 cells are used only as flip-flops, and 3 more share a cell with a LUT.
+- **Speed:** nextpnr reports a maximum frequency twice: an estimate after placement (113.99 MHz), then the real figure after routing, **107.90 MHz**. The critical path is about 3.2 ns of logic and 6.1 ns of routing. On an FPGA, the wires between cells often cost more time than the logic itself.
+
+A frequency only exists for paths between registers. That's why the ALU had to be wrapped in `alu_clocked` before the tools could report one.
+
+</details>
+
+<KeyIdea>Hardware is written as a description, checked against a model, and only then turned into gates. An exhaustive self-checking testbench makes a small block provably right; synthesis and place and route tell you what it costs in area and time.</KeyIdea>
+
+## Done when
+
+You've explained the 9-bit addition and `$signed`, predicted the exhaustive test's result, explained the 32768 failures, and read the size and speed from the real reports. Then do the assignment: add an overflow flag and pipeline the ALU.

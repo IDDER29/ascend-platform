@@ -1,0 +1,131 @@
+{
+  "id": "verilog/seq-swap-nonblocking",
+  "sourceHash": "21bb1ae44ae8b205",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp swap.v tb.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "VCD info: dumpfile waves.vcd opened for output.\nafter 3 swaps: a = 9, b = 3\ntb.v:11: $finish called at 42 (1s)\n",
+  "exitCode": 0,
+  "waves": {
+    "timescale": "1s",
+    "end": 42,
+    "waves": [
+      {
+        "name": "tb.clk",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "0"
+          ],
+          [
+            5,
+            "1"
+          ],
+          [
+            10,
+            "0"
+          ],
+          [
+            15,
+            "1"
+          ],
+          [
+            20,
+            "0"
+          ],
+          [
+            25,
+            "1"
+          ],
+          [
+            30,
+            "0"
+          ],
+          [
+            35,
+            "1"
+          ],
+          [
+            40,
+            "0"
+          ]
+        ]
+      },
+      {
+        "name": "tb.load",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "1"
+          ],
+          [
+            12,
+            "0"
+          ]
+        ]
+      },
+      {
+        "name": "tb.a",
+        "width": 4,
+        "changes": [
+          [
+            0,
+            "x"
+          ],
+          [
+            5,
+            "11"
+          ],
+          [
+            15,
+            "1001"
+          ],
+          [
+            25,
+            "11"
+          ],
+          [
+            35,
+            "1001"
+          ]
+        ]
+      },
+      {
+        "name": "tb.b",
+        "width": 4,
+        "changes": [
+          [
+            0,
+            "x"
+          ],
+          [
+            5,
+            "1001"
+          ],
+          [
+            15,
+            "11"
+          ],
+          [
+            25,
+            "1001"
+          ],
+          [
+            35,
+            "11"
+          ]
+        ]
+      }
+    ]
+  },
+  "generated": "2026-10-31"
+}

@@ -1,0 +1,18 @@
+{
+  "id": "verilog/basics-gates",
+  "sourceHash": "ef99084b27e200d9",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp gates.v tb.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "a b c | y\n0 0 0 | 0\n0 0 1 | 1\n0 1 0 | 0\n0 1 1 | 1\n1 0 0 | 0\n1 0 1 | 1\n1 1 0 | 1\n1 1 1 | 1\ntb.v:12: $finish called at 8 (1s)\n",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

@@ -39,7 +39,7 @@ export const TASK_RANKS: Record<MissionRank, string> = {
 };
 
 /** Original emblems for the four clans (one per topic). */
-export type CrestId = "tree-ir" | "cores" | "cache" | "lanes" | "stages" | "gauge" | "wrench" | "heap" | "page" | "tree" | "seal" | "gate" | "core" | "brace" | "pointer" | "shell";
+export type CrestId = "riscv" | "wafer" | "proof" | "module" | "tree-ir" | "cores" | "cache" | "lanes" | "stages" | "gauge" | "wrench" | "heap" | "page" | "tree" | "seal" | "gate" | "core" | "brace" | "pointer" | "shell";
 
 export type Achievement = {
   id: string;
@@ -76,10 +76,14 @@ const ADVANCED: LevelId = "level-12-advanced-execution";
 const CACHES: LevelId = "level-13-caches-memory";
 const MULTICORE: LevelId = "level-14-multicore-gpus";
 const COMPILERS: LevelId = "level-18-compilers-theory";
+const VERILOG: LevelId = "level-15-verilog";
+const VERIFICATION: LevelId = "level-16-verification";
+const RTL: LevelId = "level-17-rtl-to-silicon";
+const RISCV: LevelId = "level-19-riscv-core";
 const C: LevelId = "level-02-the-c-language";
 const SYSTEMS: LevelId = "level-03-systems-software";
 
-export const CREST_IDS = ["tree-ir-clan", "cores-clan", "cache-clan", "lanes-clan", "stages-clan", "gauge-clan", "wrench-clan", "heap-clan", "page-clan", "tree-clan", "seal-clan", "gate-clan", "core-clan", "brace-clan", "pointer-clan", "shell-clan"];
+export const CREST_IDS = ["riscv-clan", "wafer-clan", "proof-clan", "module-clan", "tree-ir-clan", "cores-clan", "cache-clan", "lanes-clan", "stages-clan", "gauge-clan", "wrench-clan", "heap-clan", "page-clan", "tree-clan", "seal-clan", "gate-clan", "core-clan", "brace-clan", "pointer-clan", "shell-clan"];
 
 /** Every badge Ascend awards, each with its own exact rule. Ids are stable: earned rows reference them. */
 export const ACHIEVEMENTS: Achievement[] = [
@@ -101,7 +105,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "juggler", group: "learning", label: "Juggler", glyph: "⇶", means: "Finished every lesson in Advanced execution", rules: [{ kind: "topic", topic: ADVANCED }] },
   { id: "cache-keeper", group: "learning", label: "Cache Keeper", glyph: "⧠", means: "Finished every lesson in Caches & memory systems", rules: [{ kind: "topic", topic: CACHES }] },
   { id: "parallelist", group: "learning", label: "Parallelist", glyph: "⁘", means: "Finished every lesson in Multicore & GPUs", rules: [{ kind: "topic", topic: MULTICORE }] },
+  { id: "hardware-writer", group: "learning", label: "Hardware Writer", glyph: "⊏", means: "Finished every lesson in Digital design with Verilog", rules: [{ kind: "topic", topic: VERILOG }] },
+  { id: "verifier", group: "learning", label: "Verifier", glyph: "⊨", means: "Finished every lesson in Verification", rules: [{ kind: "topic", topic: VERIFICATION }] },
+  { id: "tape-out", group: "learning", label: "Tape-out", glyph: "⊚", means: "Finished every lesson in From RTL to silicon", rules: [{ kind: "topic", topic: RTL }] },
   { id: "compiler-mind", group: "learning", label: "Compiler Mind", glyph: "⊢", means: "Finished every lesson in Compilers & theory", rules: [{ kind: "topic", topic: COMPILERS }] },
+  { id: "core-builder", group: "learning", label: "Core Builder", glyph: "⟁", means: "Finished every lesson in A RISC-V core", rules: [{ kind: "topic", topic: RISCV }] },
 
   // Building
   { id: "code-maker", group: "building", label: "Code Maker", glyph: "⌗", means: "Made and broke a codebook", rules: [{ kind: "project", projectId: "codebook" }] },
@@ -137,6 +145,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "allocator", group: "building", label: "Allocator", glyph: "◧", means: "Explained and broke a working malloc and free from the inside", rules: [{ kind: "project", projectId: "malloc" }] },
   { id: "pipe-sim", group: "building", label: "Pipe Simulator", glyph: "⧖", means: "Simulated a five-stage pipeline cycle by cycle and scheduled a loop faster", rules: [{ kind: "project", projectId: "pipeline-sim" }] },
   { id: "cache-sim", group: "building", label: "Cache Simulator", glyph: "⊛", means: "Built a cache simulator and explained a column walk that never hits", rules: [{ kind: "project", projectId: "cache-sim" }] },
+  { id: "bug-hunter", group: "building", label: "Bug Hunter", glyph: "⚲", means: "Found a crash, an overflow, an uninitialised read and a leak with gdb, ASan and valgrind", rules: [{ kind: "project", projectId: "debug-a-program" }] },
+  { id: "rtl-alu", group: "building", label: "RTL Builder", glyph: "⎔", means: "Wrote an ALU in Verilog, tested it on every input and placed it on an FPGA", rules: [{ kind: "project", projectId: "verilog-alu" }] },
+  { id: "core-designer", group: "building", label: "Core Designer", glyph: "⏣", means: "Ran compiled C on a RISC-V core in Verilog and diagnosed its decode bugs", rules: [{ kind: "project", projectId: "riscv-core" }] },
   { id: "cpu-tracer", group: "building", label: "CPU Tracer", glyph: "▤", means: "Shipped a program for the tiny CPU", rules: [{ kind: "project", projectId: "tiny-cpu" }] },
   { id: "ship-it", group: "building", label: "Shell Smith", glyph: "◈", means: "Shipped ShellForge, a working shell", rules: [{ kind: "project", projectId: "shellforge" }] },
 
@@ -151,7 +162,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "comeback", group: "habits", label: "Comeback", glyph: "✦", means: "Came back to Practice after two weeks away", rules: [{ kind: "comeback", gapDays: 14 }] },
 
   // Combinations: the parts are the rule, shown openly.
-  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ub-hunter", "map-maker", "pool-keeper", "allocator", "pipe-sim", "cache-sim", "ship-it"] }] },
+  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ub-hunter", "map-maker", "pool-keeper", "allocator", "pipe-sim", "cache-sim", "bug-hunter", "rtl-alu", "core-designer", "ship-it"] }] },
   { id: "sharp-mind", group: "combination", label: "Sharp Mind", glyph: "✺", means: "Deep memory, a clean run and a week of practice", rules: [{ kind: "badges", ids: ["deep-memory", "clean-run", "week-of-practice"] }] },
   { id: "whole-machine", group: "combination", label: "The Whole Machine", glyph: "✸", means: "Finished every lesson and shipped every project", rules: [{ kind: "allLessons" }, { kind: "badges", ids: ["builder"] }] },
 ];
@@ -178,7 +189,11 @@ export const INSIGNIA: Achievement[] = [
   { id: "lanes-clan", group: "learning", label: "Lane Clan", glyph: "⇶", means: "Joined the Lane Clan by finishing every lesson in Advanced execution", rules: [{ kind: "topic", topic: ADVANCED }], insignia: { kind: "crest", crest: "lanes" } },
   { id: "cache-clan", group: "learning", label: "Cache Clan", glyph: "⧠", means: "Joined the Cache Clan by finishing every lesson in Caches & memory systems", rules: [{ kind: "topic", topic: CACHES }], insignia: { kind: "crest", crest: "cache" } },
   { id: "cores-clan", group: "learning", label: "Core Grid Clan", glyph: "⁘", means: "Joined the Core Grid Clan by finishing every lesson in Multicore & GPUs", rules: [{ kind: "topic", topic: MULTICORE }], insignia: { kind: "crest", crest: "cores" } },
+  { id: "module-clan", group: "learning", label: "Module Clan", glyph: "⊏", means: "Joined the Module Clan by finishing every lesson in Digital design with Verilog", rules: [{ kind: "topic", topic: VERILOG }], insignia: { kind: "crest", crest: "module" } },
+  { id: "proof-clan", group: "learning", label: "Proof Clan", glyph: "⊨", means: "Joined the Proof Clan by finishing every lesson in Verification", rules: [{ kind: "topic", topic: VERIFICATION }], insignia: { kind: "crest", crest: "proof" } },
+  { id: "wafer-clan", group: "learning", label: "Wafer Clan", glyph: "⊚", means: "Joined the Wafer Clan by finishing every lesson in From RTL to silicon", rules: [{ kind: "topic", topic: RTL }], insignia: { kind: "crest", crest: "wafer" } },
   { id: "tree-ir-clan", group: "learning", label: "Syntax Clan", glyph: "⊢", means: "Joined the Syntax Clan by finishing every lesson in Compilers & theory", rules: [{ kind: "topic", topic: COMPILERS }], insignia: { kind: "crest", crest: "tree-ir" } },
+  { id: "riscv-clan", group: "learning", label: "Core Builder Clan", glyph: "⟁", means: "Joined the Core Builder Clan by finishing every lesson in A RISC-V core", rules: [{ kind: "topic", topic: RISCV }], insignia: { kind: "crest", crest: "riscv" } },
 ];
 
 export type Title = Achievement & {

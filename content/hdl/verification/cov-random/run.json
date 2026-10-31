@@ -1,0 +1,18 @@
+{
+  "id": "verification/cov-random",
+  "sourceHash": "cea0c67ee787792a",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp add8.v tb.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "0 failures in 100 tests\ncoverage: carry 48, sum wraps to zero 0, a == b 1, an operand is 255 2\ntb.v:34: $finish called at 100 (1s)\n",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

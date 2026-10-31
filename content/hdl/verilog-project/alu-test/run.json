@@ -1,0 +1,18 @@
+{
+  "id": "verilog-project/alu-test",
+  "sourceHash": "f01cebc39b93bdae",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp alu.v tb_alu.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "524288 checks, 0 errors\ntb_alu.v:38: $finish called at 524288 (1s)\n",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

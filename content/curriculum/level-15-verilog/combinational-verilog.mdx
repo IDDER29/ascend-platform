@@ -1,0 +1,142 @@
+---
+title: "Combinational logic in Verilog"
+level: level-15-verilog
+slug: combinational-verilog
+order: 2
+timeMin: 11
+learningOutcomes:
+- Describe combinational logic with assign and with always @* blocks, including if and case
+- Build a multiplexer and a multi-bit ripple-carry adder from smaller modules
+- Check a combinational design exhaustively with a self-checking testbench
+- Recognise the latch-inference bug, where a missing else turns combinational logic into memory, and fix it
+primer:
+- title: "Describing hardware in Verilog"
+  type: doc
+  meta: Reread · 3 min · modules, assign and testbenches.
+  essential: true
+- title: "Multiplexers: choosing between signals"
+  type: doc
+  meta: "Foundations · the mux you'll write in Verilog."
+  essential: false
+knowledgeCheck:
+- question: Why did Yosys build four latches for the pass module, when it was meant to be combinational?
+  answer: "When en is 0, the always @* block doesn't assign y. Combinational logic must give every output a value for every input, so the only way to do nothing is to keep the old value, which needs memory. Synthesis builds a latch for each bit of y to remember it."
+  jumpToId: the-latch-you-didnt-mean
+  jumpToLabel: The latch you didn't mean
+- question: How did the adder testbench check all 512 inputs without printing them?
+  answer: "It looped over every combination of a, b and cin, and compared the design's 5-bit result {cout, sum} with a + b + cin computed by the simulator, counting mismatches. A self-checking testbench reports only the count of errors, so a correct design says 0 errors."
+  jumpToId: an-adder-from-full-adders
+  jumpToLabel: An adder from full adders
+assignment:
+  instruction: "Write an 8-bit ripple-carry adder from your own full_adder module using a generate loop, and a self-checking testbench that tests all 131072 combinations of a, b and carry in. Then write a 4-to-1 multiplexer with an always @* case that forgets the default (and leaves one sel value unassigned), synthesise it with Yosys (yosys -p 'read_verilog mux.v; synth; stat') and find the latches."
+  resourceName: 'HDLBits: Combinational logic'
+  resourceType: site
+  resourceUrl: 'https://hdlbits.01xz.net/wiki/Problem_sets#Circuits'
+additionalResources:
+- title: "Yosys documentation"
+  type: doc
+  meta: the open-source synthesis tool used in these lessons
+  url: 'https://yosyshq.readthedocs.io/projects/yosys/en/latest/'
+whyThisMatters: "Most of a processor is combinational logic: decoders, multiplexers, adders, comparators. Writing it so that synthesis builds exactly the gates you meant, and testing it against every input, is the daily work of hardware design."
+---
+
+**Combinational** logic has no memory: its outputs depend only on its inputs right now. Gates, multiplexers, adders and the ALU from Foundations are all combinational. In Verilog you describe it two ways, with `assign` and with `always @*` blocks, and both must follow one rule: every output gets a value for every input.
+
+## Two ways to write a mux
+
+A 4-to-1 multiplexer passes one of four inputs through, chosen by a 2-bit `sel`. As one `assign`, using C's `?:` operator:
+
+```verilog
+assign y = sel[1] ? (sel[0] ? in[3] : in[2]) : (sel[0] ? in[1] : in[0]);
+```
+
+For anything longer, an `always @*` block reads better. `@*` means "whenever any input of this block changes", so the block describes combinational logic, and inside it you can use `if` and `case`, just like C:
+
+```verilog
+always @* begin
+  case (sel)
+    2'd0: y = in[0];
+    2'd1: y = in[1];
+    2'd2: y = in[2];
+    default: y = in[3];
+  endcase
+end
+```
+
+`2'd2` is a number literal: 2 bits wide, decimal value 2. Because the block assigns `y`, it is declared `output reg`, but no register comes out of it. The testbench compares the two versions on all 64 inputs.
+
+<HdlRun design="verilog/comb-mux" caption='The mux, two ways' predict show="tb.v" />
+
+<details>
+<summary>Check your answer</summary>
+
+With `in = 1010` (in[3] = 1, in[2] = 0, in[1] = 1, in[0] = 0), sel 0 to 3 picks 0, 1, 0, 1, and both versions agree. The loop then checks all 64 combinations of `in` and `sel` and finds **0 mismatches**: the `?:` version and the `case` version describe the same hardware.
+
+`!==` is the comparison to use in testbenches: unlike `!=`, it also treats the unknown value `x` as a value, so an output stuck at `x` counts as wrong instead of being silently ignored.
+
+</details>
+
+## An adder from full adders
+
+In Foundations you chained one-bit full adders into a 4-bit adder. In Verilog you write the full adder once and create four copies with a `generate` loop:
+
+```verilog
+module full_adder(input a, input b, input cin, output sum, output cout);
+  assign sum  = a ^ b ^ cin;
+  assign cout = (a & b) | (cin & (a ^ b));
+endmodule
+```
+
+Each copy's carry out drives the next one's carry in through a wire bus `c[4:0]`. Predict what `9 + 8` gives on a 4-bit adder, then run the testbench, which also checks every input.
+
+<HdlRun design="verilog/comb-adder" caption='A 4-bit ripple-carry adder' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+9 + 8 = 17, which needs 5 bits: the 4-bit sum is 1 (17 - 16) and the carry out is 1. Then the testbench loops over all 512 combinations of `a`, `b` and `cin` and compares `{cout, sum}`, a 5-bit value made by concatenation, with `a + b + cin` computed by the simulator: **0 errors**.
+
+That's a **self-checking testbench**: instead of printing hundreds of lines for you to read, it compares against a trusted reference and reports only the failures. For a small combinational block, testing every input is the gold standard: then the design is right, not just right on the cases you thought of.
+
+</details>
+
+## The latch you didn't mean
+
+Here's a block meant to be combinational: `y` follows `d` when `en` is 1, and should be 0 otherwise. Look carefully at what's missing, then see what **Yosys**, a synthesis tool, builds from it.
+
+<HdlRun design="verilog/comb-latch" caption='A missing else, synthesised' />
+
+<details>
+<summary>Check your answer</summary>
+
+There's no `else`: when `en` is 0, the block never assigns `y`. So what should `y` be then? The only possible answer is "what it was before", and remembering a value needs memory. Yosys builds four `$_DLATCH_P_` cells, one **latch** per bit of `y`: transparent while `en` is 1, holding while it's 0.
+
+Latches are rarely wanted. They make timing hard to analyse and simulation can disagree with the hardware. This is one of the most common Verilog bugs, and the cause is always the same: some path through an `always @*` block leaves an output unassigned.
+
+</details>
+
+The fix is to give `y` a value on every path. The easiest way is a default at the top of the block:
+
+```verilog
+always @* begin
+  y = 4'd0;
+  if (en) y = d;
+end
+```
+
+<HdlRun design="verilog/comb-latch-fixed" caption='With a default, synthesised' show="hold.v" />
+
+Now there are no latches: just four `$_AND_` gates, each one `en & d[i]`. That's exactly the combinational logic that was meant.
+
+<KeyIdea>Combinational logic must give every output a value for every input. In always @* blocks, use a default or cover every case, or synthesis will add latches to remember the missing values.</KeyIdea>
+
+## Try it
+
+A 2-to-1 mux is written `always @* if (sel) y = b; else if (!sel) y = a;`. Does it infer a latch? Explain why or why not.
+
+<details>
+<summary>Check your answer</summary>
+
+For the values 0 and 1 it covers both cases, but as written the last `else if` has no `else`, so the code describes a path that leaves `y` unassigned. When I ran this through Yosys 0.52, it first reported `Latch inferred for signal y`, then noticed the latch's enable (`sel` or not `sel`) is always 1 and turned it back into a single `$_MUX_`. A different tool, or a condition it can't simplify, could leave the latch in. Writing `else y = a;` says exactly what you mean and can't infer one. The habit to keep: end every `if` chain with a plain `else`, and every `case` with a `default`.
+
+</details>

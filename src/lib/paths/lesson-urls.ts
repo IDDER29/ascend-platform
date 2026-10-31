@@ -85,9 +85,25 @@ const LEVEL_OWNER: Record<
     pathSlug: "computer-architect",
     courseId: "multicore-gpus",
   },
+  "level-15-verilog": {
+    pathSlug: "computer-architect",
+    courseId: "verilog",
+  },
+  "level-16-verification": {
+    pathSlug: "computer-architect",
+    courseId: "verification",
+  },
+  "level-17-rtl-to-silicon": {
+    pathSlug: "computer-architect",
+    courseId: "rtl-to-silicon",
+  },
   "level-18-compilers-theory": {
     pathSlug: "computer-architect",
     courseId: "compilers-theory",
+  },
+  "level-19-riscv-core": {
+    pathSlug: "computer-architect",
+    courseId: "riscv-core",
   },
 };
 

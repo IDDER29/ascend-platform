@@ -1,0 +1,231 @@
+{
+  "id": "verilog/seq-fsm",
+  "sourceHash": "7ca067b2baa654c0",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp detect.v tb.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "VCD info: dumpfile waves.vcd opened for output.\nin 1 -> found 0\nin 1 -> found 0\nin 0 -> found 0\nin 1 -> found 1\nin 0 -> found 0\nin 1 -> found 1\nin 0 -> found 0\nin 0 -> found 0\nin 1 -> found 0\nin 1 -> found 0\ntb.v:16: $finish called at 106 (1s)\n",
+  "exitCode": 0,
+  "waves": {
+    "timescale": "1s",
+    "end": 106,
+    "waves": [
+      {
+        "name": "tb.clk",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "0"
+          ],
+          [
+            5,
+            "1"
+          ],
+          [
+            10,
+            "0"
+          ],
+          [
+            15,
+            "1"
+          ],
+          [
+            20,
+            "0"
+          ],
+          [
+            25,
+            "1"
+          ],
+          [
+            30,
+            "0"
+          ],
+          [
+            35,
+            "1"
+          ],
+          [
+            40,
+            "0"
+          ],
+          [
+            45,
+            "1"
+          ],
+          [
+            50,
+            "0"
+          ],
+          [
+            55,
+            "1"
+          ],
+          [
+            60,
+            "0"
+          ],
+          [
+            65,
+            "1"
+          ],
+          [
+            70,
+            "0"
+          ],
+          [
+            75,
+            "1"
+          ],
+          [
+            80,
+            "0"
+          ],
+          [
+            85,
+            "1"
+          ],
+          [
+            90,
+            "0"
+          ],
+          [
+            95,
+            "1"
+          ],
+          [
+            100,
+            "0"
+          ],
+          [
+            105,
+            "1"
+          ]
+        ]
+      },
+      {
+        "name": "tb.bit_in",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "0"
+          ],
+          [
+            12,
+            "1"
+          ],
+          [
+            26,
+            "0"
+          ],
+          [
+            36,
+            "1"
+          ],
+          [
+            46,
+            "0"
+          ],
+          [
+            56,
+            "1"
+          ],
+          [
+            66,
+            "0"
+          ],
+          [
+            86,
+            "1"
+          ]
+        ]
+      },
+      {
+        "name": "tb.dut.state",
+        "width": 2,
+        "changes": [
+          [
+            0,
+            "x"
+          ],
+          [
+            5,
+            "0"
+          ],
+          [
+            15,
+            "1"
+          ],
+          [
+            35,
+            "10"
+          ],
+          [
+            45,
+            "11"
+          ],
+          [
+            55,
+            "10"
+          ],
+          [
+            65,
+            "11"
+          ],
+          [
+            75,
+            "10"
+          ],
+          [
+            85,
+            "0"
+          ],
+          [
+            95,
+            "1"
+          ]
+        ]
+      },
+      {
+        "name": "tb.found",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "x"
+          ],
+          [
+            5,
+            "0"
+          ],
+          [
+            45,
+            "1"
+          ],
+          [
+            55,
+            "0"
+          ],
+          [
+            65,
+            "1"
+          ],
+          [
+            75,
+            "0"
+          ]
+        ]
+      }
+    ]
+  },
+  "generated": "2026-10-31"
+}

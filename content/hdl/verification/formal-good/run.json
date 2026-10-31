@@ -1,0 +1,17 @@
+{
+  "id": "verification/formal-good",
+  "sourceHash": "b4c69f5fd41da051",
+  "tool": "prove",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "yosys -p \"read_verilog -formal -sv sat_add.sv; prep -top sat_add; chformal -lower; sat -prove-asserts -show-inputs -show-outputs\""
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "Solving problem with 234 variables and 640 clauses..\nSAT proof finished - no model found: SUCCESS!",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

@@ -1,0 +1,120 @@
+---
+title: "Project: Logic gate workbench"
+level: level-00-bits-logic
+slug: project-gate-workbench
+order: 43
+timeMin: 20
+learningOutcomes:
+- Build NOT, AND, OR and XOR using nothing but NAND gates
+- Build a 2-to-1 multiplexer from NAND gates and explain what each wire carries
+- Check a circuit against its whole truth table, not just one row
+- Explain why one gate type is enough to build any logic circuit
+primer:
+- title: "Logic gates, from switches to circuits"
+  type: doc
+  meta: Reread · 3 min · the gate zoo, and why NAND builds the rest.
+  essential: true
+- title: "Multiplexers: choosing between signals"
+  type: doc
+  meta: Reread · 3 min · you'll build one in part 5.
+  essential: true
+knowledgeCheck:
+- question: How do you make NOT from a NAND gate?
+  answer: Feed the same signal into both inputs. A NAND A is 0 only when A is 1, so it is NOT A.
+  jumpToId: part-1-not
+  jumpToLabel: "Part 1: NOT"
+- question: How many NAND gates does XOR need, and what does the first one do?
+  answer: "Four. The first computes N = A NAND B, which is shared by the next two (A NAND N and B NAND N); a last NAND joins them. Sharing that first gate is what keeps it to four."
+  jumpToId: part-4-xor
+  jumpToLabel: "Part 4: XOR"
+assignment:
+  instruction: "Build the same five circuits from NOR gates only, in a fresh Gate Lab of your own design or on paper with truth tables. NOR is also universal. Count the gates for each and compare with your NAND versions: which are the same, and which differ?"
+  resourceName: 'nand2tetris.org: Project 1, Boolean Logic'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project01'
+additionalResources:
+- title: NAND logic (Wikipedia)
+  type: doc
+  meta: every basic gate built from NAND, with diagrams
+  url: 'https://en.wikipedia.org/wiki/NAND_logic'
+- title: Functional completeness (Wikipedia)
+  type: doc
+  meta: why one gate can be enough
+  url: 'https://en.wikipedia.org/wiki/Functional_completeness'
+whyThisMatters: "Real chips are built from a small set of cell types, and NAND is a favourite because it is cheap to make from transistors. Knowing that every circuit in a CPU can come from one gate makes the whole machine less mysterious: it is the same small piece, wired many ways."
+---
+
+You've seen the claim that NAND can build every other gate. In this project you prove it. Each Gate Lab below only accepts NAND, checks every row of the truth table, and counts your gates.
+
+Write each line as `NAME = expression`. Any name that isn't an input or an output is a wire you can use on later lines, for example `N = A NAND B`.
+
+## Part 1: NOT
+
+One input, one NAND. What do you feed it?
+
+<GateLab caption='NOT from NAND' inputsJson='["A"]' outputsJson='["OUT"]' targetJson='{"OUT":"NOT A"}' startJson='["OUT = A"]' allowJson='["NAND"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`OUT = A NAND A`. Both inputs are the same, so the output is 0 only when A is 1. One gate.
+
+</details>
+
+## Part 2: AND
+
+AND is NAND followed by NOT.
+
+<GateLab caption='AND from NAND' inputsJson='["A","B"]' outputsJson='["OUT"]' targetJson='{"OUT":"A AND B"}' startJson='["OUT = A NAND B"]' allowJson='["NAND"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`N = A NAND B`, then `OUT = N NAND N`. Two gates.
+
+</details>
+
+## Part 3: OR
+
+Hint: OR is 1 unless both inputs are 0. De Morgan's laws say A OR B is the same as NOT (NOT A AND NOT B).
+
+<GateLab caption='OR from NAND' inputsJson='["A","B"]' outputsJson='["OUT"]' targetJson='{"OUT":"A OR B"}' startJson='["OUT = A NAND B"]' allowJson='["NAND"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`NA = A NAND A`, `NB = B NAND B`, `OUT = NA NAND NB`. Three gates: invert both inputs, then NAND them.
+
+</details>
+
+## Part 4: XOR
+
+The hardest one. It can be done in four NANDs. If you get it in five, it's right; then look for a gate two others could share.
+
+<GateLab caption='XOR from NAND' inputsJson='["A","B"]' outputsJson='["OUT"]' targetJson='{"OUT":"A XOR B"}' startJson='["N = A NAND B", "OUT = N"]' allowJson='["NAND"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`N = A NAND B`, `P = A NAND N`, `Q = B NAND N`, `OUT = P NAND Q`. Four gates. The trick is that N is used twice: it is 0 only when both inputs are 1, which is exactly the case XOR must turn into 0.
+
+</details>
+
+## Part 5: A multiplexer
+
+A 2-to-1 multiplexer passes A when the select input S is 0, and B when S is 1. Build it from NAND alone.
+
+<GateLab caption='A multiplexer from NAND' inputsJson='["A","B","S"]' outputsJson='["OUT"]' targetJson='{"OUT":"(A AND NOT S) OR (B AND S)"}' startJson='["OUT = A"]' allowJson='["NAND"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`NS = S NAND S` (NOT S), `X = A NAND NS`, `Y = B NAND S`, `OUT = X NAND Y`. Four gates. X is 0 only when A gets through (S is 0 and A is 1); Y is 0 only when B gets through. The last NAND turns "either one got through" into a 1, the same shape as the OR in part 3.
+
+</details>
+
+<KeyIdea>One kind of gate, wired different ways, gives every other gate. A CPU is that idea repeated millions of times.</KeyIdea>
+
+## Done when
+
+All five labs say "Solved", and you can explain each circuit wire by wire. Then try the assignment: the same five from NOR.

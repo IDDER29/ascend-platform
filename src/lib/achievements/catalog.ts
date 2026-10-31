@@ -85,6 +85,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "converter", group: "building", label: "Converter", glyph: "⇄", means: "Converted, read and checked bytes by hand", rules: [{ kind: "project", projectId: "number-workbench" }] },
   { id: "byte-detective", group: "building", label: "Byte Detective", glyph: "⌕", means: "Read the same bytes as numbers, text and colours, and solved a mystery message", rules: [{ kind: "project", projectId: "byte-lab" }] },
   { id: "gate-builder", group: "building", label: "Gate Builder", glyph: "⊕", means: "Shipped the half adder", rules: [{ kind: "project", projectId: "half-adder" }] },
+  { id: "nand-maker", group: "building", label: "NAND Maker", glyph: "⊼", means: "Built NOT, AND, OR, XOR and a multiplexer from NAND alone", rules: [{ kind: "project", projectId: "gate-workbench" }] },
+  { id: "alu-architect", group: "building", label: "ALU Architect", glyph: "⊞", means: "Built an ALU slice that adds, subtracts, ANDs and ORs, and chained it into bytes", rules: [{ kind: "project", projectId: "alu" }] },
   { id: "cpu-tracer", group: "building", label: "CPU Tracer", glyph: "▤", means: "Shipped a program for the tiny CPU", rules: [{ kind: "project", projectId: "tiny-cpu" }] },
   { id: "ship-it", group: "building", label: "Shell Smith", glyph: "◈", means: "Shipped ShellForge, a working shell", rules: [{ kind: "project", projectId: "shellforge" }] },
 
@@ -99,7 +101,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "comeback", group: "habits", label: "Comeback", glyph: "✦", means: "Came back to Practice after two weeks away", rules: [{ kind: "comeback", gapDays: 14 }] },
 
   // Combinations: the parts are the rule, shown openly.
-  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "cpu-tracer", "ship-it"] }] },
+  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "cpu-tracer", "ship-it"] }] },
   { id: "sharp-mind", group: "combination", label: "Sharp Mind", glyph: "✺", means: "Deep memory, a clean run and a week of practice", rules: [{ kind: "badges", ids: ["deep-memory", "clean-run", "week-of-practice"] }] },
   { id: "whole-machine", group: "combination", label: "The Whole Machine", glyph: "✸", means: "Finished every lesson and shipped every project", rules: [{ kind: "allLessons" }, { kind: "badges", ids: ["builder"] }] },
 ];

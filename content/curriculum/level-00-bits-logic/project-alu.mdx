@@ -1,0 +1,125 @@
+---
+title: "Project: Build an 8-bit ALU"
+level: level-00-bits-logic
+slug: project-alu
+order: 44
+timeMin: 40
+learningOutcomes:
+- Build a one-bit ALU slice that adds, subtracts, ANDs and ORs, chosen by a two-bit operation code
+- Use XOR to turn the adder into a subtracter, and explain why the first carry must be 1
+- Use multiplexers to choose between results computed side by side
+- Chain eight slices into an 8-bit ALU and check it on whole bytes
+primer:
+- title: "The ALU: one circuit, many operations"
+  type: doc
+  meta: Reread · 3 min · the design you are about to build.
+  essential: true
+- title: "Full adder and the 4-bit adder"
+  type: doc
+  meta: Reread · 3 min · part 1 is a full adder.
+  essential: true
+knowledgeCheck:
+- question: How does the same slice subtract?
+  answer: "When OP0 is 1, BB = B XOR OP0 inverts every bit of B, and the first slice's carry in is 1. A + NOT B + 1 is A - B in two's complement, so the adder subtracts without any new circuit."
+  jumpToId: part-2-subtract-with-the-same-adder
+  jumpToLabel: "Part 2: Subtract with the same adder"
+- question: Why does the ALU compute every result and then choose one?
+  answer: "Gates can't skip work; they always produce an output. So the slice computes the sum and the logic result side by side, and a multiplexer driven by OP1 passes the one the operation code asks for."
+  jumpToId: part-4-choose-with-op1
+  jumpToLabel: "Part 4: Choose with OP1"
+assignment:
+  instruction: "Add a zero flag on paper: Z should be 1 when all eight OUT bits are 0. Write it as one expression over OUT0 to OUT7 using only OR and NOT, count its gates, then explain why the tiny CPU's JZ instruction needs exactly this signal."
+  resourceName: 'eater.net: the ALU of the 8-bit breadboard computer'
+  resourceType: site
+  resourceUrl: 'https://eater.net/8bit/alu'
+additionalResources:
+- title: 'nand2tetris.org: Project 2, Boolean Arithmetic'
+  type: doc
+  meta: build an ALU from gates in a full hardware simulator
+  url: 'https://www.nand2tetris.org/project02'
+- title: Arithmetic logic unit (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Arithmetic_logic_unit'
+whyThisMatters: "Every ADD, SUB, AND and OR a program ever runs happens in an ALU like this one. Building one bit of it, then watching eight copies add real bytes, turns the CPU's arithmetic from a black box into gates you wrote yourself."
+---
+
+An ALU computes several things at once and passes on the one an operation code asks for. You'll build one bit of it, a <b>slice</b>, and the Gate Lab will chain eight slices into an 8-bit ALU and run it on real bytes.
+
+The slice has five inputs: A and B (one bit of each number), CIN (the carry from the slice to the right), and a two-bit operation code, OP1 and OP0:
+
+<TruthTable caption='The operation code' rowsJson='[["OP1", "OP0", "operation"], ["0", "0", "ADD: A + B"], ["0", "1", "SUB: A - B"], ["1", "0", "AND"], ["1", "1", "OR"]]' />
+
+It has two outputs: OUT (this bit of the result) and COUT (the carry to the next slice). Work through the parts in the one Gate Lab below; it checks all 32 rows, and its bottom panel runs your slice chained eight times.
+
+<GateLab caption='A one-bit ALU slice' inputsJson='["A","B","CIN","OP1","OP0"]' outputsJson='["OUT","COUT"]' targetJson='{"OUT":"((A XOR (B XOR OP0) XOR CIN) AND NOT OP1) OR (((A AND B AND NOT OP0) OR ((A OR B) AND OP0)) AND OP1)","COUT":"(A AND (B XOR OP0)) OR (CIN AND (A XOR (B XOR OP0)))"}' startJson='["BB = B XOR OP0", "SUM = A XOR BB XOR CIN", "COUT = 0", "LOGIC = A AND B", "OUT = SUM"]' chainJson='{"bits":8,"perBit":["A","B"],"shared":["OP1","OP0"],"carryIn":"CIN","carryOut":"COUT","output":"OUT","firstCarryFrom":"OP0"}' />
+
+## Part 1: The adder's carry
+
+The starting lines already compute SUM, the full adder's sum bit, from BB (which is just B while OP0 is 0). COUT is wrong: it's always 0. Make COUT the full adder's carry out, using A, BB and CIN.
+
+Then set the chain panel to OP1 = 0, OP0 = 0 and try 28 + 14, and 200 + 100.
+
+<details>
+<summary>Check your answer</summary>
+
+`COUT = (A AND BB) OR (CIN AND (A XOR BB))`: a carry comes out when both bits are 1, or when exactly one is 1 and a carry came in. 28 + 14 gives 42. 200 + 100 gives 44 with COUT = 1, because 300 doesn't fit in 8 bits.
+
+</details>
+
+## Part 2: Subtract with the same adder
+
+Set OP0 = 1 (keeping OP1 = 0) and try 28 - 14. You shouldn't need to change anything. Why does it work?
+
+<details>
+<summary>Check your answer</summary>
+
+It gives 14. With OP0 = 1, `BB = B XOR OP0` inverts every bit of B, and the chain panel feeds OP0 into the first slice as its carry in. So the adder computes A + NOT B + 1, which is A - B in two's complement. Try 3 - 5: you get 254, the byte for -2.
+
+</details>
+
+## Part 3: The logic operations
+
+LOGIC should be A AND B when OP0 is 0, and A OR B when OP0 is 1. That's a multiplexer choosing between two results by OP0. Rewrite the LOGIC line.
+
+<details>
+<summary>Check your answer</summary>
+
+`LOGIC = (A AND B AND NOT OP0) OR ((A OR B) AND OP0)`. It computes both AND and OR, and lets OP0 pick one, the same shape as the multiplexer in the workbench project.
+
+</details>
+
+## Part 4: Choose with OP1
+
+OUT should be SUM when OP1 is 0 and LOGIC when OP1 is 1. One more multiplexer. When every row matches, the Lab says "Solved".
+
+<details>
+<summary>Check your answer</summary>
+
+`OUT = (SUM AND NOT OP1) OR (LOGIC AND OP1)`. Then in the chain panel, OP1 = 1, OP0 = 0 on 12 and 10 gives 8 (1100 AND 1010), and OP0 = 1 gives 14 (1100 OR 1010).
+
+</details>
+
+<KeyIdea>An ALU doesn't decide what to compute. It computes everything, and multiplexers pass on the result the operation code selects.</KeyIdea>
+
+## Part 5: Check it on bytes
+
+With your slice solved, use the chain panel to fill in this table before reading the answers:
+
+<TruthTable caption='Your 8-bit ALU' rowsJson='[["A", "B", "operation", "result", "carry out"], ["100", "27", "ADD", "?", "?"], ["100", "27", "SUB", "?", "?"], ["5", "9", "SUB", "?", "?"], ["240", "15", "OR", "?", "?"]]' />
+
+<details>
+<summary>Check your answer</summary>
+
+- 100 + 27 is 127, carry 0.
+- 100 - 27 is 73, carry 1 (in subtraction a carry of 1 means no borrow was needed).
+- 5 - 9 is 252, the byte for -4, carry 0 (a borrow was needed).
+- 240 OR 15 is 255.
+
+Your carry out on subtraction matches the tiny CPU's carry flag after SUB: 1 when no borrow was needed.
+
+</details>
+
+## Done when
+
+The Lab says "Solved", the chain panel agrees with the target on every byte you try, and you can explain what OP0 and OP1 each do in one sentence. Then do the assignment: add the zero flag.

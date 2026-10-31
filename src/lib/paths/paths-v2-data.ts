@@ -22,6 +22,8 @@ const PROJECT_BADGE: Record<string, string> = {
   "level-00-bits-logic/project-number-workbench": "converter",
   "level-00-bits-logic/project-byte-lab": "byte-detective",
   "level-00-bits-logic/project-half-adder": "gate-builder",
+  "level-00-bits-logic/project-gate-workbench": "nand-maker",
+  "level-00-bits-logic/project-alu": "alu-architect",
   "level-00-bits-logic/project-tiny-cpu": "cpu-tracer",
   "/projects/shellforge": "ship-it",
 };

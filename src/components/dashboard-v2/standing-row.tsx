@@ -26,7 +26,7 @@ function Step({ step }: { step: Criterion | null }) {
   );
 }
 
-const PROJECT_NAME: Record<string, string> = { "code-maker": "Codebook", cartographer: "Machine Atlas", converter: "Number workbench", "byte-detective": "Byte Lab", "gate-builder": "Half-adder", "cpu-tracer": "Tiny CPU", "ship-it": "ShellForge" };
+const PROJECT_NAME: Record<string, string> = { "code-maker": "Codebook", cartographer: "Machine Atlas", converter: "Number workbench", "byte-detective": "Byte Lab", "gate-builder": "Half-adder", "nand-maker": "Gate workbench", "alu-architect": "8-bit ALU", "cpu-tracer": "Tiny CPU", "ship-it": "ShellForge" };
 
 /** "1 of 2 steps done" for a badge not earned yet (its "means" reads as if it were). */
 function stepsDone(view: BadgeView): string {

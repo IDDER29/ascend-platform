@@ -5,6 +5,8 @@ import { COURSE1_A_BANK } from "./level-00-course1-a";
 import { COURSE1_B_BANK } from "./level-00-course1-b";
 import { COURSE2_A_BANK } from "./level-00-course2-a";
 import { COURSE2_B_BANK } from "./level-00-course2-b";
+import { COURSE3_A_BANK } from "./level-00-course3-a";
+import { COURSE3_B_BANK } from "./level-00-course3-b";
 import { LEVEL_01_BANK } from "./level-01";
 import { LEVEL_02_BANK } from "./level-02";
 import { LEVEL_03_BANK } from "./level-03";
@@ -19,6 +21,8 @@ export const PRACTICE_BANK: PracticeItem[] = [
   ...COURSE1_B_BANK,
   ...COURSE2_A_BANK,
   ...COURSE2_B_BANK,
+  ...COURSE3_A_BANK,
+  ...COURSE3_B_BANK,
   // Fresh-number cards: new numbers each review (see generated.ts).
   ...GENERATED_BANK,
   ...LEVEL_01_BANK,

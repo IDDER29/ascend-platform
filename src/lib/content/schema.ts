@@ -83,8 +83,8 @@ export const LEVELS: Record<
   "level-00-bits-logic": {
     name: "Bits & Logic",
     short: "The Groundwork",
-    totalConcepts: 35,
-    timeLabel: "~6 hr",
+    totalConcepts: 44,
+    timeLabel: "~8 hr",
   },
   "level-01-machine-memory": {
     name: "Machine & Memory",

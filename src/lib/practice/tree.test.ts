@@ -12,7 +12,7 @@ test("practiceTreeForPath maps live Foundations outline sections", () => {
   assert.ok(tree);
   assert.deepEqual(
     tree.sections.map((section) => section.id),
-    ["bits", "logic", "memory", "isa", "machine-runs"],
+    ["information", "bits", "logic", "memory", "storage", "isa", "machine-runs", "system"],
   );
   assert.deepEqual(
     tree.sections[0]?.lessons.map((lesson) => ({
@@ -23,18 +23,6 @@ test("practiceTreeForPath maps live Foundations outline sections", () => {
       {
         key: "level-00-bits-logic/what-is-a-bit",
         title: "What is a bit?",
-      },
-      {
-        key: "level-00-bits-logic/binary-and-number-bases",
-        title: "Binary & number bases",
-      },
-      {
-        key: "level-00-bits-logic/negative-numbers",
-        title: "Negative numbers: two's complement",
-      },
-      {
-        key: "level-00-bits-logic/bitwise-operations",
-        title: "Bitwise operations: AND, OR, XOR, shifts and masks",
       },
     ],
   );

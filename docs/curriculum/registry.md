@@ -3,7 +3,7 @@
 The platform's map of concepts, built from research comparing nand2tetris, Petzold's *Code*, Crash Course CS, CS:APP, CS50, MIT 6.004/6.191, Ben Eater's 8-bit computer and ACM/IEEE/AAAI CS2023, plus a 30-module architecture registry (2026-10-31). It is a planning tool, not a syllabus: every new lesson should name the concept here it teaches, and every concept here should have a home.
 
 **Where** is one of:
-- **F: course**: Foundations (live or coming soon), see `docs/superpowers/specs/2026-10-31-foundations-curriculum-design.md`.
+- **F: course**: Foundations, eight courses: Computers & Information, Binary & Data, Logic & Circuits, State & Memory, Build a CPU, Assembly Language, From Source to Machine, The Complete System. See `docs/superpowers/specs/2026-10-31-foundations-curriculum-design.md`; every blueprint lesson (F001–F106) is mapped in `src/lib/paths/foundations-outline.ts` (`covers`).
 - **SP: course**: Systems Programmer. Live topics: Machine & Memory, The C Language, Systems & Software, ShellForge. Outlined: C Basics, The C Contract, Tools, Data Structures in C, Virtual Memory, Threads & Files, Your own malloc.
 - **CA: course**: Computer Architect (soon, outlined): Performance, Pipelining, Advanced execution, Caches & memory systems, Multicore & GPUs, Verilog, Verification, RTL to silicon, Compilers & theory, A RISC-V core.
 - **Security: course**: Security Engineer (soon, outlined): Security foundations, Memory-safety bugs & defences, Side channels & hardware trust, Reliability.
@@ -18,26 +18,27 @@ Status: ✓ live · ○ planned in an outline · · not planned yet.
 ## 1. Information and representation
 | Concept | Where | Status |
 |---|---|---|
-| Bit, two states, meaning by agreement | F: Bits & Data | ✓ |
-| Binary, positional notation, hex | F: Bits & Data | ✓ |
-| Two's complement, negation, subtraction | F: Bits & Data | ✓ |
-| Finite width, overflow, wraparound | F: Bits & Data | ○ (own lesson) |
-| Bitwise AND/OR/XOR/NOT, shifts, masks | F: Bits & Data | ✓ |
-| Bytes, words, data widths, types | F: Bits & Data | ○ |
-| ASCII, Unicode, UTF-8 | F: Bits & Data | ○ |
-| Floating point (IEEE 754 basics) | F: Bits & Data | ○ |
+| Bit, two states, meaning by agreement | F: Computers & Information | ✓ |
+| Binary, positional notation, hex | F: Binary & Data | ✓ |
+| Two's complement, negation, subtraction | F: Binary & Data | ✓ |
+| Finite width, overflow, wraparound | F: Binary & Data | ○ (own lesson) |
+| Bitwise AND/OR/XOR/NOT, shifts, masks | F: Binary & Data | ✓ |
+| Bytes, words, data widths, types | F: Binary & Data | ○ |
+| ASCII, Unicode, UTF-8 | F: Binary & Data | ○ |
+| Floating point (IEEE 754 basics) | F: Binary & Data | ○ |
 | Endianness | SP: Machine & Memory | ✓ |
 | Sign/zero extension, truncation, bit fields | SP: The C Language (integer promotions and conversions) | ○ |
-| Octal, kibibytes vs kilobytes, UTF-16 | F: Bits & Data (mention) | · |
+| Kibibytes vs kilobytes | F: Binary & Data | ○ |
+| Pixels, colour, sound, file formats | F: Binary & Data | ○ |
 | Parity, checksums, error detection | Network: Network foundations | · |
 | IEEE 754 details (NaN, subnormals, rounding) | CA | · |
 
 ## 2. Electricity and the digital abstraction
 | Concept | Where | Status |
 |---|---|---|
-| Voltage ranges mean 0/1, noise margin | F: Bits & Data | ✓ |
+| Voltage ranges mean 0/1, noise margin | F: Computers & Information | ✓ |
 | Switches, relays, transistors as switches | F: Logic & Circuits | ✓ |
-| Propagation delay, why clocks have a limit | F: Memory & State | ✓ |
+| Propagation delay, why clocks have a limit | F: State & Memory | ✓ |
 | Ohm's law, CMOS, power, fan-out, metastability | CA: Performance (power), RTL to silicon | ○ (power, timing) |
 
 ## 3. Logic and circuits
@@ -53,11 +54,11 @@ Status: ✓ live · ○ planned in an outline · · not planned yet.
 ## 4. State and memory
 | Concept | Where | Status |
 |---|---|---|
-| Feedback, SR latch, D flip-flop, edge triggering | F: Memory & State | ✓ |
-| Clock, registers, load enable | F: Memory & State | ✓ |
-| Addressed RAM, address/data/write, decoder | F: Memory & State | ✓ |
-| State machines | F: Memory & State | ○ |
-| RAM vs storage (volatile vs persistent) | SP: Machine & Memory (the memory hierarchy) | ○ |
+| Feedback, SR latch, D flip-flop, edge triggering | F: State & Memory | ✓ |
+| Clock, registers, load enable | F: State & Memory | ✓ |
+| Addressed RAM, address/data/write, decoder | F: State & Memory | ✓ |
+| State machines, counters | F: State & Memory | ○ |
+| RAM vs storage, the memory hierarchy (concept) | F: The Complete System; SP: Machine & Memory (on a real machine) | ○ |
 | Counters, shift registers, setup/hold, Moore/Mealy | CA: Verilog, RTL to silicon | ○ |
 | SRAM vs DRAM, ROM, multi-port memory | CA: Caches & memory systems | ○ (DRAM) |
 
@@ -68,7 +69,7 @@ Status: ✓ live · ○ planned in an outline · · not planned yet.
 | Fetch-decode-execute, PC, IR | F: Build a CPU | ✓ |
 | Jumps, flags, conditional branches, loops | F: Build a CPU | ✓ |
 | Datapath and control, buses | F: Build a CPU | ✓ |
-| Input/output, memory-mapped I/O, interrupts (idea) | F: Build a CPU | ✓ |
+| Input/output, memory-mapped I/O, interrupts (idea) | F: The Complete System | ✓ |
 | Real CPU registers, x86-64 assembly | SP: Machine & Memory | ✓ |
 | Addressing modes, RISC/CISC, RISC-V encodings | CA: A RISC-V core | ○ |
 | Hardwired vs microprogrammed control, single vs multi-cycle | CA: Pipelining | · |
@@ -76,12 +77,13 @@ Status: ✓ live · ○ planned in an outline · · not planned yet.
 ## 6. From code to a running program
 | Concept | Where | Status |
 |---|---|---|
-| Assembly and the assembler | F: Hardware to Software | ○ |
-| Compilers vs interpreters | F: Hardware to Software | ○ |
-| Compile, assemble, link, load (concept) | F: Hardware to Software | ○ |
-| Variables in memory, read/compute/write | F: Hardware to Software | ○ |
-| Functions and the call stack (concept) | F: Hardware to Software | ○ |
-| Processes, system calls, user vs kernel (concept) | F: Hardware to Software | ○ |
+| Assembly, labels, the two-pass assembler, the stack, calls | F: Assembly Language | ○ |
+| Algorithms, languages, expressions, types | F: From Source to Machine | ○ |
+| Compile, assemble, link, load; reading real compiler output | F: From Source to Machine | ○ |
+| Variables, arrays, pointers and layout in memory | F: From Source to Machine | ○ |
+| Functions and the call stack (concept) | F: From Source to Machine | ○ |
+| Boot, OS services, system calls, processes, virtual addresses, files (concept) | F: The Complete System | ○ |
+| Networks, concurrency, protection (concept) | F: The Complete System | ○ |
 | Object files, ELF, symbols, relocation, dynamic linking, ABIs | SP: Tools (libraries, objdump/readelf/nm), The C Language (separate compilation) | ○ |
 | Compiler internals (IR, SSA, register allocation) | CA: Compilers & theory | ○ |
 
@@ -175,7 +177,7 @@ Databases, distributed systems, ethics and history of computing (worth a short p
 Side paths: Python, Linux, Network and AI branch off Foundations; Security branches off Systems Programmer.
 
 ## What to write next, in order
-1. **Foundations' coming-soon lessons** (18 items; Build a CPU is complete), led by From Hardware to Software.
+1. **Foundations' coming-soon items** (95 lessons and projects across eight courses), course by course: Computers & Information first, since it opens the path.
 2. **C Basics**, so The C Language no longer assumes them.
 3. **Tools** (gcc, make, gdb, sanitizers), which every later C lesson leans on.
 4. **The C Contract** and the coming-soon lessons in The C Language.

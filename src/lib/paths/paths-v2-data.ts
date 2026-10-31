@@ -38,13 +38,23 @@ function sectionsFor(levelId: LevelId, lessons: PathLessonInfo[]): PathInput["co
           blurb: s.blurb ?? "",
           slugs: s.items.flatMap((i) => (i.kind === "live" ? [i.slug] : [])),
           upcoming: foundationsUpcoming()[s.id] ?? [],
+          // Live lessons and coming-soon items mix in Foundations, so keep the outline's order.
+          order: s.items.flatMap((i) =>
+            i.kind === "live" ? [`lesson:${levelId}/${i.slug}`] : i.kind === "soon" ? [`soon:${i.id}`] : [],
+          ),
         }))
       : (courseOutlineForLevel(levelId) ?? []).map((s) => ({
           id: s.id,
           title: s.title,
           blurb: s.blurb ?? "",
           slugs: s.items.map((i) => i.slug),
-          upcoming: (s.upcoming ?? []).map((i) => ({ id: i.id, title: i.title, project: Boolean(i.project) })),
+          upcoming: (s.upcoming ?? []).map((i) => ({
+            id: i.id,
+            title: i.title,
+            project: Boolean(i.project),
+            description: i.description,
+          })),
+          order: undefined as string[] | undefined,
         }));
   const sections = named
     .map((s) => ({
@@ -53,6 +63,7 @@ function sectionsFor(levelId: LevelId, lessons: PathLessonInfo[]): PathInput["co
       blurb: s.blurb,
       lessonKeys: s.slugs.map((slug) => `${levelId}/${slug}`).filter((k) => inLevel.some((l) => l.key === k)),
       upcoming: s.upcoming,
+      order: s.order,
     }))
     .filter((s) => s.lessonKeys.length > 0 || s.upcoming.length > 0);
   const used = new Set(sections.flatMap((s) => s.lessonKeys));
@@ -98,7 +109,12 @@ function pathInput(p: PathDef, lessons: PathLessonInfo[]): PathInput {
               title: s.title,
               blurb: s.blurb ?? "",
               lessonKeys: [],
-              upcoming: s.items.map((i) => ({ id: i.id, title: i.title, project: Boolean(i.project) })),
+              upcoming: s.items.map((i) => ({
+                id: i.id,
+                title: i.title,
+                project: Boolean(i.project),
+                description: i.description,
+              })),
             })),
       };
     }),
@@ -119,7 +135,20 @@ function lessonInfos(): PathLessonInfo[] {
     href: lessonHref(meta.level, meta.slug),
     timeMin: meta.timeMin,
     project: meta.slug.startsWith("project-"),
+    description: lessonDescription(meta.level, meta.slug),
   }));
+}
+
+/** A live lesson's one-sentence description, from its outline. */
+function lessonDescription(level: string, slug: string): string | undefined {
+  if (level === FOUNDATIONS_LEVEL) {
+    for (const s of FOUNDATIONS_OUTLINE) {
+      for (const i of s.items) if (i.kind === "live" && i.slug === slug) return i.description;
+    }
+    return undefined;
+  }
+  return (courseOutlineForLevel(level as LevelId) ?? []).flatMap((s) => s.items).find((i) => i.slug === slug)
+    ?.description;
 }
 
 const topicOf = (a: { rules: { kind: string; topic?: string }[] }) => a.rules.find((r) => r.kind === "topic")?.topic;

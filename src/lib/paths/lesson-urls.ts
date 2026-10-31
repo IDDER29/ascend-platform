@@ -2,14 +2,14 @@
  * Odin-style public lesson URLs:
  * `/lessons/{path}-{courseKey}-{lessonSlug}`
  *
- * Example: `/lessons/foundations-bits-what-is-a-bit`
+ * Example: `/lessons/foundations-information-what-is-a-bit`
  *
  * Does not import `catalog.ts` (avoids cycles with path helpers).
  */
 
 import { getAllLessons } from "@/lib/content/lessons";
 import type { LevelId } from "@/lib/content/schema";
-import { FOUNDATIONS_OUTLINE } from "@/lib/paths/foundations-outline";
+import { FOUNDATIONS_MOVED, FOUNDATIONS_OUTLINE } from "@/lib/paths/foundations-outline";
 import { courseOutlineForLevel } from "@/lib/paths/course-outlines";
 
 export type LessonPublicRef = {
@@ -54,6 +54,8 @@ function joinPublicSlug(
 let cache: {
   byPublic: Map<string, LessonPublicRef>;
   byLevelSlug: Map<string, LessonPublicRef>;
+  /** Old public slugs of lessons that moved section → the lesson's current ref. */
+  moved: Map<string, LessonPublicRef>;
 } | null = null;
 
 function levelSlugKey(level: string, slug: string) {
@@ -129,6 +131,13 @@ function buildIndex() {
     }
   }
 
+  const moved = new Map<string, LessonPublicRef>();
+  for (const [slug, oldSection] of Object.entries(FOUNDATIONS_MOVED)) {
+    const ref = byLevelSlug.get(levelSlugKey("level-00-bits-logic", slug));
+    const old = joinPublicSlug("foundations", oldSection, slug);
+    if (ref && old !== ref.publicSlug && !byPublic.has(old)) moved.set(old, ref);
+  }
+
   for (const lesson of getAllLessons()) {
     const key = levelSlugKey(lesson.meta.level, lesson.meta.slug);
     if (byLevelSlug.has(key)) continue;
@@ -136,7 +145,7 @@ function buildIndex() {
     register("curriculum", courseKey, lesson.meta.level, lesson.meta.slug);
   }
 
-  return { byPublic, byLevelSlug };
+  return { byPublic, byLevelSlug, moved };
 }
 
 function index() {
@@ -149,6 +158,12 @@ export function lessonHref(level: string, slug: string): string {
   const ref = index().byLevelSlug.get(levelSlugKey(level, slug));
   if (ref) return `/lessons/${ref.publicSlug}`;
   return `/lessons/curriculum-${level}-${slug}`;
+}
+
+/** Where an old lesson URL now lives, if the lesson moved section; null otherwise. */
+export function movedLessonHref(publicSlug: string): string | null {
+  const ref = index().moved.get(publicSlug);
+  return ref ? `/lessons/${ref.publicSlug}` : null;
 }
 
 export function resolveLessonPublicSlug(

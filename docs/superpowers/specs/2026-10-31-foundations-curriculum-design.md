@@ -1,5 +1,15 @@
 # Foundations curriculum: five courses (2026-10-31)
 
+## Update: eight courses, from the curriculum blueprint (2026-10-31)
+The blueprint in `docs/curriculum/sugestion/` (v2: 8 courses, 106 lessons F001–F106, a guided lab, a core milestone and an optional extension per course, plus a required real-C task) replaces the five-course plan below. Decisions:
+
+- **All 106 lessons have a home.** Each outline item lists the blueprint ids it `covers`; a live lesson that already teaches several (Binary & number bases covers F010–F012 and F014) stands for all of them. `src/lib/paths/outline-descriptions.test.ts` checks every id and project has exactly one home.
+- **Eight courses**: Computers & Information, Binary & Data, Logic & Circuits, State & Memory, Build a CPU, Assembly Language, From Source to Machine, The Complete System (`catalog.ts`). 17 live items, 95 coming soon.
+- **Every outline item has a one-sentence description**, shown under its title on the path pages so a learner can read what a lesson teaches without opening it. This applies to every path, not just Foundations.
+- **Moved lessons keep their links**: What is a bit? (now Computers & Information), Memory as numbered boxes (State & Memory, Memory and storage) and Input and output (The Complete System) redirect from their old URLs (`FOUNDATIONS_MOVED`).
+- **Projects are things a learner builds**, not platform features: the Machine Atlas becomes "map a computer you use"; the 8-bit ALU replaces the 4-bit calculator; the memory board, the tiny CPU, an assembler, a tiny-language translator and inspecting real compiled C follow the blueprint. Optional extensions are titled "Optional project".
+- **One machine, not FS-8 (for now).** The blueprint's FS-8 (four registers, two-byte instructions, a stack, CALL/RET, IN/OUT) is not adopted; the tiny CPU stays, since live lessons and tests use it. Assembly Language needs a stack, calls and input, so before that course is written the tiny CPU gets a tested, versioned extension (a stack pointer, PUSH/POP, CALL/RET, IN), following the blueprint's rules: one specification, golden tests, faults that change nothing.
+
 ## Goal
 Foundations is the shared base of every path (Systems/C, OS, Linux, networking, Python/AI). It should leave a beginner with no background able to explain, from the bottom up, how a computer stores data, computes, remembers, runs instructions, and how code they write becomes a running program, so the C and OS material that follows is never magic.
 

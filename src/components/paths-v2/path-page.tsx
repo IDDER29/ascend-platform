@@ -114,7 +114,7 @@ function ItemRow({ item }: { item: PathItem }) {
     <li>
       <Link
         href={item.href}
-        className={`-mx-2 flex items-center gap-3 rounded-xl px-2 py-2 no-underline hover:bg-[var(--coach-tint-neutral-bg)] ${
+        className={`-mx-2 flex items-start gap-3 rounded-xl px-2 py-2 no-underline hover:bg-[var(--coach-tint-neutral-bg)] ${
           item.current ? "bg-[var(--coach-tint-lime-bg)] hover:bg-[var(--coach-tint-lime-bg)]" : ""
         }`}
       >
@@ -135,7 +135,12 @@ function ItemRow({ item }: { item: PathItem }) {
               <span className="ml-2 text-[12.5px] font-medium text-[var(--coach-ink-secondary)]">Up next</span>
             )}
           </span>
-          <span className="block text-[12.5px] text-[var(--coach-ink-muted)]">
+          {item.description && (
+            <span className="mt-0.5 block text-[13px] leading-snug text-[var(--coach-ink-secondary)] [text-wrap:pretty]">
+              {item.description}
+            </span>
+          )}
+          <span className="mt-0.5 block text-[12.5px] text-[var(--coach-ink-muted)]">
             {item.project ? "Project" : "Lesson"} · {item.timeMin} min{item.done ? " · done" : ""}
           </span>
         </span>
@@ -172,7 +177,7 @@ function MilestoneMark({ text, reached }: { text: string; reached: boolean }) {
 function UpcomingRow({ item }: { item: UpcomingItem }) {
   const Icon = item.project ? CircuitBoard : FileText;
   return (
-    <li className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-2 opacity-70">
+    <li className="-mx-2 flex items-start gap-3 rounded-xl px-2 py-2 opacity-80">
       <span
         aria-hidden
         className="flex size-7 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-[var(--coach-border-strong)] text-[var(--coach-ink-muted)]"
@@ -183,7 +188,15 @@ function UpcomingRow({ item }: { item: UpcomingItem }) {
         <span className="block text-[14.5px] font-semibold leading-snug text-[var(--coach-ink-secondary)]">
           {item.title}
         </span>
-        <span className="block text-[12.5px] text-[var(--coach-ink-muted)]">{item.project ? "Project" : "Lesson"}</span>
+        {item.description && (
+          <span className="mt-0.5 block text-[13px] leading-snug text-[var(--coach-ink-muted)] [text-wrap:pretty]">
+            {item.description}
+          </span>
+        )}
+        <span className="mt-0.5 block text-[12.5px] text-[var(--coach-ink-muted)]">
+          {item.project ? "Project" : "Lesson"}
+          {item.timeMin ? ` · about ${item.timeMin} min` : ""}
+        </span>
       </span>
       <span className="shrink-0 rounded-full bg-[var(--coach-tint-neutral-bg)] px-2 py-0.5 text-[11.5px] font-semibold text-[var(--coach-ink-muted)]">
         Coming soon
@@ -284,12 +297,13 @@ function CourseCard({ course, index }: { course: PathCourse; index: number }) {
             </h3>
             {s.blurb && <p className="m-0 text-[13px] leading-snug text-[var(--coach-ink-muted)]">{s.blurb}</p>}
             <ul className="m-0 mt-1 flex list-none flex-col gap-0.5 p-0">
-              {s.items.map((item) => (
-                <ItemRow key={item.key} item={item} />
-              ))}
-              {s.upcoming.map((item) => (
-                <UpcomingRow key={item.id} item={item} />
-              ))}
+              {s.entries.map((e) =>
+                e.kind === "lesson" ? (
+                  <ItemRow key={e.item.key} item={e.item} />
+                ) : (
+                  <UpcomingRow key={e.item.id} item={e.item} />
+                ),
+              )}
             </ul>
           </div>
         ))}

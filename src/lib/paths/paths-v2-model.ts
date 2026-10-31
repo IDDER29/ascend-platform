@@ -8,7 +8,15 @@ import { CREST_OF } from "@/lib/achievements/scrolls-model";
 import type { CrestId } from "@/lib/achievements/catalog";
 import type { LevelId } from "@/lib/content/schema";
 
-export type PathLessonInfo = { key: string; title: string; href: string; timeMin: number; project: boolean };
+export type PathLessonInfo = {
+  key: string;
+  title: string;
+  href: string;
+  timeMin: number;
+  project: boolean;
+  /** One sentence from the outline: what the lesson teaches, readable without opening it. */
+  description?: string;
+};
 
 export type PathInput = {
   slug: string;
@@ -36,13 +44,23 @@ export type PathInput = {
     /** A milestone reached once this course is done. */
     milestone?: string;
     /** Named sections of the topic, each with its lessons (keys, in order). */
-    sections: { id: string; title: string; blurb: string; lessonKeys: string[]; upcoming?: UpcomingItem[] }[];
+    sections: {
+      id: string;
+      title: string;
+      blurb: string;
+      lessonKeys: string[];
+      upcoming?: UpcomingItem[];
+      /** Live lessons and coming-soon items in outline order ("lesson:<key>" / "soon:<id>"); else lessons first. */
+      order?: string[];
+    }[];
   }[];
 };
 
 export type PathItem = PathLessonInfo & { done: boolean; current: boolean };
 /** An outlined lesson or project that isn't written yet ("Coming soon"). */
-export type UpcomingItem = { id: string; title: string; project: boolean };
+export type UpcomingItem = { id: string; title: string; project: boolean; description?: string; timeMin?: number };
+/** One row of a section, in outline order. */
+export type SectionEntry = { kind: "lesson"; item: PathItem } | { kind: "soon"; item: UpcomingItem };
 export type PathSection = {
   id: string;
   title: string;
@@ -50,6 +68,8 @@ export type PathSection = {
   items: PathItem[];
   done: number;
   upcoming: UpcomingItem[];
+  /** Every row, live and coming soon, in outline order. */
+  entries: SectionEntry[];
 };
 export type PathCourse = {
   id: string;
@@ -105,6 +125,21 @@ export type PathsV2Input = {
   shipped: ReadonlySet<string>;
 };
 
+/** A section's rows in outline order; without an order, its live lessons come first. */
+function sectionEntries(items: PathItem[], upcoming: UpcomingItem[], order?: string[]): SectionEntry[] {
+  const lessons: SectionEntry[] = items.map((item) => ({ kind: "lesson", item }));
+  const soon: SectionEntry[] = upcoming.map((item) => ({ kind: "soon", item }));
+  if (!order) return [...lessons, ...soon];
+  const byRef = new Map<string, SectionEntry>([
+    ...items.map((item): [string, SectionEntry] => [`lesson:${item.key}`, { kind: "lesson", item }]),
+    ...upcoming.map((item): [string, SectionEntry] => [`soon:${item.id}`, { kind: "soon", item }]),
+  ]);
+  const ordered = order.map((ref) => byRef.get(ref)).filter((e): e is SectionEntry => Boolean(e));
+  // Anything the order leaves out still shows, at the end.
+  const listed = new Set(ordered);
+  return [...ordered, ...[...lessons, ...soon].filter((e) => ![...listed].some((x) => x.item === e.item))];
+}
+
 export function buildPathViews(input: PathsV2Input): PathView[] {
   const lessonByKey = new Map(input.lessons.map((l) => [l.key, l]));
   const doneAt = new Map(input.completions.map((c) => [c.key, c.completedAt]));
@@ -123,13 +158,15 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
             .map((k) => lessonByKey.get(k))
             .filter((l): l is PathLessonInfo => Boolean(l))
             .map((l) => ({ ...l, done: doneAt.has(l.key), current: l.key === firstOpen }));
+          const upcoming = s.upcoming ?? [];
           return {
             id: s.id,
             title: s.title,
             blurb: s.blurb,
             items,
             done: items.filter((i) => i.done).length,
-            upcoming: s.upcoming ?? [],
+            upcoming,
+            entries: sectionEntries(items, upcoming, s.order),
           };
         });
         const items = sections.flatMap((s) => s.items);

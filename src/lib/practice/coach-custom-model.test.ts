@@ -61,13 +61,14 @@ test("buildCustomLessons groups lessons by path and section in curriculum order"
   assert.deepEqual(
     paths.map((p) => [p.pathSlug, p.cardCount, p.sections.map((s) => [s.id, s.lessons.map((l) => l.key)])]),
     [
-      ["foundations", 7, [["bits", [A, B]], ["logic", [C]]]],
+      ["foundations", 7, [["information", [A]], ["bits", [B]], ["logic", [C]]]],
       ["systems-programmer", 1, [["cpu-instructions", [D]]]],
     ],
   );
   assert.deepEqual(paths[0]!.lessonKeys, [A, B, C]);
 
-  const [a, b] = paths[0]!.sections[0]!.lessons;
+  const [a] = paths[0]!.sections[0]!.lessons;
+  const [b] = paths[0]!.sections[1]!.lessons;
   assert.deepEqual(
     { title: a!.title, total: a!.total, due: a!.due, weak: a!.weak, seen: a!.seen, tag: a!.tag },
     { title: "What is a bit?", total: 3, due: 1, weak: 1, seen: 3, tag: "needs-work" },

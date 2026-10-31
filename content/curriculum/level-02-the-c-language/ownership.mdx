@@ -1,0 +1,126 @@
+---
+title: "Ownership: who frees what"
+level: level-02-the-c-language
+slug: ownership
+order: 8
+timeMin: 10
+learningOutcomes:
+- Decide, for each block from malloc, which single part of the program owns it and must free it
+- Write a function contract that says whether a pointer is owned (the receiver must free it) or borrowed (it must not)
+- Recognise a leak, a double free and a use after free in code and in an AddressSanitizer report
+- Explain why a borrowed pointer becomes invalid the moment its owner frees the block
+primer:
+- title: "Dynamic memory"
+  type: doc
+  meta: Reread · 3 min · malloc, free, and why every malloc needs a free.
+  essential: true
+- title: "Undefined behaviour"
+  type: doc
+  meta: Reread · 3 min · dangling pointers, the bug this lesson prevents.
+  essential: false
+knowledgeCheck:
+- question: make_greeting returns a pointer from malloc. Whose job is it to free that block, and how would a reader know?
+  answer: "The caller's. make_greeting hands ownership to whoever calls it, and its comment says so: \"The caller owns the result and must free it.\" C has no syntax for ownership, so the function's contract (its comment and its name) is the only place it can be written down."
+  jumpToId: owners-and-borrowers
+  jumpToLabel: Owners and borrowers
+- question: In the double-free program, finish and main both call free(data). Which one is wrong, and how would you decide?
+  answer: "Either could be right, but not both. The fix is to pick one owner and document it: if finish takes ownership, its contract says so and main stops using data after the call; if main keeps ownership, finish only borrows data and never frees it."
+  jumpToId: two-owners-a-double-free
+  jumpToLabel: "Two owners: a double free"
+assignment:
+  instruction: "Take a C program you've written that uses malloc (or write a small one that builds an array of strings). For every malloc, write one comment saying who owns the block and where it's freed. Then compile with -fsanitize=address -g and run it: fix every report until it runs clean."
+  resourceName: "AddressSanitizer documentation"
+  resourceType: doc
+  resourceUrl: 'https://github.com/google/sanitizers/wiki/AddressSanitizer'
+additionalResources:
+- title: "cppreference: free"
+  type: doc
+  meta: what free promises, and the undefined cases
+  url: 'https://en.cppreference.com/w/c/memory/free'
+- title: "Clang LeakSanitizer documentation"
+  type: doc
+  meta: how leak reports are found at exit
+  url: 'https://clang.llvm.org/docs/LeakSanitizer.html'
+whyThisMatters: "Leaks, double frees and use-after-free bugs are among the most common and most dangerous bugs in C programs; many security holes start as one of them. They almost always come from the same root cause: nobody decided who owns a block. Deciding, and writing it down, prevents all three."
+---
+
+Every block from `malloc` must be freed exactly once, after its last use. The language won't track that for you. **Ownership** is the discipline that does: for each block, one part of the program is its owner, responsible for freeing it, and everyone else only borrows it.
+
+## Owners and borrowers
+
+`make_greeting` allocates a string and returns it. `shout` only reads a string. Read their comments, then run the program.
+
+<CRun program="c-language/own-contract" caption='A function that hands over ownership, and one that borrows' />
+
+Three rules make this program correct:
+
+- **The creator hands ownership over.** `make_greeting` allocated the block but returns it, so the caller becomes the owner. Its comment says so.
+- **Borrowers don't free.** `shout` takes `const char *`: it reads the string and returns. It can be called twice because it never frees.
+- **The owner frees once, after the last use.** `main` frees `g` after both calls to `shout`.
+
+C has no keyword for any of this. The contract lives in comments, in names (`make_`, `create_`, `copy_` suggest the caller owns the result) and in `const`, which signals "I only read this".
+
+<KeyIdea>Every block has exactly one owner, which frees it once. Everyone else borrows: they may use the pointer, but never free it or keep it past the owner's free.</KeyIdea>
+
+## No owner: a leak
+
+Here nobody owns the copies, so nobody frees them. The program still prints the right words. It was compiled with `-fsanitize=address -g`, which adds AddressSanitizer: it checks every memory access while the program runs, and at exit LeakSanitizer reports what was never freed.
+
+<CRun program="c-language/own-leak" caption='Three copies, nobody frees them' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The words print fine, then LeakSanitizer reports "15 byte(s) leaked in 3 allocation(s)": 5 bytes for "leak" plus its zero, three times. It even names where they came from: `copy_word` at `main.c:6`, called from `main` at line 13. The exit status is 1, so a test script would notice. (The long hex numbers are addresses; they change from run to run.)
+
+A leak in a short program is harmless because the OS reclaims everything at exit. In a server that runs for months, one leak per request eventually uses up memory. The fix is one line, `free(w);` at the end of the loop body: `main` owns each copy, because `copy_word`'s name says it returns a new one.
+
+</details>
+
+## Two owners: a double free
+
+`finish` frees `data`, and so does `main`. Both think they own it.
+
+<CRun program="c-language/own-double-free" caption='Freed by two owners' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+"finishing with 42" prints, then AddressSanitizer stops the program: "attempting double-free", at `main.c:16`, the second `free`. It also shows where the block was freed first (in `finish`) and where it was allocated.
+
+Without AddressSanitizer a double free is undefined behaviour: it can corrupt the allocator's bookkeeping, crash much later in unrelated code, or be exploited by an attacker. The fix is a decision. If `finish` takes ownership, say so in its contract and don't touch `data` in `main` afterwards. Usually it's clearer for `main`, which allocated it, to keep ownership, so remove the `free` from `finish` and make it borrow (`const int *data`).
+
+</details>
+
+## A borrower outlives the owner: use after free
+
+`best` borrows a pointer into the block. Then the owner frees the block.
+
+<CRun program="c-language/own-use-after-free" caption='Reading through a borrowed pointer after the free' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+gcc 15 already warns at compile time: "pointer 'best' used after 'free'". At run time AddressSanitizer reports a heap-use-after-free: a read of 4 bytes at `main.c:12`, inside a 12-byte block that was freed at line 11.
+
+A borrowed pointer is only valid while its owner keeps the block alive. `free(scores)` ended the block's life, and `best`, which points into it, became dangling at the same moment, even though `best` itself was never touched. Without AddressSanitizer this program might print 90, print garbage or crash, depending on what the allocator did with the freed memory. That's why use-after-free bugs hide so well: they often "work" in testing.
+
+Fix: read through `best` before the free, or keep the block alive until the last borrower is done.
+
+</details>
+
+## Writing contracts down
+
+For any function that takes or returns a pointer to allocated memory, decide and document one of three things:
+
+| Contract | Example | Who frees |
+|---|---|---|
+| Returns an owned pointer | `char *make_greeting(const char *name)` | the caller |
+| Takes ownership | `void queue_push(Queue *q, char *item)` | the function (or the queue, later) |
+| Borrows | `void shout(const char *s)` | the caller, as before |
+
+Write each down in the comment above the function. When you read someone else's C, look for exactly this in their comments and docs: the C standard library does the same (`strdup`'s result is yours to free; `getenv`'s result is not).
+
+## Done when
+
+You can say who owns every block in a program, write a contract comment for a function that returns or takes a pointer, and read the three AddressSanitizer reports above: a leak, a double free and a use after free.

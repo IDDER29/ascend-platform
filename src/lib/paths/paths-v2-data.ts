@@ -45,6 +45,7 @@ const PROJECT_BADGE: Record<string, string> = {
   "level-00-bits-logic/project-smaller-circuit": "minimizer",
   "level-00-bits-logic/project-tiny-cpu": "cpu-tracer",
   "level-04-c-basics/project-guessing-game": "game-maker",
+  "level-05-c-contract/project-ub-hunt": "ub-hunter",
   "/projects/shellforge": "ship-it",
 };
 

@@ -1,0 +1,132 @@
+---
+title: "Project: Hunt the undefined behaviour"
+level: level-05-c-contract
+slug: project-ub-hunt
+order: 8
+timeMin: 45
+learningOutcomes:
+- Read a small C program and list every place it may have undefined behaviour, before running anything
+- Use compiler warnings at -O2 and the address and undefined-behaviour sanitizers to confirm each one
+- Explain why a program with undefined behaviour can print plausible, wrong or different answers on different builds
+- Fix each case so the program is correct for every input, and prove it with a clean sanitizer run
+primer:
+- title: "Undefined behaviour, in depth"
+  type: doc
+  meta: Reread · 3 min · what the standard does and doesn't promise.
+  essential: true
+- title: "Signed overflow and shifts"
+  type: doc
+  meta: Reread · 2 min · one of the five bugs here.
+  essential: true
+- title: "Lifetime: dangling pointers and uninitialised reads"
+  type: doc
+  meta: Reread · 2 min · two more of them.
+  essential: true
+knowledgeCheck:
+- question: "The buggy program printed average: 82 at -O0 and average: 81 at -O2 for the same five scores. Which is right, and why did they differ?"
+  answer: "81 is right (406 / 5). total was never initialised, so it started with whatever was in its memory or register: at -O0 that happened to add 4 or so, at -O2 it happened to be 0. Reading an uninitialised variable is undefined, so neither run promised anything."
+  jumpToId: part-2-what-the-builds-say
+  jumpToLabel: "Part 2: What the builds say"
+- question: Why does the fixed program compute the bonus as 1LL << (best / 3) and also reject scores above 100?
+  answer: "Shifting a signed value so far that the result doesn't fit is undefined: 1 << 31 doesn't fit in an int. 1LL has 63 value bits, and rejecting scores above 100 keeps best / 3 at most 33, so the shift is always defined."
+  jumpToId: part-3-fix-every-one
+  jumpToLabel: "Part 3: Fix every one"
+assignment:
+  instruction: "Take one C program you wrote in C Basics or The C Language and build it with -O2 -Wall -Wextra, then with -O0 -g -fsanitize=address,undefined, and run it on normal, empty and too-long input. Fix everything that's reported, and write one sentence per fix saying which rule of the C contract it was breaking."
+  resourceName: 'GCC: Instrumentation options (sanitizers)'
+  resourceType: doc
+  resourceUrl: 'https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html'
+additionalResources:
+- title: "AddressSanitizer (Google sanitizers wiki)"
+  type: doc
+  meta: what ASan finds and how its reports read
+  url: 'https://github.com/google/sanitizers/wiki/AddressSanitizer'
+- title: "John Regehr: A Guide to Undefined Behavior in C and C++"
+  type: doc
+  meta: the classic three-part essay
+  url: 'https://blog.regehr.org/archives/213'
+whyThisMatters: "Undefined behaviour hides in code that looks fine and passes the test you tried. Hunting it on purpose, with the compiler's warnings and the sanitizers as your instruments, is how professional C programmers keep crashes and security holes out of shipped code."
+---
+
+This program reads up to 8 scores and prints how many there were, their average, the best one with its letter grade, and a bonus that doubles every 3 points. It compiles. With five ordinary scores it even prints the right count and the right best score. It also contains **five** pieces of undefined behaviour.
+
+## Part 1: Read it first
+
+Read the program and list every line that may be undefined, and for which inputs. Don't run anything yet. The build below is just to show it compiles; scroll past its output for now.
+
+<CRun program="c-contract/ub-hunt-warnings" caption='The program, built with -O2 -Wall -Wextra' />
+
+<details>
+<summary>Check your answer</summary>
+
+1. **`return label;`** returns the address of a local array. Its lifetime ends when `grade` returns, so the caller gets a dangling pointer.
+2. **`while (n <= MAX_SCORES ...`** lets `scanf` write `scores[8]`, one past the end, when 9 or more scores are typed.
+3. **`int total;`** is never initialised, and `total += ...` reads it.
+4. **`1 << (best / 3)`**: for a best of 93 or more the shift is 31, and 2 to the 31 doesn't fit in an `int`. For a score of 96 or more it's 32, a shift by the full width, which is also undefined.
+5. **`total / n`** divides by zero when there are no scores, and `int best = scores[0]` reads an uninitialised element then too.
+
+</details>
+
+## Part 2: What the builds say
+
+The build above is **-O2 -Wall -Wextra**. gcc warned about two of the five: the returned local address, and `total` being used uninitialised. (That second warning needs optimisation: gcc's data-flow analysis only runs then, and an -O0 build of the same file stays silent.) The output looks almost right, but `best: 95 ((null))` and the negative bonus are clues: gcc replaced the dangling pointer with a null pointer, which glibc's `printf` prints as `(null)`.
+
+Now the same program built with **AddressSanitizer and UndefinedBehaviorSanitizer**, which check the program while it runs, on three inputs. Predict what each run reports before you open it.
+
+<CRun program="c-contract/ub-hunt-five" caption='Five scores, with sanitizers' predict />
+
+<CRun program="c-contract/ub-hunt-many" caption='Nine scores, with sanitizers' predict />
+
+<CRun program="c-contract/ub-hunt-empty" caption='No scores, with sanitizers' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- **Five scores:** UBSan reports the shift: "left shift of 1 by 31 places cannot be represented in type 'int'", at `main.c:34`. The average comes out as a large negative number here, because `total` started with garbage in this build. With -O2 it printed 81, and at -O0 without sanitizers 82: three builds, three answers, and only 81 is right (406 / 5). That's undefined behaviour: the program has no single meaning.
+- **Nine scores:** ASan stops the program at the 9th `scanf`, with a **stack-buffer-overflow** WRITE of 4 bytes at `main.c:22`. Without ASan, that write would silently overwrite whatever lives next to `scores`.
+- **No scores:** UBSan reports **division by zero** at `main.c:37`, and the CPU's divide instruction then raises a floating-point exception (the signal is called that even for integers), which stops the program.
+
+None of the tools found everything on its own. Warnings found two bugs without running anything. The sanitizers found three more, but only for the inputs that triggered them. That's why the hunt needs both, plus inputs chosen to reach the edges: empty, too many and the largest values.
+
+</details>
+
+## Part 3: Fix every one
+
+Write down a fix for each of the five, then compare with this version. It's built with both sanitizers and given 10 values, one of them out of range.
+
+<CRun program="c-contract/ub-hunt-fixed" caption='The fixed program, with sanitizers' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+1. `grade` returns string literals. They have **static storage duration**: they live for the whole program, so returning a pointer to one is safe.
+2. Values are read into a temporary, and stored only while `n < MAX_SCORES`. Extra scores are reported and skipped, never written past the end.
+3. `int total = 0;`.
+4. Scores outside 0 to 100 are rejected, so `best / 3` is at most 33, and the shift is done on `1LL`, which has 63 value bits. 2 to the 33 fits easily.
+5. No scores means "no scores" and exit status 1, before `scores[0]` or the division is touched. Here's that path, also under both sanitizers:
+
+<CRun program="c-contract/ub-hunt-fixed-empty" caption='The fixed program, no scores' />
+
+The sanitizers report nothing for either input, and the average of the 8 accepted scores (622 / 8) is 77. A clean run proves only that these inputs are safe. The reasoning in each fix is what makes every input safe.
+
+</details>
+
+## Part 4: Say why it was legal to break
+
+For two of the five bugs, say what the compiler was *allowed* to do because the behaviour was undefined. Use what you saw.
+
+<details>
+<summary>Check your answer</summary>
+
+- **The dangling pointer:** the standard says nothing about what happens when you use a pointer to an object whose lifetime is over, so gcc was free to return a null pointer instead of the address. It did, and that's why the output said `(null)`. A different compiler might return the real address and print garbage, or crash.
+- **The uninitialised `total`:** an uninitialised automatic variable has an indeterminate value, and reading it is undefined here, so gcc can use whatever is in the register or memory it picked. At -O0 and -O2 that happened to differ, and the averages did too.
+
+Any of the other three works too: an overflowing shift may produce any value, an out-of-bounds write may corrupt anything, and division by zero may crash or not. The compiler isn't misbehaving in any of these cases: the program left the contract.
+
+</details>
+
+<KeyIdea>Hunt undefined behaviour by reading first, then with -O2 warnings and the address and undefined-behaviour sanitizers on edge-case inputs. Fix each case by reasoning about every input, not just the ones you tried.</KeyIdea>
+
+## Done when
+
+You've found all five by reading, matched each to a warning or a sanitizer report, fixed them, and explained what undefined behaviour allowed the compiler to do in two cases.

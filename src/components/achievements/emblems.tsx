@@ -29,6 +29,16 @@ export function CrestArt({ crest }: { crest: CrestId }) {
           <path d="M21 24h6" />
         </>
       );
+    // The C Contract: a contract page with a wax seal.
+    case "seal":
+      return (
+        <>
+          <rect x="11" y="8" width="21" height="27" rx="2" />
+          <path d="M16 15h11M16 20h11M16 25h6" />
+          <circle cx="32" cy="33" r="6" />
+          <path d="M29 38.5l-2 5.5M35 38.5l2 5.5" />
+        </>
+      );
     // The C Language: a pointer (*) aiming into a box.
     case "pointer":
       return (

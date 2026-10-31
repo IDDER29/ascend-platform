@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
-import { allProgramIds, PROGRAMS_DIR, programHash, type ProgramRun } from "./hash";
+import { allProgramIds, PROGRAM_ID, PROGRAMS_DIR, programHash, type ProgramRun } from "./hash";
 
 function lessonFiles(dir = path.join(process.cwd(), "content", "curriculum")): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
@@ -24,6 +24,7 @@ test("every CRun tag in a lesson names a program that exists", () => {
   for (const file of lessonFiles()) {
     for (const m of readFileSync(file, "utf8").matchAll(/<CRun\b[^>]*\bprogram="([^"]+)"/g)) {
       assert.ok(ids.has(m[1]), `${path.basename(file)}: no program ${m[1]}`);
+      assert.match(m[1], PROGRAM_ID, `${path.basename(file)}: ${m[1]} isn't a valid program id`);
     }
   }
 });

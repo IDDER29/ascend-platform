@@ -1,0 +1,230 @@
+---
+title: "What the optimiser assumes about your code"
+level: level-05-c-contract
+slug: what-the-optimiser-assumes
+order: 7
+timeMin: 11
+learningOutcomes:
+- Explain the optimiser's bargain, that your program never has undefined behaviour, and how it reasons backwards from that assumption
+- Explain how an out-of-bounds read let gcc decide a search always succeeds
+- Show why a null check placed after a dereference can be deleted, and write the check so it survives
+- State what C17 6.8.5p6 lets a compiler assume about loops, and what gcc actually does with it in C
+primer:
+- title: "Signed overflow and shifts"
+  type: doc
+  meta: Reread · 3 min · the overflow check gcc removed.
+  essential: true
+- title: "Reading what the compiler wrote"
+  type: doc
+  meta: "Machine & Memory · reading -O0 and -O2 listings."
+  essential: false
+knowledgeCheck:
+- question: "Why did the -O2 build of in_table say 99 is in a table that holds 10, 20, 30 and 40?"
+  answer: "The loop reads table[4] when i reaches 4, which is out of bounds and undefined. gcc assumes that never happens, so the loop must return 1 before i gets to 4, and the function always returns 1. It compiled the whole search to a single movl $1, %eax."
+  jumpToId: a-search-that-always-succeeds
+  jumpToLabel: A search that always succeeds
+- question: Why can gcc delete if (p == NULL) when it comes after int value = *p?
+  answer: "Dereferencing a null pointer is undefined, so once *p has been evaluated the compiler may assume p is not null. The later check can then never be true, and gcc removes it, along with the code inside it. Put the check before the first use of *p."
+  jumpToId: a-null-check-that-disappears
+  jumpToLabel: A null check that disappears
+assignment:
+  instruction: "Rebuild the in_table program with -O2 -fsanitize=undefined, then fix the loop bound and check that -O0, -O2 and the sanitizer build all agree. Then find one function in code of your own that uses a pointer before checking it for NULL, and reorder it."
+  resourceName: 'LLVM blog: What Every C Programmer Should Know About Undefined Behavior'
+  resourceType: doc
+  resourceUrl: 'https://blog.llvm.org/2011/05/what-every-c-programmer-should-know.html'
+additionalResources:
+- title: "John Regehr: A Guide to Undefined Behavior in C and C++"
+  type: doc
+  meta: the classic explanation, with optimiser examples
+  url: 'https://blog.regehr.org/archives/213'
+- title: "Chandler Carruth: Garbage In, Garbage Out (CppCon 2016)"
+  type: video
+  meta: why compilers reason from undefined behaviour
+  url: 'https://www.youtube.com/watch?v=yG1OZ69H_-o'
+- title: "GCC: Optimize Options"
+  type: doc
+  meta: -fdelete-null-pointer-checks, -ffinite-loops, -fstrict-aliasing
+  url: 'https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html'
+whyThisMatters: "Most surprising optimiser behaviour isn't a compiler bug: it's the compiler taking the C standard at its word. Once you understand that it reasons from 'this never happens', you can predict which of your checks it will keep, write ones it can't remove, and know which flags and sanitizers to reach for when it matters."
+---
+
+An optimising compiler makes a bargain with you: it assumes your program **never has undefined behaviour**, and in exchange it makes the program fast. That assumption isn't only used to skip work. The optimiser **reasons backwards** from it: "if this line ran with that value, the behaviour would be undefined; so that value never happens here." Every conclusion like that can remove code.
+
+You've already seen one case in Signed overflow and shifts: `x + 1 < x` can only be true if `x + 1` overflows, which is undefined, so gcc replaced the whole test with "false". This lesson shows three more, all observed with this machine's gcc. Remember that every output from a program with undefined behaviour is what this compiler did once, not a promise.
+
+## A search that always succeeds
+
+`in_table` looks for `v` in a 4-element table, but its loop runs one step too far: `i <= 4` reads `table[4]`. The input is 99, which isn't in the table. Predict the -O0 run.
+
+<CRun program="c-contract/assume-table-O0" caption='in_table(99), compiled with -O0' predict />
+
+Now the same source and input with -O2.
+
+<CRun program="c-contract/assume-table-O2" caption='in_table(99), compiled with -O2' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+-O0 says 0: on its last step the loop read whatever happened to sit in memory after the table, which wasn't 99, so it found no match and returned 0.
+
+-O2 says 1: 99 is "in the table". Here's gcc's reasoning. On the iteration with `i == 4`, `table[4]` would be read, and reading past the end of an array is undefined. So that iteration never happens. The only way the loop can stop before `i` reaches 4 is `return 1`. So the function always returns 1. This is the entire function as gcc compiled it at -O2:
+
+```
+in_table:
+	endbr64
+	movl	$1, %eax
+	ret
+```
+
+No loop, no table, no comparison. And no warning, either: `-Wall -Wextra` said nothing.
+
+</details>
+
+The sanitizer catches it. With `-fsanitize=undefined`, gcc instruments array accesses and reports the bad index at run time:
+
+<CRun program="c-contract/assume-table-ubsan" caption='The same program with -O2 -fsanitize=undefined' />
+
+UBSan reports `index 4 out of bounds for type 'int [4]'` at the exact line. The output also went back to 0, because the checks change what the optimiser can assume. Fix the loop to `i < 4` and all three builds agree.
+
+## A null check that disappears
+
+This function reads `*p`, then checks `p` for null:
+
+```c
+int read_or_default(const int *p) {
+    int value = *p;
+    if (p == NULL) {
+        puts("null pointer, using the default");
+        return -1;
+    }
+    return value;
+}
+```
+
+This is real gcc 15.2 output for it (`gcc -std=c17 -S -fno-asynchronous-unwind-tables`), first at -O0:
+
+```
+read_or_default:
+	endbr64
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$32, %rsp
+	movq	%rdi, -24(%rbp)
+	movq	-24(%rbp), %rax
+	movl	(%rax), %eax
+	movl	%eax, -4(%rbp)
+	cmpq	$0, -24(%rbp)
+	jne	.L2
+	leaq	.LC0(%rip), %rax
+	movq	%rax, %rdi
+	call	puts@PLT
+	movl	$-1, %eax
+	jmp	.L3
+.L2:
+	movl	-4(%rbp), %eax
+.L3:
+	leave
+	ret
+```
+
+and at -O2:
+
+```
+read_or_default:
+	endbr64
+	movl	(%rdi), %eax
+	ret
+```
+
+Where did the check go?
+
+<details>
+<summary>Check your answer</summary>
+
+Dereferencing a null pointer is undefined (C17 6.5.3.2p4). `movl (%rdi), %eax` reads `*p` first, so after that line gcc may assume `p` isn't null. The check `p == NULL` can then never be true, so gcc deletes it, with the `puts` and the `return -1` inside it. At -O0 the check is still there, but it comes too late to help: the read on the line before has already crashed for a null `p`.
+
+The fix is to check before the first use:
+
+```c
+int read_or_default(const int *p) {
+    if (p == NULL) {
+        puts("null pointer, using the default");
+        return -1;
+    }
+    return *p;
+}
+```
+
+gcc -O2 keeps that check (`testq %rdi, %rdi` then `je` to the default path), because now it's reached before anything is assumed.
+
+</details>
+
+gcc calls this optimisation `-fdelete-null-pointer-checks`, and it's on by default. The Linux kernel builds with `-fno-delete-null-pointer-checks`, after a real security bug in which exactly this pattern removed a check. In your own code, ordering the check correctly is the fix; the flag is a safety net.
+
+<KeyIdea>The optimiser reasons from 'undefined behaviour never happens'. A check that comes after the undefined operation it was meant to prevent can always be proven false, and deleted.</KeyIdea>
+
+## Loops that may be assumed to end
+
+C17 6.8.5p6 gives compilers one more assumption. A loop whose controlling expression isn't a constant, and whose body does no input or output, no `volatile` accesses and no atomic or synchronising operations, **may be assumed to terminate**. (A loop written `while (1)` doesn't qualify, because 1 is a constant expression.)
+
+`search` loops until `n * n` ends in the digit 2, which no square ever does, so it never ends. It does no I/O, so it qualifies. Predict the run.
+
+<CRun program="c-contract/assume-loop-O2" caption='-O2, gcc default for C' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It never finishes: the run was stopped after 3 seconds, with nothing printed. gcc is *allowed* to assume the loop ends, but by default, in C, it doesn't use that freedom. The loop is still in the -O2 code.
+
+</details>
+
+gcc has a flag for using it, `-ffinite-loops`, which gcc turns on by default only for C++ (C++11 or later, at -O2 and above). Here is the same C with it turned on:
+
+<CRun program="c-contract/assume-loop-finite" caption='-O2 -ffinite-loops' />
+
+It printed `found: 1` at once. `search` can only end by returning 1, and the compiler may now assume it ends, so `main` uses 1 without ever running the loop. The same source, with a different but standard-conforming assumption, prints a result from a search that can never finish. A loop meant to wait forever should have a constant condition (`for (;;)`) or a side effect, such as a `volatile` read, so no compiler may assume it away.
+
+## Protecting yourself
+
+The optimiser's assumptions are only dangerous when your code has undefined behaviour, so:
+
+- **Find the undefined behaviour.** Test with `-fsanitize=undefined,address`, and read every warning from an optimised build (`-O2 -Wall -Wextra`).
+- **Order checks before uses**: bounds before indexing, null before dereferencing, overflow before the arithmetic.
+- **Use flags as safety nets, not fixes**: `-fwrapv`, `-fno-strict-aliasing`, `-fno-delete-null-pointer-checks` make gcc assume less, but the code is still not portable C.
+
+## Try it
+
+`name_length` is called with `NULL` when a user has no name. Which line makes the check useless, and how do you fix it?
+
+```c
+#include <stddef.h>
+#include <string.h>
+
+size_t name_length(const char *name) {
+    size_t length = strlen(name);
+    if (name == NULL) {
+        return 0;
+    }
+    return length;
+}
+```
+
+<details>
+<summary>Check your answer</summary>
+
+`size_t length = strlen(name);` comes first. `strlen(NULL)` is undefined (it must read the string), so after that line the compiler may assume `name` isn't null and delete the check, and in any case the program has already crashed or misbehaved before reaching it. Move the check first:
+
+```c
+size_t name_length(const char *name) {
+    if (name == NULL) {
+        return 0;
+    }
+    return strlen(name);
+}
+```
+
+</details>
+
+## Done when
+
+You can explain how gcc turned `in_table` into "return 1" and deleted a late null check, say what 6.8.5p6 allows and what gcc does with it in C, and order your own checks so no optimiser can remove them.

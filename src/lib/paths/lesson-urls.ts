@@ -41,6 +41,10 @@ const LEVEL_OWNER: Record<
     pathSlug: "systems-programmer",
     courseId: "the-c-language",
   },
+  "level-05-c-contract": {
+    pathSlug: "systems-programmer",
+    courseId: "c-contract",
+  },
   "level-03-systems-software": {
     pathSlug: "systems-programmer",
     courseId: "systems-software",

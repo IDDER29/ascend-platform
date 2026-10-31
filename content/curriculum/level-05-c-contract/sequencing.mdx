@@ -1,0 +1,138 @@
+---
+title: "Sequencing and order of evaluation"
+level: level-05-c-contract
+slug: sequencing
+order: 3
+timeMin: 10
+learningOutcomes:
+- Use the standard's terms sequenced before, unsequenced and indeterminately sequenced correctly
+- Explain why i = i++ + 1 and printf("%d %d", i++, i++) are undefined, and read gcc's -Wsequence-point warning
+- "Name the operators that do fix an order (&&, ||, ?: and the comma operator) and rely on them safely"
+- Tell an unspecified order (two function calls) from an undefined one (two unsequenced writes)
+primer:
+- title: "Undefined behaviour, in depth"
+  type: doc
+  meta: Reread · 3 min · undefined means no requirements at all.
+  essential: true
+- title: "Operators and expressions"
+  type: doc
+  meta: "C Basics · precedence, which this lesson separates from order."
+  essential: false
+knowledgeCheck:
+- question: Why is i = i++ + 1; undefined, rather than just giving one of two possible answers?
+  answer: "It writes i twice, once through i++ and once through the assignment, and the standard doesn't sequence those two side effects relative to each other. C17 6.5p2 says that when a side effect on an object is unsequenced relative to another side effect on the same object, the behaviour is undefined, so no answer is promised at all."
+  jumpToId: two-writes-no-order
+  jumpToLabel: Two writes, no order
+- question: In d = next() - next(), where next() increments a counter and returns it, is the result undefined?
+  answer: "No, it's unspecified. Function calls are indeterminately sequenced: each call runs completely, without overlapping the other, but which runs first isn't fixed. So d is either 1 - 2 = -1 or 2 - 1 = 1, and correct code must not depend on which."
+  jumpToId: calls-run-whole-in-some-order
+  jumpToLabel: Calls run whole, in some order
+assignment:
+  instruction: "Search a C project you have (or the C Basics programs) for expressions that modify a variable and use it again in the same expression, or that call two functions with side effects as operands. Compile with -Wall (which turns on -Wsequence-point) and rewrite each risky expression as separate statements."
+  resourceName: 'cppreference: Order of evaluation'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/language/eval_order'
+additionalResources:
+- title: "Sequence point (Wikipedia)"
+  type: doc
+  meta: the older C89/C99 vocabulary, and how C11 replaced it
+  url: 'https://en.wikipedia.org/wiki/Sequence_point'
+- title: "C17 draft standard, N2176 (PDF)"
+  type: pdf
+  meta: 5.1.2.3 defines the sequencing terms; 6.5 has the rule
+  url: 'https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2176.pdf'
+whyThisMatters: "Expressions with side effects in the wrong place give different answers on different compilers, or none at all. Knowing exactly what C orders, and what it doesn't, lets you write compact expressions safely and spot the ones that only work by luck."
+---
+
+**Precedence** says how an expression is grouped: `a + b * c` multiplies first. It says nothing about **when** each part is evaluated, or in what order side effects (writes to variables, output) happen. That second question is **sequencing**, and C leaves much more of it open than most people expect.
+
+## The standard's vocabulary
+
+Since C11, the standard describes order with three terms (C17 5.1.2.3):
+
+- **Sequenced before:** A is finished, side effects included, before B starts. Statements are sequenced: everything in one full expression happens before the next one starts.
+- **Indeterminately sequenced:** one of A and B happens completely before the other, but which one isn't specified.
+- **Unsequenced:** no order at all. A and B may even overlap.
+
+And the key rule (C17 6.5p2): if a side effect on an object is **unsequenced** relative to another side effect on the same object, or to a read of its value, the behaviour is **undefined**.
+
+## Two writes, no order
+
+`i++` writes `i`; `i = ...` writes `i` again. Inside one expression, nothing sequences those two writes. Read gcc's message and the output.
+
+<CRun program="c-contract/seq-i-plus-plus" caption='i = i++ + 1' />
+
+gcc printed `i = 6` here and warned `operation on 'i' may be undefined`. That `6` is only what this gcc did: the standard gives this program no meaning, another compiler may print 7, and gcc itself may change with other flags. `-Wsequence-point` (part of `-Wall`) catches the simple cases, but not all.
+
+Now predict this one.
+
+<CRun program="c-contract/seq-two-increments" caption='printf("%d %d", i++, i++)' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+gcc printed `2 1` here, with the same warning. Two things combine. The order the arguments are evaluated in is unspecified, and gcc did the right one first (it gave 1, then the left one gave 2). Worse, the two `i++` write `i` with no sequencing between them, which makes the whole call undefined. The fix is to decide the order yourself, in separate statements:
+
+```c
+int first = i++;
+int second = i++;
+printf("%d %d\n", first, second);
+```
+
+</details>
+
+## Operators that do fix an order
+
+Four operators **do** sequence their left operand before their right one, and that's what makes them safe to use with side effects:
+
+- `&&` and `||`: the left side is evaluated first, and the right side only if needed (short-circuit).
+- `? :`: the condition first, then exactly one of the other two.
+- The comma operator, `a, b`: `a` completely, then `b`. (Not the commas between function arguments: those are separators, not the operator.)
+
+Predict the three lines.
+
+<CRun program="c-contract/seq-short-circuit" caption='Short-circuit and the comma operator' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `check(1) && check(2)`: `check(1)` runs and returns 0 (false), so `&&` already knows the answer and `check(2)` never runs. Result 0.
+- `check(3) || check(4)`: `check(3)` returns 1 (true), so `check(4)` never runs. Result 1.
+- `(count++, count * 10)`: the comma operator finishes `count++` first, so the right side sees `count` as 1, and `x` is 10.
+
+These orders are defined (C17 6.5.13, 6.5.14, 6.5.15, 6.5.17), on every compiler. That's why `if (p != NULL && p->ready)` is the standard way to guard a pointer: the dereference only runs when the check has passed.
+
+</details>
+
+## Calls run whole, in some order
+
+Function calls are a middle case. In `next() - next()`, each call runs completely without overlapping the other: the calls are **indeterminately sequenced**. But which call runs first is unspecified.
+
+<CRun program="c-contract/seq-calls" caption='next() - next()' />
+
+Here gcc called the left `next()` first, so `d` is 1 - 2 = -1. In the first lesson it evaluated function arguments right to left; the standard allows both and doesn't require consistency. This isn't undefined: `d` is -1 or 1, nothing else. But a program whose output depends on it is not portable, so the fix is the same: separate statements.
+
+<KeyIdea>Precedence groups an expression; sequencing orders it. Inside one expression, only &&, ||, ?: and the comma operator fix an order. Two unsequenced writes to the same object are undefined; when in doubt, use separate statements.</KeyIdea>
+
+## Try it
+
+Defined, unspecified or undefined?
+
+1. `a[i] = i++;`
+2. `x = y++ + z++;`
+3. `if (n > 0 && total / n > 10)`
+4. `f(g(), h());` where `g` and `h` both print
+
+<details>
+<summary>Check your answer</summary>
+
+1. **Undefined:** `i++` writes `i`, and `a[i]` reads `i` to find the element, unsequenced. (Unlike C++17, which sequences the right side of `=` first, C has no such rule.)
+2. **Defined:** `y` and `z` are different objects, each written once.
+3. **Defined:** `&&` sequences the test first, so the division only happens when `n > 0`.
+4. **Unspecified:** the order of `g` and `h`, so the order of their output.
+
+</details>
+
+## Done when
+
+You can use the three sequencing terms correctly, explain the two `i++` examples, rely on `&&`, `||`, `?:` and the comma operator, and tell an unspecified order from undefined behaviour.

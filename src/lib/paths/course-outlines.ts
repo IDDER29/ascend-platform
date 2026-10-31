@@ -214,11 +214,8 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
           description:
             "How to ask for heap memory with malloc and sizeof, check that it worked, and free it before it becomes a leak.",
         },
-      ],
-      upcoming: [
         {
-          id: "ownership",
-          title: "Ownership: who frees what",
+          slug: "ownership",
           description:
             "How to decide which part of a program frees each block of memory, so nothing leaks and nothing is freed twice.",
         },
@@ -240,35 +237,29 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       id: "types-and-strings",
       title: "Types, arrays and strings",
       blurb: "How C converts between types, and what arrays and strings really are.",
-      items: [],
-      upcoming: [
+      items: [
         {
-          id: "integer-promotions",
-          title: "Integer promotions and conversions",
+          slug: "integer-promotions",
           description:
             "How C quietly converts small and mixed integer types in expressions, and the surprising results that can cause.",
         },
         {
-          id: "casts",
-          title: "Casts and what they really do",
+          slug: "casts",
           description:
             "What a cast actually does: when it converts a value to a new type, and when it only changes how a pointer is used.",
         },
         {
-          id: "arrays-are-not-pointers",
-          title: "Arrays are not pointers",
+          slug: "arrays-are-not-pointers",
           description:
             "Why an array usually turns into a pointer to its first element, and the places, like sizeof and &, where it does not.",
         },
         {
-          id: "strings",
-          title: "Strings and the terminating zero",
+          slug: "strings",
           description:
             "How C stores text as a char array ending in a zero byte, and what goes wrong when that zero is missing.",
         },
         {
-          id: "function-pointers",
-          title: "Function pointers",
+          slug: "function-pointers",
           description:
             "How to store the address of a function in a variable and call through it, as qsort and callbacks do.",
         },
@@ -278,23 +269,19 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       id: "program-structure",
       title: "How a C program is organised",
       blurb: "Where variables live and how files see each other's names.",
-      items: [],
-      upcoming: [
+      items: [
         {
-          id: "storage-duration",
-          title: "Storage duration: automatic, static and allocated",
+          slug: "storage-duration",
           description:
             "How long C objects live: automatic ones until their block ends, static ones for the whole run, allocated ones until freed.",
         },
         {
-          id: "linkage",
-          title: "Linkage: static and extern",
+          slug: "linkage",
           description:
             "How static and extern decide whether a name is shared between source files or kept private to one.",
         },
         {
-          id: "headers",
-          title: "Header files and separate compilation",
+          slug: "headers",
           description:
             "How header files share declarations between .c files, and how separate compilation and linking build one program.",
         },
@@ -302,6 +289,55 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
     },
   ],
 
+  "level-05-c-contract": [
+    {
+      id: "the-rules",
+      title: "What the standard promises",
+      blurb: "The contract between your code and the compiler.",
+      items: [
+        {
+          slug: "kinds-of-behaviour",
+          description: "How the C standard sorts behaviour into defined, unspecified, implementation-defined and undefined, and why it matters.",
+        },
+        {
+          slug: "undefined-behaviour-in-depth",
+          description: "Why the standard leaves some operations undefined, and how compilers use that freedom to transform your code.",
+        },
+        {
+          slug: "sequencing",
+          description: "Which parts of an expression C evaluates in a fixed order and which it does not, and why i = i++ is undefined.",
+        },
+      ],
+    },
+    {
+      id: "the-traps",
+      title: "Where programs break",
+      blurb: "The rules real programs break, and what the optimiser does when they do.",
+      items: [
+        {
+          slug: "signed-overflow-and-shifts",
+          description: "Why overflowing a signed int or shifting by too many bits is undefined, and how to write arithmetic that stays safe.",
+        },
+        {
+          slug: "strict-aliasing",
+          description: "Why reading an object through a pointer to an incompatible type is undefined, and how memcpy or char access stays legal.",
+        },
+        {
+          slug: "lifetime",
+          description: "When an object's lifetime ends, and why reading through a dangling pointer or an uninitialised variable is a real bug.",
+        },
+        {
+          slug: "what-the-optimiser-assumes",
+          description: "How the optimiser assumes your code has no undefined behaviour, and how that can delete checks you thought were there.",
+        },
+        {
+          slug: "project-ub-hunt",
+          description: "Find and fix the undefined behaviour hidden in a small program, proving you can spot what the compiler may break.",
+          role: "project",
+        },
+      ],
+    },
+  ],
   "level-03-systems-software": [
     {
       id: "processes",
@@ -375,7 +411,8 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       id: "isolation",
       title: "Users, permissions and isolation",
       blurb: "Who may do what, and why one process can't touch another's memory.",
-      items: [],
+      items: [
+      ],
       upcoming: [
         {
           id: "permissions",

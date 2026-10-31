@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { PROGRAMS_DIR, programFiles, programStdin, type ProgramRun } from "@/lib/programs/hash";
+import { PROGRAM_ID, PROGRAMS_DIR, programFiles, programStdin, type ProgramRun } from "@/lib/programs/hash";
 import { CRunOutput, CopyButton } from "./c-run-output";
 
 const MONO = "font-[family-name:var(--font-plex-mono)]";
@@ -12,7 +12,7 @@ const MONO = "font-[family-name:var(--font-plex-mono)]";
  * the output stays hidden until the learner has predicted it. <CRun program="c-basics/hello" predict />
  */
 export function CRun({ program, caption, predict = false }: { program: string; caption?: string; predict?: boolean }) {
-  if (!/^[a-z0-9-]+(\/[a-z0-9-]+)*$/.test(program)) throw new Error(`Bad program id: ${program}`);
+  if (!PROGRAM_ID.test(program)) throw new Error(`Bad program id: ${program}`);
   const run = JSON.parse(readFileSync(path.join(PROGRAMS_DIR, program, "run.json"), "utf8")) as ProgramRun;
   const files = programFiles(program);
   const stdin = programStdin(program);

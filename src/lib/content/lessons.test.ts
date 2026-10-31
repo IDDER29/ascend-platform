@@ -46,3 +46,12 @@ test("a topic's lessons are ordered as its outline lists them, so Next follows t
     assert.deepEqual(ordered, slugs, `${level}: lesson orders don't follow the outline`);
   }
 });
+
+test("every lesson body compiles as MDX (pages render on request, so the build wouldn't catch this)", async () => {
+  const { compile } = await import("@mdx-js/mdx");
+  const { default: remarkGfm } = await import("remark-gfm");
+  for (const lesson of getAllLessons()) {
+    // The same remark plugins the lesson page uses.
+    await assert.doesNotReject(compile(lesson.body, { remarkPlugins: [remarkGfm] }), `${lesson.meta.level}/${lesson.meta.slug} doesn't compile as MDX`);
+  }
+});

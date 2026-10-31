@@ -58,7 +58,7 @@ export function EndToEnd({ caption, startJson, goalJson }: { caption?: string; s
         {caption ?? "From source to output"}
       </figcaption>
 
-      <div role="tablist" aria-label="Stages" className="flex gap-1 overflow-x-auto border-b-2 border-[var(--coach-border)] px-3 py-2">
+      <div role="tablist" aria-label="Stages" className="flex flex-wrap gap-1 border-b-2 border-[var(--coach-border)] px-3 py-2">
         {STAGES.map((s, i) => {
           const blocked = i > 0 && !built?.ok;
           return (

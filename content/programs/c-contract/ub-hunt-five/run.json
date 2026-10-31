@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/ub-hunt-five",
+  "sourceHash": "a8a336ddd8cbaae9",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -O0 -g -fsanitize=address,undefined main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘grade’:\nmain.c:16:12: warning: function returns address of local variable [-Wreturn-local-addr]\n   16 |     return label;\n      |            ^~~~~\n"
+  },
+  "run": {
+    "stdout": "scores: 5\naverage: -309924494\nbest: 95 ((null)), bonus -2147483648\n",
+    "stderr": "main.c:34:19: runtime error: left shift of 1 by 31 places cannot be represented in type 'int'\n",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

@@ -1,0 +1,125 @@
+---
+title: "Strings and the terminating zero"
+level: level-02-the-c-language
+slug: strings
+order: 13
+timeMin: 11
+learningOutcomes:
+- Explain a C string as a char array whose end is marked only by a zero byte, and predict sizeof and strlen for one
+- Explain why strncpy can leave a string without its terminator, and what reading past the end does
+- Build strings safely with snprintf, and use its return value to detect truncation
+- Tell a writable char array from a pointer to a read-only string literal
+primer:
+- title: "Characters and simple strings"
+  type: doc
+  meta: "C Basics · chars as numbers, and the zero at the end."
+  essential: true
+- title: "Arrays are not pointers"
+  type: doc
+  meta: Reread · 2 min · sizeof on an array versus a pointer.
+  essential: true
+knowledgeCheck:
+- question: For char s[] = "hi"; what are sizeof s and strlen(s), and why do they differ?
+  answer: "sizeof s is 3: the array holds 'h', 'i' and the terminating zero. strlen(s) is 2: it counts characters up to, not including, the first zero byte."
+  jumpToId: the-zero-is-the-only-end
+  jumpToLabel: The zero is the only end
+- question: Why can char *lit = "hello"; lit[0] = 'H'; crash, when char copy[] = "hello"; copy[0] = 'H'; works?
+  answer: "copy is an array initialised with a copy of the characters, on the stack, so it's yours to change. lit points at the string literal itself, which gcc places in read-only memory; writing to it is undefined behaviour, and on Linux the write faults with a segmentation fault."
+  jumpToId: literals-are-read-only
+  jumpToLabel: Literals are read-only
+assignment:
+  instruction: "Write char *join(const char *a, const char *b) that returns a new string a + \" \" + b, sized exactly with strlen and built with snprintf. Document who frees the result, test it with empty strings, and run it under -fsanitize=address -g until it's clean."
+  resourceName: "cppreference: snprintf"
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/io/fprintf'
+additionalResources:
+- title: "cppreference: strncpy"
+  type: doc
+  meta: note when it doesn't null-terminate
+  url: 'https://en.cppreference.com/w/c/string/byte/strncpy'
+- title: "SEI CERT C: STR32-C, do not pass a non-null-terminated character sequence to a function that expects a string"
+  type: doc
+  meta: the rule behind this lesson's bugs
+  url: 'https://wiki.sei.cmu.edu/confluence/display/c/STR32-C.+Do+not+pass+a+non-null-terminated+character+sequence+to+a+library+function+that+expects+a+string'
+whyThisMatters: "C strings carry no length. Everything that reads them, printf, strlen, strcpy, walks memory until it finds a zero byte. A missing zero or an undersized buffer turns into a read or write past the end, the root of a huge share of C crashes and security holes. Handling the terminator correctly is basic hygiene for every C programmer."
+---
+
+In C Basics you saw that a string is a `char` array ending in a zero byte. Here is what that really means: the zero is the **only** thing that marks the end. No length is stored anywhere. Every string function trusts that a zero is there, inside the buffer.
+
+## The zero is the only end
+
+<CRun program="c-language/str-terminator" caption='Looking at every byte' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`sizeof s` is 3 and `strlen(s)` is 2. The array has room for `'h'` (104), `'i'` (105) and the terminator, 0. `strlen` counts bytes until the first zero, without counting the zero.
+
+Writing 0 into `s[1]` shortens the string to `"h"` without changing the array at all: still 3 bytes, but now the first zero is at index 1. A string's length is wherever its first zero happens to be.
+
+</details>
+
+<KeyIdea>A C string is a pointer to chars, and its end is the first zero byte. Every buffer must have room for that zero, and every string must actually contain one.</KeyIdea>
+
+## strncpy and the missing zero
+
+`strncpy(dst, src, n)` looks like a safe `strcpy`. It isn't quite: if `src` is at least `n` characters long, it copies exactly `n` characters and **no terminator**. This program was built with AddressSanitizer.
+
+<CRun program="c-language/str-strncpy" caption='Copying into a 4-byte buffer' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+gcc warns at compile time ("output truncated copying 4 bytes from a string of length 6"). At run time `word` holds `a b c d` and no zero, so `printf("%s")` keeps reading past the 4-byte array looking for one. AddressSanitizer catches it: a stack-buffer-overflow, a read of 5 bytes by `puts` (gcc turned the `printf` into `puts`) called from `main.c:7`.
+
+Without AddressSanitizer, it might print `abcd` followed by whatever bytes happen to come next on the stack, or crash. The usual fix is to make room and terminate it yourself:
+
+```c
+strncpy(word, src, sizeof word - 1);
+word[sizeof word - 1] = '\0';
+```
+
+Better still, use `snprintf`, below.
+
+</details>
+
+## snprintf: sized, terminated, and honest
+
+`snprintf(buf, size, format, ...)` writes at most `size - 1` characters plus a terminator, so the result is always a valid string that fits. It also returns how many characters the **whole** output needed, so you can tell when it was cut.
+
+<CRun program="c-language/str-snprintf" caption='Formatting into an 8-byte buffer' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`buf` holds `"score=1"`: 7 characters and a zero, as much as fits. `needed` is 11, the length of the full `"score=12345"`. Because 11 ≥ 8, the program knows it was truncated. gcc could see it coming at compile time too (`-Wformat-truncation`).
+
+That return value is how you size a buffer exactly: call `snprintf(NULL, 0, ...)` to get the length, `malloc` that plus 1, then call `snprintf` again into the new buffer.
+
+</details>
+
+## Literals are read-only
+
+Two declarations that look nearly the same:
+
+```c
+char copy[] = "hello"; /* an array, initialised with a copy */
+char *lit = "hello";   /* a pointer to the literal itself */
+```
+
+Predict what happens when the program changes the first letter of each.
+
+<CRun program="c-language/str-literal" caption='Changing a copy, and a literal' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`copy` changes fine and `Hello` is printed. Writing to `lit[0]` crashes with a segmentation fault: string literals live in a read-only section of the program, and the hardware refuses the write. (The `fflush` makes sure `Hello` reaches the screen before the crash; output waiting in a buffer is lost when a program is killed.)
+
+C, for historical reasons, gives a string literal the type `char[]`, not `const char[]`, so gcc accepts `lit[0] = 'H'` without a word, even with `-Wall -Wextra`. Write `const char *lit = "hello";` and the compiler will reject the write instead. `-Wwrite-strings` makes gcc treat every literal as `const`.
+
+</details>
+
+## Done when
+
+You can predict `sizeof` and `strlen` for a string, explain how `strncpy` leaves a string unterminated, use `snprintf` and its return value to build strings safely, and say why writing through a pointer to a literal crashes.

@@ -106,7 +106,7 @@ Pass one:
 
 Pass two:
 1. Set the location counter to 0.
-2. For each line with an instruction: look up its opcode and format; read its register and operand, replacing a label with its address from the table; write byte0 = opcode << 3 | Rd << 1 and byte1 by format at the location counter; add 2.
+2. For each line with an instruction: look up its opcode and format; read its register and operand, replacing a label with its address from the table; write `byte0 = opcode << 3 | Rd << 1` and `byte1` by format at the location counter; add 2.
 3. Report an error for an unknown instruction, a missing label or an operand out of range.
 
 That's a complete assembler. The one this site uses (`assemble` in its source) is these steps plus error messages.

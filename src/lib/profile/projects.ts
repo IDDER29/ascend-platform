@@ -303,6 +303,16 @@ export const CURRICULUM_PROJECTS: CurriculumProject[] = [
     href: null,
   },
   {
+    id: "ub-hunt",
+    title: "Undefined-behaviour hunt",
+    inSentence: "undefined-behaviour hunt",
+    proves: "Finds five kinds of undefined behaviour with warnings and sanitizers, and fixes each for every input.",
+    level: "level-05-c-contract",
+    requires: { kind: "lesson", level: "level-05-c-contract", slug: "project-ub-hunt" },
+    badgeId: "ub-hunter",
+    href: null,
+  },
+  {
     id: "shellforge",
     title: "ShellForge",
     inSentence: "ShellForge",

@@ -19,63 +19,6 @@ const project = (id: string, title: string, description: string): PlannedItem =>
 
 // Systems Programmer
 
-export const C_CONTRACT: PlannedSection[] = [
-  {
-    id: "the-rules",
-    title: "What the standard promises",
-    blurb: "The contract between your code and the compiler.",
-    items: [
-      lesson(
-        "kinds-of-behaviour",
-        "Defined, unspecified and implementation-defined behaviour",
-        "How the C standard sorts behaviour into defined, unspecified, implementation-defined and undefined, and why it matters.",
-      ),
-      lesson(
-        "undefined-behaviour-in-depth",
-        "Undefined behaviour, in depth",
-        "Why the standard leaves some operations undefined, and how compilers use that freedom to transform your code.",
-      ),
-      lesson(
-        "sequencing",
-        "Sequencing and order of evaluation",
-        "Which parts of an expression C evaluates in a fixed order and which it does not, and why i = i++ is undefined.",
-      ),
-    ],
-  },
-  {
-    id: "the-traps",
-    title: "Where programs break",
-    blurb: "The rules real programs break, and what the optimiser does when they do.",
-    items: [
-      lesson(
-        "signed-overflow-and-shifts",
-        "Signed overflow and shifts",
-        "Why overflowing a signed int or shifting by too many bits is undefined, and how to write arithmetic that stays safe.",
-      ),
-      lesson(
-        "strict-aliasing",
-        "Aliasing and strict aliasing",
-        "Why reading an object through a pointer to an incompatible type is undefined, and how memcpy or char access stays legal.",
-      ),
-      lesson(
-        "lifetime",
-        "Lifetime: dangling pointers and uninitialised reads",
-        "When an object's lifetime ends, and why reading through a dangling pointer or an uninitialised variable is a real bug.",
-      ),
-      lesson(
-        "what-the-optimiser-assumes",
-        "What the optimiser assumes about your code",
-        "How the optimiser assumes your code has no undefined behaviour, and how that can delete checks you thought were there.",
-      ),
-      project(
-        "project-ub-hunt",
-        "Project: Hunt the undefined behaviour",
-        "Find and fix the undefined behaviour hidden in a small program, proving you can spot what the compiler may break.",
-      ),
-    ],
-  },
-];
-
 export const C_TOOLS: PlannedSection[] = [
   {
     id: "build",

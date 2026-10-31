@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/assume-table-ubsan",
+  "sourceHash": "34cd5635b2293329",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 -fsanitize=undefined main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "in_table(99) = 0\n",
+    "stderr": "main.c:8:18: runtime error: index 4 out of bounds for type 'int [4]'\nmain.c:8:18: runtime error: load of address 0x55f69ebe0050 with insufficient space for an object of type 'int'\n0x55f69ebe0050: note: pointer points here\n 28 00 00 00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  1a e0 bd 9e f6 55 00 00  08 00 00 00\n              ^ \n",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

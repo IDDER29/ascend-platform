@@ -21,6 +21,11 @@ import { LEVEL_04_BANK } from "./level-04";
 import { C_BASICS_A_BANK } from "./level-04-a";
 import { C_BASICS_B_BANK } from "./level-04-b";
 import { LEVEL_02_BANK } from "./level-02";
+import { C_LANGUAGE_B_BANK } from "./level-02-b";
+import { C_LANGUAGE_C_BANK } from "./level-02-c";
+import { LEVEL_05_BANK } from "./level-05";
+import { C_CONTRACT_A_BANK } from "./level-05-a";
+import { C_CONTRACT_B_BANK } from "./level-05-b";
 import { LEVEL_03_BANK } from "./level-03";
 
 /**
@@ -51,5 +56,10 @@ export const PRACTICE_BANK: PracticeItem[] = [
   ...C_BASICS_B_BANK,
   ...LEVEL_04_BANK,
   ...LEVEL_02_BANK,
+  ...C_LANGUAGE_B_BANK,
+  ...C_LANGUAGE_C_BANK,
+  ...C_CONTRACT_A_BANK,
+  ...C_CONTRACT_B_BANK,
+  ...LEVEL_05_BANK,
   ...LEVEL_03_BANK,
 ];

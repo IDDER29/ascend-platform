@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/lifetime-scope",
+  "sourceHash": "6cc2e3d20bceab4f",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘main’:\nmain.c:10:5: warning: using dangling pointer ‘p’ to ‘count’ [-Wdangling-pointer=]\n   10 |     printf(\"%d\\n\", *p);\n      |     ^~~~~~~~~~~~~~~~~~\nmain.c:6:13: note: ‘count’ declared here\n    6 |         int count = 7;\n      |             ^~~~~\n"
+  },
+  "run": {
+    "stdout": "7\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

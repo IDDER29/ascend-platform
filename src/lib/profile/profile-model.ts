@@ -19,6 +19,7 @@ const LEVEL_SKILLS: Record<LevelId, string> = {
   "level-01-machine-memory": "Traces how a CPU runs a program and where its data lives",
   "level-04-c-basics": "Writes, compiles and debugs whole C programs with loops, functions and arrays",
   "level-02-the-c-language": "Writes C that manages its own memory with pointers",
+  "level-05-c-contract": "Knows exactly what C promises, and finds and fixes undefined behaviour",
   "level-03-systems-software": "Builds systems software with processes, pipes and signals",
 };
 

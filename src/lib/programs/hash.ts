@@ -10,6 +10,8 @@ import path from "node:path";
  */
 export const PROGRAMS_DIR = path.join(process.cwd(), "content", "programs");
 export const DEFAULT_FLAGS = "-std=c17 -Wall -Wextra -O0";
+/** A program id: folders under content/programs, such as c-contract/overflow-check-O2. */
+export const PROGRAM_ID = /^[A-Za-z0-9-]+(\/[A-Za-z0-9-]+)*$/;
 
 export type ProgramMeta = { flags?: string; args?: string[]; note?: string };
 

@@ -8,6 +8,7 @@ const LEVEL_TO_PATH: Record<string, string> = {
   "level-01-machine-memory": "systems-programmer",
   "level-04-c-basics": "systems-programmer",
   "level-02-the-c-language": "systems-programmer",
+  "level-05-c-contract": "systems-programmer",
   "level-03-systems-software": "systems-programmer",
 };
 

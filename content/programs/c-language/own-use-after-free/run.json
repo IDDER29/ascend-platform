@@ -1,0 +1,20 @@
+{
+  "id": "c-language/own-use-after-free",
+  "sourceHash": "f72aee3d82f1b574",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=address main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘main’:\nmain.c:12:5: warning: pointer ‘best’ used after ‘free’ [-Wuse-after-free]\n   12 |     printf(\"best: %d\\n\", *best);\n      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~\nmain.c:11:5: note: call to ‘free’ here\n   11 |     free(scores);\n      |     ^~~~~~~~~~~~\n"
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "=================================================================\n==564691==ERROR: AddressSanitizer: heap-use-after-free on address 0x7a2b0efe0010 at pc 0x580f4e245300 bp 0x7fffcaaf7960 sp 0x7fffcaaf7950\nREAD of size 4 at 0x7a2b0efe0010 thread T0\n    #0 0x580f4e2452ff in main ./main.c:12\n    #1 0x7e0b0fc2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #2 0x7e0b0fc2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #3 0x580f4e245184 in _start (/tmp/build/prog+0x1184) (BuildId: 1dcf38cfcd133cd609247379ae05525842e75d52)\n\n0x7a2b0efe0010 is located 0 bytes inside of 12-byte region [0x7a2b0efe0010,0x7a2b0efe001c)\nfreed by thread T0 here:\n    #0 0x7e0b1012a3ff in free ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:51\n    #1 0x580f4e2452c8 in main ./main.c:11\n    #2 0x7e0b0fc2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #3 0x7e0b0fc2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #4 0x580f4e245184 in _start (/tmp/build/prog+0x1184) (BuildId: 1dcf38cfcd133cd609247379ae05525842e75d52)\n\npreviously allocated by thread T0 here:\n    #0 0x7e0b1012b60f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67\n    #1 0x580f4e24525e in main ./main.c:5\n    #2 0x7e0b0fc2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #3 0x7e0b0fc2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #4 0x580f4e245184 in _start (/tmp/build/prog+0x1184) (BuildId: 1dcf38cfcd133cd609247379ae05525842e75d52)\n\nSUMMARY: AddressSanitizer: heap-use-after-free ./main.c:12 in main\nShadow bytes around the buggy address:\n  0x7a2b0efdfd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a2b0efdfe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a2b0efdfe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a2b0efdff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a2b0efdff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x7a2b0efe0000: fa fa[fd]fd fa fa fa fa fa fa fa fa fa fa fa fa\n  0x7a2b0efe0080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x7a2b0efe0100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x7a2b0efe0180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x7a2b0efe0200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x7a2b0efe0280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==564691==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

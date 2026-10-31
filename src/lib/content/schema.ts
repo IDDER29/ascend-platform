@@ -5,6 +5,7 @@ export const levelIds = [
   "level-01-machine-memory",
   "level-04-c-basics",
   "level-02-the-c-language",
+  "level-05-c-contract",
   "level-03-systems-software",
 ] as const;
 
@@ -102,8 +103,14 @@ export const LEVELS: Record<
   "level-02-the-c-language": {
     name: "The C Language",
     short: "The Craft",
+    totalConcepts: 17,
+    timeLabel: "~2.5 hr",
+  },
+  "level-05-c-contract": {
+    name: "The C Contract",
+    short: "The Fine Print",
     totalConcepts: 8,
-    timeLabel: "~62 min",
+    timeLabel: "~2 hr",
   },
   "level-03-systems-software": {
     name: "Systems & Software",

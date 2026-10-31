@@ -1,0 +1,115 @@
+---
+title: "Integer promotions and conversions"
+level: level-02-the-c-language
+slug: integer-promotions
+order: 10
+timeMin: 10
+learningOutcomes:
+- Apply the integer promotions to predict the type and value of arithmetic on char and short
+- Apply the usual arithmetic conversions to a mixed signed and unsigned expression, and predict a surprising comparison
+- Explain why unsigned arithmetic wraps around while signed overflow is undefined behaviour
+- Spot the size_t subtraction trap and rewrite the comparison safely
+primer:
+- title: "Variables and types"
+  type: doc
+  meta: "C Basics · int, char, unsigned and their ranges."
+  essential: true
+- title: "Undefined behaviour"
+  type: doc
+  meta: Reread · 2 min · what undefined really means, needed for signed overflow.
+  essential: false
+knowledgeCheck:
+- question: Why is -1 < 1u false in C?
+  answer: "The usual arithmetic conversions turn the int -1 into unsigned int to match 1u. -1 becomes 4294967295 (UINT_MAX on a 32-bit unsigned), which is not less than 1. gcc warns about exactly this with -Wsign-compare."
+  jumpToId: mixing-signed-and-unsigned
+  jumpToLabel: Mixing signed and unsigned
+- question: Why does strlen(name) - 5 > 0 come out true for a two-letter name?
+  answer: "strlen returns size_t, which is unsigned. 2 - 5 can't be negative in an unsigned type, so it wraps around to a huge number (18446744073709551613 with a 64-bit size_t), which is greater than 0. Compare strlen(name) > 5 instead, which never subtracts."
+  jumpToId: the-size_t-trap
+  jumpToLabel: The size_t trap
+assignment:
+  instruction: "Write a short program that prints sizeof for char + char, short * short, unsigned char - unsigned char, and int + unsigned int, and the value of each for some edge values. Predict every line first, compile with gcc -std=c17 -Wall -Wextra, and explain any prediction you got wrong using this lesson's two rules."
+  resourceName: "cppreference: Implicit conversions"
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/language/conversion'
+additionalResources:
+- title: "SEI CERT C: INT02-C, understand integer conversion rules"
+  type: doc
+  meta: the secure-coding view of the same rules
+  url: 'https://wiki.sei.cmu.edu/confluence/display/c/INT02-C.+Understand+integer+conversion+rules'
+- title: "cppreference: Arithmetic operators"
+  type: doc
+  meta: overflow rules for signed and unsigned
+  url: 'https://en.cppreference.com/w/c/language/operator_arithmetic'
+whyThisMatters: "Integer conversions happen silently in nearly every expression you write, and they are behind a long list of real bugs: loops that never end, size checks that pass when they shouldn't, and buffer overflows in security-critical code. Two rules explain them all, and knowing them lets you read an expression the way the compiler does."
+---
+
+C never does arithmetic on mixed or small types as written. Before any operator runs, it quietly converts its operands. Most of the time you never notice; when you do, the results look impossible. Two rules explain all of it.
+
+## Rule 1: small types become int
+
+The **integer promotions**: any `char`, `signed char`, `unsigned char`, `short` or `unsigned short` in an expression is converted to `int` before the arithmetic happens. (In the rare case that `int` can't hold all its values, it becomes `unsigned int`; on any mainstream system `int` can.)
+
+Predict all four lines, then run it.
+
+<CRun program="c-language/ip-char-promotion" caption='Arithmetic on unsigned char' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `x + y` is done in `int`, so `sum` is 300, no overflow at all.
+- Storing 300 into an `unsigned char` keeps it modulo 256: 300 - 256 = 44. The conversion back to the small type is where the value changes.
+- `sizeof(x + y)` is 4: the expression has type `int`, whatever the operands were.
+- 200 doesn't fit in a `char`, which is signed on x86-64 Linux (range -128 to 127). The conversion gives 200 - 256 = -56. Whether plain `char` is signed is up to the platform; on ARM Linux it's unsigned and you'd see 200. That's why byte data belongs in `unsigned char` or `uint8_t`.
+
+</details>
+
+## Rule 2: mixed types meet at a common type
+
+The **usual arithmetic conversions** pick one type for both operands of `+`, `<`, `==` and the rest. For integers, after promotions: if one operand is unsigned and at least as wide as the other, the signed one is converted to unsigned.
+
+## Mixing signed and unsigned
+
+Is -1 less than 1? Predict, then run it.
+
+<CRun program="c-language/ip-signed-unsigned" caption='A comparison that looks obvious' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It prints "-1 is not less than 1u". `a` is `int` and `b` is `unsigned int`, so `a` is converted to `unsigned int`. In two's complement, -1 is all 32 bits set, which read as unsigned is 4294967295. And 4294967295 is not less than 1.
+
+gcc saw it coming: `-Wextra` turns on `-Wsign-compare`, "comparison of integer expressions of different signedness". Take that warning seriously. The usual fix is to keep both sides signed, or to check the signed value for negative before comparing.
+
+</details>
+
+<KeyIdea>Small integer types are promoted to int; when signed meets unsigned of the same width, the signed value becomes unsigned. Most "impossible" integer results are one of these two rules.</KeyIdea>
+
+## Unsigned wraps, signed overflows
+
+The two kinds of integer behave differently at their limits:
+
+<CRun program="c-language/ip-overflow" caption='One past the maximum' />
+
+`UINT_MAX + 1` is exactly 0: unsigned arithmetic is defined to wrap around, modulo 2 to the power of the width. `INT_MAX + 1` is **undefined behaviour**. This build used `-fsanitize=undefined`, so UBSan reported the overflow while the program ran. It printed -2147483648 here, but nothing guarantees that: an optimising compiler may assume signed overflow never happens. For example, it may turn `i + 1 > i` into "always true", or remove a check you wrote after the overflow.
+
+If you need wrap-around, use an unsigned type. If you need to detect overflow, check before the operation (`if (i > INT_MAX - 1)`), or use gcc's `__builtin_add_overflow`.
+
+## The size_t trap
+
+`strlen` returns `size_t`, an unsigned type (64 bits on x86-64 Linux). This check was meant to ask "is the name longer than 5 characters?". What does it print?
+
+<CRun program="c-language/ip-strlen-trap" caption='A length check' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The two checks disagree: the first says the name is longer than 5, the second says it isn't. `strlen(name) - 5` is 2 - 5 in `size_t`, which wraps to 18446744073709551613, and that is certainly greater than 0. The second test, `strlen(name) > 5`, never subtracts, so it's right: "not longer than 5".
+
+The rule of thumb: with unsigned types, move the subtraction to the other side as an addition (`a > b + 5` rather than `a - b > 5`), or compare directly. The same trap hides in loops like `for (size_t i = n - 1; i >= 0; i--)`, which never ends: an unsigned `i` is always at least 0.
+
+</details>
+
+## Done when
+
+You can predict the results of `char` arithmetic, explain why -1 isn't less than 1u, say which integer overflow is defined and which isn't, and rewrite a `size_t` subtraction so it can't wrap.

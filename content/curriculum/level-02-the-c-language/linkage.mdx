@@ -1,0 +1,129 @@
+---
+title: "Linkage: static and extern"
+level: level-02-the-c-language
+slug: linkage
+order: 16
+timeMin: 10
+learningOutcomes:
+- Explain the difference between external and internal linkage, and which one a file-scope name gets by default
+- Use static at file scope to keep a variable or helper function private to one source file
+- Share one global variable between files with a single definition and extern declarations
+- Read the linker's "multiple definition" and "undefined reference" errors and trace each to its cause
+primer:
+- title: "Linking, loading and starting a program"
+  type: doc
+  meta: "Foundations · the linker joins object files and resolves names."
+  essential: true
+- title: "Storage duration: automatic, static and allocated"
+  type: doc
+  meta: Reread · 2 min · static also means "lives for the whole run".
+  essential: false
+knowledgeCheck:
+- question: red.c and blue.c both define int count = 0; at file scope. Why does the build fail at the link step, not when compiling?
+  answer: "Each file compiles fine on its own. But a file-scope name without static has external linkage: it's one name for the whole program. The linker then finds two definitions of count, one in each object file, and stops with multiple definition of count."
+  jumpToId: two-definitions-one-name
+  jumpToLabel: Two definitions, one name
+- question: What does static do to a variable or function at file scope?
+  answer: "It gives the name internal linkage: it's private to that source file. Other files can't refer to it, and another file's name that's spelled the same is a different object. (Inside a function, static instead means static storage duration.)"
+  jumpToId: static-keeps-a-name-private
+  jumpToLabel: static keeps a name private
+assignment:
+  instruction: "Split a small program into three files: main.c, stats.c with a private static array and running total plus public functions stats_add and stats_mean, and stats.h. Compile each file with gcc -c, run nm on stats.o, and explain which symbols are capital T, B or D (shared) and which are lowercase (private)."
+  resourceName: "Beej's Guide to C: multifile projects"
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/multifile-projects.html'
+additionalResources:
+- title: "cppreference: storage duration and linkage"
+  type: doc
+  meta: the exact rules, linkage included
+  url: 'https://en.cppreference.com/w/c/language/storage_duration'
+- title: "Beej's Guide to C: scope"
+  type: doc
+  meta: file scope and how it relates to linkage
+  url: 'https://beej.us/guide/bgc/html/split/scope.html'
+whyThisMatters: "Every real C program is many files, built separately and joined by the linker. Linkage decides which names those files share. Get it right and modules stay independent; get it wrong and you get link errors, or worse, two parts of a program silently sharing a variable they each thought was their own."
+---
+
+In Foundations you saw the linker join object files by matching names. **Linkage** is the rule that decides which names it matches. Every file-scope variable and function in C has one of two kinds:
+
+- **External linkage:** the name means the same thing in every file of the program. This is the default for file-scope names.
+- **Internal linkage:** the name is private to its own source file. You get it with `static`.
+
+(Local variables have no linkage at all: they're only ever visible inside their block.)
+
+## Sharing a variable with extern
+
+To share one global between files, *define* it in exactly one file and *declare* it with `extern` everywhere else:
+
+```c
+int total = 0;       /* counter.c: the definition, which makes the object */
+extern int total;    /* main.c: a declaration, "it exists, somewhere else" */
+```
+
+Both files are compiled together here. Predict the three lines:
+
+<CRun program="c-language/link-extern" caption='One global, two files' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`added 5, total is now 5`, then `12`, then `113`. `main.c` and `counter.c` both use the *same* `total`, because it has external linkage and there's one definition. So the `total += 100` in `main` is visible to `add`. A function declaration like `void add(int amount);` works the same way and doesn't even need `extern`: function declarations are `extern` by default.
+
+</details>
+
+## Two definitions, one name
+
+Now `red.c` and `blue.c` each define their own counter, both called `count`, both without `static`:
+
+<CRun program="c-language/link-multiple-def" caption='The same name in two files' />
+
+Each file compiled on its own without complaint. The error comes from the linker (`ld`): `multiple definition of 'count'`. With external linkage there can only be one `count` in the whole program, and it found two. The `/tmp/cc...o` names are gcc's temporary object files, one per source file.
+
+(Old compilers sometimes merged two uninitialised definitions like `int count;` silently. Since gcc 10 that's an error too, which is safer: two files that each thought they had their own counter would have been sharing one.)
+
+## static keeps a name private
+
+Add `static` to the file-scope `count` and `report` in each file, and the program links and runs:
+
+<CRun program="c-language/link-static-private" caption='Two private counters' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`red: 1`, `red: 2`, `blue: 1`, `red: 3`. Each file has its own private `count` and its own private `report`, so blue's count starts again at 1 and doesn't disturb red's. Only `red_tick` and `blue_tick`, which have no `static`, are visible to `main.c`.
+
+You can see the difference in the object file. `nm` lists a file's symbols; a capital letter means external, lowercase means internal:
+
+```
+$ gcc -std=c17 -Wall -Wextra -c red.c
+$ nm red.o
+0000000000000000 b count
+                 U printf
+0000000000000027 T red_tick
+0000000000000000 t report
+```
+
+`T red_tick` is shared code; `t report` and `b count` (zero-initialised data, in `.bss`) are private. `U printf` is a name `red.o` uses but doesn't define, for the linker to find.
+
+</details>
+
+<KeyIdea>A file-scope name is shared with the whole program unless you mark it static. Make everything static by default, and share only what other files really need.</KeyIdea>
+
+## A private name can't be found
+
+This program declares `log_message` and calls it. `log.c` defines a `log_message`. What goes wrong?
+
+<CRun program="c-language/link-hidden" caption='Declared here, defined there?' />
+
+<details>
+<summary>Check your answer</summary>
+
+`undefined reference to 'log_message'`. `log.c` defines it as `static`, so the name is private to `log.c`; from `main.c`'s point of view, no file defines a public `log_message`. Compiling `main.c` worked because the declaration promised the function exists. The linker is where that promise is checked, and it found nothing to keep it.
+
+Fix it by removing `static` from `log_message` in `log.c` (and declaring it in a header, next lesson), or by having `main` call the public `log_twice` instead.
+
+</details>
+
+## Done when
+
+You can say which linkage a name gets, share a variable correctly with `extern`, keep helpers private with `static`, and trace both linker errors to their cause.

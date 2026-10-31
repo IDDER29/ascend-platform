@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/alias-pun-warning",
+  "sourceHash": "b29df4dc5e1f166b",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘main’:\nmain.c:5:22: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]\n    5 |     unsigned bits = *(unsigned *) &f;\n      |                      ^~~~~~~~~~~~~~~\nmain.c:5:14: warning: ‘f’ is used uninitialized [-Wuninitialized]\n    5 |     unsigned bits = *(unsigned *) &f;\n      |              ^~~~\nmain.c:4:11: note: ‘f’ declared here\n    4 |     float f = 1.0f;\n      |           ^\n"
+  },
+  "run": {
+    "stdout": "the bits of 1.0f: 0x3F800000\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/kinds-defined",
+  "sourceHash": "bb21a32852218c36",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "UINT_MAX + 1 = 0\n-7 / 2 = -3\n-7 % 2 = -1\n7 / -2 = -3\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

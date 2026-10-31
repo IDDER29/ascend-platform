@@ -1,0 +1,20 @@
+{
+  "id": "c-language/sd-dangling-asan",
+  "sourceHash": "4240e1c1a98d0cd0",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -fsanitize=address main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "=================================================================\n==565082==ERROR: AddressSanitizer: stack-use-after-return on address 0x6c1030cf0020 at pc 0x62cb74f1c3a6 bp 0x7fff44f56490 sp 0x7fff44f56480\nREAD of size 4 at 0x6c1030cf0020 thread T0\n    #0 0x62cb74f1c3a5 in main (/tmp/build/prog+0x13a5) (BuildId: 180fef5959a6bd2ec9736b3353f7898022227cc2)\n    #1 0x701032e2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #2 0x701032e2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #3 0x62cb74f1c184 in _start (/tmp/build/prog+0x1184) (BuildId: 180fef5959a6bd2ec9736b3353f7898022227cc2)\n\nAddress 0x6c1030cf0020 is located in stack of thread T0 at offset 32 in frame\n    #0 0x62cb74f1c258 in make_answer (/tmp/build/prog+0x1258) (BuildId: 180fef5959a6bd2ec9736b3353f7898022227cc2)\n\n  This frame has 1 object(s):\n    [32, 36) 'answer' (line 6) <== Memory access at offset 32 is inside this variable\nHINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork\n      (longjmp and C++ exceptions *are* supported)\nSUMMARY: AddressSanitizer: stack-use-after-return (/tmp/build/prog+0x13a5) (BuildId: 180fef5959a6bd2ec9736b3353f7898022227cc2) in main\nShadow bytes around the buggy address:\n  0x6c1030cefd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6c1030cefe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6c1030cefe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6c1030ceff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6c1030ceff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x6c1030cf0000: f5 f5 f5 f5[f5]f5 f5 f5 00 00 00 00 00 00 00 00\n  0x6c1030cf0080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6c1030cf0100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6c1030cf0180: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6c1030cf0200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6c1030cf0280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==565082==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

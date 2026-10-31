@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/ub-hunt-empty",
+  "sourceHash": "c710fb856df22b16",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -O0 -g -fsanitize=address,undefined main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘grade’:\nmain.c:16:12: warning: function returns address of local variable [-Wreturn-local-addr]\n   16 |     return label;\n      |            ^~~~~\n"
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "main.c:37:35: runtime error: division by zero\nAddressSanitizer:DEADLYSIGNAL\n=================================================================\n==565748==ERROR: AddressSanitizer: FPE on unknown address 0x611275e49a72 (pc 0x611275e49a72 bp 0x7fff502a3620 sp 0x7fff502a3550 T0)\n    #0 0x611275e49a72 in main ./main.c:37\n    #1 0x73ba9ba2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #2 0x73ba9ba2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #3 0x611275e49284 in _start (/tmp/build/prog+0x2284) (BuildId: af945dc5da7f74d8f48041b62811b58e38281b24)\n\n==565748==Register values:\nrax = 0x00000000a3a2a1a0  rbx = 0x0000000000000000  rcx = 0x000073ba9be1d92b  rdx = 0x00000000ffffffff  \nrdi = 0x0000611275e49a6e  rsi = 0x00007fff502a3540  rbp = 0x00007fff502a3620  rsp = 0x00007fff502a3550  \n r8 = 0x00007fff502a2f1e   r9 = 0x000000000000002e  r10 = 0x0000000000000000  r11 = 0x0000000000000206  \nr12 = 0x00006fba995f0000  r13 = 0x00000000a3a2a1a0  r14 = 0x00000df7532be000  r15 = 0x00007fff502a3570  \nAddressSanitizer can not provide additional info.\nSUMMARY: AddressSanitizer: FPE ./main.c:37 in main\n==565748==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

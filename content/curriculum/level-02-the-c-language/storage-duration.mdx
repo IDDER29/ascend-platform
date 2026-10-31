@@ -1,0 +1,116 @@
+---
+title: "Storage duration: automatic, static and allocated"
+level: level-02-the-c-language
+slug: storage-duration
+order: 15
+timeMin: 10
+learningOutcomes:
+- Name the three storage durations of C objects and say when each object is created and destroyed
+- Explain why returning the address of a local variable is a bug, and read gcc's warning and AddressSanitizer's report for it
+- Predict the starting value of static and automatic objects, and explain why only static ones start at zero
+- Explain why a static object needs a constant initialiser
+primer:
+- title: "Stack vs heap"
+  type: doc
+  meta: Reread · 3 min · where automatic and allocated objects usually live.
+  essential: true
+- title: "Scope: where a name lives"
+  type: doc
+  meta: "C Basics · static locals that remember between calls."
+  essential: false
+knowledgeCheck:
+- question: make_answer returns &answer, where answer is a local int. Why is that a bug even if the program seems to print 42?
+  answer: "answer has automatic storage duration: it stops existing when make_answer returns. The returned pointer points at memory the next call may reuse, so using it is undefined behaviour. It can print 42, garbage, or crash; gcc warned, and this gcc even replaced the address with a null pointer, so the program crashed."
+  jumpToId: the-dangling-pointer
+  jumpToLabel: The dangling pointer
+- question: Why does a static int start at 0 while an automatic int starts with garbage?
+  answer: "Static objects exist before main runs and are set up once, so C requires them to be initialised, to zero if you give no value. Automatic objects are created every time their block runs, on whatever was left on the stack; zeroing them each time would cost time, so C leaves them uninitialised."
+  jumpToId: what-they-start-as
+  jumpToLabel: What they start as
+assignment:
+  instruction: "Write a function char *make_greeting(const char *name) that returns a new string \"Hello, <name>!\". Write it three ways: with a local array (and see gcc's warning), with a static array (and show what goes wrong when you call it twice and keep both results), and with malloc (the right way, freed by the caller). Explain each result."
+  resourceName: "cppreference: storage duration"
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/language/storage_duration'
+additionalResources:
+- title: "cppreference: initialisation"
+  type: doc
+  meta: what each kind of object starts as
+  url: 'https://en.cppreference.com/w/c/language/initialization'
+- title: "AddressSanitizer: use after return"
+  type: doc
+  meta: how ASan catches pointers into dead stack frames
+  url: 'https://github.com/google/sanitizers/wiki/AddressSanitizerUseAfterReturn'
+whyThisMatters: "Most memory bugs in C are lifetime bugs: using an object after it has stopped existing. Knowing exactly when each object is born and dies is what lets you return data from functions safely, and what makes a dangling pointer obvious instead of mysterious."
+---
+
+Scope, from C Basics, answers *where a name can be used*. **Storage duration** answers a different question: *how long the object itself exists*. They often line up, but not always: a `static` local has a small scope and lives for the whole run. C has three durations you'll use every day.
+
+| Duration | How you get one | Created | Destroyed |
+|---|---|---|---|
+| automatic | a local variable, a parameter | each time its block starts | when its block ends |
+| static | a global, or `static` anywhere | once, before `main` | when the program ends |
+| allocated | `malloc`, `calloc`, `realloc` | when the call returns | when you call `free` |
+
+## All three in one program
+
+<CRun program="c-language/sd-lifetimes" caption='Three lifetimes' />
+
+`count` is static, so the three calls share one object, and the third call sees 3. Inside `make_array`, `a` and `i` are automatic and vanish when it returns, but the block `malloc` gave it is allocated: it outlives the function, so `main` can still read `squares[4]`, until `free` ends it.
+
+<KeyIdea>Automatic objects die with their block, static ones live for the whole run, and allocated ones live until you free them. A pointer is only valid while the object it points at still exists.</KeyIdea>
+
+## The dangling pointer
+
+What could go wrong here? Read gcc's message, then predict what running it does.
+
+<CRun program="c-language/sd-dangling" caption='Returning the address of a local' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+gcc warns, `function returns address of local variable`, and running it crashes with a segmentation fault. `answer` is automatic: it stops existing the moment `make_answer` returns, so the pointer it hands back points at nothing valid. Using it is undefined behaviour.
+
+This gcc goes further than warning. Because the code can never be correct, it returns a null pointer instead of the dead address (look at its `-S` output: `movl $0, %eax`), so the bug crashes at once instead of quietly printing 42. Other compilers, or other flags, may print 42, print garbage, or crash later: none of those means the code is fine.
+
+</details>
+
+The warning only catches the obvious case. Store the address somewhere instead of returning it, and gcc says nothing. AddressSanitizer catches it at run time:
+
+<CRun program="c-language/sd-dangling-asan" caption='The same bug, hidden from the warning' />
+
+The report names the bug, **stack-use-after-return**, says the bad read happened in `main`, and names the variable the memory belonged to: `'answer' (line 6)` in `make_answer`'s frame. (Compile with `-g` too, and ASan adds the exact line of every frame.) The addresses change from run to run; the diagnosis doesn't.
+
+The fixes: return the value itself (`int make_answer(void)`), let the caller pass in where to put the result, or return allocated memory and make the caller responsible for freeing it.
+
+## What they start as
+
+Predict all five values this prints:
+
+<CRun program="c-language/sd-static-init" caption='Static objects with no initialiser' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`0 0 0 0.000000 NULL`. Every object with static storage duration (globals, file-scope `static`, and `static` locals) is initialised before `main` runs, and if you don't give a value, C sets it to zero: 0 for numbers, 0.0 for `double`, a null pointer for pointers, and every element of an array.
+
+Automatic objects get no such guarantee. A local `int x;` holds whatever bytes were left on the stack, and reading it before assigning is undefined behaviour. That's why gcc's `-Wall` warns about "may be used uninitialized". Always initialise locals.
+
+</details>
+
+## Static means set up before main
+
+A static object is initialised once, before any of your code runs. So what's wrong with this?
+
+<CRun program="c-language/sd-not-constant" caption='Initialising a static from a function' />
+
+<details>
+<summary>Check your answer</summary>
+
+`initializer element is not constant`. Static objects are filled in when the program is loaded, before `main` and before any function can run, so their initial value must be something the compiler can work out: a constant expression such as `10`, `3 * 4` or the address of another static object. A function call isn't. Set it at the start of `main` instead: `counter = start();`.
+
+</details>
+
+## Done when
+
+You can say when each kind of object is born and dies, explain the dangling pointer from both gcc's warning and ASan's report, and predict what an uninitialised static or automatic object holds.

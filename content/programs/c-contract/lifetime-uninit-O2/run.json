@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/lifetime-uninit-O2",
+  "sourceHash": "39c2d70988d303a0",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘total’:\nmain.c:14:13: warning: ‘sum’ may be used uninitialized [-Wmaybe-uninitialized]\n   14 |         sum += values[i];\n      |         ~~~~^~~~~~~~~~~~\nmain.c:12:9: note: ‘sum’ was declared here\n   12 |     int sum;\n      |         ^~~\nIn function ‘total’,\n    inlined from ‘main’ at main.c:21:5:\nmain.c:14:13: warning: ‘sum’ is used uninitialized [-Wuninitialized]\n   14 |         sum += values[i];\n      |         ~~~~^~~~~~~~~~~~\nmain.c: In function ‘main’:\nmain.c:12:9: note: ‘sum’ was declared here\n   12 |     int sum;\n      |         ^~~\nIn function ‘total’,\n    inlined from ‘main’ at main.c:23:5:\nmain.c:14:13: warning: ‘sum’ is used uninitialized [-Wuninitialized]\n   14 |         sum += values[i];\n      |         ~~~~^~~~~~~~~~~~\nmain.c: In function ‘main’:\nmain.c:12:9: note: ‘sum’ was declared here\n   12 |     int sum;\n      |         ^~~\n"
+  },
+  "run": {
+    "stdout": "total: 12\ntotal: 12\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

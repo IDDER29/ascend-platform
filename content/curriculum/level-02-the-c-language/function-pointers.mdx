@@ -1,0 +1,133 @@
+---
+title: "Function pointers"
+level: level-02-the-c-language
+slug: function-pointers
+order: 14
+timeMin: 10
+learningOutcomes:
+- Declare a pointer to a function, assign a function to it and call through it
+- Use a typedef to give a function-pointer type a readable name
+- Write a qsort comparator that is correct for every int, and explain why subtracting is not
+- Build a dispatch table that picks a function from data instead of a long if chain
+primer:
+- title: "What a pointer really is"
+  type: doc
+  meta: Reread · 3 min · a pointer holds an address; functions have addresses too.
+  essential: true
+- title: "Functions, parameters and return values"
+  type: doc
+  meta: "C Basics · a function's type is its parameters and its return type."
+  essential: false
+knowledgeCheck:
+- question: "What does int (*f)(int) declare, and why are the brackets around *f needed?"
+  answer: "f is a pointer to a function that takes an int and returns an int. Without the brackets, int *f(int) declares a function named f that returns an int pointer, because the () binds more tightly than the *."
+  jumpToId: a-pointer-to-a-function
+  jumpToLabel: A pointer to a function
+- question: Why is return a - b a broken qsort comparator for ints?
+  answer: "a - b can overflow. With a = 5 and b = INT_MIN the true difference doesn't fit in an int, which is undefined behaviour; in practice the result wraps to a negative number, qsort is told 5 comes before INT_MIN, and the array comes out in the wrong order. Compare instead: (a > b) - (a < b)."
+  jumpToId: the-subtraction-trap
+  jumpToLabel: The subtraction trap
+assignment:
+  instruction: "Write a program that sorts an array of struct student { char name[20]; int score; } with qsort twice: once by score, highest first, and once by name using strcmp. Then add a third comparator that sorts by score and breaks ties by name. Compile with gcc -std=c17 -Wall -Wextra and check every order by hand."
+  resourceName: "cppreference: qsort"
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/algorithm/qsort'
+additionalResources:
+- title: "Beej's Guide to C: pointers to functions"
+  type: doc
+  meta: the syntax, with more examples
+  url: 'https://beej.us/guide/bgc/html/split/pointers-iii-pointers-to-pointers-and-more.html'
+- title: "Callback (Wikipedia)"
+  type: doc
+  meta: the general idea, in many languages
+  url: 'https://en.wikipedia.org/wiki/Callback_%28computer_programming%29'
+whyThisMatters: "Function pointers are how C passes behaviour around: qsort's comparator, signal handlers, thread start routines, plugin tables and every 'callback' in a C library. The operating system you'll study later is full of them, and a wrong one is a crash that's hard to read without knowing how they work."
+---
+
+A function is code at an address in memory, so you can point at one, the same way you point at an `int`. A **function pointer** holds that address, and calling through it runs whichever function it currently points at. This is how a C library can call *your* code: `qsort` sorts anything because you hand it the function that compares two elements.
+
+## A pointer to a function
+
+The declaration looks odd at first, so read it from the name outwards:
+
+```c
+int (*f)(int);
+```
+
+`f` is a pointer (`*f`, in brackets), to a function taking an `int` (`(int)`), returning an `int`. The brackets matter: `int *f(int);` would declare a *function* `f` that returns an `int *`.
+
+A function's name, used without calling it, gives its address, so `f = twice;` aims `f` at `twice`, and `f(5)` calls it. Because the full type is hard to read, it's normal to name it once with `typedef`:
+
+```c
+typedef int (*IntOp)(int);
+```
+
+Now `IntOp` is the type "pointer to a function from `int` to `int`", and it reads like any other type. Predict all five lines this program prints:
+
+<CRun program="c-language/fp-basics" caption='Calling through a pointer' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`f(5)` is 10 while `f` points at `twice`, then 25 once it points at `square`. The loop applies `twice`, `square`, `twice` to x = 3 in turn: 3 × 2 = 6, 6 × 6 = 36, 36 × 2 = 72. `apply` doesn't know which function it's calling; it calls whatever it was given. That's the whole idea.
+
+</details>
+
+## qsort and the comparator
+
+`qsort` from `<stdlib.h>` sorts an array of anything. It can't know how to compare your elements, so you give it a comparator:
+
+```c
+void qsort(void *base, size_t count, size_t size,
+           int (*compare)(const void *, const void *));
+```
+
+It calls `compare` with pointers to two elements. The comparator returns a negative number if the first should come first, a positive one if the second should, and 0 if they tie. Because `qsort` works for any type, the pointers are `const void *`; your comparator converts them back to the real type.
+
+<CRun program="c-language/fp-qsort" caption='Sorting both ways with one qsort' />
+
+`(x > y) - (x < y)` is 1, 0 or -1: a safe three-way comparison. `descending` just swaps the arguments of `ascending`, so the same idea sorts both ways.
+
+The comparator's type must match exactly. Here is a comparator that takes `int *` instead of `const void *`:
+
+<CRun program="c-language/fp-wrong-type" caption='The wrong comparator type' />
+
+Since gcc 14, passing an incompatible function pointer is an error. The message spells out both types: the one `qsort` expects (`int (*)(const void *, const void *)`) and the one it got. Calling a function through a pointer of the wrong type is undefined behaviour, so this error saves you from a crash you'd struggle to explain.
+
+## The subtraction trap
+
+Many tutorials write the comparator as one subtraction. Predict the order this prints, then run it. It's compiled with `-fsanitize=undefined`, which reports undefined behaviour as it happens.
+
+<CRun program="c-language/fp-qsort-overflow" caption='return a - b' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The order is wrong: `INT_MIN`, the smallest int, ends up last. `5 - INT_MIN` is 2,147,483,653, just past the largest `int` (2,147,483,647). That overflow is undefined behaviour, and the sanitizer reports it on line 7. In practice it wrapped around to a negative number, so `qsort` was told 5 comes *before* `INT_MIN`, and the sort went wrong without any crash.
+
+Subtraction works only when you know the difference can't overflow. The comparison `(x > y) - (x < y)` is always correct, so use it.
+
+</details>
+
+<KeyIdea>A function pointer stores which function to run. Its type, the parameters and the return type, must match the function exactly, and code that calls through it never needs to know which function it got.</KeyIdea>
+
+## Dispatch tables
+
+An array of function pointers turns "which operation?" into data. This calculator pairs each operator character with the function that does it, then looks it up:
+
+<CRun program="c-language/fp-dispatch" caption='A calculator driven by a table' />
+
+Adding an operator is now one line in the table, not another branch in an `if` chain. The same pattern is everywhere in systems code: an interpreter's table of instructions, a device driver's table of operations, the kernel's table of system calls.
+
+How would you add `%` for the remainder, and what would you have to guard against?
+
+<details>
+<summary>Check your answer</summary>
+
+Write `int mod(int a, int b) { return a % b; }` and add `{ '%', mod }` to `OPS`. Like division, `%` by zero is undefined behaviour, so extend the check to `(symbol == '/' || symbol == '%') && b == 0`. The loop, the lookup and the call don't change at all.
+
+</details>
+
+## Done when
+
+You can read and write a function-pointer declaration, use a typedef for it, write an overflow-safe comparator, and extend a dispatch table.

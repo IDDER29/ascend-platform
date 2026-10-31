@@ -1,0 +1,14 @@
+{
+  "id": "c-language/sd-not-constant",
+  "sourceHash": "4967ad0839695177",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "main.c:7:22: error: initializer element is not constant\n    7 | static int counter = start();   /* set up before main runs? */\n      |                      ^~~~~\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

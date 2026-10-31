@@ -187,9 +187,9 @@ export const PATHS: PathDef[] = [
       },
       {
         id: "c-contract",
-        title: "The C Contract",
+        title: LEVELS["level-05-c-contract"].name,
         body: "Exactly what C promises and what it doesn't: undefined behaviour, evaluation order, aliasing and lifetime.",
-        outline: O.C_CONTRACT,
+        levelId: "level-05-c-contract",
       },
       {
         id: "c-tools",

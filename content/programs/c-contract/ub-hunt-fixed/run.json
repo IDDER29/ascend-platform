@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/ub-hunt-fixed",
+  "sourceHash": "95eb9dd7301ae126",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=address,undefined main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "ignoring 60: only 8 scores fit\nignoring 140: scores go from 0 to 100\nscores: 8\naverage: 77\nbest: 95 (A), bonus 2147483648\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

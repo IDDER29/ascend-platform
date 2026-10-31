@@ -1,0 +1,162 @@
+---
+title: "Header files and separate compilation"
+level: level-02-the-c-language
+slug: headers
+order: 17
+timeMin: 11
+learningOutcomes:
+- Decide what belongs in a header file (declarations, types, macros) and what belongs in a .c file (definitions)
+- Write include guards, and explain the redefinition error they prevent
+- Build a program from several source files, compiling each separately and linking the object files
+- Explain how make uses dependencies to recompile only what changed
+primer:
+- title: "Linkage: static and extern"
+  type: doc
+  meta: Reread · 3 min · declarations versus definitions, and what the linker matches.
+  essential: true
+- title: "Source files, headers and the preprocessor"
+  type: doc
+  meta: "Foundations · #include is copy and paste."
+  essential: false
+knowledgeCheck:
+- question: Why does including point.h twice in one file give "redefinition of struct point" without include guards?
+  answer: "#include pastes the header's text in. main.c includes point.h directly and again through shapes.h, so the struct definition appears twice in one translation unit, which C forbids. An include guard (#ifndef POINT_H, #define POINT_H, #endif) makes the second paste empty."
+  jumpToId: include-guards
+  jumpToLabel: Include guards
+- question: util.h contains a whole function definition and is included by two .c files. Why does linking fail?
+  answer: "Each .c file that includes it gets its own copy of the definition, with external linkage, so the linker finds two definitions of clamp. Headers should hold declarations; put the definition in one .c file (or make it static inline if it must live in the header)."
+  jumpToId: definitions-dont-belong-in-headers
+  jumpToLabel: "Definitions don't belong in headers"
+assignment:
+  instruction: "Turn the point module from this lesson into a small library of your own: a stack of ints (stack.h and stack.c) with stack_push, stack_pop and stack_is_empty, used by main.c. Give it include guards, keep its internals static, and write a Makefile like the one here. Change only stack.c and confirm make rebuilds just that file."
+  resourceName: "GNU make manual"
+  resourceType: doc
+  resourceUrl: 'https://www.gnu.org/software/make/manual/make.html'
+additionalResources:
+- title: "GCC: once-only headers"
+  type: doc
+  meta: include guards, from the preprocessor's own manual
+  url: 'https://gcc.gnu.org/onlinedocs/cpp/Once-Only-Headers.html'
+- title: "Include guard (Wikipedia)"
+  type: doc
+  meta: the pattern, and #pragma once
+  url: 'https://en.wikipedia.org/wiki/Include_guard'
+whyThisMatters: "No real C project is a single file. Headers are the contract between a module and its users, and separate compilation is what lets a large program rebuild in seconds after a small change. Every C codebase you'll read, the Linux kernel included, is organised this way."
+---
+
+A module in C is two files: a **header** (`.h`) that says what the module offers, and a **source file** (`.c`) that does it. Other files `#include` the header to use the module, and the linker joins everything at the end. This lesson is about getting that split right.
+
+## A module in three files
+
+`point.h` is the contract: the type and the function declarations. `point.c` has the definitions. `main.c` only includes the header.
+
+<CRun program="c-language/hdr-module" caption='A point module' />
+
+Notice `#include "point.h"` uses quotes, not angle brackets: quotes look in the source file's own folder first, which is where your headers live. `point.c` includes its own header too, so the compiler checks that its definitions match the declarations everyone else sees.
+
+| In the header (.h) | In the source file (.c) |
+|---|---|
+| function declarations (prototypes) | function definitions (bodies) |
+| struct, union and enum types, typedefs | `static` helper functions |
+| `#define` constants and macros | the definition of any shared global |
+| `extern` declarations of shared globals | private `static` variables |
+
+## Separate compilation
+
+The run above built everything in one command, but the real advantage is compiling each file on its own into an object file and linking them afterwards:
+
+```
+$ gcc -std=c17 -Wall -Wextra -c main.c      # makes main.o
+$ gcc -std=c17 -Wall -Wextra -c point.c     # makes point.o
+$ gcc main.o point.o -o prog                # links them
+$ nm main.o
+0000000000000000 T main
+                 U point_add
+                 U point_manhattan
+                 U printf
+```
+
+`main.o` *uses* `point_add` and `point_manhattan` (`U`, undefined here) but doesn't contain them. They're in `point.o`, and the linker connects the two. If you change only `point.c`, you only need to recompile `point.o` and relink: in a project with hundreds of files, that's the difference between seconds and minutes.
+
+## Include guards
+
+`shapes.h` builds on `point.h`, so it includes it. `main.c` includes both. Without guards:
+
+<CRun program="c-language/hdr-no-guard" caption='Including point.h twice' />
+
+`#include` pastes text, so `struct point` is pasted into `main.c` twice: once directly and once through `shapes.h`. gcc even shows the chain: `In file included from shapes.h:1, from main.c:3`. Defining a type twice in one file is an error.
+
+The fix is an **include guard** around the header's contents:
+
+```c
+#ifndef POINT_H
+#define POINT_H
+
+/* ...the header's contents... */
+
+#endif
+```
+
+The first paste defines `POINT_H` and keeps the contents; every later paste finds `POINT_H` already defined and skips to `#endif`. With guards on both headers, the same program builds:
+
+<CRun program="c-language/hdr-guarded" caption='The same headers, guarded' />
+
+Most compilers also accept `#pragma once`, which does the same in one line, but it isn't part of standard C. Guards work everywhere.
+
+<KeyIdea>A header is a contract that may be pasted many times: it holds declarations and types, guarded against repeats. The definitions it promises live once, in a .c file.</KeyIdea>
+
+## Definitions don't belong in headers
+
+`util.h` has include guards, but it holds a whole function. Two files include it. Predict whether this builds.
+
+<CRun program="c-language/hdr-function-in-header" caption='A function body in a header' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It fails at the link step: `multiple definition of 'clamp'`. Include guards only stop repeats *within one file*. `main.c` and `scale.c` are compiled separately, and each gets its own copy of `clamp` with external linkage, so the linker finds two. Put the definition in `util.c` and keep only `int clamp(int x, int lo, int hi);` in the header. (For a tiny function you want in the header, `static inline` gives each file a private copy, so they no longer collide.)
+
+</details>
+
+## make: rebuild only what changed
+
+Typing every command gets old fast. `make` reads a **Makefile** that says what each file is built from, and rebuilds only what's out of date:
+
+```make
+CFLAGS = -std=c17 -Wall -Wextra
+
+prog: main.o point.o
+	$(CC) $(CFLAGS) main.o point.o -o prog
+
+main.o: main.c point.h
+point.o: point.c point.h
+```
+
+(The command line must start with a tab.) `make` knows how to turn a `.c` into a `.o` already, so the last two lines only list dependencies. Here is a real session: a first build, then after changing `point.c`, then after changing `point.h`:
+
+```
+$ make
+cc -std=c17 -Wall -Wextra   -c -o main.o main.c
+cc -std=c17 -Wall -Wextra   -c -o point.o point.c
+cc -std=c17 -Wall -Wextra main.o point.o -o prog
+$ touch point.c && make
+cc -std=c17 -Wall -Wextra   -c -o point.o point.c
+cc -std=c17 -Wall -Wextra main.o point.o -o prog
+$ touch point.h && make
+cc -std=c17 -Wall -Wextra   -c -o main.o main.c
+cc -std=c17 -Wall -Wextra   -c -o point.o point.c
+cc -std=c17 -Wall -Wextra main.o point.o -o prog
+```
+
+Why did changing `point.h` rebuild both object files, but changing `point.c` rebuilt only one?
+
+<details>
+<summary>Check your answer</summary>
+
+`point.c` is a dependency of `point.o` only, so `make` recompiles just that and relinks. `point.h` is a dependency of both `main.o` and `point.o`, because both files include it: a change to the contract might affect anyone who uses it, so both must be recompiled. This is also why you should list headers as dependencies: forget one, and `make` can leave you running a program built from stale code.
+
+</details>
+
+## Done when
+
+You can split a program into a header and source files, guard a header, compile and link the pieces separately, and say what `make` will rebuild after a change.

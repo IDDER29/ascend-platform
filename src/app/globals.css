@@ -648,6 +648,47 @@ html.sidebar-collapsed .app-sidebar-section {
   background: var(--coach-tint-neutral-bg);
   color: var(--coach-ink);
 }
+/* Prose lists (Tailwind's reset strips their markers); components inside the body keep their own. */
+.lesson-v2-body > ul,
+.lesson-v2-body > ol {
+  margin: 0.75rem 0 1rem;
+  padding-left: 1.4rem;
+  color: var(--coach-ink-secondary);
+}
+.lesson-v2-body > ul {
+  list-style: disc;
+}
+.lesson-v2-body > ol {
+  list-style: decimal;
+}
+.lesson-v2-body > ul > li,
+.lesson-v2-body > ol > li {
+  margin: 0.3rem 0;
+  padding-left: 0.2rem;
+  line-height: 1.65;
+}
+/* An answer to reveal after predicting (<details> in a lesson). */
+.lesson-v2-body > details {
+  margin: 1rem 0 1.25rem;
+  border: 2px solid var(--coach-border);
+  border-radius: 16px;
+  background: var(--coach-surface);
+  padding: 0.25rem 1rem;
+}
+.lesson-v2-body > details > summary {
+  cursor: pointer;
+  padding: 0.6rem 0;
+  font-weight: 700;
+  color: var(--coach-ink);
+}
+.lesson-v2-body > details[open] > summary {
+  border-bottom: 2px solid var(--coach-divider);
+  margin-bottom: 0.5rem;
+}
+.lesson-v2-body > ul > li::marker,
+.lesson-v2-body > ol > li::marker {
+  color: var(--coach-ink-muted);
+}
 
 /* Public site: the shell prompt's caret blinks unless motion is reduced. */
 @keyframes site-caret {

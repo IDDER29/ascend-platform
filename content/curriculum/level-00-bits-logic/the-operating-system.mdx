@@ -1,0 +1,100 @@
+---
+title: "What an operating system provides"
+level: level-00-bits-logic
+slug: the-operating-system
+order: 102
+timeMin: 8
+learningOutcomes:
+- Distinguish an app from the kernel, the core of the operating system
+- "List the main services an OS gives programs: running them, sharing the hardware, files, devices and memory"
+- Explain why programs reach devices through the OS instead of directly
+- Follow one program's requests through the OS in a step-by-step trace
+primer:
+- title: "Firmware, bootloaders and startup"
+  type: doc
+  meta: Reread · 2 min · the bootloader loads the kernel; the kernel starts process 1.
+  essential: true
+- title: "Input and output: talking to the outside world"
+  type: doc
+  meta: Reread · 2 min · devices have controllers, reached through ports or addresses.
+  essential: false
+knowledgeCheck:
+- question: What is the difference between an app and the kernel?
+  answer: "An app is an ordinary program that does one job for the user. The kernel is the core of the OS: it runs all the time, controls the hardware, and gives every app its services."
+  jumpToId: apps-and-the-kernel
+  jumpToLabel: Apps and the kernel
+- question: Name three services the OS gives a program.
+  answer: "Any three of: starting and running it, sharing the CPU with other programs, giving it memory, files and folders, and access to devices like the screen, keyboard and network."
+  jumpToId: what-the-os-provides
+  jumpToLabel: What the OS provides
+- question: Why does a text editor ask the OS to write a file, instead of sending commands to the SSD itself?
+  answer: "The OS knows how that SSD works, keeps the file system consistent, checks the editor is allowed to write that file, and stops two programs writing over each other. The editor only needs one request that works on any storage."
+  jumpToId: one-interface-for-every-device
+  jumpToLabel: One interface for every device
+assignment:
+  instruction: "Open your computer's task manager (Activity Monitor, Task Manager or top). Find three programs you started and two you didn't. For each, say whether it is an app or part of the OS, and what service it might be using from the kernel."
+  resourceName: 'OSTEP: Introduction to Operating Systems (PDF)'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/intro.pdf'
+additionalResources:
+- title: 'Crash Course Computer Science #18: Operating Systems'
+  type: video
+  meta: from batch processing to modern OSes
+  url: 'https://www.youtube.com/watch?v=26QPDBe-NB8'
+- title: 'Wikipedia: Kernel (operating system)'
+  type: doc
+  meta: the core of the OS and what it controls
+  url: 'https://en.wikipedia.org/wiki/Kernel_%28operating_system%29'
+whyThisMatters: "Every program you'll ever write runs on top of an operating system and asks it for almost everything: memory, files, the screen, the network. Knowing what the OS does, and doesn't, is the base for C, Linux and systems programming."
+---
+
+On the tiny CPU, one program owns the whole machine. It can read any box, write any port and run forever. A real computer runs dozens of programs at once, from many authors, on the same hardware. Something has to be in charge. That's the **operating system**.
+
+By the end you'll be able to say what the OS does for a program, and why programs ask it instead of touching the hardware themselves.
+
+## Apps and the kernel
+
+An **app** is a program that does a job for you: an editor, a browser, a game. The **kernel** is the core of the operating system: the program the bootloader loaded, which runs from startup to shutdown, controls the hardware, and serves every app.
+
+An operating system is the kernel plus the programs that come with it: the desktop, the file manager, the settings app and many background services. Those are apps too. They just come in the box.
+
+<KeyIdea>Apps do jobs for people; the kernel runs the machine for the apps. Apps get hardware only through the kernel.</KeyIdea>
+
+## What the OS provides
+
+The kernel gives programs a handful of services:
+
+<TruthTable caption='What the kernel does for programs' rowsJson='[["service", "what the program gets", "without it"], ["running programs", "loaded into memory and started", "you would load bytes by hand, like the tiny CPU"], ["sharing the CPU", "a turn on the CPU, many times a second", "one program at a time"], ["memory", "its own memory, kept apart from others", "any program could overwrite any other"], ["files", "named files and folders", "raw numbered blocks on an SSD"], ["devices", "the same request for any screen, disk or network card", "code for every model of every device"]]' />
+
+Each of these gets its own lesson in this course: system calls, processes, addresses, files, networks and sharing.
+
+## One interface for every device
+
+There are thousands of models of SSD, keyboard and network card, each with its own controller and commands. The kernel has a **driver** for each: the code that knows how to talk to that model. Apps never see them. An app says "write these bytes to notes.txt" or "show this text", and the kernel and its drivers do the rest.
+
+That gives three things at once:
+
+- **Simplicity**: one request works on any hardware.
+- **Safety**: the kernel checks every request, so a buggy or hostile app can't scribble over another's files or take over the network card.
+- **Sharing**: the kernel decides whose turn it is when two programs want the same device.
+
+Here's a program asking for three services. Step through it and watch which layer does each part. The colour on the left says who acts: the app, the CPU switching modes, the kernel, or a device.
+
+<SyscallLab caption='One program, three requests' startJson='["compute works out a message", "write 1 \"saved\"", "open \"notes.txt\"", "write 3 \"hello\"", "exit 0"]' />
+
+Before you step: which lines need the kernel, and which can the app do by itself?
+
+<details>
+<summary>Check your answer</summary>
+
+Only line 1 stays in the app: working something out uses just the CPU and the app's own memory. Every other line needs something the app isn't allowed to touch (the display, the file system, the end of its own process), so each one becomes a request to the kernel, with a switch into kernel mode and back.
+
+The trace also shows `"hello"` going into the kernel's RAM cache and reaching the disk only when the program exits. In this model, exiting writes the file out; on real Linux the kernel writes it back a little later, as you saw in *Memory versus storage*.
+
+</details>
+
+## The OS is software too
+
+The kernel isn't magic. It's a program, written mostly in C, compiled to machine instructions, and run by the same CPU as everything else. What makes it different is that the hardware lets it do things apps can't: the next lesson shows how the CPU itself enforces that line.
+
+The tiny CPU has no operating system. Every program is the only program, with the whole machine to itself, which is exactly why it's a good machine to learn on, and exactly why real computers need more.

@@ -53,16 +53,6 @@ const live = (
   covers: string[],
   role?: FoundationsItemRole,
 ): FoundationsOutlineItem => ({ kind: "live", slug, title, timeMin, description, covers, role });
-const soon = (
-  id: string,
-  title: string,
-  timeMin: number,
-  description: string,
-  covers: string[],
-  role?: FoundationsItemRole,
-): FoundationsOutlineItem => ({ kind: "soon", id, title, timeMin, description, covers, role });
-const project = (id: string, title: string, timeMin: number, description: string, covers: string[]) =>
-  soon(id, title, timeMin, description, covers, "project");
 
 /**
  * Foundations: eight courses (grouped in `catalog.ts` by section id). `covers` names the lessons (F001–F106)
@@ -102,7 +92,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
       live("state-and-steps", "State, time and step-by-step execution", 7, "Compare a machine before and after each step, and see why the same input can give different results in a different state.", ["F008"]),
       live("abstraction-and-layers", "Abstraction: a machine in layers", 7, "Why we study a computer as parts with clear interfaces, and the ladder this path climbs from bits to programs.", ["F009"]),
       live("project-machine-atlas", "Project: The Machine Atlas", 25, "Map a computer you use into input, processing, memory, storage and output, then trace one action through it step by step.", ["P1-B"], "project"),
-      project("project-noisy-channel", "Optional project: Bits through a noisy channel", 20, "Send bits over a line that sometimes flips them, and work out how sender and receiver can still agree.", ["P1-X"]),
+      live("project-noisy-channel", "Optional project: Bits through a noisy channel", 20, "Send a message down a noisy line, set the receiver's threshold, and use codes to detect or fix flipped bits.", ["P1-X"], "project"),
     ],
   },
 
@@ -130,7 +120,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
       live("floating-point", "Fractions: floating point and why 0.1 + 0.2 isn't 0.3", 9, "Why many decimal fractions can't be stored exactly in binary, and why floating-point answers are often approximate.", ["F022"]),
       live("project-number-workbench", "Project: Number workbench", 20, "Convert between decimal, binary and hex, read a byte as signed and unsigned, and predict overflow before checking.", ["P2-A"], "project"),
       live("project-byte-lab", "Project: The Byte Lab", 30, "Use the Byte Lab to read the same bytes as numbers, text and colours, and work out what a mystery message means.", ["P2-B"], "project"),
-      project("project-file-format", "Optional project: Design a tiny file format", 30, "Invent a header and data layout for a small black-and-white image, then write down exactly how to decode it.", ["P2-X"]),
+      live("project-file-format", "Optional project: Design a tiny file format", 30, "Decode a tiny black-and-white image from its bytes, then write its format down exactly enough to decode it.", ["P2-X"], "project"),
     ],
   },
 
@@ -160,7 +150,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
       live("testing-and-delay", "Testing circuits, delay and trade-offs", 7, "Test a circuit against its whole truth table, and see why real gates take time and the longest path sets the speed.", ["F036"]),
       live("project-gate-workbench", "Project: Logic gate workbench", 20, "Build NOT, AND, OR and XOR from NAND alone, then a multiplexer, and check each against its truth table.", ["P3-A"], "project"),
       live("project-alu", "Project: Build an 8-bit ALU", 40, "Build a one-bit ALU slice that adds, subtracts, ANDs and ORs, then chain eight of them and test it on whole bytes.", ["P3-B"], "project"),
-      project("project-smaller-circuit", "Optional project: Make the circuit smaller", 25, "Rebuild part of your ALU from fewer gates, then compare gate counts and the longest path through each version.", ["P3-X"]),
+      live("project-smaller-circuit", "Optional project: Make the circuit smaller", 25, "Simplify circuits to fewer gates, build a full adder from NAND only, and compare gate counts and longest paths.", ["P3-X"], "project"),
     ],
   },
 
@@ -305,11 +295,11 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "The whole machine",
     blurb: "The CPU among memory, storage, devices and firmware, from power-on to a running program.",
     items: [
-      soon("from-cpu-to-system", "From CPU to computer system", 7, "Put the CPU together with memory, storage, firmware, devices and software, each with its own clear job.", ["F092"]),
-      soon("ram-vs-storage", "Memory versus storage", 7, "Why RAM forgets when the power goes off and storage doesn't, and what that means for a running program.", ["F093"]),
-      soon("memory-hierarchy", "The memory hierarchy and locality", 8, "Registers, caches, RAM and storage trade size for speed, and programs run fast by reusing nearby data.", ["F094"]),
+      live("from-cpu-to-system", "From CPU to computer system", 7, "Put the CPU together with memory, storage, firmware, devices and software, each with its own clear job.", ["F092"]),
+      live("ram-vs-storage", "Memory versus storage", 7, "Why RAM forgets when the power goes off and storage doesn't, and what that means for a running program.", ["F093"]),
+      live("memory-hierarchy", "The memory hierarchy and locality", 8, "Registers, caches, RAM and storage trade size for speed, and programs run fast by reusing nearby data.", ["F094"]),
       live("input-and-output", "Input and output: talking to the outside world", 8, "How bytes reach a display and arrive from devices, through ports or memory addresses, by polling or interrupts.", ["F095", "F096"]),
-      soon("boot", "Firmware, bootloaders and startup", 8, "What happens between pressing power and a running program: reset, firmware, a bootloader, then the OS.", ["F097"]),
+      live("boot", "Firmware, bootloaders and startup", 8, "What happens between pressing power and a running program: reset, firmware, a bootloader, then the OS.", ["F097"]),
     ],
   },
   {
@@ -317,11 +307,11 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "The operating system",
     blurb: "What the OS does for every program: processes, protected services, memory and files.",
     items: [
-      soon("the-operating-system", "What an operating system provides", 8, "The OS runs programs, shares the hardware between them, and gives them files and devices through one interface.", ["F098"]),
-      soon("system-calls", "Privilege, traps and system calls", 8, "Programs can't touch the hardware directly, so they ask the OS with a system call that switches into kernel mode.", ["F099"]),
-      soon("processes", "Programs, processes and address spaces", 8, "A program is a file; a process is that program running, with its own memory, registers and open files.", ["F100"]),
-      soon("virtual-memory", "Virtual and physical addresses", 8, "Each process sees its own addresses, which the hardware translates into real memory and keeps apart from others.", ["F101"]),
-      soon("files", "Files and file systems", 7, "Named files and folders are built by the OS on top of storage blocks, and saving a file is not the same as changing RAM.", ["F102"]),
+      live("the-operating-system", "What an operating system provides", 8, "The OS runs programs, shares the hardware between them, and gives them files and devices through one interface.", ["F098"]),
+      live("system-calls", "Privilege, traps and system calls", 8, "Programs can't touch the hardware directly, so they ask the OS with a system call that switches into kernel mode.", ["F099"]),
+      live("processes", "Programs, processes and address spaces", 8, "A program is a file; a process is that program running, with its own memory, registers and open files.", ["F100"]),
+      live("virtual-memory", "Virtual and physical addresses", 8, "Each process sees its own addresses, which the hardware translates into real memory and keeps apart from others.", ["F101"]),
+      live("files", "Files and file systems", 7, "Named files and folders are built by the OS on top of storage blocks, and saving a file is not the same as changing RAM.", ["F102"]),
     ],
   },
   {
@@ -329,9 +319,9 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "Sharing, networks and trust",
     blurb: "Talking to other computers, running many programs at once, and staying safe when things go wrong.",
     items: [
-      soon("networks", "How computers communicate", 8, "Follow a short message across a network as packets, passed down and back up through layers of protocols.", ["F103"]),
-      soon("concurrency", "Sharing one machine", 8, "Many programs seem to run at once because the OS switches between them, and anything shared needs coordinating.", ["F104"]),
-      soon("protection", "Protection, failures and trust", 8, "Programs can be wrong or hostile, so systems check bounds, keep programs apart and plan how to recover.", ["F105"]),
+      live("networks", "How computers communicate", 8, "Follow a short message across a network as packets, passed down and back up through layers of protocols.", ["F103"]),
+      live("concurrency", "Sharing one machine", 8, "Many programs seem to run at once because the OS switches between them, and anything shared needs coordinating.", ["F104"]),
+      live("protection", "Protection, failures and trust", 8, "Programs can be wrong or hostile, so systems check bounds, keep programs apart and plan how to recover.", ["F105"]),
     ],
   },
   {
@@ -339,10 +329,10 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "Wrap-up",
     blurb: "Follow one program all the way through the machine, then pick where to go next.",
     items: [
-      soon("program-journey", "The complete journey of a program", 10, "Trace a small program from source code to bits, instructions, memory, the OS and the screen, naming each simplification.", ["F106"]),
-      project("project-os-boundary", "Project: Follow a request across the OS boundary", 25, "Trace a file save or screen output from an app through the OS to the hardware, and say who does each part.", ["P8-A"]),
-      project("project-trace-a-program", "Final project: Trace a program end to end", 45, "Take a program through your translator, assembler and tiny CPU, then compare it with real compiled C on a real OS.", ["P8-B"]),
-      project("project-system-call-model", "Optional project: Model a system call", 30, "Simulate a program asking an OS for a service, showing the switch into kernel mode and back, step by step.", ["P8-X"]),
+      live("program-journey", "The complete journey of a program", 10, "Trace a small program from source code to bits, instructions, memory, the OS and the screen, naming each simplification.", ["F106"]),
+      live("project-os-boundary", "Project: Follow a request across the OS boundary", 25, "Step a screen write and a file save from an app through the kernel to the hardware, saying who does each part.", ["P8-A"], "project"),
+      live("project-trace-a-program", "Final project: Trace a program end to end", 45, "Take a program through the translator, assembler and tiny CPU, then compare it with real compiled C on a real OS.", ["P8-B"], "project"),
+      live("project-system-call-model", "Optional project: Model a system call", 30, "Audit system-call traces, fix requests the kernel refuses, and design a new system call of your own.", ["P8-X"], "project"),
       {
         kind: "link",
         id: "choose-path",

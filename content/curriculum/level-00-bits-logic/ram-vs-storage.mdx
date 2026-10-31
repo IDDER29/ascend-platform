@@ -1,0 +1,114 @@
+---
+title: "Memory versus storage"
+level: level-00-bits-logic
+slug: ram-vs-storage
+order: 99
+timeMin: 7
+learningOutcomes:
+- Tell memory (RAM) apart from storage (an SSD or a disk) by speed, size and what happens at power-off
+- Explain why RAM forgets when the power goes and flash storage doesn't
+- Explain why saving a file is a separate step from changing data in memory
+- Read real memory and storage sizes from a running computer
+primer:
+- title: "From CPU to computer system"
+  type: doc
+  meta: Reread · 2 min · RAM holds running programs; storage keeps files.
+  essential: true
+knowledgeCheck:
+- question: You type a page of text and the power cuts out before you save. Why is the text lost, when yesterday's saved file is fine?
+  answer: "The new text was only in RAM, which needs power to hold its bits. Yesterday's file was written to storage, which keeps its bits with no power at all."
+  jumpToId: why-ram-forgets
+  jumpToLabel: Why RAM forgets
+- question: A program writes to a file, and the call returns at once. Is the data on the SSD now?
+  answer: "Not necessarily. The OS usually copies it into a cache in RAM and writes it to the SSD a little later. A program that must be sure asks for that explicitly (sync or fsync)."
+  jumpToId: saving-is-a-separate-step
+  jumpToLabel: Saving is a separate step
+- question: Why not build a computer with only storage, since storage never forgets?
+  answer: "Storage is far slower than RAM, and the CPU needs to read and write its data billions of times a second. RAM is fast enough for that; storage keeps things for later."
+  jumpToId: two-kinds-of-remembering
+  jumpToLabel: Two kinds of remembering
+assignment:
+  instruction: "Find how much RAM and how much storage your own computer or phone has (on Linux: free -h and df -h; on a phone: the settings). Work out roughly how many times bigger the storage is, and explain why both are needed."
+  resourceName: 'Wikipedia: Computer data storage'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Computer_data_storage'
+additionalResources:
+- title: 'Crash Course Computer Science #19: Memory & Storage'
+  type: video
+  meta: from punch cards to SSDs
+  url: 'https://www.youtube.com/watch?v=TQCr9RV7twk'
+- title: 'Wikipedia: Non-volatile memory'
+  type: doc
+  meta: memory that keeps its bits without power
+  url: 'https://en.wikipedia.org/wiki/Non-volatile_memory'
+whyThisMatters: "Lost work, slow apps and the difference between quit and crash all come down to one question: is the data in memory or in storage? Once you can answer it, a lot of everyday computer behaviour stops being mysterious."
+---
+
+The word "memory" gets used for two different things. The RAM in a computer and the SSD in it both remember bytes, but they're built differently, used differently, and behave very differently when the power goes.
+
+By the end you'll be able to say which is which, why one forgets, and why saving is a step of its own.
+
+## Two kinds of remembering
+
+**Memory** (RAM) holds the programs that are running and the data they're working on. The CPU reads and writes it all the time, so it has to be fast.
+
+**Storage** (an SSD, or an older spinning disk) keeps programs and files for later: the ones that aren't running, and everything you've saved. It's much bigger and much slower.
+
+<TruthTable caption='Memory versus storage' rowsJson='[["", "memory (RAM)", "storage (SSD)"], ["holds", "running programs and their data", "files and installed programs"], ["reached by", "the CPU, byte by byte, by address", "the OS, in blocks, through a controller"], ["speed", "about 100 nanoseconds", "about 100 microseconds, a thousand times slower"], ["typical size", "8 to 32 GB", "256 GB to a few TB"], ["power off", "forgets everything", "keeps everything"]]' />
+
+The numbers are rough, and they change from machine to machine. Here is what one laptop reports (this is a real run; yours will differ):
+
+```
+$ free -h
+               total        used        free      shared  buff/cache   available
+Mem:            14Gi       5.4Gi       3.5Gi       1.2Gi       7.4Gi       9.4Gi
+$ df -h /
+/dev/nvme0n1p2  233G  146G   76G  66% /
+```
+
+About 14 GiB of RAM, and a 233 GB SSD: the storage is about sixteen times bigger. Notice `buff/cache`: 7.4 GiB of RAM is holding copies of files. That will matter in a moment.
+
+## Why RAM forgets
+
+You built memory from flip-flops in *State and memory*. A flip-flop holds its bit only while current flows through it: cut the power and the bit is gone. Registers and the fast memory inside a CPU work this way.
+
+Main memory (DRAM) stores each bit as a tiny charge in a capacitor. The charge leaks away within milliseconds, so the memory chips rewrite (refresh) every row many times a second. With no power there's no refresh, and the bits fade.
+
+Flash storage traps charge inside an insulated layer of each cell, where it stays for years with no power. Spinning disks store bits as magnetised spots, which also need no power. Writing them is slower, which is the price of keeping them.
+
+<KeyIdea>RAM needs power to hold its bits; storage doesn't. Anything only in RAM is lost when the power goes.</KeyIdea>
+
+## Saving is a separate step
+
+When a program changes data, it changes it in memory. Getting it into storage is a separate request to the operating system: "write these bytes to this file". Even then, the OS usually copies the bytes into its own cache in RAM first (that's the `buff/cache` above) and writes them to the SSD shortly afterwards, because that's faster.
+
+So there's a window where the file looks saved but is still only in RAM. A program that must be sure, such as a database or an editor's autosave, asks the OS to write it now, with `sync` or `fsync`.
+
+In this model, a program opens a file and writes to it. The goal: the text is safely on the disk. Step through it, then fix the program.
+
+<SyscallLab editable caption='Is it on the disk yet?' startJson='["open \"notes.txt\"", "write 3 \"done\""]' goalJson='{"disk":{"notes.txt":"done"}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+After the write, the RAM cache holds `notes.txt: "done"` but the disk still has nothing. Add a line that asks for it to be written:
+
+```
+open "notes.txt"
+write 3 "done"
+sync
+```
+
+In this model, `close 3` and `exit 0` also write the file out. That's a simplification: on real Linux, closing a file or ending a program doesn't force the data onto the disk. The kernel writes it back a little later, and only `sync` or `fsync` makes it happen now.
+
+</details>
+
+## Quitting versus crashing
+
+Now everyday behaviour makes sense:
+
+- **Save, then quit**: the data went to storage, so it's there next time.
+- **Quit without saving**: the program's memory is handed back to the OS and reused; the changes are gone.
+- **Power cut right after saving**: usually fine, but data still waiting in the OS's cache can be lost. That's why some devices warn you not to pull the plug while they're writing.
+
+The tiny CPU has only the left-hand column of the table: 256 bytes that forget everything when the simulation resets. It has no storage at all.

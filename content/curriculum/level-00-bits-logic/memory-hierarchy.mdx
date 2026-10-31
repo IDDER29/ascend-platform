@@ -1,0 +1,146 @@
+---
+title: "The memory hierarchy and locality"
+level: level-00-bits-logic
+slug: memory-hierarchy
+order: 100
+timeMin: 8
+learningOutcomes:
+- Explain why no single kind of memory is fast, big and cheap all at once
+- Put registers, caches, RAM and storage in order of speed and size
+- Explain locality in time and in space, and why it makes caches work
+- Predict which of two loops over the same data runs faster, and check it against a real measurement
+primer:
+- title: "Memory versus storage"
+  type: doc
+  meta: Reread · 2 min · RAM is fast and forgets; storage is slow and keeps.
+  essential: true
+- title: "Arrays: values side by side"
+  type: doc
+  meta: Reread · 2 min · array elements sit next to each other in memory.
+  essential: true
+knowledgeCheck:
+- question: Why not make all of a computer's memory as fast as its registers?
+  answer: "Fast memory costs much more per byte, uses more power and space, and has to sit very close to the CPU. You can afford a few hundred bytes of it, not gigabytes, so computers use a little fast memory and a lot of slower memory."
+  jumpToId: fast-big-or-cheap
+  jumpToLabel: Fast, big or cheap
+- question: A loop adds up an array from the first element to the last. Which kind of locality does that use, and why does it help?
+  answer: "Locality in space: each element is next to the last one. The cache fetches a whole line (64 bytes on most PCs) at a time, so one slow fetch brings in the next several elements too."
+  jumpToId: locality-why-caches-work
+  jumpToLabel: "Locality: why caches work"
+- question: Summing a 4096 × 4096 grid row by row took about 10 ms; column by column took about 400 ms. Same additions, same result. Why?
+  answer: "C stores a grid row by row. Going along a row uses every int in each 64-byte line the cache fetched. Going down a column jumps 16 KiB each time, so almost every access needs a new line from RAM."
+  jumpToId: see-it-on-a-real-machine
+  jumpToLabel: See it on a real machine
+assignment:
+  instruction: "Compile and run the row-versus-column program from this lesson on your own computer (gcc -O1). Record both times, then change N to 512 and run it again. Explain why the gap shrinks or grows, using the cache sizes from lscpu (or your system's equivalent)."
+  resourceName: 'Wikipedia: Locality of reference'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Locality_of_reference'
+additionalResources:
+- title: 'Latency numbers every programmer should know'
+  type: doc
+  meta: rough access times, from a cache hit to a disk seek
+  url: 'https://gist.github.com/jboner/2841832'
+- title: 'Wikipedia: Memory hierarchy'
+  type: doc
+  meta: each step of the hierarchy, with diagrams
+  url: 'https://en.wikipedia.org/wiki/Memory_hierarchy'
+whyThisMatters: "Two programs can do exactly the same work and differ in speed by forty times, just from the order they touch memory. Knowing the hierarchy is how you write the fast one, and it's the start of the caches course in Computer Architect."
+---
+
+The last lesson had two kinds of memory: fast RAM and slow storage. Real computers have more steps than that, and the steps exist for one reason: memory can be fast, big or cheap, but not all three.
+
+By the end you'll be able to order the steps, explain why caches work, and predict which of two loops is faster.
+
+## Fast, big or cheap
+
+The fastest memory is built from flip-flops right next to the ALU: the registers. It's fast because it's tiny and close. Making gigabytes of it would cost a fortune, fill the chip and burn power, and the far end would be too far away to be fast anyway.
+
+So computers stack memories, each bigger and slower than the one above:
+
+<TruthTable caption='The memory hierarchy (rough figures for a laptop today)' rowsJson='[["step", "typical size", "time to read", "kept with power off?"], ["registers", "a few hundred bytes", "under 1 ns", "no"], ["L1 cache", "tens of KB per core", "about 1 ns", "no"], ["L2 cache", "1 or 2 MB per core or group", "about 4 ns", "no"], ["L3 cache", "a few to tens of MB", "about 10 to 20 ns", "no"], ["RAM", "8 to 32 GB", "about 100 ns", "no"], ["SSD", "256 GB to a few TB", "about 100 µs", "yes"], ["spinning disk", "terabytes", "about 10 ms", "yes"]]' />
+
+The figures are orders of magnitude, not exact: they vary by machine. The pattern doesn't. Each step down is bigger and many times slower. One RAM read takes as long as a hundred register operations, and one SSD read as long as a thousand RAM reads.
+
+A **cache** is a small, fast memory that keeps copies of recently used data from the bigger, slower memory below it. The CPU checks the cache first. If the data is there (a hit), it's quick; if not (a miss), it waits for the slower memory, and keeps a copy for next time.
+
+<KeyIdea>Each step of the hierarchy trades size for speed. A cache keeps copies of what was used recently, so most reads are fast even though most of the data lives in slow memory.</KeyIdea>
+
+## Locality: why caches work
+
+A cache only helps if programs reuse what's in it. They do, in two ways:
+
+- **Locality in time**: data used now is likely to be used again soon. A loop counter is read every time round the loop.
+- **Locality in space**: data near what's used now is likely to be used next. Array elements are side by side, and so are a program's instructions.
+
+To use locality in space, a cache never fetches one byte. It fetches a whole **line**, 64 bytes on most PCs, so the neighbours arrive with it. On this laptop:
+
+```
+$ lscpu | grep cache
+L1d cache:                               352 KiB (10 instances)
+L1i cache:                               576 KiB (10 instances)
+L2 cache:                                6.5 MiB (4 instances)
+L3 cache:                                12 MiB (1 instance)
+$ getconf LEVEL1_DCACHE_LINESIZE
+64
+```
+
+That's ten cores, each with its own small L1 caches (one for data, one for instructions), four L2 caches (some cores have their own, others share one), one L3 shared by all, and 64-byte lines. Your machine will show different sizes. How a cache decides where each line goes is for the caches course; here it only matters that lines come in whole.
+
+## See it on a real machine
+
+This C program adds up every int in a 4096 × 4096 grid twice: once row by row, once column by column. C stores the grid row by row, so `grid[r][c]` and `grid[r][c + 1]` are neighbours, and `grid[r + 1][c]` is 4096 ints (16 KiB) further on.
+
+```c
+#include <stdio.h>
+#include <time.h>
+
+#define N 4096
+static int grid[N][N];
+
+int main(void) {
+    for (int r = 0; r < N; r++)
+        for (int c = 0; c < N; c++)
+            grid[r][c] = 1;
+    long sum = 0;
+    clock_t t0 = clock();
+    for (int r = 0; r < N; r++)
+        for (int c = 0; c < N; c++)
+            sum += grid[r][c];          /* row by row: neighbours in memory */
+    clock_t t1 = clock();
+    for (int c = 0; c < N; c++)
+        for (int r = 0; r < N; r++)
+            sum += grid[r][c];          /* column by column: jumps of 16 KiB */
+    clock_t t2 = clock();
+    printf("row by row:       %.0f ms\n", 1000.0 * (t1 - t0) / CLOCKS_PER_SEC);
+    printf("column by column: %.0f ms\n", 1000.0 * (t2 - t1) / CLOCKS_PER_SEC);
+    printf("sum %ld\n", sum);
+    return 0;
+}
+```
+
+Before you look: which loop is faster, and by roughly how much?
+
+<details>
+<summary>Check your answer</summary>
+
+Three real runs, compiled with gcc 15.2 at `-O1` on the laptop above (times vary by machine and run):
+
+```
+row by row:       9 ms
+column by column: 445 ms
+row by row:       9 ms
+column by column: 352 ms
+row by row:       11 ms
+column by column: 360 ms
+```
+
+The same 16.7 million additions, the same sum (33554432), and the column-by-column loop is about forty times slower.
+
+Row by row, each 64-byte line holds 16 ints, so one miss brings in the next fifteen reads for free. Column by column, every read is 16 KiB from the last, in a different line. By the time the loop comes back to a line for the next column, it has been pushed out of the cache by thousands of others, so nearly every read waits for RAM.
+
+</details>
+
+## Where the tiny CPU fits
+
+The tiny CPU has two steps: four registers and 256 bytes of memory, and every memory read takes the same single step. Real CPUs add caches because their memory is millions of times bigger and far slower than their registers. The instructions don't change: a load is still a load. Only the time it takes depends on where the data happens to be.

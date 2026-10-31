@@ -37,6 +37,12 @@ const PROJECT_BADGE: Record<string, string> = {
   "level-00-bits-logic/project-translator": "translator",
   "level-00-bits-logic/project-real-c": "compiler-reader",
   "level-00-bits-logic/project-compiler-variation": "cross-compiler",
+  "level-00-bits-logic/project-os-boundary": "boundary-walker",
+  "level-00-bits-logic/project-trace-a-program": "system-tracer",
+  "level-00-bits-logic/project-system-call-model": "trap-setter",
+  "level-00-bits-logic/project-noisy-channel": "signal-keeper",
+  "level-00-bits-logic/project-file-format": "format-maker",
+  "level-00-bits-logic/project-smaller-circuit": "minimizer",
   "level-00-bits-logic/project-tiny-cpu": "cpu-tracer",
   "/projects/shellforge": "ship-it",
 };

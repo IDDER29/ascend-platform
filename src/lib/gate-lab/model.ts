@@ -166,6 +166,26 @@ export function gateCount(circuit: Circuit): { total: number; byGate: Partial<Re
   return { total: Object.values(byGate).reduce((a, b) => a + (b ?? 0), 0), byGate };
 }
 
+/**
+ * The longest path through the circuit, in gates: the most gates any signal passes through from an
+ * input to an output. A shared wire counts once per path, so it's the circuit's depth, which sets how
+ * long it takes to settle when each gate takes the same time.
+ */
+export function gateDepth(circuit: Circuit, outputs?: string[]): number {
+  const depth = new Map<string, number>();
+  const nodeDepth = (node: Node): number =>
+    node.kind === "const"
+      ? 0
+      : node.kind === "ref"
+        ? (depth.get(node.name) ?? 0)
+        : node.kind === "not"
+          ? 1 + nodeDepth(node.arg)
+          : 1 + Math.max(nodeDepth(node.left), nodeDepth(node.right));
+  for (const w of circuit.wires) depth.set(w.name, nodeDepth(w.expr));
+  const names = outputs ?? circuit.wires.map((w) => w.name);
+  return Math.max(0, ...names.map((n) => depth.get(n) ?? 0));
+}
+
 export type LabRow = { inputs: Record<string, number>; outputs: Record<string, number>; want: Record<string, number> | null; ok: boolean };
 
 export type LabResult =
@@ -174,6 +194,10 @@ export type LabResult =
       ok: true;
       rows: LabRow[];
       gates: { total: number; byGate: Partial<Record<GateName, number>> };
+      /** The longest path from an input to an output, in gates. */
+      depth: number;
+      /** More gates than the lab's budget allows (0 when there's no budget). */
+      overBudget: number;
       /** Outputs no line defines yet. */
       missing: string[];
       /** Gates used that the lab doesn't allow. */
@@ -192,6 +216,8 @@ export function runLab(lab: {
   lines: string[];
   target?: Record<string, string>;
   allow?: GateName[];
+  /** At most this many gates, for "make it smaller" labs. */
+  maxGates?: number;
 }): LabResult {
   const parsed = parseCircuit(lab.lines, lab.inputs);
   if (!parsed.ok) return parsed;
@@ -220,13 +246,17 @@ export function runLab(lab: {
   const disallowed = lab.allow
     ? (Object.keys(gates.byGate) as GateName[]).filter((g) => !lab.allow!.includes(g))
     : [];
+  const overBudget = lab.maxGates !== undefined ? Math.max(0, gates.total - lab.maxGates) : 0;
   return {
     ok: true,
     rows,
     gates,
+    depth: gateDepth(circuit, lab.outputs),
+    overBudget,
     missing,
     disallowed,
-    solved: reference !== null && missing.length === 0 && disallowed.length === 0 && rows.every((r) => r.ok),
+    solved:
+      reference !== null && missing.length === 0 && disallowed.length === 0 && overBudget === 0 && rows.every((r) => r.ok),
   };
 }
 

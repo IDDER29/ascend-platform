@@ -100,6 +100,12 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "translator", group: "building", label: "Translator", glyph: "⇆", means: "Translated a program by hand and diagnosed a translator bug", rules: [{ kind: "project", projectId: "translator" }] },
   { id: "compiler-reader", group: "building", label: "Compiler Reader", glyph: "⌬", means: "Annotated real gcc output and said what C, the compiler and the target each decide", rules: [{ kind: "project", projectId: "real-c" }] },
   { id: "cross-compiler", group: "building", label: "Cross Compiler", glyph: "⤨", means: "Compared one function compiled for two targets (optional project)", rules: [{ kind: "project", projectId: "compiler-variation" }] },
+  { id: "boundary-walker", group: "building", label: "Boundary Walker", glyph: "⇵", means: "Followed a screen write and a file save across the OS boundary, step by step", rules: [{ kind: "project", projectId: "os-boundary" }] },
+  { id: "system-tracer", group: "building", label: "System Tracer", glyph: "⟴", means: "Traced a program from source to output, and kept the toy and real pipelines apart", rules: [{ kind: "project", projectId: "trace-a-program" }] },
+  { id: "trap-setter", group: "building", label: "Trap Setter", glyph: "⊡", means: "Audited system-call traces and designed a call of your own (optional project)", rules: [{ kind: "project", projectId: "system-call-model" }] },
+  { id: "signal-keeper", group: "building", label: "Signal Keeper", glyph: "⌇", means: "Got a message through a noisy line with a threshold and a code (optional project)", rules: [{ kind: "project", projectId: "noisy-channel" }] },
+  { id: "format-maker", group: "building", label: "Format Maker", glyph: "▦", means: "Decoded a tiny image format and wrote its specification (optional project)", rules: [{ kind: "project", projectId: "file-format" }] },
+  { id: "minimizer", group: "building", label: "Minimizer", glyph: "⊟", means: "Made circuits smaller and built a full adder from NAND only (optional project)", rules: [{ kind: "project", projectId: "smaller-circuit" }] },
   { id: "cpu-tracer", group: "building", label: "CPU Tracer", glyph: "▤", means: "Shipped a program for the tiny CPU", rules: [{ kind: "project", projectId: "tiny-cpu" }] },
   { id: "ship-it", group: "building", label: "Shell Smith", glyph: "◈", means: "Shipped ShellForge, a working shell", rules: [{ kind: "project", projectId: "shellforge" }] },
 
@@ -114,7 +120,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "comeback", group: "habits", label: "Comeback", glyph: "✦", means: "Came back to Practice after two weeks away", rules: [{ kind: "comeback", gapDays: 14 }] },
 
   // Combinations: the parts are the rule, shown openly.
-  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "ship-it"] }] },
+  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "ship-it"] }] },
   { id: "sharp-mind", group: "combination", label: "Sharp Mind", glyph: "✺", means: "Deep memory, a clean run and a week of practice", rules: [{ kind: "badges", ids: ["deep-memory", "clean-run", "week-of-practice"] }] },
   { id: "whole-machine", group: "combination", label: "The Whole Machine", glyph: "✸", means: "Finished every lesson and shipped every project", rules: [{ kind: "allLessons" }, { kind: "badges", ids: ["builder"] }] },
 ];

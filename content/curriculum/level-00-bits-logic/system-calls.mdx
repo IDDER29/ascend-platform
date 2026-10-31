@@ -1,0 +1,152 @@
+---
+title: "Privilege, traps and system calls"
+level: level-00-bits-logic
+slug: system-calls
+order: 103
+timeMin: 8
+learningOutcomes:
+- Explain user mode and kernel mode, and what the CPU refuses to do in user mode
+- Describe a system call as a trap from user mode into the kernel and back
+- Explain why the kernel checks every argument it is given
+- Read a real system-call trace, and tell the tiny CPU's OUT apart from a system call
+primer:
+- title: "What an operating system provides"
+  type: doc
+  meta: Reread · 2 min · apps reach hardware only through the kernel.
+  essential: true
+- title: "Functions and the call stack"
+  type: doc
+  meta: Reread · 2 min · CALL saves where to come back to; RET returns there.
+  essential: false
+knowledgeCheck:
+- question: An app runs an instruction that talks to a device directly. What happens on a real CPU, and why?
+  answer: "The CPU is in user mode, where device instructions are privileged, so it refuses: it raises a fault and jumps into the kernel, which normally stops the program. Only kernel mode may drive hardware directly."
+  jumpToId: two-modes
+  jumpToLabel: Two modes
+- question: A system call and an ordinary function call both jump somewhere and come back. What's different?
+  answer: "A system call goes through a special trap instruction that switches the CPU into kernel mode and jumps to a fixed kernel entry point the app can't choose. On the way back the CPU switches to user mode again. An ordinary call stays in user mode and can jump anywhere."
+  jumpToId: asking-the-kernel-a-system-call
+  jumpToLabel: "Asking the kernel: a system call"
+- question: Is the tiny CPU's OUT instruction a system call?
+  answer: "No. The tiny CPU has no modes and no OS: OUT just copies a register to the output port. A system call is a request to a kernel, across a mode switch, and the tiny CPU has neither."
+  jumpToId: the-toy-and-the-real-thing
+  jumpToLabel: The toy and the real thing
+assignment:
+  instruction: "On a Linux machine (or a Linux virtual machine), run strace -c on two commands, such as ls and echo hi. Compare how many system calls each makes and which ones appear most. Pick one you don't know and look it up with man 2 followed by its name."
+  resourceName: 'Linux man page: syscalls(2)'
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man2/syscalls.2.html'
+additionalResources:
+- title: 'OSTEP: Limited Direct Execution (PDF)'
+  type: pdf
+  meta: how the OS runs programs safely, traps and all
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-mechanisms.pdf'
+- title: 'Wikipedia: Protection ring'
+  type: doc
+  meta: privilege rings in real processors
+  url: 'https://en.wikipedia.org/wiki/Protection_ring'
+whyThisMatters: "Every printf, file save and network message in every program you write ends in a system call. Knowing where that boundary is, and that the CPU itself enforces it, explains crashes like segmentation faults and is the first thing you'll trace when a program misbehaves."
+---
+
+The last lesson said apps reach the hardware only through the kernel. That's not a polite agreement. The CPU enforces it, and the way apps cross the line is one carefully guarded instruction.
+
+By the end you'll be able to say what user and kernel mode are, follow a system call step by step, and read a real trace of one.
+
+## Two modes
+
+Real CPUs have a **mode** bit (some have more than two settings, but two are enough here):
+
+- In **kernel mode**, the CPU will run any instruction: talk to devices, change memory protection, switch modes.
+- In **user mode**, those **privileged** instructions are refused. If an app tries one, the CPU doesn't do it: it raises a fault and jumps into the kernel, which usually ends the app.
+
+The kernel runs in kernel mode; every app runs in user mode. An app can't simply switch itself into kernel mode, because switching mode is itself privileged.
+
+Here's a real C program that tries to talk to a hardware port directly, with the x86 instruction `outb`:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    printf("before\n");
+    fflush(stdout);
+    __asm__ volatile ("outb %%al, $0x80" : : "a"(0));
+    printf("after\n");
+    return 0;
+}
+```
+
+```
+$ ./priv
+before
+Segmentation fault         (core dumped)
+```
+
+The CPU refused the instruction in user mode, and Linux stopped the program with a signal (the label "segmentation fault" is Linux's catch-all name for it). `after` never printed. This is a real run with gcc 15.2 on x86-64 Linux; the exact message depends on the system and shell.
+
+<KeyIdea>The CPU itself enforces the line: privileged instructions work only in kernel mode, and apps always run in user mode.</KeyIdea>
+
+## Asking the kernel: a system call
+
+So how does an app show text or save a file? It makes a **system call**:
+
+1. The app puts a number saying which service it wants (write, open, exit...) and the arguments in registers.
+2. It runs the one instruction made for this (`syscall` on x86-64). The CPU **traps**: it saves where the app was, switches to kernel mode, and jumps to the kernel's entry point, a fixed address the kernel chose at startup. The app can't choose where it lands.
+3. The kernel checks the request, does the work (often telling a device driver what to do), and puts a result in a register.
+4. The kernel returns: the CPU switches back to user mode and the app carries on from the next instruction.
+
+The app gets the service; it never gets kernel mode.
+
+## The kernel checks everything
+
+The kernel can't trust what an app passes in. Before doing anything, it checks: is this file open for this program? Is this buffer address inside the app's own memory? If not, it refuses and returns an error instead of doing harm.
+
+<SyscallLab caption='The kernel checks each request' startJson='["write 1 @0x4000", "write 1 @0x9000", "write 5 \"x\"", "exit 0"]' />
+
+The app's memory in this model runs from 0x4000 to 0x7FFF. Step through it: the first write is fine, the second points outside the app, and the third uses a file descriptor that was never opened. The app keeps running after the refusals; it just gets an error back.
+
+## Watch it happen
+
+This program tries to show "hi" by driving the display port itself. Step through to see what the CPU and kernel do, then fix it so the text appears and the program isn't stopped.
+
+<SyscallLab editable caption='Show hi, the allowed way' startJson='["out 1 104", "out 1 105", "exit 0"]' goalJson='{"screen":"hi","notKilled":true}' />
+
+<details>
+<summary>Check your answer</summary>
+
+`out` is privileged, so the very first line gets the program stopped. Ask the kernel instead:
+
+```
+write 1 "hi"
+exit 0
+```
+
+File descriptor 1 is the screen (strictly, the program's standard output). The kernel checks the request, the display driver does the work, and the app gets back 2: the number of bytes written.
+
+</details>
+
+## Real system calls on Linux
+
+`strace` runs a program and prints every system call it makes. Here's the classic first C program, `printf("hi\n")`, traced (a real run; output differs by system):
+
+```
+$ strace -e trace=write,exit_group ./hello
+write(1, "hi\n", 3)                     = 3
+exit_group(0)                           = ?
++++ exited with 0 +++
+```
+
+`printf` is a library function that runs in user mode. It collects the text, then makes one `write` system call to file descriptor 1 with 3 bytes, and the kernel returns 3. Then `exit_group` ends the process. Counting every call, not just those two:
+
+```
+$ strace -c ./hello
+...
+100.00    0.001028          30        34         1 total
+```
+
+34 system calls for one line of output. Most of them (`execve`, `mmap`, `openat` and others) are the OS loading the program and the C library before `main` even starts.
+
+## The toy and the real thing
+
+The tiny CPU's `OUT` is not a system call. The tiny CPU has no modes, no kernel and no checks: `OUT R0` simply copies a register to the output port, and any program may do it. That's like a real machine running entirely in kernel mode with no OS, which is how very simple computers and microcontrollers really do work.
+
+So when you see `OUT` in a tiny CPU program, think "device instruction". When you see `write` in a trace, think "a request to the kernel, across the line".

@@ -1,0 +1,124 @@
+---
+title: "How computers communicate"
+level: level-00-bits-logic
+slug: networks
+order: 107
+timeMin: 8
+learningOutcomes:
+- Explain why a message is split into packets, and what each packet must carry
+- Describe a network as layers, each adding its own header on the way down and reading it on the way up
+- Follow a short message from one program, down through the layers, across the network and up to another program
+- Explain how lost or reordered packets can still give the receiver the whole message
+primer:
+- title: "Input and output: talking to the outside world"
+  type: doc
+  meta: Reread · 3 min · a device controller moves bytes in and out.
+  essential: true
+- title: "Privilege, traps and system calls"
+  type: doc
+  meta: Reread · 3 min · sending is a request to the OS.
+  essential: false
+knowledgeCheck:
+- question: Why is a long message split into packets instead of being sent in one piece?
+  answer: "Networks carry limited-size pieces, and sharing a link is fairer and faster with small pieces: many conversations can take turns, and if one packet is lost only that piece is sent again, not the whole message."
+  jumpToId: too-big-split-it-into-packets
+  jumpToLabel: "Too big? Split it into packets"
+- question: On the way down the layers, what does each layer do to the data it is given?
+  answer: "It adds its own header (information for the same layer on the other machine), treating everything it was given as plain data, then passes the result down. The receiver's layers read and remove the headers in reverse order."
+  jumpToId: layers-each-add-a-header
+  jumpToLabel: Layers each add a header
+- question: Packets 2 and 3 of a message arrive in the order 3, 2, and packet 4 never arrives. How can the receiver still rebuild the message?
+  answer: "Each packet carries a sequence number, so the receiver puts 2 before 3. Noticing 4 is missing, it can ask for it again (or the sender resends it when no acknowledgement comes back)."
+  jumpToId: when-packets-go-wrong
+  jumpToLabel: When packets go wrong
+assignment:
+  instruction: "Pick a 20-character message. Split it into packets of 6 characters, give each a sequence number, and write the headers each of four layers would add (application, transport, network, link), using made-up but consistent addresses. Then shuffle the packets, drop one, and show step by step how the receiver gets the whole message back."
+  resourceName: 'Wikipedia: Packet switching'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Packet_switching'
+additionalResources:
+- title: 'Wikipedia: Internet protocol suite'
+  type: doc
+  meta: the real layers of the Internet, when you want the details
+  url: 'https://en.wikipedia.org/wiki/Internet_protocol_suite'
+- title: 'Wikipedia: OSI model'
+  type: doc
+  meta: the seven-layer model you'll see in books
+  url: 'https://en.wikipedia.org/wiki/OSI_model'
+whyThisMatters: "Almost every program you'll write talks to another computer: a web request, a database, an API. Knowing that a message becomes packets passing through layers, each with one job, is the map you need before learning the real protocols in a networking course."
+---
+
+So far, every program has talked to devices in the same machine: the display, the disk. A network lets a program talk to a program on another computer, possibly on the other side of the world. Underneath, it's the same idea as any device: bytes go out through a controller (the network card) and come in through one. What's new is everything needed to get them to the right place, intact.
+
+This lesson is a conceptual model. Real networks (TCP/IP) follow the same ideas with many more details, which a networking course covers.
+
+## A message is just bytes
+
+Say a program on computer A wants to send `HELLO WORLD` to a program on computer B. To the network, it's 11 bytes. Three questions have to be answered before they can travel:
+
+- **Where to?** Which computer, and which program on it.
+- **In what pieces?** Networks carry limited-size chunks.
+- **What if something goes wrong?** Pieces can be lost, damaged or arrive out of order.
+
+## Too big? Split it into packets
+
+The message is cut into **packets**. Real packets carry up to about 1500 bytes; here, to see it happen, each carries 4:
+
+<TruthTable caption='HELLO WORLD in 4-byte packets' rowsJson='[["packet", "sequence number", "data"], ["1", "1 of 3", "HELL"], ["2", "2 of 3", "O WO"], ["3", "3 of 3", "RLD"]]' />
+
+Each packet travels on its own, so many conversations can share one link by taking turns, packet by packet. That's why one big download doesn't freeze everyone else's video call.
+
+## Layers each add a header
+
+Nobody writes one program that does everything from "send this message" to "make this voltage on the wire". The work is split into **layers**, each solving one problem and trusting the layer below for the rest:
+
+<TruthTable caption='A conceptual network stack' rowsJson='[["layer", "its job", "what its header holds"], ["application", "what the message means", "for example: this is a chat message from ana"], ["transport", "deliver to the right program, whole and in order", "port (which program), sequence number, checksum"], ["network", "route across many networks to the right computer", "source and destination computer addresses"], ["link", "get to the next machine on this wire or radio", "the next hop hardware address"]]' />
+
+On the way down, each layer takes what it was given, treats it as plain data, adds its own header in front, and hands it down. One packet leaving A looks like this:
+
+```
+[ link | network | transport | "O WO" ]
+```
+
+On the way up at B, each layer reads its own header, removes it and passes the rest up. The transport layer at B never looks inside the data; the application never sees a link header.
+
+<KeyIdea>Each layer adds a header on the way down and removes it on the way up, so every layer talks only to the same layer on the other machine.</KeyIdea>
+
+## Down one stack, up the other
+
+Packet 2 of `HELLO WORLD`, end to end:
+
+1. The program on A asks the OS to send the message (a system call, like a file write).
+2. The OS's transport layer splits it, adds headers with port and sequence numbers; the network layer adds A's and B's addresses.
+3. The link layer adds the address of the next machine (a router) and the network card's controller sends the bits.
+4. Each **router** on the way reads only the network header, picks the next hop, and gives the packet a new link header.
+5. B's network card receives it and interrupts the CPU; B's kernel checks and removes each header and finds the program waiting on that port.
+6. The program on B reads the bytes, through a system call, once all packets are in.
+
+<details>
+<summary>Check your answer: which headers does a router in the middle need to read, and which part does it never look at?</summary>
+
+It reads the link header (to receive the packet) and the network header (to see where it's going). It replaces the link header for the next hop. It doesn't need the transport header and never looks at the data, so the routers in the middle don't care whether the bytes are a chat message or a video.
+
+</details>
+
+## When packets go wrong
+
+Networks lose and reorder packets all the time: a busy router drops one, two take different routes. The transport layer copes:
+
+- **Sequence numbers** let the receiver put packets back in order.
+- **Checksums** let it spot a damaged packet and throw it away.
+- **Acknowledgements**: the receiver says what it got, and the sender sends again anything that wasn't acknowledged in time.
+
+Suppose B receives packet 3 (`RLD`) then packet 1 (`HELL`), and packet 2 is lost:
+
+<details>
+<summary>Check your answer: what does B do, and what does it give the program?</summary>
+
+B holds both, ordered by sequence number: 1 then 3, with a gap at 2. It acknowledges 1 and 3 (or says it is still waiting for 2), so A sends packet 2 again. When `O WO` arrives, B puts it in place and gives the program the whole `HELLO WORLD`. The program never sees the gap.
+
+</details>
+
+## How this fits the rest of the machine
+
+Nothing here is magic. The network card is a device controller, like the display's. Sending and receiving are system calls into the kernel, which runs the transport and network layers. Arriving packets raise interrupts, and the bytes sit in kernel memory until the program reads them. The tiny CPU's `OUT` to a display and a laptop sending a packet differ in scale and layers, not in kind.

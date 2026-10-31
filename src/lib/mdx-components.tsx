@@ -16,6 +16,9 @@ import { ControlLab } from "@/components/lesson/control-lab";
 import { AssemblerLab } from "@/components/lesson/assembler-lab";
 import { CompilerOutput } from "@/components/lesson/compiler-output";
 import { TranslatorLab } from "@/components/lesson/translator-lab";
+import { EndToEnd } from "@/components/lesson/end-to-end";
+import { SyscallLab } from "@/components/lesson/syscall-lab";
+import { ChannelLab } from "@/components/lesson/channel-lab";
 import { SectionHeading } from "@/components/bookmarks/lesson-bookmarks";
 
 export const mdxComponents: MDXComponents = {
@@ -36,6 +39,9 @@ export const mdxComponents: MDXComponents = {
   AssemblerLab,
   CompilerOutput,
   TranslatorLab,
+  EndToEnd,
+  SyscallLab,
+  ChannelLab,
   h2: (props) => (
     <SectionHeading
       className="group/section mt-9 mb-3 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight"

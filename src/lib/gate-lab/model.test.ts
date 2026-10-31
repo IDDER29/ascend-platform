@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { chain, gateCount, inputRows, parseCircuit, runClocked, runLab } from "./model";
+import { chain, gateCount, gateDepth, inputRows, parseCircuit, runClocked, runLab } from "./model";
 
 const table = (lines: string[], inputs: string[], out: string) =>
   runLab({ inputs, outputs: [out], lines }).ok
@@ -194,4 +194,23 @@ test("watched wires show the state after each tick, so a row reads as one moment
   });
   assert.ok(r.ok);
   if (r.ok) assert.deepEqual(r.rows.map((x) => [x.after.ADD, x.after.WRITE, x.after.READ]), [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
+});
+
+test("gateDepth is the longest gate path to an output, counting a shared wire once per path", () => {
+  const nand = parseCircuit(["N = A NAND B", "X = A NAND N", "Y = B NAND N", "OUT = X NAND Y"], ["A", "B"]);
+  assert.ok(nand.ok);
+  if (nand.ok) assert.equal(gateDepth(nand.circuit, ["OUT"]), 3);
+  const plain = parseCircuit(["OUT = (A AND NOT B) OR (NOT A AND B)"], ["A", "B"]);
+  assert.ok(plain.ok);
+  if (plain.ok) assert.equal(gateDepth(plain.circuit, ["OUT"]), 3);
+  const one = parseCircuit(["OUT = A XOR B"], ["A", "B"]);
+  if (one.ok) assert.equal(gateDepth(one.circuit), 1);
+});
+
+test("a gate budget: right but too big isn't solved", () => {
+  const lab = { inputs: ["A", "B"], outputs: ["OUT"], target: { OUT: "A XOR B" }, maxGates: 4 };
+  const big = runLab({ ...lab, lines: ["OUT = (A AND NOT B) OR (NOT A AND B)"] });
+  assert.ok(big.ok && !big.solved && big.overBudget === 1 && big.depth === 3);
+  const small = runLab({ ...lab, lines: ["N = A NAND B", "OUT = (A NAND N) NAND (B NAND N)"] });
+  assert.ok(small.ok && small.solved && small.gates.total === 4);
 });

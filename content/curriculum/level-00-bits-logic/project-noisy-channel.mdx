@@ -1,0 +1,113 @@
+---
+title: "Optional project: Bits through a noisy channel"
+level: level-00-bits-logic
+slug: project-noisy-channel
+order: 114
+timeMin: 20
+learningOutcomes:
+- Explain how a receiver turns a noisy voltage back into a bit with a threshold, and why the threshold belongs between the two levels
+- Predict how more noise changes the number of misread bits
+- Compare a parity bit (detects a flip) with sending each bit three times (corrects a flip), and say what each costs
+- Explain why sender and receiver must agree on levels, threshold and code before they communicate
+primer:
+- title: "What is a bit?"
+  type: doc
+  meta: Reread · 2 min · two states, and why two.
+  essential: true
+knowledgeCheck:
+- question: The line uses 0 V for 0 and 5 V for 1. Why does a threshold of 4.2 V misread more bits than 2.5 V?
+  answer: "Noise pushes each voltage up or down a little. A threshold just under 5 V leaves almost no room for a 1 that arrives a bit low, so many 1s are read as 0. Halfway between the levels gives the same margin on both sides."
+  jumpToId: part-1-where-to-draw-the-line
+  jumpToLabel: "Part 1: Where to draw the line"
+- question: What can a parity bit do that sending each bit three times can't, and the other way round?
+  answer: "A parity bit costs only one extra bit per byte, but it can only detect an odd number of flips in that byte, not fix them. Three copies cost three times the bits, but a majority vote fixes any single flip in a trio."
+  jumpToId: part-3-codes-that-fight-back
+  jumpToLabel: "Part 3: Codes that fight back"
+assignment:
+  instruction: "Pick a real two-state link you know of (a light signal, a USB cable, Wi-Fi, a QR code) and write down what the two states are, what can blur them, and one thing the designers did so the receiver still gets the right bits."
+  resourceName: 'Wikipedia: Noisy-channel coding theorem'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Noisy-channel_coding_theorem'
+additionalResources:
+- title: "Parity bit (Wikipedia)"
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Parity_bit'
+- title: "Error correction code (Wikipedia)"
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Error_correction_code'
+whyThisMatters: "Every bit that moves, through a wire, the air or a scratched disc, arrives a little blurred. Computers stay reliable because two states are easy to tell apart and because codes catch or fix the flips that slip through. That's why digital beat analogue, and it's the first step towards networking and storage."
+---
+
+Inside a computer, and between computers, bits travel as something physical: a voltage, light, a radio wave. Nothing physical is perfectly clean. In this optional project you send a short message down a noisy line and work out how the receiver can still get it right.
+
+This is a preview of communications, not an electronics course: the line here is a simple model with two voltages, 0 V for a 0 and 5 V for a 1, and random noise added to each.
+
+## Part 1: Where to draw the line
+
+The receiver reads each voltage and decides: at or above its **threshold** is a 1, below is a 0. This receiver's threshold is set badly. Move it until "HI" arrives with no wrong bits.
+
+<ChannelLab caption='Set the receiver' messageJson='"HI"' noiseJson='1' thresholdJson='4.2' seedJson='4' goalJson='{"errors":0}' />
+
+<details>
+<summary>Check your answer</summary>
+
+At 4.2 V, any 1 that the noise pushes down below 4.2 V is read as 0, and three bits are misread. Anywhere from about 2.3 V to 3.3 V works here. The best choice is halfway, 2.5 V, because it leaves the same margin for a 0 pushed up as for a 1 pushed down.
+
+That's why digital signals are so robust: as long as the noise is smaller than half the gap between the two levels, every bit is read correctly, however blurred it is.
+
+</details>
+
+## Part 2: More noise
+
+This line lets you change the noise too. Keep the threshold at 2.5 V and slowly raise the noise. Before you do, predict roughly where the first misread appears. Then try a longer message.
+
+<ChannelLab noiseAdjustable caption='Turn up the noise' messageJson='"DATA"' noiseJson='0.4' thresholdJson='2.5' seedJson='13' />
+
+<details>
+<summary>Check your answer</summary>
+
+With little noise, nothing is misread: the voltages stay far from 2.5 V. On this line the first misread appears at about 1 V of noise; by 2 V, eight of the 32 bits are wrong. There's no sharp cut-off, because noise is random: big pushes are rare, not impossible. More bits sent means more chances for one of those rare pushes, so longer messages need protection even on a good line.
+
+</details>
+
+## Part 3: Codes that fight back
+
+This line is too noisy for any threshold to save. Try each code and watch the counts below the chart.
+
+<ChannelLab caption='Choose a code' messageJson='"HI"' noiseJson='1.3' thresholdJson='2.5' seedJson='53' codingsJson='["none","parity","repeat3"]' goalJson='{"errors":0}' />
+
+<details>
+<summary>Check your answer</summary>
+
+- **No code:** three data bits arrive wrong, and the receiver has no idea.
+- **Parity bit per byte:** the sender adds one bit to each byte so the number of 1s is even. The receiver flags the first byte, because its count came out odd. It knows that byte is damaged, but not which bit, so it can't fix it; it would have to ask for that byte again. Two flips in one byte would cancel out and slip through unnoticed.
+- **Send each bit 3 times:** the receiver takes a majority vote of each three. A single flip in a trio is outvoted, so the message arrives intact. The cost is three times as many bits on the line.
+
+Real systems choose from the same trade-off, with cleverer codes: networks detect errors with checksums and resend, while storage and memory chips correct them with error-correcting codes.
+
+</details>
+
+## Part 4: Agreeing first
+
+Write down everything the sender and the receiver must agree on before the first bit is sent, using this lab as your example.
+
+<details>
+<summary>Check your answer</summary>
+
+- **The two levels:** that 0 V means 0 and 5 V means 1 (and not the other way round).
+- **The threshold** the receiver uses, which depends on the levels.
+- **Timing:** when each bit starts and ends, so the receiver samples once per bit.
+- **The code:** none, parity or three copies, and where code bits go.
+- **The meaning of the bits:** that each 8 bits are a character code, and which code.
+
+None of this is in the signal itself. It's an agreement, a protocol, made in advance. This is the same idea that returns when you study networks.
+
+</details>
+
+<KeyIdea>Two well-separated states make bits survive noise; a threshold between them reads the bits back; codes detect or correct the flips that still get through. All of it only works because both ends agreed first.</KeyIdea>
+
+## Done when
+
+"HI" arrived intact in parts 1 and 3, you've seen misreads appear as the noise grows, and you've listed what both ends must agree on.

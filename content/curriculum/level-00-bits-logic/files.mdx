@@ -1,0 +1,151 @@
+---
+title: "Files and file systems"
+level: level-00-bits-logic
+slug: files
+order: 106
+timeMin: 7
+learningOutcomes:
+- Explain a file as a name the operating system keeps for a sequence of bytes on storage
+- Follow a file save from a program through system calls to the storage device
+- Explain why changing data in RAM is not the same as saving it, and when it reaches the disk
+- Describe a folder as a table that maps names to files
+primer:
+- title: "Memory versus storage"
+  type: doc
+  meta: Reread · 3 min · RAM forgets when the power goes; storage doesn't.
+  essential: true
+- title: "Privilege, traps and system calls"
+  type: doc
+  meta: Reread · 3 min · programs ask the OS for services.
+  essential: true
+knowledgeCheck:
+- question: A program opens notes.txt, writes "ok" and keeps running. Is "ok" on the disk yet?
+  answer: "Not necessarily. The write copies the bytes into the kernel's cache in RAM; the kernel writes them to the disk later, or straight away if the program calls fsync (or the system runs sync). A power cut before then loses them."
+  jumpToId: saving-is-not-the-same-as-changing-ram
+  jumpToLabel: Saving is not the same as changing RAM
+- question: What does the number 3 in write(3, "ok\n", 3) refer to?
+  answer: "The first 3 is a file descriptor: the number openat returned for notes.txt, an index into this process's table of open files. The last 3 is how many bytes to write."
+  jumpToId: saving-goes-through-the-os
+  jumpToLabel: Saving goes through the OS
+- question: What does a folder actually store?
+  answer: "A list of names, each pointing to a file's record (on Linux, an inode number). The file's bytes and details live elsewhere; the folder only maps names to them."
+  jumpToId: folders-map-names-to-files
+  jumpToLabel: Folders map names to files
+assignment:
+  instruction: "Write a C program that saves a line to a file, then run it under strace -e trace=openat,write,close. Find the three calls for your file and label each with what the kernel did. Then read the NOTES section of man 2 close and write two sentences on why close isn't a guarantee that the data is on the disk."
+  resourceName: 'man 2 fsync'
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man2/fsync.2.html'
+additionalResources:
+- title: 'OSTEP: Files and Directories'
+  type: pdf
+  meta: the file system interface, chapter by chapter
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/file-intro.pdf'
+- title: 'Wikipedia: Page cache'
+  type: doc
+  meta: why writes sit in RAM before reaching the disk
+  url: 'https://en.wikipedia.org/wiki/Page_cache'
+- title: 'Wikipedia: Inode'
+  type: doc
+  meta: the record behind every file name on Unix systems
+  url: 'https://en.wikipedia.org/wiki/Inode'
+whyThisMatters: "Every program that saves anything goes through the file system, and the gap between 'written' and 'on the disk' is where data gets lost in crashes. Knowing that files are an OS service on top of storage blocks, with a cache in between, explains both how to save safely and why it's slow to save too often."
+---
+
+A storage device knows nothing about files. An SSD stores numbered blocks of bytes, and that's all. "notes.txt in your Documents folder" is something the operating system builds on top of those blocks, and every program reaches it through the OS.
+
+By the end you'll be able to follow a save from a program to the disk, and say exactly when the data is safe.
+
+## A file is a name for bytes
+
+To a program, a file is:
+
+- a **name** (notes.txt) in a **folder**,
+- a sequence of **bytes** (here, three: `o`, `k` and a newline),
+- some **details**: its size, who may read or write it, when it changed.
+
+The file system's job is to keep that picture true on a device that only has numbered blocks: which blocks hold this file's bytes, where its details are, which blocks are free.
+
+## Saving goes through the OS
+
+This C program saves "ok" to notes.txt:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    FILE *f = fopen("notes.txt", "w");
+    if (f == NULL) return 1;
+    fprintf(f, "ok\n");
+    fclose(f);
+    return 0;
+}
+```
+
+`strace` lists the system calls a program makes. Here are the ones for notes.txt (gcc 15.2 on Linux; other systems show different details):
+
+```
+openat(AT_FDCWD, "notes.txt", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 3
+write(3, "ok\n", 3)                     = 3
+close(3)                                = 0
+```
+
+- `openat` asks the kernel to open (and create, and empty) notes.txt. The kernel returns **3**, a file descriptor: this process's number for the open file.
+- `write(3, ...)` hands the kernel three bytes for file 3. It returns 3: three bytes accepted.
+- `close(3)` says the program is done with file 3.
+
+The program never touched the SSD. It only asked, and the kernel did the rest.
+
+## Saving is not the same as changing RAM
+
+When `write` returns, where are the bytes? On Linux, usually in the kernel's **page cache**, in RAM. The kernel writes them to the disk a little later, often within seconds, because collecting many writes and sending them together is much faster. Until then, a power cut loses them.
+
+The lab below is a teaching model of this. In the model, a file write goes into the kernel's RAM cache, and the cache is written to the disk on `close`, `sync` or `exit`. That's a simplification: real Linux does not write to the disk on close. It writes back on its own schedule, and only `fsync` (for one file) or `sync` (for everything) forces it.
+
+This program writes "ok" to notes.txt but stops before the data reaches the disk. Step through it and watch the RAM cache and the disk. Then change it so "ok" is safely on the disk when it ends.
+
+<SyscallLab editable caption='Save a file, really' startJson='["open \"notes.txt\"", "write 3 \"ok\""]' goalJson='{"disk":{"notes.txt":"ok"}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Add a line that gets the cache to the disk. In the model, any of `close 3`, `sync` or `exit 0` does it:
+
+```
+open "notes.txt"
+write 3 "ok"
+sync
+```
+
+On real Linux, the safe version is to call `fsync` on the file before relying on it (databases and editors do exactly this). Close alone only promises the program is done with the file.
+
+</details>
+
+<KeyIdea>A write puts bytes in the kernel's RAM cache. They are only safe from a power cut once they reach the disk, which fsync or sync forces.</KeyIdea>
+
+## Where the bytes really go
+
+`stat` shows what the file system keeps for notes.txt:
+
+```
+name notes.txt, size 3 bytes, 8 blocks of 512 bytes, inode 104185
+```
+
+- **size 3 bytes**: the file's length, as the program sees it.
+- **8 blocks of 512 bytes**: the file system gave it 4096 bytes of storage, because it hands out space in 4096-byte chunks. A 3-byte file still takes a whole chunk.
+- **inode 104185**: the number of the file's record, which holds its size, owner, permissions, times and where its blocks are.
+
+## Folders map names to files
+
+The name "notes.txt" isn't stored in the inode. It's stored in the folder. A folder is a small table:
+
+<TruthTable caption='A folder, as the file system stores it' rowsJson='[["name", "inode"], ["notes.txt", "104185"], ["save.c", "104178"], ["save", "104184"]]' />
+
+Opening a file means finding its name in the folder's table, following the inode number to its record, and from there finding its blocks. Renaming a file only changes the folder's table; the bytes don't move.
+
+<details>
+<summary>Check your answer: you move a 2 GB video into another folder on the same disk, and it finishes instantly. Why?</summary>
+
+Moving within one file system only removes the name from one folder's table and adds it to another's, pointing at the same inode. None of the 2 GB of blocks is copied. Moving to another disk is slow because there the bytes really have to be copied.
+
+</details>

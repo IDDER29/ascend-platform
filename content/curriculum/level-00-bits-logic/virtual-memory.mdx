@@ -1,0 +1,152 @@
+---
+title: "Virtual and physical addresses"
+level: level-00-bits-logic
+slug: virtual-memory
+order: 105
+timeMin: 8
+learningOutcomes:
+- Explain why two running programs can use the same address without touching each other's data
+- Tell a virtual address (what a program uses) from a physical address (a real place in RAM)
+- Give three reasons operating systems translate addresses
+- Say why the tiny CPU has no address translation, and what that costs it
+primer:
+- title: "Programs, processes and address spaces"
+  type: doc
+  meta: Reread · 3 min · each process has its own memory.
+  essential: true
+- title: "What a pointer means"
+  type: doc
+  meta: Reread · 3 min · an address is a value a program can hold.
+  essential: false
+knowledgeCheck:
+- question: Two copies of the same program both print that x is at 0x404044, yet one sees x = 1 and the other x = 2. How can both be true?
+  answer: "0x404044 is a virtual address. Each process has its own map from virtual to physical addresses, so the same virtual address leads to a different real place in RAM for each process."
+  jumpToId: two-programs-one-address
+  jumpToLabel: Two programs, one address
+- question: Who does the translation on every memory access, and who sets up the map?
+  answer: "The hardware (the memory management unit, inside the CPU) translates every access. The operating system writes the map for each process and switches maps when it switches processes."
+  jumpToId: translation-in-one-picture
+  jumpToLabel: Translation in one picture
+- question: On the tiny CPU, could one program overwrite another program's variable? Why?
+  answer: "Yes. The tiny CPU has no translation: an address is a real box number, and nothing checks who owns a box. Any program can read or write any of the 256 boxes."
+  jumpToId: the-tiny-cpu-has-no-translation
+  jumpToLabel: The tiny CPU has no translation
+assignment:
+  instruction: "Compile a small C program that prints the address of a global variable and its process id, then sleeps for a second and prints the variable. Run two copies at once (with -no-pie so the address is the same), giving each a different value. Write three sentences explaining the output using the words virtual address, physical address and process."
+  resourceName: 'OSTEP: The Abstraction: Address Spaces'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/vm-intro.pdf'
+additionalResources:
+- title: 'Wikipedia: Virtual memory'
+  type: doc
+  meta: the idea, with a diagram of the mapping
+  url: 'https://en.wikipedia.org/wiki/Virtual_memory'
+- title: 'Wikipedia: Address space layout randomization'
+  type: doc
+  meta: why addresses change from run to run
+  url: 'https://en.wikipedia.org/wiki/Address_space_layout_randomization'
+whyThisMatters: "Every pointer you'll print in C is a virtual address, and every crash that says 'segmentation fault' is the translation hardware refusing an address. Knowing that addresses are per process, and translated, is what makes those numbers and those crashes make sense."
+---
+
+On the tiny CPU, address 0x80 is box 0x80: one real place, the same for every program. On your laptop it isn't. Each running program gets its own private set of addresses, and the hardware quietly turns them into real places in RAM.
+
+By the end you'll be able to explain why two programs can use the same address safely, and why the tiny CPU can't do that.
+
+## Two programs, one address
+
+Here's a small C program. It stores its argument in a global variable x, prints where x is, waits a second, then prints x:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int x;
+
+int main(int argc, char **argv) {
+    if (argc < 2) return 1;
+    x = atoi(argv[1]);
+    printf("process %d: x is at %p\n", getpid(), (void *)&x);
+    fflush(stdout);
+    sleep(1);
+    printf("process %d: x = %d\n", getpid(), x);
+    return 0;
+}
+```
+
+Compiled with `gcc -no-pie` and run twice at the same time, once with 1 and once with 2 (gcc 15.2, x86-64 Linux; the numbers differ on other systems):
+
+```
+process 537966: x is at 0x404044
+process 537968: x is at 0x404044
+process 537966: x = 1
+process 537968: x = 2
+```
+
+Both processes say x is at 0x404044. Both were alive at once. Neither changed the other's x. If 0x404044 were one real place in RAM, the second program's write would have overwritten the first one's 1.
+
+<details>
+<summary>Check your answer: what must be true about the address 0x404044 for this output to make sense?</summary>
+
+It can't be a real place in RAM. It's a <b>virtual address</b>: a name for a place, which each process interprets through its own map. Process 537966's 0x404044 and process 537968's 0x404044 lead to two different real boxes, called <b>physical addresses</b>.
+
+</details>
+
+## Why not use real addresses?
+
+The operating system could hand each program a different part of RAM and let it use real addresses. Translation is worth its cost for three reasons:
+
+1. **Isolation.** A program can only reach addresses in its own map. A bug (or an attack) in one program can't scribble over another program or the kernel.
+2. **Every program can be built the same way.** The linker can put x at 0x404044 for every run, without knowing what else will be in RAM when the program starts.
+3. **RAM can be used flexibly.** The parts of a program's memory don't need to be next to each other in RAM, can be shared (two processes using the same library code), and can even be moved out to storage while unused.
+
+<KeyIdea>A program only ever sees virtual addresses. Each process has its own map, so the same address in two processes means two different places.</KeyIdea>
+
+## Translation in one picture
+
+Every load, store and instruction fetch goes through translation:
+
+```
+program uses     →   MMU looks up this    →   RAM is accessed at
+virtual 0x404044     process's map             physical 0x7A3044 (say)
+```
+
+- The **MMU** (memory management unit) is hardware inside the CPU. It translates every single access, so it has to be fast.
+- The **operating system** writes each process's map, and swaps in the right map whenever it switches to another process.
+- Maps work in chunks called pages, usually 4096 bytes on Linux. How the maps are stored (page tables) is a topic for an operating systems course; here, the idea is enough.
+
+If the map has no entry for an address, the MMU stops the access and hands control to the kernel. That's what happens when a program follows a bad pointer:
+
+```
+about to write through 0x10
+--- SIGSEGV {si_signo=SIGSEGV, si_code=SEGV_MAPERR, si_addr=0x10} ---
++++ killed by SIGSEGV (core dumped) +++
+```
+
+`SEGV_MAPERR` means "no mapping for this address". The kernel turned the failed translation into a segmentation fault and stopped only that program.
+
+## The tiny CPU has no translation
+
+The tiny CPU (version 2) has no MMU. Every address is a real box number from 0x00 to 0xFF, and nothing records which program owns which box. That's fine for one program at a time, which is all it runs. Watch what happens if two "programs" share it: program A stores its variable 7 at 0x80, then program B (which also chose 0x80) stores 99 there:
+
+<TinyCpu2 caption='Two programs, one real box' programJson='["LDI R0, 7", "STA R0, [0x80]", "LDI R1, 99", "STA R1, [0x80]", "LDA R2, [0x80]", "OUT R2", "HALT"]' />
+
+Program A reads its variable back and gets 99. On the tiny CPU, an address is a physical address, so sharing the machine means sharing every box. Real systems give each process its own map precisely so this can't happen.
+
+<details>
+<summary>Check your answer: name two things the tiny CPU would need before it could safely run two programs at once.</summary>
+
+Hardware that translates or checks every address (an MMU), so each program has its own address space, and a privileged mode, so only the OS can change the maps. Without the second, a program could simply rewrite its own map.
+
+</details>
+
+## Addresses that change between runs
+
+Compile the same program without `-no-pie` (the normal default) and run it twice:
+
+```
+process 537974: x is at 0x5fb74e5ce01c
+process 537976: x is at 0x61e6685e601c
+```
+
+Now even the virtual address changes every run. Linux deliberately loads programs at random places (address space layout randomization), so an attacker can't predict where things are. It's still a virtual address, just a different one each time.

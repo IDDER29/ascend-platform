@@ -32,7 +32,7 @@ function parseJson<T>(text: string | undefined, fallback: T): T {
  * The Gate Lab: write a circuit as gate expressions, one wire per line ("SUM = A XOR B"), and see its
  * whole truth table, checked row by row against a target. Pass JSON strings (MDX drops expression props):
  * inputsJson='["A","B"]' outputsJson='["OUT"]' targetJson='{"OUT":"A XOR B"}' startJson='["OUT = A OR B"]'
- * allowJson='["NAND"]'. With chainJson, the one-bit circuit is also chained into a wider one (an ALU).
+ * allowJson='["NAND"]' maxGatesJson='4' (a gate budget). With chainJson, the one-bit circuit is also chained into a wider one (an ALU).
  */
 export function GateLab({
   caption,
@@ -42,6 +42,7 @@ export function GateLab({
   startJson,
   allowJson,
   chainJson,
+  maxGatesJson,
 }: {
   caption?: string;
   inputsJson: string;
@@ -50,11 +51,13 @@ export function GateLab({
   startJson?: string;
   allowJson?: string;
   chainJson?: string;
+  maxGatesJson?: string;
 }) {
   const inputs = useMemo(() => parseJson<string[]>(inputsJson, ["A", "B"]), [inputsJson]);
   const outputs = useMemo(() => parseJson<string[]>(outputsJson, ["OUT"]), [outputsJson]);
   const target = useMemo(() => parseJson<Record<string, string> | undefined>(targetJson, undefined), [targetJson]);
   const allow = useMemo(() => parseJson<GateName[] | undefined>(allowJson, undefined), [allowJson]);
+  const maxGates = useMemo(() => parseJson<number | undefined>(maxGatesJson, undefined), [maxGatesJson]);
   const chainCfg = useMemo(() => parseJson<ChainConfig | undefined>(chainJson, undefined), [chainJson]);
   const start = useMemo(
     () => parseJson<string[]>(startJson, outputs.map((o) => `${o} = 0`)).join("\n"),
@@ -66,11 +69,11 @@ export function GateLab({
   const lines = useMemo(() => source.split("\n"), [source]);
   const result = useMemo(() => {
     try {
-      return runLab({ inputs, outputs, lines, target, allow });
+      return runLab({ inputs, outputs, lines, target, allow, maxGates });
     } catch (e) {
       return { ok: false as const, line: 0, message: e instanceof Error ? e.message : "This lab is set up wrongly." };
     }
-  }, [lines, inputs, outputs, target, allow]);
+  }, [lines, inputs, outputs, target, allow, maxGates]);
 
   const matching = result.ok ? result.rows.filter((r) => r.ok).length : 0;
   const status = !result.ok
@@ -83,7 +86,9 @@ export function GateLab({
           ? { tone: "info", text: `Still to define: ${result.missing.join(", ")}.` }
           : result.disallowed.length > 0
             ? { tone: "error", text: `This lab only allows ${allow!.join(", ")}; you used ${result.disallowed.join(", ")}.` }
-            : { tone: "info", text: `${matching} of ${result.rows.length} rows match.` };
+            : result.overBudget > 0 && matching === result.rows.length
+              ? { tone: "info", text: `Every row matches, but with ${result.gates.total} gates: the budget is ${maxGates}.` }
+              : { tone: "info", text: `${matching} of ${result.rows.length} rows match.` };
 
   return (
     <figure className="not-prose my-6 overflow-hidden rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] text-[var(--coach-ink)]">
@@ -91,6 +96,7 @@ export function GateLab({
         <span className="text-[15px] font-bold">{caption ?? "The Gate Lab"}</span>
         <span className="flex items-center gap-2 text-[12.5px] text-[var(--coach-ink-muted)]">
           {allow ? <span>Only {allow.join(", ")}</span> : null}
+          {maxGates !== undefined ? <span>At most {maxGates} gates</span> : null}
           <button
             type="button"
             onClick={() => setSource(start)}
@@ -127,6 +133,11 @@ export function GateLab({
                 ` (${Object.entries(result.gates.byGate)
                   .map(([g, n]) => `${n} ${g}`)
                   .join(", ")})`}
+              {result.gates.total > 0 && (
+                <>
+                  . Longest path: <b>{result.depth}</b> {result.depth === 1 ? "gate" : "gates"}
+                </>
+              )}
             </p>
           )}
         </div>

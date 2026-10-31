@@ -1,0 +1,130 @@
+---
+title: "Optional project: Design a tiny file format"
+level: level-00-bits-logic
+slug: project-file-format
+order: 115
+timeMin: 30
+learningOutcomes:
+- Decode a small black-and-white image from its bytes by following a written format
+- Write a format specification exact enough that someone else could write the decoder
+- Decide how to store a number bigger than one byte, and state the byte order
+- Explain why a decoder must check a file's size and must not assume arbitrary bytes are valid text
+primer:
+- title: "Pixels, colour, sound and files"
+  type: doc
+  meta: Reread · 3 min · formats are agreed ways to read bytes.
+  essential: true
+- title: "Project: The Byte Lab"
+  type: doc
+  meta: Reread · 2 min · the tool you'll use here.
+  essential: true
+- title: "Text: ASCII, Unicode and UTF-8"
+  type: doc
+  meta: Reread · 2 min · why not every byte sequence is text.
+  essential: false
+knowledgeCheck:
+- question: In the TB format, how many bytes does an image 5 pixels wide and 3 high take?
+  answer: "7. The header is 4 bytes (T, B, width, height). Each row of 5 pixels needs 5 bits, which is padded to a whole byte, so 3 rows take 3 bytes."
+  jumpToId: part-2-write-the-specification
+  jumpToLabel: "Part 2: Write the specification"
+- question: Why can't the width be stored in one byte if images may be 300 pixels wide, and what must the spec then say?
+  answer: "One byte only holds 0 to 255. Two bytes hold up to 65,535, but then the spec must say which byte comes first (big-endian or little-endian), because 300 is 0x01 0x2C one way and 0x2C 0x01 the other."
+  jumpToId: part-3-bigger-images
+  jumpToLabel: "Part 3: Bigger images"
+assignment:
+  instruction: "Look up the Netpbm PBM format (P4, the binary version) and compare it with the TB format: what's the same, what's different, and which details does each spec pin down? Then save a tiny PBM file with an image editor or a short script and look at its bytes with a hex viewer."
+  resourceName: 'Netpbm: the PBM format'
+  resourceType: doc
+  resourceUrl: 'https://netpbm.sourceforge.net/doc/pbm.html'
+additionalResources:
+- title: "File format (Wikipedia)"
+  type: doc
+  meta: magic numbers, headers and specifications
+  url: 'https://en.wikipedia.org/wiki/File_format'
+- title: "Endianness (Wikipedia)"
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Endianness'
+whyThisMatters: "Every file you open is bytes plus an agreement about what they mean. Designing a format yourself shows what that agreement has to cover, and why vague specs, unchecked sizes and bytes taken for text are behind so many real bugs and security holes."
+---
+
+A file is just bytes. What makes them a picture, a song or a document is a **format**: a written agreement about what each byte means. In this optional project you decode a tiny image format, then write its specification properly.
+
+## The TB format, in brief
+
+Here is a format for black-and-white images, called TB:
+
+- Bytes 0 and 1: the letters `T` and `B`, so a program can tell a TB file from anything else.
+- Byte 2: the width in pixels. Byte 3: the height.
+- Then the pixels, row by row from the top. Each row is packed 8 pixels to a byte, leftmost pixel in the highest bit: 1 is black, 0 is white.
+
+## Part 1: Decode an image
+
+Here is a whole TB file, all 8 bytes. Check the header, then draw the image on paper as a grid, with `#` for black and `.` for white.
+
+<ByteLab caption='A TB file' bytesJson='[84, 66, 8, 4, 102, 0, 129, 126]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`84 66` is `TB`, so it's a TB file. Width 8, height 4, so 4 rows of one byte each:
+
+```
+0x66 = 01100110   .##..##.
+0x00 = 00000000   ........
+0x81 = 10000001   #......#
+0x7E = 01111110   .######.
+```
+
+A smiling face. Notice what the Byte Lab says when it tries the same bytes as UTF-8 text: they aren't valid, because 0x81 can't start a character. These bytes were never meant as text. A decoder that reads a whole file as text, or prints it, can mangle or misread binary data. Treat bytes as text only when the format says they are.
+
+</details>
+
+## Part 2: Write the specification
+
+The brief description above leaves questions open. Write a specification exact enough that a stranger could write a decoder from it alone. Then work out how many bytes an image w pixels wide and h high takes.
+
+<details>
+<summary>Check your answer</summary>
+
+A good spec settles every question a decoder might have. For example:
+
+1. **Magic:** bytes 0 and 1 are 0x54 0x42 (`TB`). Anything else is not a TB file.
+2. **Width:** byte 2, 1 to 255. **Height:** byte 3, 1 to 255. Zero is invalid.
+3. **Pixels:** rows from top to bottom. Each row takes ceil(w / 8) bytes; pixel 0 of a row is bit 7 (the highest) of its first byte. 1 is black, 0 is white.
+4. **Padding:** unused bits at the end of a row's last byte are 0, and decoders ignore them.
+5. **Size:** a valid file is exactly 4 + h × ceil(w / 8) bytes. A shorter file is damaged; a decoder must say so rather than read past the end.
+
+For 8 × 4 that's 4 + 4 × 1 = 8 bytes, as in part 1. For 5 × 3 it's 4 + 3 × 1 = 7. For 20 × 2 it's 4 + 2 × 3 = 10.
+
+</details>
+
+## Part 3: Bigger images
+
+The format can't describe an image 300 pixels wide: one byte holds at most 255. Change the spec so width and height take two bytes each. How would you store 300, and what new rule must the spec state?
+
+<details>
+<summary>Check your answer</summary>
+
+300 is 0x012C. In two bytes that's either `01 2C` (most significant byte first, **big-endian**) or `2C 01` (least significant first, **little-endian**). Both work, but the spec must pick one and say so, or two programs will disagree: one reads 300, the other 11,265. The header now takes 6 bytes, so every size formula changes too. That's why real formats often start with a version number: a decoder can tell which rules a file follows.
+
+</details>
+
+## Part 4: A damaged file
+
+This file claims to be 16 × 4, but it's only 8 bytes long. What should a decoder do?
+
+<ByteLab caption='A damaged TB file' bytesJson='[84, 66, 16, 4, 255, 0, 255, 0]' />
+
+<details>
+<summary>Check your answer</summary>
+
+A 16 × 4 image needs 4 + 4 × 2 = 12 bytes, and there are only 8. The decoder must stop with an error such as "file too short: expected 12 bytes, found 8". It must not guess, and it must never read past the end of the data. A decoder that trusts the header and reads anyway is exactly how many real image-parsing bugs, and security holes, have happened.
+
+</details>
+
+<KeyIdea>A file format is a promise about what every byte means. Write it down exactly (magic, sizes, bit and byte order, padding), and make decoders check the bytes against it instead of trusting them.</KeyIdea>
+
+## Done when
+
+You've decoded the face, written a spec with a size formula, chosen and stated a byte order for two-byte sizes, and said how a decoder handles the damaged file.

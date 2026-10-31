@@ -29,6 +29,8 @@ const LEVEL_SKILLS: Record<LevelId, string> = {
   "level-11-pipelining": "Explains pipelines, hazards, forwarding and branch prediction, and counts cycles exactly",
   "level-12-advanced-execution": "Explains superscalar, out-of-order execution, renaming and speculation, and schedules code for them",
   "level-13-caches-memory": "Predicts cache hits and misses, and explains the hierarchy from L1 to DRAM",
+  "level-14-multicore-gpus": "Explains coherence, memory ordering, SIMD and GPUs, and what work suits each",
+  "level-18-compilers-theory": "Explains how a compiler parses, optimises and allocates registers, and what no program can compute",
 };
 
 export type ProfileViewer = "owner" | "visitor";

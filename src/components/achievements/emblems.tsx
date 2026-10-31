@@ -107,6 +107,26 @@ export function CrestArt({ crest }: { crest: CrestId }) {
           <path d="M9 17h30M9 24h30M9 31h30M24 10v28" />
         </>
       );
+    // Multicore & GPUs: four cores on one die.
+    case "cores":
+      return (
+        <>
+          <rect x="9" y="9" width="30" height="30" rx="3" />
+          <rect x="13" y="13" width="9" height="9" rx="1" />
+          <rect x="26" y="13" width="9" height="9" rx="1" />
+          <rect x="13" y="26" width="9" height="9" rx="1" />
+          <rect x="26" y="26" width="9" height="9" rx="1" />
+        </>
+      );
+    // Compilers & theory: a syntax tree branching into code.
+    case "tree-ir":
+      return (
+        <>
+          <circle cx="24" cy="10" r="3.5" />
+          <path d="M24 13.5v6M24 19.5l-10 7M24 19.5l10 7M14 26.5v6M34 26.5v6" />
+          <path d="M10 36h8M30 36h8" />
+        </>
+      );
     // The C Language: a pointer (*) aiming into a box.
     case "pointer":
       return (

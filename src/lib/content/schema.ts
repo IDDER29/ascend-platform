@@ -15,6 +15,8 @@ export const levelIds = [
   "level-11-pipelining",
   "level-12-advanced-execution",
   "level-13-caches-memory",
+  "level-14-multicore-gpus",
+  "level-18-compilers-theory",
 ] as const;
 
 export const LevelIdSchema = z.enum(levelIds);
@@ -172,6 +174,18 @@ export const LEVELS: Record<
     name: "Caches & memory systems",
     short: "The Memory Wall",
     totalConcepts: 5,
+    timeLabel: "~1.5 hr",
+  },
+  "level-14-multicore-gpus": {
+    name: "Multicore & GPUs",
+    short: "The Crowd",
+    totalConcepts: 5,
     timeLabel: "~1 hr",
+  },
+  "level-18-compilers-theory": {
+    name: "Compilers & theory",
+    short: "The Translator",
+    totalConcepts: 4,
+    timeLabel: "~45 min",
   },
 };

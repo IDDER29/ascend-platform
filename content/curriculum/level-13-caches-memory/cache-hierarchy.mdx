@@ -1,0 +1,135 @@
+---
+title: "Cache hierarchies: L1, L2 and L3"
+level: level-13-caches-memory
+slug: cache-hierarchy
+order: 3
+timeMin: 12
+learningOutcomes:
+- Explain why caches come in a hierarchy of growing size and latency instead of one big cache
+- Compute the average memory access time (AMAT) of a one-, two- or three-level hierarchy from hit times and miss rates
+- Distinguish local and global miss rates, and inclusive and exclusive hierarchies
+- Read real latency steps for L1, L2, L3 and DRAM from a pointer-chasing measurement
+primer:
+- title: "Replacement and write policies"
+  type: doc
+  meta: Reread · 2 min · what happens on a miss.
+  essential: true
+- title: "The memory hierarchy and locality"
+  type: doc
+  meta: "Foundations · the first look at the pyramid this lesson measures."
+  essential: false
+knowledgeCheck:
+- question: "L1 hits in 4 cycles and misses 5% of the time; L2 hits in 12 cycles and misses 20% of the accesses that reach it; memory takes 200 cycles. What is the AMAT?"
+  answer: "AMAT = 4 + 0.05 × (12 + 0.20 × 200) = 4 + 0.05 × 52 = 4 + 2.6 = 6.6 cycles. Without the L2 it would be 4 + 0.05 × 200 = 14 cycles."
+  jumpToId: average-memory-access-time
+  jumpToLabel: Average memory access time
+- question: Why don't designers just make the L1 as big as the L3?
+  answer: "A bigger cache is slower: longer wires, more ways to compare, more sets to decode. The L1 sits on the critical path of every load, so a few extra cycles there cost far more than they save in misses. Small and fast near the core, big and slower further away, gives a lower average than any single size."
+  jumpToId: why-a-hierarchy
+  jumpToLabel: Why a hierarchy
+assignment:
+  instruction: "Run a pointer-chasing latency test on your own machine (start from the program below), and find your L1, L2 and L3 sizes from where the latency steps up. Compare them with what /sys/devices/system/cpu/cpu0/cache/ reports, and explain any step that doesn't match."
+  resourceName: 'Wikipedia: Average memory access time'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Average_memory_access_time'
+additionalResources:
+- title: "Wikipedia: Cache inclusion policy"
+  type: doc
+  meta: inclusive, exclusive and non-inclusive hierarchies
+  url: 'https://en.wikipedia.org/wiki/Cache_inclusion_policy'
+- title: "Ulrich Drepper: What Every Programmer Should Know About Memory"
+  type: pdf
+  meta: section 3.3, measuring each cache level
+  url: 'https://people.freebsd.org/~lstewart/articles/cpumemory.pdf'
+whyThisMatters: "Memory is slow and the CPU is fast; the hierarchy is how they're made to fit. Being able to compute an average access time and read real latency steps lets you predict when your data structure falls out of a cache, and why that costs ten or a hundred times more per access."
+---
+
+The last two lessons looked at one cache. A real CPU has three, sometimes four, stacked between the core and DRAM. This lesson is about why, and about how to put a number on the result.
+
+## Why a hierarchy
+
+There is no memory that is big, fast and cheap at once. A larger cache needs longer wires and more comparisons, so it's slower, and it costs more area and power. So designers stack them:
+
+- **L1:** tiny (32 to 48 KiB of data per core), 4 to 5 cycles, separate for instructions and data, private to a core.
+- **L2:** bigger (1 to 2 MiB here), around 12 to 15 cycles, usually private to a core or a small cluster.
+- **L3:** many MiB, 40 cycles or more, shared by every core.
+- **DRAM:** gigabytes, hundreds of cycles.
+
+Locality means most accesses hit near the top, so the average stays close to the L1's speed while the capacity is the L3's.
+
+## Measure it
+
+This program follows a random cycle of pointers, one per 64-byte line, through working sets from 16 KiB to 64 MiB. Each load needs the address from the one before, so nothing overlaps, and the prefetcher can't guess the next line. The time per load is the latency of whichever cache the working set fits in. Predict where the steps will be, using the cache sizes from the first lesson (48 KiB L1, 1.25 or 2 MiB L2, 12 MiB L3).
+
+<CRun program="architect/cache-latency" caption='Latency by working-set size' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+In this run (your numbers will differ, and they vary from run to run):
+
+- **16 and 32 KiB, about 1.7 ns:** the working set fits in the L1 data cache. That's 5 to 8 clock cycles, depending on how fast the core happens to be clocked (up to 4.6 GHz here), and includes the loop's own instructions.
+- **128 KiB to 1 MiB, about 8 to 13 ns:** too big for L1, it fits in L2. The 128 KiB figure is a little noisy: the program can run on a performance core or an efficiency core, whose caches differ.
+- **4 to 8 MiB, about 32 to 78 ns:** past L2, inside the 12 MiB L3. Part of this step is the TLB too: with 4 KiB pages, a random walk over megabytes misses the TLB as well as the L1 and L2.
+- **32 and 64 MiB, about 160 to 175 ns:** bigger than the L3, so most loads go to DRAM.
+
+From L1 to DRAM is about a factor of 100. That's the whole case for caring about locality.
+
+</details>
+
+## Average memory access time
+
+The standard way to put one number on a hierarchy is the **average memory access time**:
+
+```
+AMAT = hit time + miss rate × miss penalty
+```
+
+The miss penalty is itself the AMAT of the next level down, so the formula nests. Here is a worked example in cycles:
+
+| Level | Hit time | Miss rate (of accesses that reach it) |
+|---|---|---|
+| L1 | 4 | 5% |
+| L2 | 12 | 20% |
+| L3 | 40 | 30% |
+| DRAM | 200 | none |
+
+- **L1 alone, straight to DRAM:** 4 + 0.05 × 200 = **14 cycles**
+- **With the L2:** 4 + 0.05 × (12 + 0.20 × 200) = 4 + 0.05 × 52 = **6.6 cycles**
+- **With L2 and L3:** 4 + 0.05 × (12 + 0.20 × (40 + 0.30 × 200)) = 4 + 0.05 × (12 + 0.20 × 100) = 4 + 0.05 × 32 = **5.6 cycles**
+
+Two questions:
+
+1. What fraction of all accesses go to DRAM?
+2. A designer can make the L1 bigger, cutting its miss rate to 4%, but its hit time rises to 5 cycles. With the three-level numbers above, is that worth it?
+
+<details>
+<summary>Check your answer</summary>
+
+1. 0.05 × 0.20 × 0.30 = 0.003: **0.3%** of accesses. The 20% and 30% are **local** miss rates, out of the accesses that reach that level. The 0.3% is the **global** miss rate of the L3, out of all accesses. Quote the wrong one and an L3 looks either useless or perfect.
+2. No. The new AMAT is 5 + 0.04 × 32 = 6.28 cycles, worse than 5.6. Every access pays the L1 hit time, but only 5% of accesses benefited from the lower miss rate. This is why L1 caches stay small: the hit time matters more than the last percent of hits.
+
+</details>
+
+<KeyIdea>AMAT = hit time + miss rate × miss penalty, nested level by level. Small, fast caches near the core and big ones further away give an average close to the fastest and a capacity close to the biggest.</KeyIdea>
+
+## Inclusive, exclusive or neither
+
+When a line is in the L1, is it also in the L2 and L3?
+
+- **Inclusive:** yes, always. A core checking whether another core has a line only needs to look in the shared L3, which simplifies coherence. The cost: the same data takes up space twice, and evicting a line from the L3 forces it out of every L1 and L2 too.
+- **Exclusive:** a line lives in exactly one level, and moves between them. The total capacity is the sum of the levels, at the cost of more moving of lines.
+- **Non-inclusive (neither):** no guarantee either way. Many recent Intel and AMD designs have a non-inclusive L3 with a separate directory to track which core holds what.
+
+On the laptop above, the L2 caches total 6.5 MiB against a 12 MiB L3, and each L2 holds 1.25 or 2 MiB. Why would a strictly inclusive L3 be a poor fit here?
+
+<details>
+<summary>Check your answer</summary>
+
+An inclusive L3 must hold a copy of everything in every L2. With 6.5 MiB of L2 in total, over half of the 12 MiB L3 could be taken up by duplicates, leaving much less room for anything else. As private L2s grew, designers moved away from strict inclusion for exactly this reason.
+
+</details>
+
+## Done when
+
+You can explain the hierarchy's trade-off, read the latency steps from a real measurement, compute AMAT for one, two and three levels, tell local from global miss rates, and say what inclusion costs.

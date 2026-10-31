@@ -71,6 +71,14 @@ const LEVEL_OWNERS: PracticeLevelOwner[] = [
     level: "level-13-caches-memory",
     pathSlug: "computer-architect",
   },
+  {
+    level: "level-14-multicore-gpus",
+    pathSlug: "computer-architect",
+  },
+  {
+    level: "level-18-compilers-theory",
+    pathSlug: "computer-architect",
+  },
 ];
 
 export type PracticeTreeLesson = {

@@ -697,6 +697,111 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       ],
     },
   ],
+  "level-12-advanced-execution": [
+    {
+      id: "beyond-the-pipeline",
+      title: "Beyond one instruction at a time",
+      items: [
+        {
+          slug: "superscalar",
+          description: "How a superscalar CPU issues and runs several instructions in the same clock cycle, and what limits it.",
+        },
+        {
+          slug: "out-of-order",
+          description: "How a CPU runs instructions as soon as their inputs are ready, not in program order, while keeping results correct.",
+        },
+        {
+          slug: "register-renaming",
+          description: "How register renaming removes false dependencies between instructions that only reuse the same register name.",
+        },
+        {
+          slug: "speculation",
+          description: "How a CPU runs instructions before it knows they are needed, and uses a reorder buffer to commit them in order.",
+        },
+      ],
+    },
+  ],
+  "level-13-caches-memory": [
+    {
+      id: "caches",
+      title: "Caches and memory",
+      items: [
+        {
+          slug: "cache-organisation",
+          description: "How a cache splits an address into tag, index and offset to find a line in a set, and what associativity means.",
+        },
+        {
+          slug: "replacement-and-writes",
+          description: "How a full cache picks a line to evict, and how write-through and write-back keep memory up to date.",
+        },
+        {
+          slug: "cache-hierarchy",
+          description: "Why CPUs stack L1, L2 and L3 caches of growing size and latency, and how a miss travels down them.",
+        },
+        {
+          slug: "dram",
+          description: "How DRAM stores bits in capacitors that must be refreshed, and how the memory controller schedules access to it.",
+        },
+        {
+          slug: "project-cache-sim",
+          description: "Build a cache simulator that counts hits and misses for real address traces, proving you can predict cache behaviour.",
+          role: "project",
+        },
+      ],
+    },
+  ],
+  "level-14-multicore-gpus": [
+    {
+      id: "parallel-hardware",
+      title: "Parallel hardware",
+      items: [
+        {
+          slug: "cache-coherence",
+          description: "How cores with their own caches agree on the value of shared data, using protocols like MESI.",
+        },
+        {
+          slug: "memory-consistency",
+          description: "In what order one core's writes may appear to other cores, and why fences are needed to enforce an order.",
+        },
+        {
+          slug: "simd",
+          description: "How SIMD instructions apply one operation to many values at once, and how loops are written to use them.",
+        },
+        {
+          slug: "gpus",
+          description: "How a GPU runs thousands of threads in groups that share one instruction stream, and what work suits it.",
+        },
+        {
+          slug: "accelerators",
+          description: "Why chips built for one job, such as machine learning or video, beat general CPUs at it, and what they give up.",
+        },
+      ],
+    },
+  ],
+  "level-18-compilers-theory": [
+    {
+      id: "compilers",
+      title: "Compilers and computation",
+      items: [
+        {
+          slug: "compiler-structure",
+          description: "How a compiler turns source code into machine code in stages: parsing, checking, optimising and generating code.",
+        },
+        {
+          slug: "ssa",
+          description: "How compilers rewrite code into an intermediate form where each variable is assigned once, which makes optimising easier.",
+        },
+        {
+          slug: "register-allocation",
+          description: "How a compiler decides which values live in the few registers and which spill to memory.",
+        },
+        {
+          slug: "computability",
+          description: "Which problems a computer can solve at all, and why no program can decide whether every program halts.",
+        },
+      ],
+    },
+  ],
 };
 
 export function courseOutlineForLevel(

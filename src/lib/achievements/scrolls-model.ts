@@ -25,6 +25,8 @@ export const CREST_OF: Record<LevelId, CrestId> = {
   "level-11-pipelining": "stages",
   "level-12-advanced-execution": "lanes",
   "level-13-caches-memory": "cache",
+  "level-14-multicore-gpus": "cores",
+  "level-18-compilers-theory": "tree-ir",
 };
 
 export type Skill = {

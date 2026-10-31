@@ -21,103 +21,6 @@ const project = (id: string, title: string, description: string): PlannedItem =>
 
 // Computer Architect
 
-export const ADVANCED_EXECUTION: PlannedSection[] = [
-  {
-    id: "beyond-the-pipeline",
-    title: "Beyond one instruction at a time",
-    items: [
-      lesson(
-        "superscalar",
-        "Superscalar: more than one at a time",
-        "How a superscalar CPU issues and runs several instructions in the same clock cycle, and what limits it.",
-      ),
-      lesson(
-        "out-of-order",
-        "Out-of-order execution",
-        "How a CPU runs instructions as soon as their inputs are ready, not in program order, while keeping results correct.",
-      ),
-      lesson(
-        "register-renaming",
-        "Register renaming",
-        "How register renaming removes false dependencies between instructions that only reuse the same register name.",
-      ),
-      lesson(
-        "speculation",
-        "Speculation and the reorder buffer",
-        "How a CPU runs instructions before it knows they are needed, and uses a reorder buffer to commit them in order.",
-      ),
-    ],
-  },
-];
-
-export const CACHES_MEMORY: PlannedSection[] = [
-  {
-    id: "caches",
-    title: "Caches and memory",
-    items: [
-      lesson(
-        "cache-organisation",
-        "Cache organisation: sets, ways and lines",
-        "How a cache splits an address into tag, index and offset to find a line in a set, and what associativity means.",
-      ),
-      lesson(
-        "replacement-and-writes",
-        "Replacement and write policies",
-        "How a full cache picks a line to evict, and how write-through and write-back keep memory up to date.",
-      ),
-      lesson(
-        "cache-hierarchy",
-        "Cache hierarchies: L1, L2 and L3",
-        "Why CPUs stack L1, L2 and L3 caches of growing size and latency, and how a miss travels down them.",
-      ),
-      lesson(
-        "dram",
-        "DRAM and the memory controller",
-        "How DRAM stores bits in capacitors that must be refreshed, and how the memory controller schedules access to it.",
-      ),
-      project(
-        "project-cache-sim",
-        "Project: A cache simulator",
-        "Build a cache simulator that counts hits and misses for real address traces, proving you can predict cache behaviour.",
-      ),
-    ],
-  },
-];
-
-export const MULTICORE_GPUS: PlannedSection[] = [
-  {
-    id: "parallel-hardware",
-    title: "Parallel hardware",
-    items: [
-      lesson(
-        "cache-coherence",
-        "Cache coherence",
-        "How cores with their own caches agree on the value of shared data, using protocols like MESI.",
-      ),
-      lesson(
-        "memory-consistency",
-        "Memory consistency models",
-        "In what order one core's writes may appear to other cores, and why fences are needed to enforce an order.",
-      ),
-      lesson(
-        "simd",
-        "SIMD and vector instructions",
-        "How SIMD instructions apply one operation to many values at once, and how loops are written to use them.",
-      ),
-      lesson(
-        "gpus",
-        "How a GPU runs thousands of threads",
-        "How a GPU runs thousands of threads in groups that share one instruction stream, and what work suits it.",
-      ),
-      lesson(
-        "accelerators",
-        "Accelerators built for one job",
-        "Why chips built for one job, such as machine learning or video, beat general CPUs at it, and what they give up.",
-      ),
-    ],
-  },
-];
-
 export const VERILOG: PlannedSection[] = [
   {
     id: "hdl",
@@ -195,35 +98,6 @@ export const RTL_TO_SILICON: PlannedSection[] = [
         "place-and-route",
         "Place, route and the finished chip",
         "How gates are placed on the chip and wired together, and the checks a design passes before it is manufactured.",
-      ),
-    ],
-  },
-];
-
-export const COMPILERS_THEORY: PlannedSection[] = [
-  {
-    id: "compilers",
-    title: "Compilers and computation",
-    items: [
-      lesson(
-        "compiler-structure",
-        "How a compiler is built",
-        "How a compiler turns source code into machine code in stages: parsing, checking, optimising and generating code.",
-      ),
-      lesson(
-        "ssa",
-        "Intermediate code and SSA",
-        "How compilers rewrite code into an intermediate form where each variable is assigned once, which makes optimising easier.",
-      ),
-      lesson(
-        "register-allocation",
-        "Register allocation",
-        "How a compiler decides which values live in the few registers and which spill to memory.",
-      ),
-      lesson(
-        "computability",
-        "What can be computed",
-        "Which problems a computer can solve at all, and why no program can decide whether every program halts.",
       ),
     ],
   },

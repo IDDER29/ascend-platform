@@ -1,0 +1,185 @@
+---
+title: "Register allocation"
+level: level-18-compilers-theory
+slug: register-allocation
+order: 3
+timeMin: 11
+learningOutcomes:
+- Work out which values are live at each point of a short piece of code
+- Build an interference graph and colour it with a given number of registers
+- Explain when a value must spill to memory, and what a spill costs
+- Read real gcc output and point out the values kept in callee-saved registers and the ones spilled to the stack
+primer:
+- title: "How a compiler is built"
+  type: doc
+  meta: Reread · 2 min · pseudo-registers in RTL, before allocation.
+  essential: true
+- title: "Calls and returns in assembly"
+  type: doc
+  meta: "Machine & Memory · caller-saved and callee-saved registers."
+  essential: true
+knowledgeCheck:
+- question: Two values interfere in the interference graph. What does that mean for the registers they can use?
+  answer: "They are live at the same time somewhere, so they can't share a register: an edge in the graph means the two need different colours. Values whose live ranges never overlap can share one register."
+  jumpToId: the-interference-graph
+  jumpToLabel: The interference graph
+- question: In gcc's output for combine, why are v3 and v4 kept in stack slots instead of registers?
+  answer: "Each call to f may overwrite every caller-saved register, so a value that must survive a call needs a callee-saved register (rbx, rbp, r12 to r15) or a stack slot. a and three of the results took callee-saved registers; v3 and v4 were spilled to 8(%rsp) and 12(%rsp). This gcc saved r14 and r15 but didn't use them, a reminder that allocators are heuristics, not guaranteed optimal."
+  jumpToId: a-real-spill
+  jumpToLabel: A real spill
+assignment:
+  instruction: "Take the combine function from this lesson and change how many values are live across the calls (fewer calls, or compute products as soon as both factors exist). Compile each version with gcc -O2 -S and count the stack slots used. Write down the most values that are live across any one call, and compare it with the 6 callee-saved registers."
+  resourceName: 'Register allocation (Wikipedia)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Register_allocation'
+additionalResources:
+- title: "Chaitin's algorithm (Wikipedia)"
+  type: doc
+  meta: graph-colouring allocation and spilling
+  url: 'https://en.wikipedia.org/wiki/Chaitin%27s_algorithm'
+whyThisMatters: "Registers are the fastest storage in the machine, and there are only 16 general-purpose ones on x86-64. How a compiler shares them out decides how much time code spends going to memory, and reading spills in assembly is how you spot a function doing too much at once."
+---
+
+The back end works with as many **pseudo-registers** as it likes, as you saw in RTL. Real x86-64 has 16 general-purpose registers, and some are spoken for (the stack pointer, arguments, return values). **Register allocation** maps the pseudo-registers onto the real ones. When they don't fit, some values **spill**: they're stored in memory, usually the stack, and loaded back when needed.
+
+## Live ranges
+
+A value is **live** from where it's defined until its last use. Two values that are live at the same time need two different registers. Find the set of values live after each line:
+
+```
+1: a = load
+2: b = load
+3: c = a + b
+4: d = c * 2
+5: e = b - d
+6: return e + a
+```
+
+<details>
+<summary>Check your answer</summary>
+
+| After line | Live |
+|---|---|
+| 1 | a |
+| 2 | a, b |
+| 3 | a, b, c |
+| 4 | a, b, d |
+| 5 | a, e |
+| 6 | (none) |
+
+`c` dies at line 4, its last use, the same line that defines `d`. `b` dies at line 5. At most three values are live at once, so three registers are enough, if the allocator is clever.
+
+</details>
+
+## The interference graph
+
+Draw one node per value, and an edge between any two that are live at the same time. Those two **interfere**: they need different registers. Allocating registers is then **graph colouring**: give each node a colour (a register) so that no edge joins two nodes of the same colour.
+
+For the code above the edges are a-b, a-c, b-c, a-d, b-d and a-e. Colour it with three registers, R1 to R3. Then try with only two.
+
+<details>
+<summary>Check your answer</summary>
+
+| Value | Interferes with | Register |
+|---|---|---|
+| a | b, c, d, e | R1 |
+| b | a, c, d | R2 |
+| c | a, b | R3 |
+| d | a, b | R3 (c is dead by then) |
+| e | a | R2 (b is dead by then) |
+
+Three registers work. With two, they can't: a, b and c form a triangle, all three live at line 3, and a triangle needs three colours. Something must spill. A good choice is `a`: it's live the longest but only used at lines 3 and 6, so storing it once after line 1 and reloading it once at line 6 costs only two memory accesses.
+
+Colouring a graph with the fewest colours is NP-hard in general, so real allocators use heuristics. Chaitin's algorithm, for example, repeatedly removes a node with fewer neighbours than there are registers, and when none is left, picks a value to spill by how often it's used against how long it lives.
+
+</details>
+
+## A real spill
+
+Calls make it harder. Under the System V convention, a called function may overwrite every **caller-saved** register, so any value that must survive a call has to sit in a **callee-saved** register (`rbx`, `rbp`, `r12` to `r15`: six of them) or on the stack. This function keeps many results alive across calls:
+
+```c
+int f(int x);
+
+int combine(int a) {
+    int v0 = f(a);
+    int v1 = f(a + 1);
+    int v2 = f(a + 2);
+    int v3 = f(a + 3);
+    int v4 = f(a + 4);
+    int v5 = f(a + 5);
+    int v6 = f(a + 6);
+    int v7 = f(a + 7);
+    return v0 * v7 + v1 * v6 + v2 * v5 + v3 * v4;
+}
+```
+
+The real output (`gcc -O2 -fno-asynchronous-unwind-tables -S`, gcc 15.2, directives removed):
+
+```
+combine:
+	pushq	%r15
+	pushq	%r14
+	pushq	%r13
+	pushq	%r12
+	pushq	%rbp
+	pushq	%rbx
+	movl	%edi, %ebx
+	subq	$24, %rsp
+	call	f@PLT
+	leal	1(%rbx), %edi
+	movl	%eax, %ebp
+	call	f@PLT
+	leal	2(%rbx), %edi
+	movl	%eax, %r13d
+	call	f@PLT
+	leal	3(%rbx), %edi
+	movl	%eax, %r12d
+	call	f@PLT
+	leal	4(%rbx), %edi
+	movl	%eax, 8(%rsp)
+	call	f@PLT
+	leal	5(%rbx), %edi
+	movl	%eax, 12(%rsp)
+	call	f@PLT
+	leal	6(%rbx), %edi
+	imull	%eax, %r12d
+	call	f@PLT
+	leal	7(%rbx), %edi
+	imull	%eax, %r13d
+	call	f@PLT
+	movl	8(%rsp), %edx
+	imull	12(%rsp), %edx
+	addq	$24, %rsp
+	imull	%eax, %ebp
+	popq	%rbx
+	leal	0(%rbp,%r13), %eax
+	popq	%rbp
+	addl	%r12d, %eax
+	popq	%r12
+	popq	%r13
+	addl	%edx, %eax
+	popq	%r14
+	popq	%r15
+	ret
+```
+
+Find where `a` and each of `v0` to `v4` live. Which values were spilled, and what did gcc do with `v5`, `v6` and `v7`?
+
+<details>
+<summary>Check your answer</summary>
+
+- `a` lives in `ebx` (`movl %edi, %ebx`): it's needed for every call's argument (`leal 1(%rbx), %edi`).
+- `v0` is in `ebp`, `v1` in `r13d` and `v2` in `r12d`, all callee-saved, so they survive the later calls.
+- `v3` and `v4` are **spilled** to the stack, at `8(%rsp)` and `12(%rsp)`, and loaded back only at the end (`movl 8(%rsp), %edx` and `imull 12(%rsp), %edx`).
+- `v5`, `v6` and `v7` are never kept at all. gcc reordered the sum so each product is formed as soon as its second factor arrives: `imull %eax, %r12d` is `v2 * v5`, right after `v5` is returned. After that, `v2` is dead and its register holds the product.
+
+Across the sixth call, six values are live: `a` and `v0` to `v4`, exactly the number of callee-saved registers. Yet this gcc saved `r14` and `r15` and never used them, while spilling `v3` and `v4`. That isn't the best possible allocation, and that's the honest lesson: register allocation is solved with heuristics that are good on average, not perfect on every function. A spill here costs a store and a load each, a few cycles against the hundreds the calls take.
+
+</details>
+
+<KeyIdea>Values live at the same time interfere and need different registers. Allocation is graph colouring with as many colours as registers; when the graph needs more, values spill to the stack. Across calls only the callee-saved registers survive, so calls raise the pressure.</KeyIdea>
+
+## Done when
+
+You can list live values line by line, build and colour an interference graph, decide what to spill, and read spills and callee-saved registers in real gcc output.

@@ -1,0 +1,164 @@
+---
+title: "Cache coherence"
+level: level-14-multicore-gpus
+slug: cache-coherence
+order: 1
+timeMin: 11
+learningOutcomes:
+- Explain why private caches on several cores can disagree about one address, and what coherence promises
+- Trace a cache line through the MESI states as two cores read and write it
+- Compare snooping and directory-based coherence, and say why large chips use directories
+- Explain false sharing from the coherence protocol, measure it, and fix it by padding
+primer:
+- title: "Cache hierarchies: L1, L2 and L3"
+  type: doc
+  meta: Reread · 3 min · each core has its own L1 and L2.
+  essential: true
+- title: "Atomics and memory ordering: a first look"
+  type: doc
+  meta: "Virtual Memory, Threads & Files · atomic counters, from the software side."
+  essential: false
+knowledgeCheck:
+- question: Core 1 holds a line in M. Core 2 reads an address in it. What happens to the line in both caches?
+  answer: "Core 2's read misses and goes on the bus (or to the directory). Core 1 sees it owns the only up-to-date copy, supplies the data (and writes it back to memory or the shared cache), and drops from M to S. Core 2 gets the line in S. Both now hold the same, clean value."
+  jumpToId: mesi-step-by-step
+  jumpToLabel: MESI, step by step
+- question: Two threads each update their own counter, yet the program is five times slower when the counters are 8 bytes apart than when they are 64 bytes apart. Why?
+  answer: "Coherence works on whole cache lines, not variables. With both counters in one 64-byte line, every write by one core must invalidate the other core's copy, so the line bounces between the two caches on every update. That's false sharing: no data is shared, but the line is. Padding each counter to its own line stops the bouncing."
+  jumpToId: false-sharing-measured
+  jumpToLabel: False sharing, measured
+assignment:
+  instruction: "Write a program in which 4 threads each count into one element of an int array of 4, timed; then pad each element to 64 bytes and time it again. Run both with taskset on two cores of the same physical core and on two different cores (lscpu -e shows which CPU is which), and explain each result with MESI."
+  resourceName: 'A Primer on Memory Consistency and Cache Coherence (Nagarajan, Sorin, Hill, Wood)'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf'
+additionalResources:
+- title: "MESI protocol (Wikipedia)"
+  type: doc
+  meta: the states and transitions
+  url: 'https://en.wikipedia.org/wiki/MESI_protocol'
+- title: "Directory-based cache coherence (Wikipedia)"
+  type: doc
+  meta: how large chips scale coherence
+  url: 'https://en.wikipedia.org/wiki/Directory-based_cache_coherence'
+- title: "False sharing (Wikipedia)"
+  type: doc
+  meta: the performance bug, with examples
+  url: 'https://en.wikipedia.org/wiki/False_sharing'
+whyThisMatters: "Every multithreaded program relies on coherence to see other threads' writes at all, and pays for it on every shared cache line. Knowing how the protocol moves lines between cores explains why some parallel code scales and some gets slower with more threads."
+---
+
+In the Caches course every cache served one core. A real chip has several cores, each with its own L1 and L2, all caching the same memory. If core 1 writes `x` in its L1 and core 2 has an old copy of `x` in its own L1, which value is right? **Cache coherence** is the hardware's answer, and it runs on every load and store your threads make.
+
+## What coherence promises
+
+A coherent system makes the caches behave, for each single address, as if there were no caches at all:
+
+- **One writer at a time, or many readers.** At any moment a line is either being written by one core or read (possibly) by several. Never both.
+- **Reads see the latest write.** Once a write to an address has happened, later reads of that address by any core get that value or a newer one.
+
+Coherence is about **one address at a time**. What order writes to *different* addresses appear in is a separate question, memory consistency, which is the next lesson.
+
+The hardware keeps this promise per **cache line** (64 bytes here, the same unit the cache stores), using a protocol: a small state machine per line in every cache, plus messages between the caches.
+
+## MESI, step by step
+
+The classic protocol is **MESI**, named after the four states a line can be in, in one cache:
+
+| State | Meaning | This cache may |
+|---|---|---|
+| **M**odified | The only copy, and it's been written: memory is out of date | read and write |
+| **E**xclusive | The only copy, still clean (equal to memory) | read; write without asking (becomes M) |
+| **S**hared | A clean copy; other caches may also have one | read only |
+| **I**nvalid | Not here (or thrown away) | nothing |
+
+To write a line, a cache needs it in M or E. If it holds the line in S or I, it first sends an **invalidate** (or "read for ownership") so every other copy goes to I. Here's a trace for one line holding `x`, with two cores:
+
+| Step | Event | Core 1 | Core 2 | What went over the bus |
+|---|---|---|---|---|
+| 1 | Core 1 reads x | E | I | read miss, memory supplies the line |
+| 2 | Core 1 writes x | M | I | nothing: E lets it write silently |
+| 3 | Core 2 reads x | S | S | read miss; core 1 supplies its data, writes it back |
+| 4 | Core 2 writes x | I | M | invalidate: core 1's copy is thrown away |
+| 5 | Core 1 reads x | S | S | read miss; core 2 supplies the data |
+
+Try it: continue the trace. In step 6 core 1 writes x, then in step 7 core 2 writes x. Give both cores' states after each, and what goes over the bus.
+
+<details>
+<summary>Check your answer</summary>
+
+- **Step 6, core 1 writes x:** core 1 is in S, so it must upgrade. It sends an invalidate; core 2 goes to I, and core 1 goes to M. (No data needs to move: core 1 already has the current value.)
+- **Step 7, core 2 writes x:** core 2 is in I, so it sends a read-for-ownership. Core 1 supplies the modified data and goes to I; core 2 gets the line in M and writes it.
+
+Two cores taking turns to write one line move the whole line between their caches on every write. That's the cost of sharing writable data, and the root of the false-sharing slowdown below.
+
+</details>
+
+<KeyIdea>Coherence lets many cores read a line, or one core write it, never both. Writing a line someone else holds costs a message and moves the whole line.</KeyIdea>
+
+## Snooping and directories
+
+How does a cache find out that another core wants the line?
+
+- **Snooping:** every miss and invalidate is broadcast on a shared bus, and every cache watches ("snoops") the bus and reacts to messages about lines it holds. Simple and fast with a few cores, but every core must see every message, so the traffic grows with the core count.
+- **Directories:** a directory, usually kept alongside the shared last-level cache, records for each line which caches hold a copy and in what state. A miss goes to the directory, which forwards it only to the caches that matter. More bookkeeping, but the messages scale, so large chips with dozens of cores use directories (often with snooping inside small clusters).
+
+The protocol is also extended in practice. Intel adds an F (Forward) state and AMD an O (Owned) state, so one designated cache answers a read instead of memory, but the core idea is MESI's.
+
+## False sharing, measured
+
+Two threads, each adding 1 to **its own** atomic counter 20 million times. In the first run the two counters are 8 bytes apart, in one cache line; in the second, padded with `alignas(64)`, each has its own line. The program never shares a value between the threads. Predict the difference.
+
+<CRun program="architect/false-sharing" caption='The same work, one cache line or two' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Sharing the line was about 5.6 times slower in this run (your machine and your run will differ). Each `atomic_fetch_add` is a locked add, which needs the line in M. With both counters in one line, every add by one core invalidates the other core's copy (steps 6 and 7 above, 40 million times), so the line spends its time travelling between the two L1s. Padded apart, each core keeps its own line in M and adds at full speed.
+
+The counters were never shared, only the line. That's **false sharing**, and the fix is layout: put data written by different threads in different cache lines.
+
+</details>
+
+## When the "cores" share a cache
+
+This laptop's CPUs 0 and 1 are two hardware threads of one physical core, sharing its L1 and L2; CPU 2 is a different core. `lscpu -e` shows it (output trimmed):
+
+```
+$ lscpu -e
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ   MINMHZ
+  0    0      0    0 0:0:0:0          yes 4600.0000 400.0000
+  1    0      0    0 0:0:0:0          yes 4600.0000 400.0000
+  2    0      0    1 4:4:1:0          yes 4600.0000 400.0000
+...
+```
+
+The same program, pinned to two CPUs with `taskset` (real runs; numbers vary):
+
+```
+$ taskset -c 0,2 ./prog
+distance between the counters: 8 bytes, then 64 bytes
+same cache line:        804.5 ms (a = 20000000, b = 20000000)
+separate cache lines:   165.3 ms (a = 20000000, b = 20000000)
+the shared line was 4.9 times slower
+$ taskset -c 0,1 ./prog
+distance between the counters: 8 bytes, then 64 bytes
+same cache line:        374.0 ms (a = 20000000, b = 20000000)
+separate cache lines:   428.1 ms (a = 20000000, b = 20000000)
+the shared line was 0.9 times slower
+```
+
+Why does false sharing vanish on CPUs 0 and 1?
+
+<details>
+<summary>Check your answer</summary>
+
+CPUs 0 and 1 are two hardware threads (hyper-threads) of **one** core, so they share the same L1. There's only one copy of the line, in one cache, so there's nothing to keep coherent: no invalidations, no line moving between caches. Both runs are slower than on separate cores for a different reason: the two threads share one core's execution units.
+
+False sharing is a cost of coherence **between caches**. It's worst between cores that share the fewest caches. Pinned to two efficiency cores in different clusters, the gap was larger still in other runs here.
+
+</details>
+
+## Done when
+
+You can say what coherence promises, trace MESI states for reads and writes by two cores, compare snooping with directories, and explain both the false-sharing slowdown and why it disappears on two threads of one core.

@@ -18,6 +18,8 @@ const LEVEL_TO_PATH: Record<string, string> = {
   "level-11-pipelining": "computer-architect",
   "level-12-advanced-execution": "computer-architect",
   "level-13-caches-memory": "computer-architect",
+  "level-14-multicore-gpus": "computer-architect",
+  "level-18-compilers-theory": "computer-architect",
 };
 
 export const PRACTICE_PATH_TITLES: Record<string, string> = {

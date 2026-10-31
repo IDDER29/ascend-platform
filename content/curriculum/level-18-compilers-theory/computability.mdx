@@ -1,0 +1,139 @@
+---
+title: "What can be computed"
+level: level-18-compilers-theory
+slug: computability
+order: 4
+timeMin: 12
+learningOutcomes:
+- Describe a Turing machine and trace a small one step by step
+- Prove, by contradiction and diagonalisation, that no program can decide for every program and input whether it halts
+- State Rice's theorem and recognise questions about programs that it makes undecidable
+- Explain why compilers, warnings and analysers must be conservative, and what sanitizers do differently
+primer:
+- title: "Undefined behaviour, in depth"
+  type: doc
+  meta: "The C Contract · what compilers may assume, because they can't check everything."
+  essential: false
+- title: "Sanitizers: ASan and UBSan"
+  type: doc
+  meta: "Tools · checking the runs you actually make, instead of every possible run."
+  essential: false
+knowledgeCheck:
+- question: In the halting proof, what does D do when given its own text, and why is that a contradiction?
+  answer: "D(D) asks H whether D halts on input D. If H says it halts, D loops forever; if H says it loops, D halts. Either way H's answer about D(D) is wrong. So a decider H that is always right can't exist."
+  jumpToId: the-halting-problem
+  jumpToLabel: The halting problem
+- question: gcc warns that a variable "may be used uninitialized" in code where it never is. Is gcc broken?
+  answer: "No. Whether a variable is read before it's written, on every possible run, is a semantic property of the program, and Rice's theorem says no algorithm decides such properties exactly for all programs. A warning must either miss some real problems or report some false ones; gcc chooses to warn when it can't prove the variable is always set."
+  jumpToId: why-tools-must-be-conservative
+  jumpToLabel: Why tools must be conservative
+assignment:
+  instruction: "Extend the Turing machine program so it adds 1 and then doubles the number (append a 0 on the right). Write the rule table first, then the code. Then write a paragraph explaining why a program that checks whether any C program can ever divide by zero is impossible in general, citing Rice's theorem, and what real tools do instead."
+  resourceName: 'Halting problem (Wikipedia)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Halting_problem'
+additionalResources:
+- title: "Rice's theorem (Wikipedia)"
+  type: doc
+  meta: every non-trivial semantic property is undecidable
+  url: 'https://en.wikipedia.org/wiki/Rice%27s_theorem'
+- title: "Turing machine (Wikipedia)"
+  type: doc
+  meta: the definition, and the Church-Turing thesis
+  url: 'https://en.wikipedia.org/wiki/Turing_machine'
+whyThisMatters: "Some questions about programs can't be answered by any program, ever, however clever. Knowing which ones explains why compilers assume no undefined behaviour instead of checking for it, why warnings have false alarms, and why testing and sanitizers will always matter."
+---
+
+Every compiler optimisation in this course rests on a question about programs: is this value constant, is this code reachable, does this loop end? Some of those questions have answers a compiler can always find. Others provably don't. This lesson draws the line.
+
+## A machine that computes
+
+In 1936 Alan Turing described the simplest possible computer: a **Turing machine**. It has:
+
+- an infinite **tape** of cells, each holding a symbol (here `0`, `1` or blank `_`);
+- a **head** that reads and writes one cell and moves left or right;
+- a **state**, and a **rule table**: for each state and symbol read, what to write, which way to move and which state comes next.
+
+That's all. The **Church–Turing thesis** says anything an algorithm can compute, a Turing machine can compute. Your laptop is faster, not more powerful. Here is a two-state machine that adds 1 to a binary number, simulated in C:
+
+<CRun program="architect/turing-increment" caption='A Turing machine that adds 1' predict />
+
+The rules, as the code has them:
+
+| State | Reads | Writes | Moves | Next state |
+|---|---|---|---|---|
+| CARRY | 1 | 0 | left | CARRY |
+| CARRY | 0 | 1 | stay | DONE |
+| CARRY | _ | 1 | stay | DONE |
+
+Trace `1011` by hand before checking the output.
+
+<details>
+<summary>Check your answer</summary>
+
+The head starts on the last `1`. CARRY reads `1`: write `0`, move left (`1010`). CARRY reads `1`: write `0`, move left (`1000`). CARRY reads `0`: write `1`, stop (`1100`). Three steps, and `1011` (11) + 1 = `1100` (12). For `111` the carry runs off the left end onto a blank, which becomes the new leading `1`: `1000`, in four steps.
+
+</details>
+
+## The halting problem
+
+Some programs stop and some loop forever. Could one program tell, for any program and input, which will happen? Suppose it could: a function `H(P, x)` that always returns, with `true` if program `P` halts on input `x` and `false` if it runs forever.
+
+Now build a new program `D` that uses `H`:
+
+```
+D(P):
+    if H(P, P) is true:     # "P halts when given its own text"
+        loop forever
+    else:
+        halt
+```
+
+Programs are text, so a program can be given its own text as input. What happens when you run `D(D)`?
+
+<details>
+<summary>Check your answer</summary>
+
+`D(D)` calls `H(D, D)`, which must answer whether `D` halts on input `D`:
+
+- If `H(D, D)` is **true** ("D(D) halts"), then `D` loops forever. So `D(D)` doesn't halt, and `H` was wrong.
+- If `H(D, D)` is **false** ("D(D) runs forever"), then `D` halts. So `D(D)` halts, and `H` was wrong again.
+
+Every possible answer is wrong, so no such `H` can exist. That's the **halting problem**: no program decides, for every program and input, whether it halts. The trick, feeding a program its own description and doing the opposite of the prediction, is **diagonalisation**, the same idea Cantor used to show there are more real numbers than whole numbers.
+
+Note what the proof does *not* say. It doesn't say you can never tell whether a particular program halts; often you easily can. It says no single program gets it right for all of them.
+
+</details>
+
+## Rice's theorem
+
+The halting problem is one example of something much bigger. **Rice's theorem** (1953): every **non-trivial semantic property** of programs is undecidable. "Semantic" means a property of what the program does (its behaviour), not of how its text looks. "Non-trivial" means some programs have it and some don't.
+
+Which of these can a tool decide exactly for every C program?
+
+1. Does the source contain a `goto`?
+2. Can this program ever divide by zero?
+3. Does this function always return the same value as that one?
+4. Is this program shorter than 1000 lines?
+
+<details>
+<summary>Check your answer</summary>
+
+1 and 4 are about the program's text, not its behaviour: easy, just read it. 2 and 3 are about behaviour, and some programs have the property and some don't, so Rice's theorem says no tool can decide them exactly for every program. (If one could decide "ever divides by zero", you could decide halting: take the program you're asking about, make every division in it checked so it can never divide by zero itself, and add a division by zero at the very end. The new program divides by zero exactly when the original halts.)
+
+</details>
+
+## Why tools must be conservative
+
+So a compiler can't know for sure whether a variable is always initialised, whether an index is always in bounds, or whether a loop ends. It still has to do something, so every analysis is **conservative**: it gives up exactness in a safe direction.
+
+- **An optimisation** only fires when the compiler can *prove* it's safe. When it can't prove a value is constant, it keeps the computation. Missed optimisations are allowed; wrong code is not.
+- **A warning** like `-Wmaybe-uninitialized` fires when gcc can't prove the variable is set. Some warnings are false alarms, and some real bugs are missed. Both are unavoidable.
+- **Undefined behaviour** is how C makes the hard questions the programmer's job. The compiler may *assume* no signed overflow and no out-of-bounds access, instead of trying to decide them, which is impossible in general.
+- **Sanitizers** dodge the theorem a different way: they don't reason about all runs, they check the one run you actually make. ASan and UBSan report real errors on the paths you executed, and say nothing about the paths you didn't.
+
+<KeyIdea>No program can decide halting, or any non-trivial property of what programs do, for every program. So compilers optimise only what they can prove, warnings err to one side, and sanitizers check the runs you make instead of all of them.</KeyIdea>
+
+## Done when
+
+You can trace a Turing machine, prove the halting problem undecidable, use Rice's theorem to tell decidable questions from undecidable ones, and explain why compilers, warnings and sanitizers behave the way they do.

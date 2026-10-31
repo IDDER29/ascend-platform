@@ -370,21 +370,21 @@ export const PATHS: PathDef[] = [
       },
       {
         id: "advanced-execution",
-        title: "Advanced execution",
+        title: LEVELS["level-12-advanced-execution"].name,
         body: "Superscalar, out-of-order and speculative CPUs: how real cores run many instructions at once.",
-        outline: O.ADVANCED_EXECUTION,
+        levelId: "level-12-advanced-execution",
       },
       {
         id: "caches-memory",
-        title: "Caches & memory systems",
+        title: LEVELS["level-13-caches-memory"].name,
         body: "How caches are built, and why memory, not the CPU, is usually the limit.",
-        outline: O.CACHES_MEMORY,
+        levelId: "level-13-caches-memory",
       },
       {
         id: "multicore-gpus",
-        title: "Multicore & GPUs",
+        title: LEVELS["level-14-multicore-gpus"].name,
         body: "Many cores sharing memory, vector units, GPUs and accelerators.",
-        outline: O.MULTICORE_GPUS,
+        levelId: "level-14-multicore-gpus",
       },
       {
         id: "verilog",
@@ -406,9 +406,9 @@ export const PATHS: PathDef[] = [
       },
       {
         id: "compilers-theory",
-        title: "Compilers & theory",
+        title: LEVELS["level-18-compilers-theory"].name,
         body: "How compilers turn code into instructions, and the limits of what any computer can compute.",
-        outline: O.COMPILERS_THEORY,
+        levelId: "level-18-compilers-theory",
       },
       {
         id: "riscv-core",

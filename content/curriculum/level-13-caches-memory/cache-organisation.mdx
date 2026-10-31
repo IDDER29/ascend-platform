@@ -1,0 +1,158 @@
+---
+title: "Cache organisation: sets, ways and lines"
+level: level-13-caches-memory
+slug: cache-organisation
+order: 1
+timeMin: 11
+learningOutcomes:
+- Split an address into tag, index and offset for a cache of a given size, line size and associativity
+- Explain how a direct-mapped, a set-associative and a fully associative cache find a line, and what each costs in hardware
+- Classify a miss as compulsory, capacity or conflict, and say which design change helps each kind
+- Read a real CPU's cache geometry from Linux and work out its number of sets
+primer:
+- title: Caches & locality
+  type: doc
+  meta: "Machine & Memory · why caches work at all: temporal and spatial locality."
+  essential: true
+- title: "Cache-friendly data layout"
+  type: doc
+  meta: "Data Structures in C · the programmer's side of the same hardware."
+  essential: false
+knowledgeCheck:
+- question: "A 32 KiB cache has 64-byte lines and 8 ways. How many sets does it have, and how many bits of a 32-bit address are offset, index and tag?"
+  answer: "32768 / (64 × 8) = 64 sets. The offset is log2(64) = 6 bits, the index log2(64) = 6 bits, and the tag is the remaining 32 - 12 = 20 bits."
+  jumpToId: splitting-an-address
+  jumpToLabel: Splitting an address
+- question: Two addresses 256 bytes apart keep evicting each other in a 256-byte direct-mapped cache. What kind of miss is that, and what fixes it?
+  answer: "Conflict misses: both map to the same set, which holds only one line, even though the cache has room for both. More ways (associativity) fixes it: with 2 ways, the set holds both lines at once."
+  jumpToId: when-two-lines-fight-over-one-set
+  jumpToLabel: When two lines fight over one set
+assignment:
+  instruction: "Read your own machine's cache geometry from /sys/devices/system/cpu/cpu0/cache/index*/ (size, ways_of_associativity, coherency_line_size, number_of_sets). For each cache, check that size = sets × ways × line size, and work out how many index and offset bits it uses."
+  resourceName: 'Wikipedia: CPU cache'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/CPU_cache'
+additionalResources:
+- title: "Ulrich Drepper: What Every Programmer Should Know About Memory"
+  type: pdf
+  meta: section 3, CPU caches, in depth
+  url: 'https://people.freebsd.org/~lstewart/articles/cpumemory.pdf'
+- title: "UCSD CSE 141: cache handout"
+  type: pdf
+  meta: worked address splits and associativity
+  url: 'https://cseweb.ucsd.edu/classes/su07/cse141/cache-handout.pdf'
+whyThisMatters: "Every load your program makes goes through this lookup first. Knowing how a cache is organised is what lets you explain why one loop is ten times slower than another, why array sizes that are powers of two can be slow, and why CPU designers make the trade-offs they do."
+---
+
+In Machine & Memory you saw *that* caches work: programs reuse data, and data near data. This course is about *how* they're built. A cache has to answer one question in a cycle or two: "is this address here, and where?" Its organisation is the answer.
+
+## Lines, sets and ways
+
+A cache stores memory in **lines** (also called blocks): fixed chunks, 64 bytes on almost every modern CPU. Loading one byte brings in its whole line, which is why neighbouring data comes almost free.
+
+Lines are grouped into **sets**. An address maps to exactly one set, and the line can sit in any of that set's **ways**:
+
+- **Direct-mapped:** 1 way. Each address has exactly one possible place. Cheap and fast, but two hot addresses that map to the same place keep evicting each other.
+- **N-way set-associative:** N places per set. The hardware compares the tag against all N ways in parallel.
+- **Fully associative:** one set containing every line. The fewest conflicts, but a comparator for every line, so it's only practical for small structures like the TLB.
+
+The size is always **sets × ways × line size**.
+
+## Splitting an address
+
+To find a line, the cache cuts the address into three fields:
+
+```
+| tag                       | index        | offset     |
+  which line in the set       which set      which byte in the line
+```
+
+- **offset** = the low log2(line size) bits
+- **index** = the next log2(sets) bits
+- **tag** = everything above; it's stored with the line and compared on every lookup
+
+Take a 32 KiB cache with 64-byte lines and 8 ways: 32768 / (64 × 8) = **64 sets**, so 6 offset bits, 6 index bits and, for a 32-bit address, a 20-bit tag. Split the address 0x12345678.
+
+<details>
+<summary>Check your answer</summary>
+
+The low 12 bits are 0x678 = 0110 0111 1000 in binary.
+
+- **offset** = the low 6 bits, 111000 = 56
+- **index** = the next 6 bits, 011001 = 25
+- **tag** = 0x12345678 shifted right by 12 = 0x12345
+
+So the byte is at offset 56 of a line in set 25, and that line is a hit only if one of set 25's 8 ways holds tag 0x12345.
+
+</details>
+
+Here is a tiny direct-mapped cache, 256 bytes with 16-byte lines (16 sets), reading 64 ints in a row: addresses 0, 4, 8 and on up to 252. Predict the hits and misses, then step through.
+
+<CacheLab caption='A sequential walk through a direct-mapped cache' configJson='{"sizeBytes":256,"lineBytes":16,"ways":1,"policy":"LRU","write":"write-back"}' patternJson='{"start":0,"stride":4,"count":64}' fixed />
+
+<details>
+<summary>Check your answer</summary>
+
+16 misses and 48 hits. Each 16-byte line holds 4 ints: the first read of a line misses (a **compulsory** miss: that line was never in the cache) and the next three hit. The offset counts 0, 4, 8, 12 within each line, and the index moves to the next set every 16 bytes. That's spatial locality in numbers: a hit rate of 75% from a cache that had never seen the data.
+
+</details>
+
+<KeyIdea>An address is tag, index and offset. The index picks the set, the ways are compared against the tag, and the offset picks the byte. Size = sets × ways × line size.</KeyIdea>
+
+## When two lines fight over one set
+
+Now a program alternates between two addresses, 0x000 and 0x100. They're 256 bytes apart, so in this 256-byte cache they have the same index (set 0) and different tags. Run it as given. Then change the cache, keeping its size at 256 bytes, so the trace has at most 2 misses.
+
+<CacheLab caption='Two addresses, one set' configJson='{"sizeBytes":256,"lineBytes":16,"ways":1,"policy":"LRU","write":"write-back"}' traceJson='["R 0x0","R 0x100","R 0x0","R 0x100","R 0x0","R 0x100","R 0x0","R 0x100"]' goalJson='{"maxMisses":2}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Direct-mapped, every access misses: 2 compulsory misses and then 6 **conflict** misses, because each line evicts the other from set 0 even though the other 15 sets sit empty. Choose 2 ways: the cache now has 8 sets of 2 ways, both lines live in set 0 at once, and the trace has only its 2 compulsory misses, then 6 hits.
+
+This is the classic trouble with power-of-two strides. Arrays whose rows are a large power of two apart can map every row to the same few sets.
+
+</details>
+
+## Three kinds of miss
+
+Every miss is one of the **3 Cs**:
+
+- **Compulsory:** the first access to a line. Only prefetching or bigger lines avoid it.
+- **Capacity:** the working set is bigger than the whole cache. Even a fully associative cache of the same size would miss. Only a bigger cache helps.
+- **Conflict:** the cache had room, but the line's set didn't. More ways help, or a different layout of the data.
+
+The lab classifies each miss the same way, by also running a fully associative LRU cache of the same size and checking whether it would have hit.
+
+## A real CPU's caches
+
+This is the laptop that compiled every program in this course, a 13th-generation Intel Core i5-1335U, read from Linux (`lscpu`, then `/sys/devices/system/cpu/cpu*/cache/`; trimmed):
+
+```
+$ lscpu | grep -i cache
+L1d cache:                               352 KiB (10 instances)
+L1i cache:                               576 KiB (10 instances)
+L2 cache:                                6.5 MiB (4 instances)
+L3 cache:                                12 MiB (1 instance)
+
+cpu0  L1 Data         48K  ways=12  line=64  sets=64     shared with cpu 0-1
+cpu0  L2 Unified    1280K  ways=10  line=64  sets=2048   shared with cpu 0-1
+cpu0  L3 Unified   12288K  ways=12  line=64  sets=16384  shared with cpu 0-11
+cpu4  L1 Data         32K  ways=8   line=64  sets=64     shared with cpu 4
+cpu4  L2 Unified    2048K  ways=16  line=64  sets=2048   shared with cpu 4-7
+```
+
+It's a **hybrid** chip: cpu0 is a performance core (two hardware threads share its caches), cpu4 an efficiency core, and they have different L1 and L2 caches. Check one line of it, and notice something about both L1 data caches.
+
+<details>
+<summary>Check your answer</summary>
+
+cpu0's L1: 64 sets × 12 ways × 64 bytes = 49152 bytes = 48 KiB. Its L3: 16384 × 12 × 64 = 12 MiB, shared by all 12 hardware threads.
+
+Both L1 data caches have **64 sets of 64-byte lines**, so 6 + 6 = 12 bits of index and offset, and 2^12 = 4096 bytes, exactly one page. That's deliberate: the index then comes entirely from the page offset, which is the same in the virtual and the physical address. The L1 can start its lookup with the virtual address while the TLB translates the rest, in parallel. To grow such an L1, designers add ways (12 instead of 8), not sets.
+
+</details>
+
+## Done when
+
+You can split an address for any cache shape, say why a direct-mapped cache thrashed and 2 ways fixed it, name the 3 Cs, and read a real CPU's cache geometry.

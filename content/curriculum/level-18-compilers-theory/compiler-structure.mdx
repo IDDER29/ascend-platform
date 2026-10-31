@@ -1,0 +1,205 @@
+---
+title: "How a compiler is built"
+level: level-18-compilers-theory
+slug: compiler-structure
+order: 1
+timeMin: 11
+learningOutcomes:
+- Name the stages of a compiler (lexing, parsing, semantic checks, intermediate code, optimisation, code generation) and what each one produces
+- Explain the split into a front end, a middle end and a back end, and why it lets one compiler serve many languages and many CPUs
+- Match a gcc error message to the stage that found it
+- Find your code in gcc's own dumps of its passes, from the parsed tree to the final assembly
+primer:
+- title: "Project: A tiny-language translator"
+  type: doc
+  meta: "Foundations · a whole compiler in miniature: tokens, a parser and code generation."
+  essential: true
+- title: "Compiling and assembling"
+  type: doc
+  meta: "Foundations · where the compiler sits in the toolchain."
+  essential: false
+knowledgeCheck:
+- question: "gcc reports \"expected expression before ';' token\" for return 1 +; but reports \"makes integer from pointer without a cast\" for int x = \"hi\";. Which stage found each, and how can you tell?"
+  answer: "The first is a parse error: the tokens don't fit the grammar (a + must be followed by an expression), so the parser stops. The second program parses fine; the semantic check (type checking) finds that a char * is being stored in an int. Grammar mistakes are parse errors, meaning mistakes are semantic errors."
+  jumpToId: the-front-end-tokens-trees-and-meaning
+  jumpToLabel: "The front end: tokens, trees and meaning"
+- question: Why do compilers translate into an intermediate representation instead of going straight from C to x86-64?
+  answer: "So the work can be shared. Front ends for many languages produce the same IR, optimisations are written once on that IR, and back ends turn it into code for many CPUs. N languages and M targets need N + M parts instead of N × M compilers, and the IR is simpler to analyse than source code."
+  jumpToId: three-ends-and-an-ir
+  jumpToLabel: Three ends and an IR
+assignment:
+  instruction: "Pick a small C function with a loop and an if. Compile it with gcc -O2 -fdump-tree-all -fdump-rtl-all -c, then open the .original, .gimple, .ssa, .optimized and .expand files in order. For each, write one sentence on what changed since the previous one."
+  resourceName: 'GCC Internals: Passes and Files of the Compiler'
+  resourceType: doc
+  resourceUrl: 'https://gcc.gnu.org/onlinedocs/gccint/Passes.html'
+additionalResources:
+- title: "Crafting Interpreters (free online book)"
+  type: doc
+  meta: building a scanner, parser and compiler step by step
+  url: 'https://craftinginterpreters.com/'
+- title: "Compilers: Principles, Techniques, and Tools (Wikipedia)"
+  type: doc
+  meta: the Dragon Book, the classic textbook
+  url: 'https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools'
+whyThisMatters: "Every program you have written went through this pipeline. Knowing its stages tells you what an error message means, where an optimisation can and can't happen, and how languages like Rust and Swift share the same back end. It's also the map for the rest of this course: SSA lives in the middle, register allocation at the back."
+---
+
+In Foundations you wrote a translator for a tiny language: it split the source into tokens, parsed them into statements, and printed tiny CPU assembly. A real compiler like gcc does the same three jobs, but splits them into well over a hundred careful steps. This lesson walks through those stages with gcc's own record of what it did.
+
+## Three ends and an IR
+
+A modern compiler has three parts:
+
+| Part | Job | In gcc |
+|---|---|---|
+| **Front end** | Read one language: tokens, grammar, meaning. Report errors. | One per language: C, C++, Fortran, Ada, Go... |
+| **Middle end** | Optimise an **intermediate representation** (IR) that doesn't depend on the language or the CPU. | GIMPLE, in SSA form |
+| **Back end** | Turn the IR into one CPU's instructions: choose instructions, allocate registers, schedule. | RTL, then assembly, one per target |
+
+The IR is the trick. Every front end produces the same IR, and every back end consumes it, so each optimisation is written once. Supporting a new CPU means writing one back end; supporting a new language means writing one front end. LLVM works the same way: clang, Rust and Swift share its IR and back ends.
+
+Your tiny-language translator had no IR. It went straight from statements to assembly, one statement at a time, which is exactly why its output repeated loads and stores that a smarter compiler would remove:
+
+<TranslatorLab caption='A compiler with no middle end' startJson='["var n = 4;","var t = 0;","while (n != 0) {","  t = t + n;","  n = n - 1;","}","output(t);"]' />
+
+## The front end: tokens, trees and meaning
+
+The front end works in three steps:
+
+1. **Lexing** splits characters into **tokens**: `int`, `x`, `=`, `42`, `;`. Spaces and comments disappear here.
+2. **Parsing** checks the tokens against the language's grammar and builds a **syntax tree**: an expression node with two operands, a loop node with a condition and a body.
+3. **Semantic analysis** checks meaning: every name is declared, types fit together, a `return` matches the function's type.
+
+Here are two real gcc errors, from gcc 15.2. Which stage found each one?
+
+```
+$ gcc -c bad.c
+bad.c: In function ‘f’:
+bad.c:1:25: error: expected expression before ‘;’ token
+    1 | int f(void) { return 1 +; }
+      |                         ^
+```
+
+```
+$ gcc -c types.c
+types.c: In function ‘f’:
+types.c:1:23: error: initialization of ‘int’ from ‘char *’ makes integer from pointer without a cast [-Wint-conversion]
+    1 | int f(void) { int x = "hi"; return x; }
+      |                       ^~~~
+```
+
+<details>
+<summary>Check your answer</summary>
+
+The first is the **parser**. The tokens `return 1 + ;` don't fit the grammar: after `+` the grammar requires an expression, and gcc names the token where it gave up.
+
+The second program is grammatically perfect: a declaration with an initialiser. **Semantic analysis** finds the problem: a string literal has type `char *`, and storing it in an `int` isn't allowed without a cast. A grammar problem stops the parser; a meaning problem is found once the tree exists.
+
+</details>
+
+## Watching gcc's passes
+
+gcc can write out what it has after every pass. Take this function:
+
+```c
+int sum_to(int n) {
+    int total = 0;
+    for (int i = 1; i <= n; i++) {
+        total += i;
+    }
+    return total;
+}
+```
+
+```
+$ gcc -O2 -fdump-tree-all -fdump-rtl-all -c sum.c
+$ ls sum.c.* | wc -l
+211
+```
+
+211 files: 142 tree (GIMPLE) passes and 69 RTL passes, numbered in the order they ran. A few of the important ones (the full list is longer; your gcc's numbers may differ):
+
+```
+sum.c.006t.original    the parsed function, just after the front end
+sum.c.007t.gimple      lowered to GIMPLE: three-address statements and gotos
+sum.c.023t.ssa         rewritten into SSA form
+sum.c.270t.optimized   after all the middle-end optimisations
+sum.c.271r.expand      turned into RTL, the back end's IR
+sum.c.324r.ira         registers allocated
+sum.c.364r.final       just before assembly is printed
+```
+
+Here's the GIMPLE version, real and complete:
+
+```
+int sum_to (int n)
+{
+  int D.2841;
+  int total;
+
+  total = 0;
+  {
+    int i;
+
+    i = 1;
+    goto <D.2839>;
+    <D.2838>:
+    total = total + i;
+    i = i + 1;
+    <D.2839>:
+    if (i <= n) goto <D.2838>; else goto <D.2836>;
+    <D.2836>:
+  }
+  D.2841 = total;
+  return D.2841;
+}
+```
+
+What happened to the `for` loop and to `total += i`? And where have you seen code shaped like this before?
+
+<details>
+<summary>Check your answer</summary>
+
+The `for` loop is gone. It's now labels and gotos: start at the test, jump back to the body while `i <= n`. `total += i` became `total = total + i`, and `i++` became `i = i + 1`. Every statement does at most one operation on at most two operands (**three-address code**), and `D.2841` is a temporary gcc made up for the return value.
+
+It's the same shape as your tiny-language translator's output and as the tiny CPU's assembly in Foundations: a test, a conditional jump, a jump back. GIMPLE is assembly-like enough to optimise, but still independent of any real CPU.
+
+</details>
+
+## The back end: from RTL to instructions
+
+After the middle end, `expand` turns GIMPLE into **RTL**, gcc's register transfer language. This is the real excerpt for `total = total + i` (trimmed to the one instruction):
+
+```
+(insn 16 15 17 5 (parallel [
+            (set (reg/v:SI 102 [ <retval> ])
+                (plus:SI (reg/v:SI 102 [ <retval> ])
+                    (reg/v:SI 99 [ i ])))
+            (clobber (reg:CC 17 flags))
+        ]) "sum.c":4:15 -1
+     (nil))
+```
+
+`SI` is a 32-bit integer and `plus` is the addition. The `clobber` says the add also changes the CPU's flags. Notice the registers: 102 and 99. x86-64 has 16 general-purpose registers, so these aren't real ones. They are **pseudo-registers**: the back end pretends it has as many as it likes, and the register allocator (the `ira` pass) later maps them onto the real 16, spilling to memory when they don't fit. That's the subject of the register allocation lesson.
+
+<KeyIdea>A compiler is a pipeline: the front end reads one language into a tree, the middle end optimises a language-neutral IR, and the back end maps it onto one CPU. gcc will show you every step if you ask with -fdump-tree-all and -fdump-rtl-all.</KeyIdea>
+
+## Try it
+
+The tiny-language translator in the lab above has a tokenizer, a parser and a code generator, but no IR and no optimiser. Name two improvements an IR plus a middle end would let it make to the output above, without changing what the program prints.
+
+<details>
+<summary>Check your answer</summary>
+
+Two good answers:
+
+- **Keep variables in registers** across statements, instead of loading `n` and `t` from memory and storing them back on every line. This needs knowing, across statements, where each value already is: an IR makes that analysis possible.
+- **Fold constants and remove redundant work**, such as loading a value that's already in a register, or a test whose answer is known.
+
+gcc's version of the same loop at -O2 keeps everything in registers. The translator can't, because it translates each statement on its own, with no view of the whole function.
+
+</details>
+
+## Done when
+
+You can name the stages and what each produces, place an error in the stage that found it, and read a GIMPLE dump of a loop.

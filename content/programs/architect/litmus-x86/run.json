@@ -1,0 +1,20 @@
+{
+  "id": "architect/litmus-x86",
+  "sourceHash": "f68b6792367a0556",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 -pthread main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "store buffering, no fence:  r1 = 0 and r2 = 0 in  22739 of 100000 trials\nstore buffering, fence:     r1 = 0 and r2 = 0 in      0 of 100000 trials\nmessage passing:            flag 1, data 0  in      0 of 100000 trials\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

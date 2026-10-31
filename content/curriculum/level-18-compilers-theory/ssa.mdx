@@ -1,0 +1,218 @@
+---
+title: "Intermediate code and SSA"
+level: level-18-compilers-theory
+slug: ssa
+order: 2
+timeMin: 11
+learningOutcomes:
+- Rewrite a short piece of straight-line code into static single assignment form, giving each assignment a new version
+- Explain what a phi node is, and place phi nodes where control-flow paths meet
+- Read real gcc GIMPLE in SSA form, including the phi nodes of a loop
+- Explain how SSA makes constant propagation and dead-code elimination simple, and trace both through a real example
+primer:
+- title: "How a compiler is built"
+  type: doc
+  meta: Reread · 3 min · GIMPLE, the IR this lesson rewrites.
+  essential: true
+- title: "What the optimiser assumes about your code"
+  type: doc
+  meta: "The C Contract · optimisations that delete code; here is how they find it."
+  essential: false
+knowledgeCheck:
+- question: In the loop's SSA form, what does "# i_2 = PHI <i_4(2), i_9(3)>" mean?
+  answer: "At the top of block 4, i_2 takes the value i_4 if control arrived from block 2 (entering the loop, where i_4 = 1), or i_9 if it arrived from block 3 (the loop body, where i_9 = i_2 + 1). A phi node picks a version by which path was taken, so every name is still assigned exactly once."
+  jumpToId: loops-need-phi-nodes
+  jumpToLabel: Loops need phi nodes
+- question: Why is constant propagation easy in SSA form?
+  answer: "Each name has exactly one definition. If that definition is a constant (y_3 = 8), every use of y_3 can be replaced by 8 without checking whether y was changed in between, because in SSA it can't be. Then the comparison 8 > 5 becomes true, the else branch is unreachable, and its code is deleted."
+  jumpToId: what-ssa-buys-the-optimiser
+  jumpToLabel: What SSA buys the optimiser
+assignment:
+  instruction: "Write a small C function with an if/else that assigns the same variable on both sides, then a loop. Compile with gcc -O2 -fdump-tree-ssa -fdump-tree-optimized -c, find every PHI in the .ssa file, and explain each in one sentence. Then compare with .optimized and list what the optimiser removed."
+  resourceName: 'Static single-assignment form (Wikipedia)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Static_single-assignment_form'
+additionalResources:
+- title: "GCC Internals: SSA"
+  type: doc
+  meta: how gcc builds and uses SSA form
+  url: 'https://gcc.gnu.org/onlinedocs/gccint/SSA.html'
+whyThisMatters: "Almost every optimising compiler today (gcc, LLVM, the JVM's JIT, V8) does its main optimisations in SSA form. Understanding it explains how compilers prove that code is dead or constant, and why -O2 output can look so little like what you wrote."
+---
+
+To optimise, a compiler keeps asking "where did this value come from?" In ordinary code a variable can be assigned many times, so the answer depends on which assignment ran last. **Static single assignment** form (SSA) removes the question: every variable is assigned exactly once, so each name has one definition.
+
+## One assignment per name
+
+The rule: each time a variable is assigned, give it a new version. Uses refer to the version that's current at that point.
+
+```c
+x = a + 1;
+x = x * 2;
+y = x + a;
+```
+
+becomes
+
+```
+x1 = a0 + 1;
+x2 = x1 * 2;
+y1 = x2 + a0;
+```
+
+Now `x2` always means "a0 + 1, times 2", wherever it's used. Rewrite this into SSA form yourself:
+
+```c
+t = n;
+t = t - 1;
+n = t * t;
+r = n + t;
+```
+
+<details>
+<summary>Check your answer</summary>
+
+```
+t1 = n0;
+t2 = t1 - 1;
+n1 = t2 * t2;
+r1 = n1 + t2;
+```
+
+`n` is assigned once in the code, but its incoming value is a different version (`n0`, the parameter) from the new one (`n1`). In SSA you can always see which definition a use reads.
+
+</details>
+
+## Loops need phi nodes
+
+Straight-line code is easy. But at a point where two paths meet, a variable might hold either path's version. SSA solves this with a **phi node**: `x3 = φ(x1, x2)` means "x1 if we came from the first path, x2 if from the second".
+
+Here is `sum_to` again (`total = 0; for (i = 1; i <= n; i++) total += i; return total;`), in real gcc SSA form:
+
+```
+$ gcc -O2 -fdump-tree-ssa -c sum.c
+$ cat sum.c.023t.ssa      (trimmed: the header comment removed)
+int sum_to (int n)
+{
+  int i;
+  int total;
+  int _6;
+
+  <bb 2> :
+  total_3 = 0;
+  i_4 = 1;
+  goto <bb 4>; [INV]
+
+  <bb 3> :
+  total_8 = total_1 + i_2;
+  i_9 = i_2 + 1;
+
+  <bb 4> :
+  # total_1 = PHI <total_3(2), total_8(3)>
+  # i_2 = PHI <i_4(2), i_9(3)>
+  if (i_2 <= n_5(D))
+    goto <bb 3>; [INV]
+  else
+    goto <bb 5>; [INV]
+
+  <bb 5> :
+  _6 = total_1;
+  return _6;
+
+}
+```
+
+`bb` means **basic block**, a straight run of code with one way in and one way out. The number after a name is its version, and `n_5(D)` is the parameter's incoming value (D for default). Explain the two PHI lines.
+
+<details>
+<summary>Check your answer</summary>
+
+Block 4 is the loop test, and control reaches it from two places: block 2 (entering the loop) and block 3 (the end of the body).
+
+- `# total_1 = PHI <total_3(2), total_8(3)>`: from block 2, `total_1` is `total_3` (0); from block 3, it's `total_8` (the new sum).
+- `# i_2 = PHI <i_4(2), i_9(3)>`: from block 2, `i_2` is `i_4` (1); from block 3, it's `i_9` (`i_2 + 1`).
+
+Each name is still assigned in exactly one place, yet the loop works. The number in brackets after each operand is the block that version comes from.
+
+</details>
+
+## What SSA buys the optimiser
+
+With one definition per name, two classic optimisations become almost mechanical:
+
+- **Constant propagation:** if a name's one definition is a constant, replace every use of it with that constant, then fold any operation whose operands are now all constants.
+- **Dead-code elimination:** if a name has no uses, its definition can go (unless it has side effects). If a branch can never be taken, its blocks can go.
+
+Here is a function that gives the optimiser plenty to do:
+
+```c
+int scaled(int x) {
+    int k = 4;
+    int y = k * 2;
+    int unused = x * 100;
+    if (y > 5) {
+        return x * y;
+    }
+    return x - 1;
+}
+```
+
+Its real SSA form, before optimising (`gcc -O2 -fdump-tree-ssa`, trimmed to the code):
+
+```
+  <bb 2> :
+  k_2 = 4;
+  y_3 = k_2 * 2;
+  unused_5 = x_4(D) * 100;
+  if (y_3 > 5)
+    goto <bb 3>; [INV]
+  else
+    goto <bb 4>; [INV]
+
+  <bb 3> :
+  _7 = x_4(D) * y_3;
+  goto <bb 5>; [INV]
+
+  <bb 4> :
+  _6 = x_4(D) + -1;
+
+  <bb 5> :
+  # _1 = PHI <_7(3), _6(4)>
+  return _1;
+```
+
+Predict what's left after constant propagation and dead-code elimination, then check against gcc's real dumps below.
+
+<details>
+<summary>Check your answer</summary>
+
+- `k_2 = 4`, so `y_3 = 4 * 2 = 8`. `y_3 > 5` is `8 > 5`, always true.
+- Block 4 can never run, so `_6` and the phi node go. `_7 = x * 8`.
+- `unused_5` has no uses, so it's dead.
+
+After the first constant-propagation pass (`-fdump-tree-ccp1`), gcc has already done most of it:
+
+```
+  <bb 2> :
+  unused_5 = x_4(D) * 100;
+  _7 = x_4(D) * 8;
+  return _7;
+```
+
+`unused_5` survives this pass, because removing dead code is a separate pass. By the end of the middle end (`-fdump-tree-optimized`) it's gone too:
+
+```
+  <bb 2> [local count: 1073741824]:
+  _2 = x_1(D) * 8;
+  return _2;
+```
+
+and the back end turns `x * 8` into a single instruction, `leal 0(,%rdi,8), %eax`. Eight lines of C became one instruction, and SSA is what let each step be a simple, local rewrite.
+
+</details>
+
+<KeyIdea>SSA gives every value exactly one definition, with phi nodes where paths meet. With one definition per name, constants spread and dead code disappears by simple rules that need no knowledge of what ran before.</KeyIdea>
+
+## Done when
+
+You can rewrite code into SSA, explain a loop's phi nodes, and trace constant propagation and dead-code elimination through a real gcc dump.

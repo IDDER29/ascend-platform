@@ -39,7 +39,7 @@ export const TASK_RANKS: Record<MissionRank, string> = {
 };
 
 /** Original emblems for the four clans (one per topic). */
-export type CrestId = "cache" | "lanes" | "stages" | "gauge" | "wrench" | "heap" | "page" | "tree" | "seal" | "gate" | "core" | "brace" | "pointer" | "shell";
+export type CrestId = "tree-ir" | "cores" | "cache" | "lanes" | "stages" | "gauge" | "wrench" | "heap" | "page" | "tree" | "seal" | "gate" | "core" | "brace" | "pointer" | "shell";
 
 export type Achievement = {
   id: string;
@@ -74,10 +74,12 @@ const PERFORMANCE: LevelId = "level-10-performance";
 const PIPELINING: LevelId = "level-11-pipelining";
 const ADVANCED: LevelId = "level-12-advanced-execution";
 const CACHES: LevelId = "level-13-caches-memory";
+const MULTICORE: LevelId = "level-14-multicore-gpus";
+const COMPILERS: LevelId = "level-18-compilers-theory";
 const C: LevelId = "level-02-the-c-language";
 const SYSTEMS: LevelId = "level-03-systems-software";
 
-export const CREST_IDS = ["cache-clan", "lanes-clan", "stages-clan", "gauge-clan", "wrench-clan", "heap-clan", "page-clan", "tree-clan", "seal-clan", "gate-clan", "core-clan", "brace-clan", "pointer-clan", "shell-clan"];
+export const CREST_IDS = ["tree-ir-clan", "cores-clan", "cache-clan", "lanes-clan", "stages-clan", "gauge-clan", "wrench-clan", "heap-clan", "page-clan", "tree-clan", "seal-clan", "gate-clan", "core-clan", "brace-clan", "pointer-clan", "shell-clan"];
 
 /** Every badge Ascend awards, each with its own exact rule. Ids are stable: earned rows reference them. */
 export const ACHIEVEMENTS: Achievement[] = [
@@ -98,6 +100,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "pipeliner", group: "learning", label: "Pipeliner", glyph: "⫼", means: "Finished every lesson in Pipelining", rules: [{ kind: "topic", topic: PIPELINING }] },
   { id: "juggler", group: "learning", label: "Juggler", glyph: "⇶", means: "Finished every lesson in Advanced execution", rules: [{ kind: "topic", topic: ADVANCED }] },
   { id: "cache-keeper", group: "learning", label: "Cache Keeper", glyph: "⧠", means: "Finished every lesson in Caches & memory systems", rules: [{ kind: "topic", topic: CACHES }] },
+  { id: "parallelist", group: "learning", label: "Parallelist", glyph: "⁘", means: "Finished every lesson in Multicore & GPUs", rules: [{ kind: "topic", topic: MULTICORE }] },
+  { id: "compiler-mind", group: "learning", label: "Compiler Mind", glyph: "⊢", means: "Finished every lesson in Compilers & theory", rules: [{ kind: "topic", topic: COMPILERS }] },
 
   // Building
   { id: "code-maker", group: "building", label: "Code Maker", glyph: "⌗", means: "Made and broke a codebook", rules: [{ kind: "project", projectId: "codebook" }] },
@@ -173,6 +177,8 @@ export const INSIGNIA: Achievement[] = [
   { id: "stages-clan", group: "learning", label: "Stage Clan", glyph: "⫼", means: "Joined the Stage Clan by finishing every lesson in Pipelining", rules: [{ kind: "topic", topic: PIPELINING }], insignia: { kind: "crest", crest: "stages" } },
   { id: "lanes-clan", group: "learning", label: "Lane Clan", glyph: "⇶", means: "Joined the Lane Clan by finishing every lesson in Advanced execution", rules: [{ kind: "topic", topic: ADVANCED }], insignia: { kind: "crest", crest: "lanes" } },
   { id: "cache-clan", group: "learning", label: "Cache Clan", glyph: "⧠", means: "Joined the Cache Clan by finishing every lesson in Caches & memory systems", rules: [{ kind: "topic", topic: CACHES }], insignia: { kind: "crest", crest: "cache" } },
+  { id: "cores-clan", group: "learning", label: "Core Grid Clan", glyph: "⁘", means: "Joined the Core Grid Clan by finishing every lesson in Multicore & GPUs", rules: [{ kind: "topic", topic: MULTICORE }], insignia: { kind: "crest", crest: "cores" } },
+  { id: "tree-ir-clan", group: "learning", label: "Syntax Clan", glyph: "⊢", means: "Joined the Syntax Clan by finishing every lesson in Compilers & theory", rules: [{ kind: "topic", topic: COMPILERS }], insignia: { kind: "crest", crest: "tree-ir" } },
 ];
 
 export type Title = Achievement & {

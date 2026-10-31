@@ -81,6 +81,14 @@ const LEVEL_OWNER: Record<
     pathSlug: "computer-architect",
     courseId: "caches-memory",
   },
+  "level-14-multicore-gpus": {
+    pathSlug: "computer-architect",
+    courseId: "multicore-gpus",
+  },
+  "level-18-compilers-theory": {
+    pathSlug: "computer-architect",
+    courseId: "compilers-theory",
+  },
 };
 
 function joinPublicSlug(

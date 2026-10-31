@@ -1,0 +1,115 @@
+---
+title: "Register renaming"
+level: level-12-advanced-execution
+slug: register-renaming
+order: 3
+timeMin: 10
+learningOutcomes:
+- Tell a true dependence (read after write) from a false one (write after read, write after write)
+- Explain why reusing a register name can stall an out-of-order core even when no data flows between the instructions
+- Explain how renaming maps program registers to a larger set of physical registers to remove false dependences
+- Remove a false dependence by hand, and say why hardware renaming makes that unnecessary
+primer:
+- title: "Out-of-order execution"
+  type: doc
+  meta: Reread · 3 min · issue when ready, commit in order.
+  essential: true
+knowledgeCheck:
+- question: "In the block, addi r1, r5, 1 doesn't use the mul's result. Why does it still have to wait without renaming?"
+  answer: "It overwrites r1, and add r4, r1, r1 still has to read r1's old value (the mul's result). If the addi wrote r1 first, that add would read the wrong value. That's a write after read: a false dependence, caused only by reusing the name r1."
+  jumpToId: when-a-name-gets-in-the-way
+  jumpToLabel: When a name gets in the way
+- question: How does renaming let the addi run in cycle 1?
+  answer: "The core gives the addi's result a fresh physical register instead of the one holding the mul's r1. Later instructions that name r1 are steered to the new physical register; add r4 keeps reading the old one. The two values no longer share a home, so neither has to wait for the other."
+  jumpToId: how-renaming-works
+  jumpToLabel: How renaming works
+assignment:
+  instruction: "Take a short loop you wrote in C, compile it with gcc -O2 -S, and find a register that's written again while an earlier value of it may still be needed. Write down which pairs of instructions are true dependences and which are only false ones, and explain why renaming lets a core overlap iterations of the loop."
+  resourceName: 'Compiler Explorer'
+  resourceType: site
+  resourceUrl: 'https://godbolt.org/'
+additionalResources:
+- title: "Register renaming (Wikipedia)"
+  type: doc
+  meta: architectural vs physical registers, the rename table
+  url: 'https://en.wikipedia.org/wiki/Register_renaming'
+- title: "Modern Microprocessors: A 90-Minute Guide"
+  type: doc
+  meta: renaming in context
+  url: 'https://www.lighterra.com/papers/modernmicroprocessors/'
+whyThisMatters: "A program has only 16 or 32 register names, so compilers reuse them constantly. Without renaming, those reused names would serialise code that has no real dependence at all; with it, an out-of-order core can overlap loop iterations and independent work freely."
+---
+
+An out-of-order core issues each instruction when its inputs are ready. But "ready" has a catch: some instructions wait not for a value, but for a *name*.
+
+## Three kinds of dependence
+
+Between an earlier instruction A and a later instruction B that use the same register:
+
+- **Read after write (RAW):** A writes r1, B reads it. B really needs A's value. This is a **true dependence**: data flows from A to B.
+- **Write after read (WAR):** A reads r1, B writes it. B must not overwrite r1 before A has read the old value.
+- **Write after write (WAW):** both write r1. B's value must be the one left at the end.
+
+WAR and WAW are **false dependences**: no value passes between A and B. They only exist because both happen to use the same register name.
+
+## When a name gets in the way
+
+In this block, `addi r1, r5, 1` starts a new, independent chain that reuses the name r1. The core is out of order, two wide, with renaming **off**. Predict how many cycles it takes, then switch renaming on.
+
+<OooLab caption='Reusing the name r1' blockJson='["mul r1, r2, r3","add r4, r1, r1","addi r1, r5, 1","add r6, r1, r1","add r7, r6, r6","add r8, r7, r7"]' optionsJson='{"outOfOrder":true,"width":2,"window":32,"renaming":false}' goalJson='{"maxCycles":6}' />
+
+<details>
+<summary>Check your answer</summary>
+
+**Renaming off: 8 cycles.** The `mul` takes 3 cycles, and `add r4, r1, r1` waits for it until cycle 4. `addi r1, r5, 1` needs nothing from them, but it would overwrite r1, which `add r4` hasn't read yet, so it must wait until cycle 4 as well. The lab says: "r1 still to be read by add r4, r1, r1". The whole new chain behind it is delayed too.
+
+**Renaming on: 6 cycles.** The `addi` issues in cycle 1, and its chain (`add r6`, `add r7`, `add r8`) runs in cycles 2 to 4, overlapping the `mul` instead of waiting behind it.
+
+</details>
+
+## How renaming works
+
+The registers a program names (r0 to r31 here, x0 to x31 in RISC-V, 16 general-purpose ones in x86-64) are **architectural registers**. Inside, an out-of-order core has many more **physical registers**, often a couple of hundred, and a **rename table** that says which physical register currently holds each architectural one.
+
+Each time an instruction writes a register, the core takes a free physical register for the result and updates the table. Later readers are steered to it; earlier readers keep the physical register they were already given. In the block above:
+
+| Instruction | Writes | Reads |
+|---|---|---|
+| `mul r1, r2, r3` | r1 → P40 | |
+| `add r4, r1, r1` | r4 → P41 | P40 (the mul's r1) |
+| `addi r1, r5, 1` | r1 → P42 | |
+| `add r6, r1, r1` | r6 → P43 | P42 (the addi's r1) |
+
+The two r1 values now live in P40 and P42, so the `addi` can write whenever it's ready. True dependences remain: `add r6` still waits for P42. A physical register is freed when a later write to the same architectural register commits, because by then nothing can need the old value any more.
+
+<KeyIdea>Renaming gives every result its own physical register, so only true dependences (read after write) can make an instruction wait.</KeyIdea>
+
+## Rename it yourself
+
+On a core with no renaming hardware, a compiler (or you) can remove a false dependence by choosing a different register. Here renaming is off and the settings are fixed. Change the register names, without changing what the block computes, so it finishes in 6 cycles.
+
+<OooLab editable fixed caption='Remove the false dependence by hand' blockJson='["mul r1, r2, r3","add r4, r1, r1","addi r1, r5, 1","add r6, r1, r1","add r7, r6, r6","add r8, r7, r7"]' optionsJson='{"outOfOrder":true,"width":2,"window":32,"renaming":false}' goalJson='{"maxCycles":6}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Give the second value a register nothing else uses, for example r9, and update its reader:
+
+```
+mul  r1, r2, r3
+add  r4, r1, r1
+addi r9, r5, 1
+add  r6, r9, r9
+add  r7, r6, r6
+add  r8, r7, r7
+```
+
+6 cycles: with r9, there's no write after read, so the `addi` issues in cycle 1. The results are the same: r4, r6, r7 and r8 get the same values as before. The only difference is that r1 ends up holding the `mul`'s result rather than the `addi`'s. If later code needed r1 to be the `addi`'s value, you'd copy it there at the end.
+
+Compilers try to do this, but they run out of names quickly: a program only has 16 or 32 to work with, and loops reuse the same ones on every iteration. Hardware renaming does it for every instruction, including across loop iterations, with hundreds of physical registers.
+
+</details>
+
+## Done when
+
+You can classify a dependence as true or false, explain the 8 and 6 cycles, describe what the rename table does, and removed the false dependence by hand.

@@ -1,0 +1,20 @@
+{
+  "id": "architect/cache-latency",
+  "sourceHash": "ea233f225da28719",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "    16 KiB     1.6 ns per load\n    32 KiB     1.7 ns per load\n   128 KiB     9.8 ns per load\n   512 KiB     7.9 ns per load\n     1 MiB    13.2 ns per load\n     4 MiB    31.6 ns per load\n     8 MiB    78.2 ns per load\n    32 MiB   160.9 ns per load\n    64 MiB   173.3 ns per load\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

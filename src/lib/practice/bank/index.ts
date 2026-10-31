@@ -39,7 +39,11 @@ import { VM_THREADS_B_BANK } from "./level-08-b";
 import { LEVEL_09_BANK } from "./level-09";
 import { PERFORMANCE_BANK } from "./level-10";
 import { LEVEL_11_BANK } from "./level-11";
+import { ADVANCED_BANK } from "./level-12";
 import { LEVEL_13_BANK } from "./level-13";
+import { MULTICORE_BANK } from "./level-14";
+import { COMPILERS_BANK } from "./level-18";
+import { CACHES_A_BANK } from "./level-13-a";
 import { PIPELINING_A_BANK } from "./level-11-a";
 
 /**
@@ -89,5 +93,9 @@ export const PRACTICE_BANK: PracticeItem[] = [
   ...PERFORMANCE_BANK,
   ...PIPELINING_A_BANK,
   ...LEVEL_11_BANK,
+  ...ADVANCED_BANK,
+  ...CACHES_A_BANK,
   ...LEVEL_13_BANK,
+  ...MULTICORE_BANK,
+  ...COMPILERS_BANK,
 ];

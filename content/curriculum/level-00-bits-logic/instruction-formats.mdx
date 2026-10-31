@@ -1,0 +1,100 @@
+---
+title: "Instruction formats and operand fields"
+level: level-00-bits-logic
+slug: instruction-formats
+order: 53
+timeMin: 8
+learningOutcomes:
+- Split a tiny CPU instruction byte into its 4-bit opcode and 4-bit operand
+- Say for each instruction whether its operand is an address, a value, or ignored
+- Explain why a 4-bit operand limits the tiny CPU to 16 memory boxes, and a 4-bit opcode to 16 instructions
+- Explain why the instruction format has to be fixed before anyone can build an assembler for it
+primer:
+- title: "An instruction set: the CPU's vocabulary"
+  type: doc
+  meta: Reread · 3 min · the instructions this lesson takes apart.
+  essential: true
+knowledgeCheck:
+- question: In LDA 9 and LDI 9, the operand is the same bits, 1001. What does it mean in each?
+  answer: "In LDA 9 it is an address: load the byte stored in box 9. In LDI 9 it is the value itself: put the number 9 into A. The opcode decides how the operand field is read."
+  jumpToId: three-ways-to-read-the-operand
+  jumpToLabel: Three ways to read the operand
+- question: Why can the tiny CPU only use 16 memory boxes?
+  answer: "Its operand field is 4 bits, and 4 bits can only name 16 different addresses, 0 to 15. A wider operand field could reach more memory, but each instruction would need more bits."
+  jumpToId: what-4-bits-can-and-cant-do
+  jumpToLabel: What 4 bits can and can't do
+- question: Why must the instruction format be fixed before you write an assembler?
+  answer: "An assembler turns text like LDA 14 into exact bits. If the opcode values or the position and width of the operand field could change, the same text would mean different bits, and old programs would stop working."
+  jumpToId: a-format-is-a-promise
+  jumpToLabel: A format is a promise
+assignment:
+  instruction: "Design a format for an imaginary CPU with 32 instructions and 256 memory boxes, in instructions of 16 bits. How many bits does the opcode need? The address? How many bits are left over, and what could they be used for? Write it as a diagram like the one in this lesson."
+  resourceName: 'Wikipedia: Instruction set architecture, instruction encoding'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Instruction_set_architecture'
+additionalResources:
+- title: Opcode (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Opcode'
+- title: Addressing mode (Wikipedia)
+  type: doc
+  meta: the many ways real CPUs read an operand
+  url: 'https://en.wikipedia.org/wiki/Addressing_mode'
+- title: 'eater.net: CPU control logic'
+  type: doc
+  meta: the same instruction set, on a breadboard
+  url: 'https://eater.net/8bit/control'
+whyThisMatters: "Every machine code you will ever read, from this tiny CPU to x86 and ARM, is a fixed format of fields. Once you can split a byte into its fields and say what each one means, a hex dump of a program stops being noise, and you can see why some instructions exist and others can't."
+---
+
+You've seen that an instruction is one byte: an opcode and an operand. This lesson looks harder at that split. Which bits mean what, how the opcode changes the meaning of the operand, and what a fixed format makes possible and impossible.
+
+By the end you'll be able to split any tiny CPU instruction into its fields, say what its operand means, and explain why the format can never quietly change.
+
+## Two fields in every byte
+
+Every tiny CPU instruction has the same <b>format</b>: the top four bits are the <b>opcode</b>, and the bottom four bits are the <b>operand field</b>.
+
+<TruthTable caption='The tiny CPU instruction format' rowsJson='[["bits", "7 6 5 4", "3 2 1 0"], ["field", "opcode", "operand"], ["example: 0001 1110", "0001 = LDA", "1110 = 14"], ["example: 0101 1001", "0101 = LDI", "1001 = 9"], ["example: 1110 0000", "1110 = OUT", "0000, not used"]]' />
+
+The CPU's decoder doesn't look at the whole byte at once. It sends the opcode bits to the control unit, which picks the steps to run, and it can put the operand bits on the bus when a step needs them.
+
+## Three ways to read the operand
+
+The operand field is always four bits, but what those bits mean depends on the opcode. There are three cases:
+
+<TruthTable caption='What the operand means, by instruction' rowsJson='[["instruction", "operand is", "example"], ["LDA n", "an address to read", "LDA 9: load the byte in box 9"], ["ADD n, SUB n", "an address to read", "ADD 15: add the byte in box 15"], ["STA n", "an address to write", "STA 13: store A into box 13"], ["JMP n, JC n, JZ n", "an address to jump to", "JMP 0: next instruction from box 0"], ["LDI n", "the value itself", "LDI 9: A becomes 9"], ["OUT, HLT, NOP", "ignored", "OUT: shows A, whatever the operand"]]' />
+
+So LDA 9 and LDI 9 have the same operand bits, 1001, and do completely different things. LDA 9 goes to box 9 and fetches whatever is there. LDI 9 puts the number 9 itself into A. Real CPUs call these two cases <b>direct</b> and <b>immediate</b> addressing.
+
+<KeyIdea>The operand field is just four bits. The opcode decides whether those bits are an address, a value, or nothing at all.</KeyIdea>
+
+Try both. Box 9 holds 42; one program loads from box 9, the other loads the number 9. Predict each display before you run it.
+
+<TinyCpu caption='LDA 9: the operand is an address' programJson='["LDA 9", "OUT", "HLT"]' dataJson='{"9": 42}' />
+
+<TinyCpu caption='LDI 9: the operand is the value' programJson='["LDI 9", "OUT", "HLT"]' dataJson='{"9": 42}' />
+
+The first shows 42, the second 9. The memory is identical; only the opcode changed.
+
+## What 4 bits can and can't do
+
+A fixed format sets hard limits.
+
+- <b>16 instructions at most.</b> A 4-bit opcode has only 16 patterns, 0000 to 1111. The tiny CPU uses 11 of them, so 5 are spare. There is no room for a multiply instruction plus everything else a modern CPU has.
+- <b>16 memory boxes.</b> An address must fit in the 4-bit operand, so it can only be 0 to 15. Program and data together have to fit in 16 bytes.
+- <b>Small immediate values.</b> LDI can only load 0 to 15. To get 200 into A, you have to store 200 in a box and use LDA.
+- <b>One register.</b> There's no field to say which register to use, so every instruction works on A.
+
+These limits are the price of a tiny format. Wider instructions buy more: more opcode bits, longer addresses, and fields that name registers. The second version of the tiny CPU, which you'll program in Assembly Language, uses two bytes per instruction for exactly that reason.
+
+## A format is a promise
+
+Once programs exist, the format can't change. Every program is just bytes in that format; if LDA's opcode were changed from 0001 to 0111, every old program containing 0001 would now do something else.
+
+The same goes for tools. An <b>assembler</b>, which turns text like `LDA 14` into the byte 0001 1110, is a direct translation of the format. It can only be written once the format is settled: which opcode each name has, where the operand goes, and what the leftover bits must be.
+
+<KeyIdea>An instruction format is a promise between the hardware and every program and tool. Changing it breaks all of them, so it's fixed first.</KeyIdea>
+
+That's why real instruction sets grow by adding new instructions in unused opcodes, never by changing old ones, and why the tiny CPU's 5 spare opcodes are worth having.

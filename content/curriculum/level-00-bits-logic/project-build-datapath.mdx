@@ -1,0 +1,134 @@
+---
+title: "Project: Build the datapath"
+level: level-00-bits-logic
+slug: project-build-datapath
+order: 56
+timeMin: 25
+learningOutcomes:
+- Fetch an instruction by hand by turning on the right control signals in the right order
+- Run LDA, ADD, OUT and STA as steps on the bus, one tick at a time
+- Explain why only one part may put a value on the bus in a tick
+- Predict every register's value after each tick before pressing Tick
+primer:
+- title: "From gates to a tiny CPU: datapath and control"
+  type: doc
+  meta: Reread · 4 min · the signals and steps you'll use here.
+  essential: true
+- title: "Loads and stores: moving data to and from memory"
+  type: doc
+  meta: Reread · 3 min · part 4 is a store.
+  essential: true
+knowledgeCheck:
+- question: What are the two fetch steps, and what does each change?
+  answer: "CO MI copies the program counter into the memory address register. RO II CE copies the box it points at into the instruction register and adds 1 to the program counter, ready for the next instruction."
+  jumpToId: part-1-fetch-one-instruction
+  jumpToLabel: "Part 1: Fetch one instruction"
+- question: Why does the lab refuse a tick with AO and CO both on?
+  answer: The bus is one set of wires. Two parts driving it at once would mix their values, so no part could load a sensible value. In real hardware it can even damage the chips. Exactly one out signal per tick.
+  jumpToId: part-5-break-the-bus-rule
+  jumpToLabel: "Part 5: Break the bus rule"
+assignment:
+  instruction: "Write out, tick by tick, the signals for the whole program LDI 5, ADD 15, OUT, HLT with 3 in box 15, including every fetch. Predict what the display shows and how many ticks it takes until HLT, then check your list against the steps in this project and in Build the tiny CPU."
+  resourceName: 'eater.net: CPU control logic'
+  resourceType: site
+  resourceUrl: 'https://eater.net/8bit/control'
+additionalResources:
+- title: 'nand2tetris.org: Project 5, Computer Architecture'
+  type: doc
+  meta: build the whole CPU in a hardware simulator
+  url: 'https://www.nand2tetris.org/project05'
+- title: Datapath (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Datapath'
+whyThisMatters: "This is the job the control unit does billions of times a second. Doing it by hand, one signal at a time, is how the phrase \"the CPU runs an instruction\" stops being a figure of speech and becomes a list of steps you could write down yourself."
+---
+
+In this project you are the control unit. Each lab below is the tiny CPU's datapath: its registers, its memory and its bus. Nothing happens until you switch on control signals and press Tick.
+
+On each tick:
+- exactly one signal from **onto the bus** puts a value on the bus (CO, RO, IO, AO or EO);
+- every signal from **off the bus** that's on loads that value (MI, RI, II, AI, BI, OI or J);
+- CE adds 1 to the program counter, FI loads the flags, and SU makes the ALU subtract.
+
+Hover over or focus a signal to see what it does. Before each tick, say what will change.
+
+## Part 1: Fetch one instruction
+
+Every instruction starts with the same two steps. Fetch the first instruction: get it into the instruction register (IR) and move the program counter on to 1.
+
+<DatapathLab caption='Fetch LDA 14' programJson='["LDA 14","HLT"]' dataJson='{"14":28}' goalJson='{"IR":30,"PC":1}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Tick 1: **CO MI**. The program counter (0) goes onto the bus and into the memory address register.
+
+Tick 2: **RO II CE**. Box 0 (0001 1110, LDA 14) goes onto the bus and into the IR, and the program counter moves to 1.
+
+The IR now holds 30, which is 0001 1110: opcode 0001 (LDA) and operand 1110 (14).
+
+</details>
+
+## Part 2: Finish the load
+
+Now run LDA 14 to the end: after the fetch, get the byte in box 14 into A.
+
+<DatapathLab caption='Run LDA 14' programJson='["LDA 14","HLT"]' dataJson='{"14":28}' goalJson='{"A":28}' />
+
+<details>
+<summary>Check your answer</summary>
+
+After the two fetch ticks: **IO MI** puts the operand, 14, into the memory address register; then **RO AI** puts box 14 (28) into A. Four ticks in all. The address and the value travel on the bus separately: first 14, then 28.
+
+</details>
+
+## Part 3: A whole program
+
+Run all of LDA 14, ADD 15, OUT, HLT by hand, until the display shows 42. Box 15 holds 14.
+
+<DatapathLab caption='28 + 14, by hand' programJson='["LDA 14","ADD 15","OUT","HLT"]' dataJson='{"14":28,"15":14}' goalJson='{"out":[42]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+- LDA 14: CO MI, RO II CE, IO MI, RO AI.
+- ADD 15: CO MI, RO II CE, IO MI, RO BI, EO AI FI.
+- OUT: CO MI, RO II CE, AO OI.
+
+That's 12 ticks to the display showing 42 (and 3 more for HLT). Notice EO AI: the ALU always shows A + B, and EO is what lets A load it. FI saves the flags at the same moment.
+
+</details>
+
+## Part 4: Store a value
+
+Run LDI 9, STA 13 so that box 13 holds 9.
+
+<DatapathLab caption='LDI 9, then STA 13' programJson='["LDI 9","STA 13","HLT"]' goalJson='{"mem":{"13":9}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+- LDI 9: CO MI, RO II CE, then **IO AI**: the operand itself (9) goes into A, not the box it would point at.
+- STA 13: CO MI, RO II CE, **IO MI**, **AO RI**: the address goes into the MAR first, then A is written into the box it points at.
+
+Seven ticks. RI writes to whichever box the MAR points at, so the MAR has to be set on an earlier tick.
+
+</details>
+
+## Part 5: Break the bus rule
+
+In any lab above, switch on two signals from the "onto the bus" row, say AO and CO, and press Tick. What happens, and why?
+
+<details>
+<summary>Check your answer</summary>
+
+The lab refuses, and nothing changes: "AO and CO both try to put a value on the bus". The bus is one set of eight wires, and two values on it at once would be neither value. Making sure that never happens is a large part of the control unit's job.
+
+</details>
+
+<KeyIdea>An instruction is a list of ticks, and each tick is one value moving across the bus. Choosing the signals for each tick is what a control unit does.</KeyIdea>
+
+## Done when
+
+Every lab says "Goal reached", you predicted each tick before pressing it, and you can list the signals for LDA, ADD, OUT and STA from memory. Next, in "Build the tiny CPU", you'll write these lists down as a table and let the machine run them.

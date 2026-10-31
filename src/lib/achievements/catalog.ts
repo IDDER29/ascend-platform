@@ -90,6 +90,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "clockmaker", group: "building", label: "Clockmaker", glyph: "◷", means: "Built registers and a counter that change only on the tick", rules: [{ kind: "project", projectId: "register-lab" }] },
   { id: "memory-keeper", group: "building", label: "Memory Keeper", glyph: "▦", means: "Drove a 256-byte memory by its signals and found a faulty decoder", rules: [{ kind: "project", projectId: "memory-board" }] },
   { id: "conductor", group: "building", label: "Conductor", glyph: "♪", means: "Built a sequencer and followed it through a read, an add and a write (optional project)", rules: [{ kind: "project", projectId: "sequencer" }] },
+  { id: "bus-driver", group: "building", label: "Bus Driver", glyph: "⇉", means: "Ran instructions by hand, one control signal at a time", rules: [{ kind: "project", projectId: "build-datapath" }] },
+  { id: "microcoder", group: "building", label: "Microcoder", glyph: "⌘", means: "Wrote the tiny CPU's whole control table and ran real programs on it", rules: [{ kind: "project", projectId: "build-the-cpu" }] },
+  { id: "efficiency-expert", group: "building", label: "Efficiency Expert", glyph: "⏱", means: "Compared two designs of one instruction set by their ticks (optional project)", rules: [{ kind: "project", projectId: "two-designs" }] },
   { id: "cpu-tracer", group: "building", label: "CPU Tracer", glyph: "▤", means: "Shipped a program for the tiny CPU", rules: [{ kind: "project", projectId: "tiny-cpu" }] },
   { id: "ship-it", group: "building", label: "Shell Smith", glyph: "◈", means: "Shipped ShellForge, a working shell", rules: [{ kind: "project", projectId: "shellforge" }] },
 
@@ -104,7 +107,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "comeback", group: "habits", label: "Comeback", glyph: "✦", means: "Came back to Practice after two weeks away", rules: [{ kind: "comeback", gapDays: 14 }] },
 
   // Combinations: the parts are the rule, shown openly.
-  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "cpu-tracer", "ship-it"] }] },
+  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "ship-it"] }] },
   { id: "sharp-mind", group: "combination", label: "Sharp Mind", glyph: "✺", means: "Deep memory, a clean run and a week of practice", rules: [{ kind: "badges", ids: ["deep-memory", "clean-run", "week-of-practice"] }] },
   { id: "whole-machine", group: "combination", label: "The Whole Machine", glyph: "✸", means: "Finished every lesson and shipped every project", rules: [{ kind: "allLessons" }, { kind: "badges", ids: ["builder"] }] },
 ];

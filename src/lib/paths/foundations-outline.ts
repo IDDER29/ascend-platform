@@ -198,7 +198,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     blurb: "The CPU's vocabulary, and programs stored as bits in memory.",
     items: [
       live("instruction-set", "An instruction set: the CPU's vocabulary", 9, "What a CPU can be told to do, how one instruction fits in a byte, and why programs and data share memory.", ["F049", "F053", "F054"]),
-      soon("instruction-formats", "Instruction formats and operand fields", 8, "How an instruction's bits split into an opcode and operands, and why the format is fixed before any tools are built.", ["F055"]),
+      live("instruction-formats", "Instruction formats and operand fields", 8, "How an instruction's bits split into an opcode and operands, and why the format is fixed before any tools are built.", ["F055"]),
     ],
   },
   {
@@ -207,14 +207,14 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     blurb: "The fetch-execute loop, each kind of instruction, branching, and a tiny CPU built from everything before it.",
     items: [
       live("the-fetch-execute-loop", "The fetch-execute loop", 9, "The program counter points at the next instruction; the CPU fetches it, decodes it and runs it, over and over.", ["F056", "F057", "F058"]),
-      soon("alu-instructions", "Running arithmetic instructions", 7, "Follow an ADD from the instruction to the ALU and back into a register, and see what stays unchanged.", ["F059"]),
-      soon("loads-and-stores", "Loads and stores: moving data to and from memory", 7, "Trace values between registers and memory, keeping an address apart from the value stored there.", ["F060"]),
+      live("alu-instructions", "Running arithmetic instructions", 7, "Follow an ADD from the instruction to the ALU and back into a register, and see what stays unchanged.", ["F059"]),
+      live("loads-and-stores", "Loads and stores: moving data to and from memory", 7, "Trace values between registers and memory, keeping an address apart from the value stored there.", ["F060"]),
       live("jumps-and-loops", "Jumps and loops: how a CPU decides", 8, "A jump rewrites the program counter, flags record the last result, and together they make ifs and loops.", ["F061"]),
       live("from-gates-to-cpu", "From gates to a tiny CPU: datapath and control", 12, "The registers, ALU and memory share one bus, and a control unit decides which part talks on each clock tick.", ["F050", "F051", "F052", "F062"]),
-      project("project-build-datapath", "Project: Build the datapath", 25, "Connect the ALU, registers and memory with a bus and load signals, and move values by hand before adding control.", ["P5-A"]),
+      live("project-build-datapath", "Project: Build the datapath", 25, "Connect the ALU, registers and memory with a bus and load signals, and move values by hand before adding control.", ["P5-A"], "project"),
       live("project-tiny-cpu", "Project: Run a program on a tiny CPU", 25, "Predict, step through and debug three programs on the tiny CPU: a multiply loop, an overflow and a broken jump.", ["F063"], "project"),
-      project("project-build-the-cpu", "Project: Build the tiny CPU", 45, "Add the control unit to your datapath and run real programs on a CPU you wired yourself, checked against the simulator.", ["P5-B"]),
-      project("project-two-designs", "Optional project: Two designs, one instruction set", 30, "Run the same programs on two different control designs and show the results match although the inner steps differ.", ["P5-X"]),
+      live("project-build-the-cpu", "Project: Build the tiny CPU", 45, "Add the control unit to your datapath and run real programs on a CPU you wired yourself, checked against the simulator.", ["P5-B"], "project"),
+      live("project-two-designs", "Optional project: Two designs, one instruction set", 30, "Run the same programs on two different control designs and show the results match although the inner steps differ.", ["P5-X"], "project"),
     ],
   },
 

@@ -1,0 +1,114 @@
+---
+title: "Loads and stores: moving data to and from memory"
+level: level-00-bits-logic
+slug: loads-and-stores
+order: 55
+timeMin: 7
+learningOutcomes:
+- Run LDA, STA and LDI by their control signals, step by step
+- Tell an address apart from the value stored at that address, in every load and store
+- Explain why STA can overwrite any box, including one that holds an instruction
+- Trace a short program that loads, stores and loads again, predicting every box it changes
+primer:
+- title: "Running arithmetic instructions"
+  type: doc
+  meta: Reread · 3 min · the signal names used here.
+  essential: true
+- title: "Instruction formats and operand fields"
+  type: doc
+  meta: Reread · 2 min · address operands versus values.
+  essential: true
+knowledgeCheck:
+- question: What are the steps of STA 13 after the fetch?
+  answer: "IO MI: the operand 13 goes into the memory address register. AO RI: A goes onto the bus and is written into box 13. Only box 13 changes; A keeps its value."
+  jumpToId: stores-write-a-box
+  jumpToLabel: Stores write a box
+- question: Box 9 holds 42. What is in A after LDA 9, and after LDI 9?
+  answer: "After LDA 9, A is 42: the value stored at address 9. After LDI 9, A is 9: the operand itself. Mixing up an address and the value stored there is the most common mistake with loads and stores."
+  jumpToId: an-address-is-not-a-value
+  jumpToLabel: An address is not a value
+- question: How can a program stop before reaching its OUT instruction without any jump?
+  answer: "By storing over it. STA writes any box, and code lives in the same boxes as data, so storing the byte for HLT into the box that holds OUT turns that instruction into HLT before the CPU fetches it."
+  jumpToId: a-store-can-change-the-program
+  jumpToLabel: A store can change the program
+assignment:
+  instruction: "Write a tiny CPU program that swaps the values in boxes 14 and 15, using box 13 as a spare. Write each instruction with its control signals, then check it in the tiny CPU simulator (any lesson that has one) by predicting the three boxes after each STA."
+  resourceName: 'nand2tetris.org: Project 5, Computer Architecture'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project05'
+additionalResources:
+- title: Von Neumann architecture (Wikipedia)
+  type: doc
+  meta: why code and data share one memory
+  url: 'https://en.wikipedia.org/wiki/Von_Neumann_architecture'
+- title: Self-modifying code (Wikipedia)
+  type: doc
+  meta: programs that store over their own instructions
+  url: 'https://en.wikipedia.org/wiki/Self-modifying_code'
+- title: 'eater.net: CPU control logic'
+  type: doc
+  meta: the same signals on a real breadboard CPU
+  url: 'https://eater.net/8bit/control'
+whyThisMatters: "Almost every bug with variables, arrays and pointers, in any language, comes down to one confusion: the address of something versus what is stored there. Learning loads and stores on a machine where you can see every box is the clearest way to keep the two apart for good."
+---
+
+A CPU can only do arithmetic on what's in its registers, but programs keep their data in memory. Two kinds of instruction move data between them: <b>loads</b> bring a byte from memory into a register, and <b>stores</b> write a register's byte into memory.
+
+By the end you'll be able to run every load and store by its signals, keep addresses and values apart, and explain why a store can even change the program itself.
+
+## Loads read a box
+
+LDA n loads the byte at address n into A. After the fetch:
+
+<TruthTable caption='LDA n after the fetch' rowsJson='[["step", "signals", "what changes"], ["2", "IO MI", "the memory address register becomes n"], ["3", "RO AI", "A becomes the byte in box n"]]' />
+
+Box n is only read: it keeps its value. LDA doesn't touch the flags either, because FI isn't on.
+
+LDI n is a shorter load. Its operand is the value itself, so there's nothing to look up:
+
+<TruthTable caption='LDI n after the fetch' rowsJson='[["step", "signals", "what changes"], ["2", "IO AI", "A becomes n, straight from the instruction"]]' />
+
+## An address is not a value
+
+Box 9 holds 42. Then:
+
+- LDA 9 puts <b>42</b> in A: the value stored at address 9.
+- LDI 9 puts <b>9</b> in A: the operand itself.
+
+That difference is the most important thing in this lesson. An address says where to look; the value is what you find there. In LDA 9, the 9 is never put in A. It goes to the memory address register, picks a box, and the box's contents go to A.
+
+<KeyIdea>An address picks a box; the value is what's inside it. LDA n uses n to find a value; LDI n uses n as the value.</KeyIdea>
+
+Run LDA 9 by hand. Box 9 holds 42; get 42 into A.
+
+<DatapathLab caption='Run LDA 9 by hand' programJson='["LDA 9","HLT"]' dataJson='{"9":42}' goalJson='{"A":42}' />
+
+## Stores write a box
+
+STA n stores A into box n. It's a load run backwards:
+
+<TruthTable caption='STA n after the fetch' rowsJson='[["step", "signals", "what changes"], ["2", "IO MI", "the memory address register becomes n"], ["3", "AO RI", "box n becomes the value in A"]]' />
+
+A keeps its value: AO only copies it onto the bus. Whatever was in box n before is gone.
+
+Trace this program before you run it. Box 14 holds 20. What's in box 13 at the end, and what does the display show?
+
+<TruthTable caption='Load, store, load again' rowsJson='[["address", "instruction", "what it does"], ["0", "LDA 14", "A = the byte in box 14"], ["1", "STA 13", "box 13 = A"], ["2", "LDI 5", "A = 5"], ["3", "ADD 13", "A = A + the byte in box 13"], ["4", "OUT", "show A"], ["5", "HLT", "stop"], ["14", "20", "the starting value"]]' />
+
+<TinyCpu caption='Load, store, load again' programJson='["LDA 14", "STA 13", "LDI 5", "ADD 13", "OUT", "HLT"]' dataJson='{"14": 20}' />
+
+Box 13 ends up holding 20, and the display shows 25. STA saved A's value in box 13 so that LDI could reuse A, and ADD 13 brought the saved value back.
+
+## A store can change the program
+
+Code and data share the same 16 boxes, and STA can write any of them. Nothing stops it from writing over an instruction.
+
+In this program, box 15 holds 240, which is 1111 0000: the byte for HLT. Read it carefully before you run it.
+
+<TinyCpu caption='A program that changes itself' programJson='["LDA 15", "STA 3", "LDI 7", "OUT", "HLT"]' dataJson='{"15": 240}' />
+
+Without the first two instructions, it would show 7. With them, it shows nothing. LDA 15 puts 240 in A, and STA 3 writes it into box 3, which held OUT. When the CPU reaches box 3 it fetches HLT and stops. Watch box 3 change in the memory table as STA runs.
+
+<KeyIdea>A store writes whatever box its address names. If that box holds code, the program itself has changed.</KeyIdea>
+
+Programs that write over their own code are called self-modifying, and real systems mostly forbid it, using memory protection you'll meet in The Complete System. On the tiny CPU nothing protects the code, which makes it the clearest place to see why that protection exists.

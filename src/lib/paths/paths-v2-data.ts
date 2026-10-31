@@ -27,6 +27,9 @@ const PROJECT_BADGE: Record<string, string> = {
   "level-00-bits-logic/project-register-lab": "clockmaker",
   "level-00-bits-logic/project-memory-board": "memory-keeper",
   "level-00-bits-logic/project-sequencer": "conductor",
+  "level-00-bits-logic/project-build-datapath": "bus-driver",
+  "level-00-bits-logic/project-build-the-cpu": "microcoder",
+  "level-00-bits-logic/project-two-designs": "efficiency-expert",
   "level-00-bits-logic/project-tiny-cpu": "cpu-tracer",
   "/projects/shellforge": "ship-it",
 };

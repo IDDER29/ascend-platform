@@ -11,6 +11,8 @@ import { ByteLab } from "@/components/lesson/byte-lab";
 import { GateLab } from "@/components/lesson/gate-lab";
 import { ClockLab } from "@/components/lesson/clock-lab";
 import { MemoryBoard } from "@/components/lesson/memory-board";
+import { DatapathLab } from "@/components/lesson/datapath-lab";
+import { ControlLab } from "@/components/lesson/control-lab";
 import { SectionHeading } from "@/components/bookmarks/lesson-bookmarks";
 
 export const mdxComponents: MDXComponents = {
@@ -26,6 +28,8 @@ export const mdxComponents: MDXComponents = {
   GateLab,
   ClockLab,
   MemoryBoard,
+  DatapathLab,
+  ControlLab,
   h2: (props) => (
     <SectionHeading
       className="group/section mt-9 mb-3 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight"

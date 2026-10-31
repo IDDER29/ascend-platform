@@ -1,0 +1,86 @@
+---
+title: Memory as numbered boxes
+level: level-00-bits-logic
+slug: memory-and-addresses
+order: 8
+timeMin: 8
+learningOutcomes:
+- Describe memory as a long row of numbered boxes, each holding one byte
+- Explain what an address is and how many boxes an address of n bits can reach
+- Trace a read and a write, step by step, using the address, the data and a write signal
+- Explain how a decoder picks exactly one box out of many from its address
+primer:
+- title: The clock and registers
+  type: doc
+  meta: Reread · 3 min · each box in memory is a small register.
+  essential: true
+- title: 'Crash Course Computer Science #6: Registers and RAM'
+  type: video
+  meta: Watch · 12 min · from latches to a grid of memory.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=fpnE6UAfbtU'
+knowledgeCheck:
+- question: How many different bytes can a memory with 16-bit addresses reach, and why?
+  answer: 65,536. An address of 16 bits can be any of 2 to the 16th different patterns, and each pattern names exactly one box, so there are 65,536 boxes, each holding one byte (64 KB).
+  jumpToId: an-address-is-just-a-number
+  jumpToLabel: An address is just a number
+- question: Walk through what happens when the CPU writes the value 42 to address 5.
+  answer: The CPU puts 5 on the address wires, 42 on the data wires and sets the write signal to 1. The decoder turns address 5 into a 1 on the load input of box 5 only. At the clock tick box 5 takes in 42, and every other box keeps its value because its load input is 0.
+  jumpToId: reading-and-writing
+  jumpToLabel: Reading and writing
+assignment:
+  instruction: 'In nand2tetris Project 3, build RAM8 from eight registers, a decoder (DMux8Way) and a chooser (Mux8Way16). It is this lesson, built with your own hands, and the same pattern scales to RAM64 and beyond.'
+  resourceName: 'nand2tetris.org: Project 3, Memory'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project03'
+additionalResources:
+- title: 'Crash Course Computer Science #6: Registers and RAM'
+  type: video
+  meta: 12 min
+  url: 'https://www.youtube.com/watch?v=fpnE6UAfbtU'
+- title: Petzold, Code, Chapter 16 (An assemblage of memory)
+  type: doc
+  meta: ~20-page read
+  url: 'https://en.wikipedia.org/wiki/Code:_The_Hidden_Language_of_Computer_Hardware_and_Software'
+whyThisMatters: "Every variable you'll ever create lives in one of these numbered boxes, and every pointer you meet in C is simply one of these numbers. The fetch-execute loop reads its instructions from them by address. Once memory is a row of numbered boxes in your head, addresses, pointers, arrays and the stack all become the same simple idea."
+---
+
+You can now store a byte in a register. A program needs millions of them, and it needs to say which one it means. This lesson stacks registers into <b>memory</b>: a long row of boxes, each with a number, so any box can be read or written by naming it.
+
+By the end you'll be able to describe memory as numbered boxes, work out how many boxes an address can reach, trace a read and a write, and explain how one box out of thousands gets picked.
+
+## A long row of numbered boxes
+
+Picture memory as a very long street of boxes. Each box holds one byte, eight bits. Each box also has a house number, starting from 0: that number is its <b>address</b>. The box at address 0, the box at address 1, the box at address 2, and so on.
+
+The box doesn't know what its byte means. The same rule from lesson one applies: a byte might be a number, a letter, a colour or part of an instruction, depending only on how it's read.
+
+<Visual type='diagram' caption='Memory: one byte per numbered box' description='A vertical column of boxes. On the left of each box is its address, 0x00, 0x01, 0x02 and so on downward. Inside each box is an 8-bit pattern, for example 01000001 at 0x00 and 00101010 at 0x01. A note beside the column reads "each box: one byte".' />
+
+<KeyIdea>Memory is a row of one-byte boxes. An address is just the number of a box.</KeyIdea>
+
+## An address is just a number
+
+Addresses travel on wires too, as binary numbers. With 4 address wires there are 2⁴ = 16 patterns, so 16 boxes can be named: 0000 to 1111. Every extra address wire doubles the count.
+
+<TruthTable caption='Address bits and how many boxes they reach' rowsJson='[["address bits", "boxes"], ["4", "16"], ["8", "256"], ["16", "65,536 (64 KB)"], ["32", "about 4.3 billion (4 GB)"]]' />
+
+That last row is why older 32-bit computers topped out at 4 GB of memory: there simply weren't enough address patterns to name more boxes.
+
+## Reading and writing
+
+Memory talks to the CPU over three groups of wires: the <b>address</b> (which box), the <b>data</b> (the byte going in or out) and a <b>write</b> signal (are we storing or fetching?).
+
+To <b>read</b>, the CPU puts an address on the address wires with write at 0, and the byte in that box appears on the data wires. To <b>write</b>, it puts the address and the new byte on the wires, sets write to 1, and at the next clock tick that one box takes in the new byte. Every other box keeps its value.
+
+<Visual type='diagram' caption='Reading and writing memory' description='A CPU box on the left and a memory box on the right, joined by three labeled bundles of wires: "address" with an arrow from CPU to memory, "data" with arrows both ways, and a single "write" wire from CPU to memory. Below, two small examples: "read 5: address 5, write 0, data comes back" and "write 42 to 5: address 5, data 42, write 1".' />
+
+## Picking one box: the decoder
+
+How does memory make only box 5 listen? With a <b>decoder</b>: a circuit with the address bits as inputs and one output wire per box. For any address, exactly one output is 1, the one for that box. That output drives the box's load input, so only the chosen box takes in the new byte at the tick. When reading, a chooser (a multiplexer) does the reverse: it passes just the chosen box's byte onto the data wires.
+
+<KeyIdea>A decoder turns an address into "this box, and only this box". That is how one write touches one byte out of billions.</KeyIdea>
+
+## Ready to run a program
+
+Now every piece of the fetch-execute loop is in place. The program's instructions sit in memory boxes. The program counter is a register holding the address of the next one. Fetching means reading the box at that address into the instruction register. The next lesson puts the loop together.

@@ -69,9 +69,9 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     title: "Memory & time",
     blurb: "How a circuit remembers: latches, the clock, registers and addressed memory.",
     items: [
-      { kind: "soon", id: "latches-and-flip-flops", title: "Remembering a bit: latches and flip-flops", timeMin: 9 },
-      { kind: "soon", id: "clocks-and-registers", title: "The clock and registers", timeMin: 8 },
-      { kind: "soon", id: "memory-and-addresses", title: "Memory as numbered boxes", timeMin: 8 },
+      { kind: "live", slug: "latches-and-flip-flops", title: "Remembering a bit: latches and flip-flops", timeMin: 9 },
+      { kind: "live", slug: "clocks-and-registers", title: "The clock and registers", timeMin: 8 },
+      { kind: "live", slug: "memory-and-addresses", title: "Memory as numbered boxes", timeMin: 8 },
     ],
   },
   {

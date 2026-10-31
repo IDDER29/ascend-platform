@@ -2,7 +2,7 @@
 title: The fetch-execute loop
 level: level-00-bits-logic
 slug: the-fetch-execute-loop
-order: 6
+order: 9
 timeMin: 9
 learningOutcomes:
 - Describe, in order, the stages of the fetch-decode-execute cycle
@@ -10,9 +10,9 @@ learningOutcomes:
 - Trace how a specific example instruction moves through fetch, decode, and execute
 - Explain why "running a program" is, physically, this same loop repeating billions of times per second
 primer:
-- title: "Project: Half-adder"
+- title: Memory as numbered boxes
   type: doc
-  meta: Reread · 4 min · addition as gates — the ALU that executes instructions is built from these ideas.
+  meta: Reread · 3 min · the program counter and instruction register are registers, and instructions live in numbered boxes.
   essential: true
 - title: 'Crash Course Computer Science #7: The Central Processing Unit (CPU)'
   type: video
@@ -45,7 +45,7 @@ additionalResources:
 whyThisMatters: "Every line of code you'll ever write eventually gets reduced to instructions marching through this exact loop — there is no other way a processor runs a program. Understanding fetch-decode-execute now is what makes concepts like the call stack, branching, interrupts, and even why infinite loops hang a machine make sense later: they're all just different ways of steering what address the program counter fetches next."
 ---
 
-You now have every ingredient: bits (lesson one), numbers built from them (lesson two), logic to combine them (lesson three), and physical gates that carry out that logic (lesson four). This final lesson of Level 00 assembles all four into the thing that turns a pile of gates into an actual computer: the <b>fetch-decode-execute cycle</b> — the loop every CPU on earth runs, over and over, to run any program at all.
+You now have every ingredient: bits, numbers built from them, logic to combine them, gates that carry out that logic, and memory: flip-flops, registers and numbered boxes that hold bits from one tick to the next. This lesson assembles them into the thing that turns a pile of gates into an actual computer: the <b>fetch-decode-execute cycle</b>, the loop every CPU on earth runs, over and over, to run any program at all.
 
 By the end you'll be able to name the stages of that cycle in order, explain what the program counter and instruction register actually do, trace a real instruction through the whole loop, and understand why "running a program" is, physically, nothing more than this loop repeating billions of times a second.
 
@@ -69,4 +69,4 @@ Take a concrete instruction like `ADD R1, R2`: fetch pulls its bits into the IR 
 
 A CPU doesn't "understand" a program the way a person does — it is simply repeating this same three-stage loop, unimaginably fast (a 3 GHz processor completes roughly three billion cycles every second), always fetching whatever instruction the PC currently points to. Branching, loops, and function calls in a program are, at this level, nothing mystical: they're just instructions that change the PC to something other than "the next address", redirecting the loop's next fetch.
 
-That closes the whole arc of Level 00: a bit's two voltage states, stacked into binary numbers, combined by boolean rules, implemented as physical gates, assembled into a loop that fetches and executes those gate-built instructions forever. That entire stack, bottom to top, is what a computer <i>is</i>. Every level from here — assembly, C, operating systems — is just building further on top of this exact loop.
+That closes the arc of Bits & Logic: a bit's two voltage states, stacked into binary numbers, combined by boolean rules, built as physical gates, given memory with flip-flops, registers and numbered boxes, and assembled into a loop that fetches and executes instructions forever. That entire stack, bottom to top, is what a computer <i>is</i>. Everything from here (assembly, C, operating systems) builds on top of this exact loop.

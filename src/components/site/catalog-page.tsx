@@ -2,6 +2,7 @@ import Link from "next/link";
 import { durationLabel } from "@/lib/paths/paths-v2-model";
 import { FIRST_LESSON_HREF } from "@/lib/routes";
 import { publicPaths, siteStats } from "@/lib/site/site-data";
+import { TrackMap } from "@/components/paths-v2/track-map";
 import { PathTile } from "./path-tile";
 import { SiteShell } from "./site-shell";
 import { H2, LEAD, PageIntro, SOLID_BTN, StartBand, WRAP } from "./site-ui";
@@ -23,6 +24,10 @@ export function CatalogPage() {
           {stats.projects} projects
         </p>
       </PageIntro>
+
+      <div className={`${WRAP} pb-12 sm:pb-16`}>
+        <TrackMap views={views} />
+      </div>
 
       <section aria-labelledby="live-title" className={`${WRAP} pb-12 sm:pb-16`}>
         <h2 id="live-title" className="m-0 mb-5 text-[20px] font-bold">

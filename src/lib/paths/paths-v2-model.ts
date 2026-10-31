@@ -19,6 +19,11 @@ export type PathInput = {
   status: "live" | "soon";
   href: string;
   requires: { slug: string; title: string } | null;
+  /** What finishing the path means ("Understand the OS"). */
+  milestone?: string | null;
+  /** Its stage on the main track, if it's on it; or the path it branches off. */
+  stage?: number | null;
+  branchOf?: string | null;
   courses: {
     id: string;
     title: string;
@@ -28,6 +33,8 @@ export type PathInput = {
     href?: string;
     plannedLessons?: number;
     plannedProjects?: number;
+    /** A milestone reached once this course is done. */
+    milestone?: string;
     /** Named sections of the topic, each with its lessons (keys, in order). */
     sections: { id: string; title: string; blurb: string; lessonKeys: string[]; upcoming?: UpcomingItem[] }[];
   }[];
@@ -60,6 +67,7 @@ export type PathCourse = {
   href: string | null;
   capstone: "not-started" | "ready" | "shipped" | null;
   planned: { lessons: number; projects: number } | null;
+  milestone: string | null;
 };
 
 export type PathView = {
@@ -80,6 +88,9 @@ export type PathView = {
   /** The next lesson on this path, or its capstone once the lessons are done. */
   next: { title: string; href: string } | null;
   requires: { slug: string; title: string; done: boolean } | null;
+  milestone: string | null;
+  stage: number | null;
+  branchOf: string | null;
   /** When you last finished a lesson on it (or joined it). */
   lastActive: string | null;
 };
@@ -105,7 +116,8 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
     let currentSet = false;
 
     const courses = path.courses.map((course): PathCourse => {
-      if (course.levelId) {
+      // A topic with lessons, or a course whose lessons are all still "Coming soon" (its outline).
+      if (course.levelId || course.sections.length > 0) {
         const sections = course.sections.map((s) => {
           const items = s.lessonKeys
             .map((k) => lessonByKey.get(k))
@@ -123,7 +135,7 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
         const items = sections.flatMap((s) => s.items);
         const done = items.filter((i) => i.done).length;
         const finished = items.length > 0 && done === items.length;
-        const current = path.status === "live" && !finished && !currentSet;
+        const current = path.status === "live" && items.length > 0 && !finished && !currentSet;
         if (current) currentSet = true;
         return {
           id: course.id,
@@ -142,6 +154,7 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
           capstone: null,
           planned:
             items.length > 0 ? null : { lessons: course.plannedLessons ?? 0, projects: course.plannedProjects ?? 0 },
+          milestone: course.milestone ?? null,
         };
       }
       if (course.href && path.status === "live") {
@@ -161,6 +174,7 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
           href: course.href,
           capstone: shipped ? "shipped" : topicsDone ? "ready" : "not-started",
           planned: null,
+          milestone: course.milestone ?? null,
         };
       }
       return {
@@ -178,6 +192,7 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
         href: null,
         capstone: null,
         planned: { lessons: course.plannedLessons ?? 0, projects: course.plannedProjects ?? 0 },
+        milestone: course.milestone ?? null,
       };
     });
 
@@ -215,6 +230,9 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
       requires: path.requires
         ? { ...path.requires, done: requiresKeys.length > 0 && requiresKeys.every((k) => doneAt.has(k)) }
         : null,
+      milestone: path.milestone ?? null,
+      stage: path.stage ?? null,
+      branchOf: path.branchOf ?? null,
       lastActive: dates.at(-1) ?? joinedAt,
     };
   });

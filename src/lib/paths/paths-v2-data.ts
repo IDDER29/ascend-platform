@@ -10,6 +10,7 @@ import { PATHS, type PathDef } from "./catalog";
 import { courseOutlineForLevel } from "./course-outlines";
 import { FOUNDATIONS_LEVEL, FOUNDATIONS_OUTLINE, foundationsUpcoming } from "./foundations-outline";
 import { lessonHref } from "./lesson-urls";
+import { plannedCounts } from "./planned-outlines";
 import { buildPathViews, type PathInput, type PathLessonInfo, type PathView } from "./paths-v2-model";
 import { getFollowingMap } from "./selected-path";
 
@@ -42,7 +43,7 @@ function sectionsFor(levelId: LevelId, lessons: PathLessonInfo[]): PathInput["co
           title: s.title,
           blurb: s.blurb ?? "",
           slugs: s.items.map((i) => i.slug),
-          upcoming: [],
+          upcoming: (s.upcoming ?? []).map((i) => ({ id: i.id, title: i.title, project: Boolean(i.project) })),
         }));
   const sections = named
     .map((s) => ({
@@ -73,19 +74,33 @@ function pathInput(p: PathDef, lessons: PathLessonInfo[]): PathInput {
     status: p.status,
     href: `${PATHS_INDEX_HREF}/${p.slug}`,
     requires: requires ? { slug: requires.slug, title: requires.title } : null,
-    courses: p.courses.map((c) => ({
-      id: c.id,
-      // A whole topic goes by its own name (Bits & Logic); a course that is part of one, by its own title.
-      title: c.levelId && !c.sections ? LEVELS[c.levelId].name : c.title,
-      body: c.body,
-      levelId: c.levelId,
-      href: c.href,
-      plannedLessons: c.plannedLessons,
-      plannedProjects: c.plannedProjects,
-      sections: c.levelId
-        ? sectionsFor(c.levelId, lessons).filter((s) => !c.sections || c.sections.includes(s.id))
-        : [],
-    })),
+    milestone: p.milestone ?? null,
+    stage: p.stage ?? null,
+    branchOf: p.branchOf ?? null,
+    courses: p.courses.map((c) => {
+      const counts = c.outline ? plannedCounts(c.outline) : null;
+      return {
+        id: c.id,
+        // A whole topic goes by its own name (Bits & Logic); a course that is part of one, by its own title.
+        title: c.levelId && !c.sections ? LEVELS[c.levelId].name : c.title,
+        body: c.body,
+        levelId: c.levelId,
+        href: c.href,
+        plannedLessons: counts?.lessons ?? c.plannedLessons,
+        plannedProjects: counts?.projects ?? c.plannedProjects,
+        milestone: c.milestone,
+        sections: c.levelId
+          ? sectionsFor(c.levelId, lessons).filter((s) => !c.sections || c.sections.includes(s.id))
+          : // A course with no lessons yet: its outline, every item "Coming soon".
+            (c.outline ?? []).map((s) => ({
+              id: s.id,
+              title: s.title,
+              blurb: s.blurb ?? "",
+              lessonKeys: [],
+              upcoming: s.items.map((i) => ({ id: i.id, title: i.title, project: Boolean(i.project) })),
+            })),
+      };
+    }),
   };
 }
 

@@ -1,5 +1,6 @@
+import { Fragment } from "react";
 import Link from "next/link";
-import { Check, CircuitBoard, FileText } from "lucide-react";
+import { Check, CircuitBoard, FileText, Flag } from "lucide-react";
 import { CrestPatch } from "@/components/achievements/emblems";
 import { BadgeMark } from "@/components/achievements/marks";
 import type { BadgeView } from "@/lib/achievements/achievements-model";
@@ -8,6 +9,7 @@ import { PRACTICE_PATH_TITLES } from "@/lib/practice/path-map";
 import { practiceSessionHref } from "@/lib/practice/routes";
 import { durationLabel, type PathCourse, type PathItem, type PathView, type UpcomingItem } from "@/lib/paths/paths-v2-model";
 import { LessonMemory } from "./lesson-memory";
+import { TRACK_STAGES } from "./track-map";
 import { CARD, JoinButton, PathGlyph, pathMeta, TopicBar } from "./path-parts";
 
 /** Practice has a desk for this path (Foundations, Systems Programmer). */
@@ -56,6 +58,12 @@ function Hero({ path }: { path: PathView }) {
             ) : null}
           </div>
           <p className="m-0 mt-1 text-[13.5px] text-[var(--coach-hero-muted)]">{pathMeta(path)}</p>
+          {path.stage && (
+            <p className="m-0 mt-0.5 text-[13.5px] text-[var(--coach-hero-muted)]">
+              Stage {path.stage} of {TRACK_STAGES}
+              {path.milestone ? ` · Leaves you: ${path.milestone}` : ""}
+            </p>
+          )}
         </div>
       </div>
       <p className="m-0 max-w-[68ch] text-[15px] leading-relaxed text-[var(--coach-hero-muted)] [text-wrap:pretty]">
@@ -134,6 +142,29 @@ function ItemRow({ item }: { item: PathItem }) {
         <LessonMemory lessonKey={item.key} />
       </Link>
     </li>
+  );
+}
+
+/** A point on the path worth marking: what you can do once the courses above it are done. */
+function MilestoneMark({ text, reached }: { text: string; reached: boolean }) {
+  return (
+    <div className="flex items-center gap-3 px-1" role="note">
+      <span
+        aria-hidden
+        className={`flex size-8 shrink-0 items-center justify-center rounded-full ${
+          reached
+            ? "bg-[var(--coach-lime)] text-[var(--coach-lime-ink)]"
+            : "border-2 border-[var(--coach-border-strong)] text-[var(--coach-ink-muted)]"
+        }`}
+      >
+        <Flag size={15} strokeWidth={2.4} />
+      </span>
+      <p className="m-0 text-[14px] text-[var(--coach-ink-secondary)]">
+        <span className="font-bold text-[var(--coach-ink)]">Milestone: {text}</span>
+        {reached ? " · reached" : ""}
+      </p>
+      <span aria-hidden className="h-0.5 flex-1 rounded-full bg-[var(--coach-border)]" />
+    </div>
   );
 }
 
@@ -313,8 +344,17 @@ export function PathPage({ path, earns, other }: { path: PathView; earns: BadgeV
             </div>
           )}
           {path.courses.map((c, i) => (
-            <CourseCard key={c.id} course={c} index={i} />
+            <Fragment key={c.id}>
+              <CourseCard course={c} index={i} />
+              {c.milestone && (
+                <MilestoneMark
+                  text={c.milestone}
+                  reached={path.courses.slice(0, i + 1).every((x) => x.finished)}
+                />
+              )}
+            </Fragment>
           ))}
+          {path.milestone && <MilestoneMark text={path.milestone} reached={path.courses.every((x) => x.finished)} />}
         </div>
         <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
           {path.requires && (

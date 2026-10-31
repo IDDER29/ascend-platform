@@ -1,5 +1,7 @@
 
 import { LEVELS, type LevelId } from "@/lib/content/schema";
+import * as O from "./planned-outlines";
+import type { PlannedSection } from "./planned-outlines";
 
 export type PathStatus = "live" | "soon";
 
@@ -18,8 +20,13 @@ export type PathCourse = {
   sections?: string[];
   /** Capstone / special href when not a level */
   href?: string;
+  /** The sections and lessons planned for a course with no lessons yet (shown as "Coming soon"). */
+  outline?: PlannedSection[];
+  /** Counts for a planned course that has no outline yet. With an outline, they come from it. */
   plannedLessons?: number;
   plannedProjects?: number;
+  /** A milestone reached once this course is done ("Understand C deeply"). */
+  milestone?: string;
 };
 
 export type PathDef = {
@@ -34,6 +41,12 @@ export type PathDef = {
   /** Shown on catalog meta line */
   requiresLabel?: string;
   requiresSlug?: string;
+  /** Its place on the main track (Foundations → Systems Programmer → Computer Architect), if it's on it. */
+  stage?: 1 | 2 | 3;
+  /** What you can do once the whole path is done. */
+  milestone?: string;
+  /** A side path: the track stage it branches off (a path slug). */
+  branchOf?: string;
   courses: PathCourse[];
 };
 
@@ -44,6 +57,8 @@ export const PATHS: PathDef[] = [
     status: "live",
     eyebrow: "Foundations",
     title: "Foundations",
+    stage: 1,
+    milestone: "Ready to start C",
     pitch: "Bits, logic and how a machine makes decisions: the ground every other path stands on.",
     body: "A hands-on introduction to the ideas every real machine is built on, in five short courses: how data becomes bits, how circuits compute, how a circuit remembers, how a CPU is built and runs, and how your code reaches it. No background needed, and every other path starts from here.",
     courses: [
@@ -90,6 +105,7 @@ export const PATHS: PathDef[] = [
     status: "soon",
     eyebrow: "Foundations",
     title: "Python Foundations",
+    branchOf: "foundations",
     pitch: "The Python you need for applied AI: the language, the tools and good project habits.",
     body: "This course is the Python on-ramp for applied AI. You'll learn language basics, tooling, and project habits in the order shown: everything you need before RAG, agents, and LLM apps, without wandering the whole Python universe first.",
     courses: [
@@ -115,8 +131,10 @@ export const PATHS: PathDef[] = [
     status: "live",
     eyebrow: "Path",
     title: "Systems Programmer",
+    stage: 2,
+    milestone: "Understand the OS",
     pitch: "How the machine runs, how C talks to it and how the OS keeps it alive, ending with a shell you write yourself.",
-    body: "This path takes you through Ascend's systems curriculum. Take the courses in the order shown: how the machine runs, how C touches hardware, how the OS keeps it alive. Then prove it with ShellForge. You'll learn everything you need to understand the machine end-to-end and write software that meets it.",
+    body: "This path takes you through Ascend's systems curriculum. Take the courses in the order shown: how the machine runs, C from the basics to its exact rules, the tools and data structures C programmers live with, then how the OS keeps it all alive. Prove it with ShellForge and your own malloc. Some courses are still being written; their lessons are listed so you can see where the path goes.",
     requiresLabel: "Requires Foundations",
     requiresSlug: "foundations",
     courses: [
@@ -127,10 +145,35 @@ export const PATHS: PathDef[] = [
         levelId: "level-01-machine-memory",
       },
       {
+        id: "c-basics",
+        title: "C Basics",
+        body: "Types, operators, control flow, functions and the compile-run loop: the C you need before the deep parts.",
+        outline: O.C_BASICS,
+      },
+      {
         id: "the-c-language",
         title: LEVELS["level-02-the-c-language"].name,
-        body: "How code touches that hardware, with C as craft.",
+        body: "How code touches that hardware, with C as craft: memory, pointers, structs and the heap.",
         levelId: "level-02-the-c-language",
+      },
+      {
+        id: "c-contract",
+        title: "The C Contract",
+        body: "Exactly what C promises and what it doesn't: undefined behaviour, evaluation order, aliasing and lifetime.",
+        outline: O.C_CONTRACT,
+      },
+      {
+        id: "c-tools",
+        title: "Tools",
+        body: "Build, inspect and debug like a systems programmer: gcc, make, gdb, objdump, strace and sanitizers.",
+        outline: O.C_TOOLS,
+      },
+      {
+        id: "data-structures",
+        title: "Data Structures in C",
+        body: "Arrays, lists, hash tables and trees, built by hand, with what each costs and how it sits in memory.",
+        outline: O.DATA_STRUCTURES,
+        milestone: "Understand C deeply",
       },
       {
         id: "systems-software",
@@ -139,11 +182,23 @@ export const PATHS: PathDef[] = [
         levelId: "level-03-systems-software",
       },
       {
+        id: "vm-threads-files",
+        title: "Virtual Memory, Threads & Files",
+        body: "How the OS gives each process its own memory, runs many things at once, and keeps files safe.",
+        outline: O.VM_THREADS_FILES,
+      },
+      {
         id: "shellforge",
         title: "ShellForge",
         body: "Capstone: prove the path with a working shell.",
         href: "/projects/shellforge",
         plannedProjects: 1,
+      },
+      {
+        id: "memory-allocator",
+        title: "Your own malloc",
+        body: "Capstone: write the allocator every C program relies on, from free lists to mmap.",
+        outline: O.MEMORY_ALLOCATOR,
       },
     ],
   },
@@ -153,6 +208,7 @@ export const PATHS: PathDef[] = [
     status: "soon",
     eyebrow: "Path",
     title: "Linux Engineer",
+    branchOf: "foundations",
     pitch: "From living on a Linux distro to running virtual machines and containers like practitioners do.",
     body: "This path takes you from living on a distro to shipping real systems. Work through the courses in order: Linux fundamentals, virtual machines, containers & Docker, then bone-to-bone projects. You'll learn to run, isolate, and operate Linux systems the way practitioners actually do.",
     requiresLabel: "Requires Foundations",
@@ -198,27 +254,138 @@ export const PATHS: PathDef[] = [
     body: "This path takes you through how machines talk. Follow the courses in order: network foundations, core protocols, then operating networks. You'll learn what packets are, how stacks and tools reveal them, and how to change networks without flying blind.",
     requiresLabel: "Requires Foundations",
     requiresSlug: "foundations",
+    branchOf: "foundations",
     courses: [
       {
         id: "network-foundations",
         title: "Network foundations",
         body: "Layers, addressing, and what a packet actually is.",
-        plannedLessons: 10,
-        plannedProjects: 1,
+        outline: O.NETWORK_FOUNDATIONS,
       },
       {
         id: "protocols",
         title: "Core protocols",
-        body: "TCP/IP, DNS, HTTP, and the tools you use to see them.",
-        plannedLessons: 12,
-        plannedProjects: 2,
+        body: "TCP/IP, DNS, HTTP and TLS, and the sockets your programs use to speak them.",
+        outline: O.NETWORK_PROTOCOLS,
       },
       {
         id: "network-ops",
         title: "Operating networks",
-        body: "Routing intuition, debugging, and safe change.",
-        plannedLessons: 8,
-        plannedProjects: 2,
+        body: "The tools that show what's happening, and how to change a network safely.",
+        outline: O.NETWORK_OPS,
+      },
+    ],
+  },
+  {
+    slug: "security-engineer",
+    kind: "role",
+    status: "soon",
+    eyebrow: "Path",
+    title: "Security Engineer",
+    branchOf: "systems-programmer",
+    pitch: "How systems get broken and how to build them so they don't: memory safety, side channels and reliable code.",
+    body: "This path builds on Systems Programmer. Take the courses in order: how attackers think, the memory-safety bugs behind most exploits and the defences against them, how hardware itself can leak, and how to build systems that fail safely.",
+    requiresLabel: "Requires Systems Programmer",
+    requiresSlug: "systems-programmer",
+    courses: [
+      {
+        id: "security-foundations",
+        title: "Security foundations",
+        body: "Threat models, least privilege, secrets, and what cryptography can and can't do.",
+        outline: O.SECURITY_FOUNDATIONS,
+      },
+      {
+        id: "memory-safety",
+        title: "Memory-safety bugs & defences",
+        body: "Overflows, use-after-free and format strings, and the defences built into compilers and OSes.",
+        outline: O.MEMORY_SAFETY,
+      },
+      {
+        id: "hardware-trust",
+        title: "Side channels & hardware trust",
+        body: "When timing and speculation leak secrets, and how hardware tries to keep them.",
+        outline: O.HARDWARE_TRUST,
+      },
+      {
+        id: "reliability",
+        title: "Reliability",
+        body: "Faults, redundancy, fuzzing and code that fails safely.",
+        outline: O.RELIABILITY,
+      },
+    ],
+  },
+  {
+    slug: "computer-architect",
+    kind: "role",
+    status: "soon",
+    eyebrow: "Path",
+    title: "Computer Architect",
+    stage: 3,
+    milestone: "Ready to design processors",
+    pitch: "Go from understanding a CPU to designing one: pipelines, caches, parallel hardware, Verilog, and a RISC-V core of your own.",
+    body: "This path builds on Systems Programmer. Take the courses in order: measure performance, then see how real CPUs go fast (pipelines, out-of-order execution, caches, many cores and GPUs). Then describe hardware in Verilog, prove it works, and follow it to silicon. It ends with a small RISC-V processor you design and verify yourself.",
+    requiresLabel: "Requires Systems Programmer",
+    requiresSlug: "systems-programmer",
+    courses: [
+      {
+        id: "performance",
+        title: "Performance & trade-offs",
+        body: "What makes a computer fast, how to measure it, and what it costs in power.",
+        outline: O.PERFORMANCE,
+      },
+      {
+        id: "pipelining",
+        title: "Pipelining",
+        body: "Overlapping instructions like an assembly line, and the hazards that come with it.",
+        outline: O.PIPELINING,
+      },
+      {
+        id: "advanced-execution",
+        title: "Advanced execution",
+        body: "Superscalar, out-of-order and speculative CPUs: how real cores run many instructions at once.",
+        outline: O.ADVANCED_EXECUTION,
+      },
+      {
+        id: "caches-memory",
+        title: "Caches & memory systems",
+        body: "How caches are built, and why memory, not the CPU, is usually the limit.",
+        outline: O.CACHES_MEMORY,
+      },
+      {
+        id: "multicore-gpus",
+        title: "Multicore & GPUs",
+        body: "Many cores sharing memory, vector units, GPUs and accelerators.",
+        outline: O.MULTICORE_GPUS,
+      },
+      {
+        id: "verilog",
+        title: "Digital design with Verilog",
+        body: "Describe circuits in code, simulate them, and run them on an FPGA.",
+        outline: O.VERILOG,
+      },
+      {
+        id: "verification",
+        title: "Verification",
+        body: "Testbenches, coverage and formal checks: how chip designers know a design works.",
+        outline: O.VERIFICATION,
+      },
+      {
+        id: "rtl-to-silicon",
+        title: "From RTL to silicon",
+        body: "Synthesis, timing and layout: how a design becomes a chip.",
+        outline: O.RTL_TO_SILICON,
+      },
+      {
+        id: "compilers-theory",
+        title: "Compilers & theory",
+        body: "How compilers turn code into instructions, and the limits of what any computer can compute.",
+        outline: O.COMPILERS_THEORY,
+      },
+      {
+        id: "riscv-core",
+        title: "A RISC-V core",
+        body: "Capstone: design a small RISC-V processor and prove it runs real programs.",
+        outline: O.RISCV_CORE,
       },
     ],
   },
@@ -228,6 +395,7 @@ export const PATHS: PathDef[] = [
     status: "soon",
     eyebrow: "Path",
     title: "AI Engineer",
+    branchOf: "foundations",
     pitch: "Build grounded AI apps that use tools: from a first API call to RAG, agents and outputs you can trust.",
     body: "This path takes you through applied LLM systems. Take the courses in order: LLM applications, RAG, agents, then contracts & decoding. You'll learn to build grounded, tool-using AI apps, from first API call to structured outputs you can trust.",
     requiresLabel: "Requires Python Foundations",

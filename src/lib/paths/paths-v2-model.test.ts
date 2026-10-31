@@ -139,3 +139,48 @@ test("durations read naturally", () => {
   assert.equal(durationLabel(150), "about 2.5 h");
   assert.equal(durationLabel(185), "about 3 h");
 });
+
+test("a course with only an outline is a topic of 'Coming soon' items, never the current one", () => {
+  const outlined: PathInput = {
+    ...PATHS[1],
+    stage: 2,
+    milestone: "Understand the OS",
+    courses: [
+      {
+        id: "c-basics",
+        title: "C Basics",
+        body: "",
+        plannedLessons: 1,
+        plannedProjects: 1,
+        milestone: "Write C",
+        sections: [
+          {
+            id: "first",
+            title: "First programs",
+            blurb: "",
+            lessonKeys: [],
+            upcoming: [
+              { id: "hello", title: "Hello", project: false },
+              { id: "project-game", title: "Project: A game", project: true },
+            ],
+          },
+        ],
+      },
+      PATHS[1].courses[0],
+    ],
+  };
+  const s = buildPathViews({ paths: [outlined], lessons: LESSONS, completions: [], following: {}, shipped: new Set() })[0];
+  const [planned, machine] = s.courses;
+  assert.equal(planned.kind, "topic");
+  assert.equal(planned.total, 0);
+  assert.equal(planned.current, false);
+  assert.equal(planned.finished, false);
+  assert.equal(planned.milestone, "Write C");
+  assert.deepEqual(
+    planned.sections[0].upcoming.map((u) => u.project),
+    [false, true],
+  );
+  // The first course with lessons is where you are.
+  assert.equal(machine.current, true);
+  assert.deepEqual([s.stage, s.milestone, s.lessons.total], [2, "Understand the OS", 2]);
+});

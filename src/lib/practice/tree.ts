@@ -79,18 +79,21 @@ function sectionsForLevel(level: LevelId): PracticeTreeSection[] {
     }));
   }
 
-  return (COURSE_OUTLINES[level] ?? []).map((section) => ({
-    id: section.id,
-    title: section.title,
-    blurb: section.blurb,
-    level,
-    lessons: section.items.map((item) => ({
-      key: completionKey(level, item.slug),
+  // Sections with no lessons written yet have no cards either.
+  return (COURSE_OUTLINES[level] ?? [])
+    .filter((section) => section.items.length > 0)
+    .map((section) => ({
+      id: section.id,
+      title: section.title,
+      blurb: section.blurb,
       level,
-      slug: item.slug,
-      title: titleFromSlug(item.slug),
-    })),
-  }));
+      lessons: section.items.map((item) => ({
+        key: completionKey(level, item.slug),
+        level,
+        slug: item.slug,
+        title: titleFromSlug(item.slug),
+      })),
+    }));
 }
 
 export const PRACTICE_TREE: PracticeTreePath[] = Object.entries(

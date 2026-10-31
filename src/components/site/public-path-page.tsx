@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CrestArt } from "@/components/achievements/emblems";
 import { BadgeMark } from "@/components/achievements/marks";
 import { PathIcon, pathMeta } from "@/components/paths-v2/path-parts";
+import { TRACK_STAGES } from "@/components/paths-v2/track-map";
 import type { BadgeView } from "@/lib/achievements/achievements-model";
 import { durationLabel, type PathCourse, type PathView } from "@/lib/paths/paths-v2-model";
 import { FIRST_LESSON_HREF, SIGNUP_HREF } from "@/lib/routes";
@@ -66,6 +67,22 @@ function TopicBlock({ course, index }: { course: PathCourse; index: number }) {
                       {lesson.timeMin} min
                     </span>
                   </Link>
+                </li>
+              ))}
+              {section.upcoming.map((item) => (
+                <li
+                  key={item.id}
+                  className="-mx-2 flex min-h-11 items-center justify-between gap-3 px-2 text-[15px] text-[var(--coach-ink-muted)]"
+                >
+                  <span className="min-w-0">
+                    {item.title.replace(/^(Project|Capstone): /, "")}
+                    {item.project && (
+                      <span className="ml-2 rounded-full bg-[var(--coach-tint-neutral-bg)] px-2 py-0.5 text-[12px] font-semibold">
+                        Project
+                      </span>
+                    )}
+                  </span>
+                  <span className="shrink-0 text-[13px]">Coming soon</span>
                 </li>
               ))}
             </ol>
@@ -160,7 +177,11 @@ export function PublicPathPage({ path, earns }: { path: PathView; earns: BadgeVi
           <p className="m-0 mt-4 max-w-[46rem] text-[17px] leading-relaxed text-[var(--coach-hero-muted)] [text-wrap:pretty] sm:text-[19px]">
             {path.pitch}
           </p>
-          <p className="m-0 mt-4 text-[14px] tabular-nums text-[var(--coach-hero-muted)]">{pathMeta(path)}</p>
+          <p className="m-0 mt-4 text-[14px] tabular-nums text-[var(--coach-hero-muted)]">
+            {pathMeta(path)}
+            {path.stage ? ` · Stage ${path.stage} of ${TRACK_STAGES}` : ""}
+            {path.milestone ? ` · Leaves you: ${path.milestone}` : ""}
+          </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             {path.soon ? (
               <Link href={FIRST_LESSON_HREF} className={LIME_BTN}>

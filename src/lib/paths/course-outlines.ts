@@ -16,6 +16,8 @@ export type CourseOutlineSection = {
   title: string;
   blurb?: string;
   items: CourseOutlineItem[];
+  /** Lessons and projects planned for this section but not written yet, after its live lessons. */
+  upcoming?: { id: string; title: string; project?: boolean }[];
 };
 
 /** Level → topic sections. Missing levels fall back to a flat lesson list. */
@@ -28,6 +30,10 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       items: [
         { slug: "inside-the-cpu" },
         { slug: "assembly-a-first-look" },
+      ],
+      upcoming: [
+        { id: "calls-and-returns", title: "Calls and returns in assembly" },
+        { id: "reading-compiler-output", title: "Reading what the compiler wrote" },
       ],
     },
     {
@@ -46,6 +52,16 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       items: [
         { slug: "caches-and-locality" },
         { slug: "endianness" },
+      ],
+    },
+    {
+      id: "memory-hierarchy",
+      title: "The memory hierarchy",
+      blurb: "Registers, caches, RAM and storage: why there are so many kinds of memory.",
+      items: [],
+      upcoming: [
+        { id: "the-memory-hierarchy", title: "Registers, caches, RAM and storage" },
+        { id: "ram-vs-storage", title: "Why RAM forgets and storage doesn't" },
       ],
     },
   ],
@@ -78,12 +94,37 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
         { slug: "structs-and-unions" },
         { slug: "dynamic-memory" },
       ],
+      upcoming: [{ id: "ownership", title: "Ownership: who frees what" }],
     },
     {
       id: "c-safety",
       title: "Safety in C",
       blurb: "What undefined behaviour really means for your programs.",
       items: [{ slug: "undefined-behaviour" }],
+    },
+    {
+      id: "types-and-strings",
+      title: "Types, arrays and strings",
+      blurb: "How C converts between types, and what arrays and strings really are.",
+      items: [],
+      upcoming: [
+        { id: "integer-promotions", title: "Integer promotions and conversions" },
+        { id: "casts", title: "Casts and what they really do" },
+        { id: "arrays-are-not-pointers", title: "Arrays are not pointers" },
+        { id: "strings", title: "Strings and the terminating zero" },
+        { id: "function-pointers", title: "Function pointers" },
+      ],
+    },
+    {
+      id: "program-structure",
+      title: "How a C program is organised",
+      blurb: "Where variables live and how files see each other's names.",
+      items: [],
+      upcoming: [
+        { id: "storage-duration", title: "Storage duration: automatic, static and allocated" },
+        { id: "linkage", title: "Linkage: static and extern" },
+        { id: "headers", title: "Header files and separate compilation" },
+      ],
     },
   ],
 
@@ -95,6 +136,10 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       items: [
         { slug: "processes-and-the-process-table" },
         { slug: "system-calls" },
+      ],
+      upcoming: [
+        { id: "context-switching", title: "Context switching: how the OS takes turns" },
+        { id: "environment-and-exit", title: "Arguments, environment and exit codes" },
       ],
     },
     {
@@ -111,6 +156,17 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       title: "Files & descriptors",
       blurb: "File descriptors, redirection, and the Unix I/O model.",
       items: [{ slug: "file-descriptors-and-redirection" }],
+      upcoming: [{ id: "buffered-io", title: "Buffered I/O: stdio and write" }],
+    },
+    {
+      id: "isolation",
+      title: "Users, permissions and isolation",
+      blurb: "Who may do what, and why one process can't touch another's memory.",
+      items: [],
+      upcoming: [
+        { id: "permissions", title: "Users, groups and permissions" },
+        { id: "process-isolation", title: "Why one process can't read another's memory" },
+      ],
     },
   ],
 };

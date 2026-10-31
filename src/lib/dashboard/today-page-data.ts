@@ -49,7 +49,8 @@ export async function loadToday(): Promise<{
       slug: p.slug,
       title: p.title,
       href: pathHref(p.slug),
-      courses: p.courses.map((c) => ({
+      // Courses still being written have nothing to do yet.
+      courses: p.courses.filter((c) => c.levelId || c.href).map((c) => ({
         id: c.id,
         title: c.title,
         levelId: c.levelId,

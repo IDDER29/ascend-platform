@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { PathView } from "@/lib/paths/paths-v2-model";
+import { TrackMap } from "./track-map";
 import { CARD, ContinueLink, JoinButton, PathGlyph, PathIcon, pathMeta, SECONDARY, TopicBar } from "./path-parts";
 
 function YourPathCard({ path }: { path: PathView }) {
@@ -149,6 +150,8 @@ export function PathsCatalog({ views }: { views: PathView[] }) {
           </div>
         </section>
       )}
+
+      <TrackMap views={views} progress={views.some((v) => v.lessons.done > 0)} />
 
       {explore.length > 0 && (
         <section aria-labelledby="explore" className="flex flex-col gap-3">

@@ -8,20 +8,26 @@ export type Limit = { key: string; limit: number; windowMs: number };
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 
-const norm = (s: string) => s.trim().toLowerCase();
+/** Keys stay short: an email is at most 254 characters, and anything longer is cut, never stored whole. */
+const norm = (s: string) => s.trim().toLowerCase().slice(0, 254);
 
 /** The limits for each action: per email (guessing one account) and per IP (spraying many). */
 export const LIMITS = {
-  signIn: (email: string, ip: string): Limit[] => [
-    { key: `signin:email:${norm(email)}`, limit: 10, windowMs: 15 * MINUTE },
-    { key: `signin:ip:${ip}`, limit: 50, windowMs: 15 * MINUTE },
-  ],
+  /** Every sign-in attempt from one IP (spraying many accounts). */
+  signIn: (ip: string): Limit[] => [{ key: `signin:ip:${ip}`, limit: 50, windowMs: 15 * MINUTE }],
+  /**
+   * Failed sign-ins for one email (guessing its password). Only failures count, so nobody can lock
+   * someone else out just by trying to sign in as them with the right email and no password.
+   */
+  signInFailures: (email: string): Limit => ({ key: `signin-fail:email:${norm(email)}`, limit: 10, windowMs: 15 * MINUTE }),
   signUp: (ip: string): Limit[] => [{ key: `signup:ip:${ip}`, limit: 10, windowMs: HOUR }],
   resetRequest: (email: string, ip: string): Limit[] => [
     { key: `reset:email:${norm(email)}`, limit: 3, windowMs: HOUR },
     { key: `reset:ip:${ip}`, limit: 20, windowMs: HOUR },
   ],
   resetSubmit: (ip: string): Limit[] => [{ key: `reset-submit:ip:${ip}`, limit: 20, windowMs: HOUR }],
+  /** Checking the current password (to change it or delete the account), per account. */
+  passwordCheck: (userId: string): Limit[] => [{ key: `password-check:user:${userId}`, limit: 10, windowMs: 15 * MINUTE }],
 };
 
 /** Whether one more attempt would go over the limit, given the times of earlier attempts. */
@@ -34,5 +40,5 @@ export const TOO_MANY = "Too many attempts. Wait a few minutes, then try again."
 /** The client's IP from the proxy headers Vercel sets; "unknown" when there are none (local dev). */
 export function clientIp(get: (name: string) => string | null): string {
   const forwarded = get("x-forwarded-for")?.split(",")[0]?.trim();
-  return forwarded || get("x-real-ip")?.trim() || "unknown";
+  return (forwarded || get("x-real-ip")?.trim() || "unknown").slice(0, 64);
 }

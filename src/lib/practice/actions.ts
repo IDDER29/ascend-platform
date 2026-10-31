@@ -16,6 +16,7 @@ import { PRACTICE_BANK } from "@/lib/practice/bank";
 import { completionKey } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
 import { PRACTICE_ROUTES } from "@/lib/practice/routes";
+import { cleanSession } from "@/lib/practice/session-rules";
 
 export type PracticeActionResult =
   | { ok: true }
@@ -147,29 +148,23 @@ export async function savePracticeSessionAction(input: {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Sign in to sync Practice history." };
   if (!db) return { ok: false, error: "Database unavailable." };
-
-  const createdAt = input.at ? new Date(input.at) : new Date();
+  const session = cleanSession(input, PRACTICE_BANK_IDS);
+  if (!session) return { ok: false, error: "That Practice session couldn't be saved." };
 
   try {
-    await db.insert(schema.practiceSessions).values({
-      id: input.id,
-      userId: user.id,
-      scopeType: input.scopeType,
-      scopeLabel: input.scopeLabel,
-      pathSlug: input.pathSlug,
-      correct: input.correct,
-      total: input.total,
-      missIds: JSON.stringify(input.missIds),
-      questionIds: JSON.stringify(input.questionIds),
-      createdAt,
-    });
+    await db
+      .insert(schema.practiceSessions)
+      .values({
+        ...session,
+        userId: user.id,
+        missIds: JSON.stringify(session.missIds),
+        questionIds: JSON.stringify(session.questionIds),
+      })
+      .onConflictDoNothing(); // the same session synced twice
     revalidatePath("/practice");
     return { ok: true };
   } catch {
-    return {
-      ok: false,
-      error: "Could not sync Practice history (table may need a migration).",
-    };
+    return { ok: false, error: "Could not sync Practice history." };
   }
 }
 
@@ -203,7 +198,7 @@ export async function upsertPracticeCardsAction(
   } catch {
     return {
       ok: false,
-      error: "Could not sync Practice cards (table may need a migration).",
+      error: "Could not sync Practice cards.",
     };
   }
 }
@@ -266,7 +261,7 @@ export async function savePracticeDeckAction(
     revalidateDecks();
     return { ok: true, deck: { id, ...deck, updatedAt: now.toISOString() } };
   } catch {
-    return { ok: false, error: "Could not save the deck (table may need a migration)." };
+    return { ok: false, error: "Could not save the deck." };
   }
 }
 
@@ -308,7 +303,7 @@ export async function savePracticeDailyGoalAction(
   } catch {
     return {
       ok: false,
-      error: "Could not save the daily goal (table may need a migration).",
+      error: "Could not save the daily goal.",
     };
   }
 }

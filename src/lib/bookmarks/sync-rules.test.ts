@@ -26,6 +26,8 @@ test("bookmarks from the browser are checked before they're stored", () => {
   assert.ok(cleanBookmark(bm("a")));
   assert.equal(cleanBookmark({ ...bm("a"), reason: "spam" }), null);
   assert.equal(cleanBookmark({ ...bm("a"), href: "javascript:alert(1)" }), null);
+  assert.equal(cleanBookmark({ ...bm("a"), href: "//evil.example/x" }), null);
+  assert.equal(cleanBookmark({ ...bm("a"), href: "/lessons/x" })?.href, "/lessons/x");
   assert.equal(cleanBookmark({ ...bm("a"), ref: "x".repeat(600) }), null);
   assert.equal(cleanBookmark({ ...bm("a"), note: "x".repeat(5000) })?.note, "");
   assert.equal(cleanBookmark("nope"), null);

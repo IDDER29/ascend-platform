@@ -33,6 +33,13 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  // Lesson pages render on request and read content/ at run time: lesson files, and the C programs and
+  // compiler evidence that CRun and CompilerOutput show. The tracer misses .c, .h and .txt files, so list
+  // the folder explicitly, or those pages would fail on Vercel.
+  outputFileTracingIncludes: {
+    "/lessons/**": ["./content/**/*"],
+    "/curriculum/**": ["./content/**/*"],
+  },
   async headers() {
     return [{ source: "/:path*", headers: SECURITY_HEADERS }];
   },

@@ -35,7 +35,16 @@ throwaway database that would lose data.
 - Postgres only (`src/lib/db/client.ts`), pooled with `prepare: false` for Neon's pooler, one retry on
   transient connection errors (`src/lib/db/retry.ts`).
 - `AUTH_SECRET` of 32+ characters; sessions issued before a password change or reset are rejected.
-- Rate limits on sign-in, sign-up and password reset (`src/lib/auth/rate-limit-rules.ts`).
+- Rate limits on sign-in (per IP, and failed sign-ins per email), sign-up, password reset and
+  current-password checks (`src/lib/auth/rate-limit-rules.ts`), recorded before counting so parallel
+  requests can't slip past them.
+- Everything the browser sends is checked on the server: lesson completions must name a real lesson,
+  settings and Practice sessions are validated (`settings-rules.ts`, `session-rules.ts`), bookmarks
+  are cleaned (`sync-rules.ts`).
+- Password-reset requests do their work after the response, so the answer time doesn't reveal which
+  emails have accounts.
+- Lesson pages read `content/` at request time; `outputFileTracingIncludes` in `next.config.ts` ships
+  the whole folder with them (the tracer would otherwise drop the `.c`, `.h` and `.txt` program files).
 - Reset links: single-use, 30 minutes, only a hash stored, built from `NEXT_PUBLIC_SITE_URL` (never
   from the request's Host header).
 - Security headers and a Content-Security-Policy on every response (`next.config.ts`).

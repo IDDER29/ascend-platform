@@ -71,12 +71,23 @@ async function uniqueUsername(base: string): Promise<string> {
   }
 }
 
+/** A unique-constraint failure from Postgres (code 23505) or SQLite (local development). */
+function isUniqueViolation(err: unknown): boolean {
+  const e = err as { code?: string; message?: string; cause?: { code?: string; message?: string } } | null;
+  return (
+    e?.code === "23505" ||
+    e?.cause?.code === "23505" ||
+    /UNIQUE constraint failed/.test(e?.message ?? "") ||
+    /UNIQUE constraint failed/.test(e?.cause?.message ?? "")
+  );
+}
+
 export async function signUp(input: { email: string; password: string; name: string }): Promise<PublicUser> {
   const conn = requireDb();
   const email = input.email.trim().toLowerCase();
-  const name = input.name.trim();
+  const name = input.name.trim().slice(0, 80);
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new AuthError("Enter a valid email address.");
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new AuthError("Enter a valid email address.");
   if (input.password.length < MIN_PASSWORD_LENGTH)
     throw new AuthError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
   if (!name) throw new AuthError("Enter your name.");
@@ -89,11 +100,32 @@ export async function signUp(input: { email: string; password: string; name: str
   const username = await uniqueUsername(name || email.split("@")[0]);
   const now = new Date();
 
-  await conn.insert(schema.users).values({ id: userId, email, passwordHash, createdAt: now });
-  await conn.insert(schema.profiles).values({ userId, name, username, bio: "" });
-  await conn.insert(schema.streaks).values({ userId });
-
-  return { id: userId, email, name, username, createdAt: now };
+  try {
+    await conn.insert(schema.users).values({ id: userId, email, passwordHash, createdAt: now });
+  } catch (err) {
+    // Two sign-ups with the same email at once: the second loses the race.
+    if (isUniqueViolation(err)) throw new AuthError("An account with that email already exists.");
+    throw err;
+  }
+  // The profile and streak must exist too, or the account could never be used: if they can't be created,
+  // remove the user again (profiles and streaks cascade) so the email isn't stuck.
+  try {
+    let chosen = username;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await conn.insert(schema.profiles).values({ userId, name, username: chosen, bio: "" });
+        break;
+      } catch (err) {
+        if (!isUniqueViolation(err) || attempt >= 5) throw err;
+        chosen = await uniqueUsername(`${username}${Math.floor(Math.random() * 1000)}`); // taken meanwhile
+      }
+    }
+    await conn.insert(schema.streaks).values({ userId });
+    return { id: userId, email, name, username: chosen, createdAt: now };
+  } catch (err) {
+    await conn.delete(schema.users).where(eq(schema.users.id, userId));
+    throw err;
+  }
 }
 
 export async function signIn(input: { email: string; password: string }): Promise<PublicUser> {

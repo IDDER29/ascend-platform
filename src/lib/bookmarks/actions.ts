@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getCurrentUser } from "@/lib/auth/auth";
 import { db, schema } from "@/lib/db/client";
 import type { Bookmark } from "./model";
@@ -35,17 +35,22 @@ export async function saveBookmarksAction(raw: unknown[]): Promise<boolean> {
   );
   // At the cap, existing bookmarks can still be updated, but no new ones are added.
   let room = MAX_BOOKMARKS - existing.size;
+  const rows = [];
   for (const b of list) {
     if (!existing.has(b.ref)) {
       if (room <= 0) continue;
       room--;
     }
+    rows.push({ id: crypto.randomUUID(), userId: user.id, kind: b.kind, refId: b.ref, data: JSON.stringify(b), createdAt: new Date(b.savedAt) });
+  }
+  // A few batched statements, not one round trip per bookmark (a first sync can be large).
+  for (let i = 0; i < rows.length; i += 200) {
     await conn
       .insert(schema.bookmarks)
-      .values({ id: crypto.randomUUID(), userId: user.id, kind: b.kind, refId: b.ref, data: JSON.stringify(b), createdAt: new Date(b.savedAt) })
+      .values(rows.slice(i, i + 200))
       .onConflictDoUpdate({
         target: [schema.bookmarks.userId, schema.bookmarks.refId],
-        set: { kind: b.kind, data: JSON.stringify(b) },
+        set: { kind: sql`excluded.kind`, data: sql`excluded.data` },
       });
   }
   return true;

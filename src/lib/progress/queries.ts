@@ -83,26 +83,15 @@ export async function markLessonComplete(
   slug: string,
 ): Promise<{ alreadyComplete: boolean; streak: StreakInfo | null }> {
   const conn = requireDb();
-  const existing = await conn.query.lessonProgress.findFirst({
-    where: and(
-      eq(schema.lessonProgress.userId, userId),
-      eq(schema.lessonProgress.level, level),
-      eq(schema.lessonProgress.slug, slug),
-    ),
-  });
-
-  if (!existing) {
-    await conn.insert(schema.lessonProgress).values({
-      id: crypto.randomUUID(),
-      userId,
-      level,
-      slug,
-      completedAt: new Date(),
-    });
-  }
+  // One statement, so a double click or two tabs can't race into the unique index.
+  const inserted = await conn
+    .insert(schema.lessonProgress)
+    .values({ id: crypto.randomUUID(), userId, level, slug, completedAt: new Date() })
+    .onConflictDoNothing()
+    .returning({ id: schema.lessonProgress.id });
 
   const streak = await bumpStreak(userId);
-  return { alreadyComplete: Boolean(existing), streak };
+  return { alreadyComplete: inserted.length === 0, streak };
 }
 
 async function bumpStreak(userId: string): Promise<StreakInfo | null> {

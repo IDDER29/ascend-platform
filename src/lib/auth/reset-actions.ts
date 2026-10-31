@@ -8,6 +8,7 @@
 
 import { and, eq, isNull } from "drizzle-orm";
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { setNewPassword } from "@/lib/auth/auth";
 import { hitRateLimit, requestIp } from "@/lib/auth/rate-limit";
 import { LIMITS, TOO_MANY } from "@/lib/auth/rate-limit-rules";
@@ -49,16 +50,21 @@ export async function requestPasswordResetAction(
   if (!emailConfigured() || !db) return { error: NOT_AVAILABLE };
   if (await hitRateLimit(LIMITS.resetRequest(email, await requestIp()))) return { error: TOO_MANY };
 
-  const user = await db.query.users.findFirst({ where: eq(schema.users.email, email) });
-  if (user) {
+  // Everything that depends on whether the account exists runs after the response, so a known and an
+  // unknown email take the same time to answer (otherwise the delay would reveal who has an account).
+  const conn = db;
+  const base = await siteUrl();
+  after(async () => {
+    const user = await conn.query.users.findFirst({ where: eq(schema.users.email, email) });
+    if (!user) return;
     // One live link at a time: older unused ones stop working.
-    await db
+    await conn
       .update(schema.passwordResetTokens)
       .set({ usedAt: new Date() })
       .where(and(eq(schema.passwordResetTokens.userId, user.id), isNull(schema.passwordResetTokens.usedAt)));
     const { token, hash } = newResetToken();
     const now = Date.now();
-    await db.insert(schema.passwordResetTokens).values({
+    await conn.insert(schema.passwordResetTokens).values({
       id: crypto.randomUUID(),
       userId: user.id,
       tokenHash: hash,
@@ -66,14 +72,13 @@ export async function requestPasswordResetAction(
       usedAt: null,
       createdAt: new Date(now),
     });
-    const base = await siteUrl();
     if (!base) {
       console.error("[reset] NEXT_PUBLIC_SITE_URL is not set, so no reset link can be sent.");
-    } else {
-      const link = `${base}${RESET_NEW_PASSWORD_HREF}?token=${encodeURIComponent(token)}`;
-      await sendEmail({ to: email, ...resetEmail(link) });
+      return;
     }
-  }
+    const link = `${base}${RESET_NEW_PASSWORD_HREF}?token=${encodeURIComponent(token)}`;
+    await sendEmail({ to: email, ...resetEmail(link) });
+  });
   // The same answer either way, so this can't be used to find out who has an account.
   return { ok: true };
 }

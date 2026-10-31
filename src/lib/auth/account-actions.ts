@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { getCurrentUser, setNewPassword } from "@/lib/auth/auth";
 import { confirmationMatches, PROGRESS_TABLES } from "@/lib/auth/account-rules";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/reset-flow";
+import { hitRateLimit } from "@/lib/auth/rate-limit";
+import { LIMITS, TOO_MANY } from "@/lib/auth/rate-limit-rules";
 import { clearSessionCookie, setSessionCookie } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db/client";
 
@@ -31,6 +33,7 @@ export async function changePasswordAction(_prev: AccountActionState, formData: 
 
   const found = await me();
   if (!found || !db) return { error: OFFLINE };
+  if (await hitRateLimit(LIMITS.passwordCheck(found.user.id))) return { error: TOO_MANY };
   if (!(await bcrypt.compare(current, found.passwordHash))) return { error: "Your current password isn't right." };
 
   // Signs out every other device; this one gets a fresh session.
@@ -65,6 +68,7 @@ export async function deleteAccountAction(_prev: AccountActionState, formData: F
   if (!confirmationMatches(String(formData.get("confirm") ?? ""), found.user.username)) {
     return { error: `Type your username, ${found.user.username}, to confirm.` };
   }
+  if (await hitRateLimit(LIMITS.passwordCheck(found.user.id))) return { error: TOO_MANY };
   if (!(await bcrypt.compare(String(formData.get("password") ?? ""), found.passwordHash))) {
     return { error: "That password isn't right." };
   }

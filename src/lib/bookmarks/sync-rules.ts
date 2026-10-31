@@ -12,11 +12,12 @@ export function cleanBookmark(raw: unknown): Bookmark | null {
   const b = raw as Record<string, unknown>;
   const ref = str(b.ref, MAX_TEXT.ref);
   const title = str(b.title, MAX_TEXT.title);
-  const kind = typeof b.kind === "string" ? b.kind : null;
+  const kind = typeof b.kind === "string" && b.kind.length <= 40 ? b.kind : null;
   const reason = b.reason === "later" || b.reason === "reference" || b.reason === "revisit" ? b.reason : null;
   if (!ref || title === null || !kind || !reason) return null;
   const href = b.href === null ? null : str(b.href, MAX_TEXT.href);
-  if (href !== null && !href.startsWith("/") && !/^https?:\/\//.test(href)) return null;
+  // A site path ("/lessons/...", but not "//elsewhere", which browsers read as another site) or a web URL.
+  if (href !== null && !(href.startsWith("/") && !href.startsWith("//")) && !/^https?:\/\//.test(href)) return null;
   return {
     ref,
     kind: kind as Bookmark["kind"],

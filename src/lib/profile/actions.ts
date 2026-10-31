@@ -14,7 +14,7 @@ const MAX_LABEL = 40;
 const MAX_TITLE = 60;
 const MAX_DESCRIPTION = 140;
 const BAD_URL = "Use a full web address, like github.com/you/project.";
-const SAVE_FAILED = "Could not save (the profile tables may need a migration).";
+const SAVE_FAILED = "Could not save. Try again in a moment.";
 
 async function owner() {
   const user = await getCurrentUser();

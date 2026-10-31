@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { signIn, signUp, AuthError } from "@/lib/auth/auth";
 import { AFTER_SIGN_IN_HREF, AFTER_SIGN_UP_HREF, safeNextHref } from "@/lib/auth/next-href";
-import { hitRateLimit, requestIp } from "@/lib/auth/rate-limit";
+import { atLimit, hitRateLimit, recordAttempt, requestIp } from "@/lib/auth/rate-limit";
 import { LIMITS, TOO_MANY } from "@/lib/auth/rate-limit-rules";
 import { setSessionCookie } from "@/lib/auth/session";
 
@@ -17,14 +17,20 @@ export async function signInAction(_prev: AuthActionState, formData: FormData): 
   const keepSignedIn = formData.get("keepSignedIn") === "true";
   const next = safeNextHref(String(formData.get("next") || ""));
 
-  if (await hitRateLimit(LIMITS.signIn(email, await requestIp()))) return { error: TOO_MANY };
+  if (await hitRateLimit(LIMITS.signIn(await requestIp()))) return { error: TOO_MANY };
+  const failures = LIMITS.signInFailures(email);
+  if (await atLimit(failures)) return { error: TOO_MANY };
 
   let userId: string;
   try {
     const user = await signIn({ email, password });
     userId = user.id;
   } catch (err) {
-    return { error: err instanceof AuthError ? err.message : "Something went wrong. Try again." };
+    if (err instanceof AuthError) {
+      await recordAttempt(failures);
+      return { error: err.message };
+    }
+    return { error: "Something went wrong. Try again." };
   }
 
   await setSessionCookie(userId, keepSignedIn);

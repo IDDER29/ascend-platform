@@ -224,6 +224,34 @@ export function assemble(source: string[], data: Record<string | number, number>
   return mem;
 }
 
+/** One line of an assembly listing: where it lands and the bytes it becomes (null for a label-only or blank line). */
+export type ListingLine = { source: string; label: string | null; address: number | null; bytes: [number, number] | null };
+
+/**
+ * What the assembler's two passes work out, line by line: pass one gives each instruction an address
+ * and each label its address; pass two gives each instruction its bytes. Throws like `assemble`.
+ */
+export function assembleListing(source: string[]): { lines: ListingLine[]; labels: Record<string, number> } {
+  const mem = assemble(source);
+  const labels: Record<string, number> = {};
+  let at = 0;
+  const lines = source.map((raw): ListingLine => {
+    let text = raw.replace(/;.*/, "").trim();
+    let label: string | null = null;
+    const m = /^([A-Za-z_]\w*):\s*(.*)$/.exec(text);
+    if (m) {
+      label = m[1];
+      labels[label] = at;
+      text = m[2].trim();
+    }
+    if (!text) return { source: raw, label, address: null, bytes: null };
+    const line: ListingLine = { source: raw, label, address: at, bytes: [mem[at], mem[at + 1]] };
+    at += 2;
+    return line;
+  });
+  return { lines, labels };
+}
+
 export function boot(mem: number[], input: number[] = []): Machine {
   return { mem: [...mem], r: [0, 0, 0, 0], pc: 0, sp: STACK_TOP, z: false, halted: false, out: [], input: [...input], steps: 0 };
 }

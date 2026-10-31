@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { Pause, Play, RotateCcw, StepForward } from "lucide-react";
 import {
   CODE_END,
@@ -8,6 +8,7 @@ import {
   STACK_BOTTOM,
   STACK_TOP,
   assemble,
+  assembleListing,
   boot,
   decode,
   step,
@@ -37,28 +38,123 @@ const REGION_BG: Record<ReturnType<typeof region>, string> = {
  * The tiny CPU, version 2, live in a lesson: four registers, a stack, CALL/RET and IN/OUT over 256 bytes.
  * Pass JSON strings (MDX drops expression props):
  * programJson='["LDI R0, 2","loop: DEC R0","JNZ loop","HALT"]' dataJson='{"128":3}' inputJson='[5]'.
+ * With `editable`, the learner writes the program; with goalJson ('{"out":[42]}', '{"R1":7}',
+ * '{"mem":{"128":5}}'), the result is checked when the program halts.
  */
 export function TinyCpu2({
   caption,
   programJson,
   dataJson,
   inputJson,
+  goalJson,
+  editable = false,
 }: {
   caption?: string;
   programJson: string;
   dataJson?: string;
   inputJson?: string;
+  goalJson?: string;
+  editable?: boolean;
+}) {
+  const initial = useMemo(() => {
+    try {
+      return (JSON.parse(programJson) as string[]).join("\n");
+    } catch {
+      return "";
+    }
+  }, [programJson]);
+  const [source, setSource] = useState(initial);
+  const editorId = useId();
+  const goal = useMemo(() => {
+    try {
+      return goalJson ? (JSON.parse(goalJson) as Goal) : null;
+    } catch {
+      return null;
+    }
+  }, [goalJson]);
+
+  const editor = editable ? (
+    <div className="flex flex-col gap-1.5 border-b-2 border-[var(--coach-border)] p-4">
+      <label htmlFor={editorId} className="text-[12.5px] font-semibold text-[var(--coach-ink-secondary)]">
+        Your program: one instruction per line, labels like <code>loop:</code>, and <code>;</code> for comments
+      </label>
+      <textarea
+        id={editorId}
+        value={source}
+        onChange={(e) => setSource(e.target.value)}
+        spellCheck={false}
+        rows={Math.max(5, source.split("\n").length + 1)}
+        className={`w-full resize-y rounded-xl border-2 border-[var(--coach-border)] bg-[var(--coach-code-bg)] p-3 text-[13.5px] leading-relaxed text-[var(--coach-code-ink)] outline-none focus-visible:border-[var(--coach-focus)] ${MONO}`}
+      />
+      <button
+        type="button"
+        onClick={() => setSource(initial)}
+        className="self-start text-[12.5px] text-[var(--coach-ink-muted)] underline underline-offset-2"
+      >
+        Start again from the given program
+      </button>
+    </div>
+  ) : null;
+
+  // A new program means a fresh machine: the key resets everything below.
+  return (
+    <MachineView
+      key={source}
+      caption={caption}
+      source={source.split("\n")}
+      dataJson={dataJson}
+      inputJson={inputJson}
+      goal={goal}
+      editor={editor}
+    />
+  );
+}
+
+type Goal = { out?: number[]; mem?: Record<string, number> } & Partial<Record<"R0" | "R1" | "R2" | "R3", number>>;
+
+/** Which parts of a goal aren't met yet, in words; empty when it's met. */
+function goalMisses(m: Machine, goal: Goal): string[] {
+  const misses: string[] = [];
+  if (goal.out && JSON.stringify(m.out) !== JSON.stringify(goal.out)) {
+    misses.push(`the output should be ${goal.out.join(", ") || "nothing"}`);
+  }
+  for (const r of ["R0", "R1", "R2", "R3"] as const) {
+    const want = goal[r];
+    if (want !== undefined && m.r[Number(r[1])] !== want) misses.push(`${r} should be ${want}`);
+  }
+  for (const [a, v] of Object.entries(goal.mem ?? {})) {
+    if (m.mem[Number(a)] !== v) misses.push(`box ${hex(Number(a))} should hold ${v}`);
+  }
+  return misses;
+}
+
+function MachineView({
+  caption,
+  source,
+  dataJson,
+  inputJson,
+  goal,
+  editor,
+}: {
+  caption?: string;
+  source: string[];
+  dataJson?: string;
+  inputJson?: string;
+  goal: Goal | null;
+  editor: ReactNode;
 }) {
   const start = useMemo(() => {
     try {
-      const program: string[] = JSON.parse(programJson);
-      const mem = assemble(program, dataJson ? JSON.parse(dataJson) : {});
+      const mem = assemble(source, dataJson ? JSON.parse(dataJson) : {});
       const input: number[] = inputJson ? JSON.parse(inputJson) : [];
-      return { machine: boot(mem, input), lines: program.length, error: null };
+      const lines = assembleListing(source).lines.filter((l) => l.address !== null).length;
+      return { machine: boot(mem, input), lines, error: null };
     } catch (e) {
       return { machine: null, lines: 0, error: e instanceof Error ? e.message : "This program can't run." };
     }
-  }, [programJson, dataJson, inputJson]);
+    // `source` is a fresh array each render, but the parent's key already resets this view on change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [machine, setMachine] = useState<Machine | null>(start.machine);
   const [status, setStatus] = useState<{ text: string; tone: "info" | "stop" } | null>(null);
@@ -104,6 +200,19 @@ export function TinyCpu2({
   });
 
   if (!machine) {
+    if (editor) {
+      return (
+        <figure className="not-prose my-6 overflow-hidden rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] text-[var(--coach-ink)]">
+          <figcaption className="border-b-2 border-[var(--coach-border)] px-4 py-3 text-[15px] font-bold">
+            {caption ?? "The tiny CPU, version 2"}
+          </figcaption>
+          {editor}
+          <p aria-live="polite" className="m-0 bg-[var(--coach-wrong-soft)] px-4 py-3 text-[14px]">
+            Can&apos;t assemble yet: {start.error}.
+          </p>
+        </figure>
+      );
+    }
     return (
       <div className="not-prose my-6 rounded-2xl border-2 border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-soft)] p-4 text-[14px]">
         Tiny CPU: {start.error}
@@ -115,9 +224,14 @@ export function TinyCpu2({
     const d = decode(machine.mem[at], machine.mem[at + 1]);
     return { at, text: d.ok ? d.d.text : "??" };
   });
+  const misses = goal && machine.halted ? goalMisses(machine, goal) : null;
   const line =
     machine.halted
-      ? "Halted."
+      ? misses === null
+        ? "Halted."
+        : misses.length === 0
+          ? "Halted, and the goal is met."
+          : `Halted, but not there yet: ${misses.join("; ")}.`
       : machine.steps >= MAX_STEPS
         ? `Stopped after ${MAX_STEPS} steps: this program may loop forever.`
         : (status?.text ?? "Ready. Before each Step, predict what will change.");
@@ -154,6 +268,7 @@ export function TinyCpu2({
           </button>
         </span>
       </figcaption>
+      {editor}
 
       <div className="grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_170px]">
         {/* The program, with the next instruction marked. */}
@@ -257,7 +372,11 @@ export function TinyCpu2({
       <p
         aria-live="polite"
         className={`m-0 border-t-2 border-[var(--coach-border)] px-4 py-3 text-[14px] leading-snug ${
-          status?.tone === "stop" && !machine.halted ? "bg-[var(--coach-wrong-soft)]" : ""
+          misses && misses.length === 0
+            ? "bg-[var(--coach-tint-lime-bg)] font-semibold"
+            : (status?.tone === "stop" && !machine.halted) || (misses && misses.length > 0)
+              ? "bg-[var(--coach-wrong-soft)]"
+              : ""
         }`}
       >
         {line}

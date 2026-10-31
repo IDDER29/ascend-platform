@@ -1,0 +1,118 @@
+---
+title: "Project: Write an assembler"
+level: level-00-bits-logic
+slug: project-assembler
+order: 75
+timeMin: 45
+learningOutcomes:
+- "Run both passes of an assembler by hand: addresses and the label table, then the bytes"
+- Assemble a program whose CALL jumps forward to a label defined later
+- Spot an assembler bug from the bytes it produced
+- Write the two passes as a step-by-step procedure a program could follow
+primer:
+- title: "The assembler, pass one: finding labels"
+  type: doc
+  meta: Reread · 3 min · the location counter and the label table.
+  essential: true
+- title: "The assembler, pass two: writing the bytes"
+  type: doc
+  meta: Reread · 3 min · byte0 and byte1 for each format.
+  essential: true
+knowledgeCheck:
+- question: Why does an assembler need two passes for CALL show when show is defined further down?
+  answer: "When the assembler reaches CALL show, it hasn't seen show yet, so it can't know its address. Pass one walks the whole program to fill the label table; pass two then has every address it needs."
+  jumpToId: part-2-a-forward-call
+  jumpToLabel: "Part 2: A forward call"
+- question: A broken assembler produced 98 04 for CALL show, where show is the fifth instruction. What's wrong?
+  answer: "It gave the label the instruction's index, 4, instead of its byte address. Instructions are two bytes, so the fifth one starts at byte 8: the right bytes are 98 08."
+  jumpToId: part-3-find-the-assembler-bug
+  jumpToLabel: "Part 3: Find the assembler bug"
+assignment:
+  instruction: "Turn your procedure from part 4 into a real program in any language you know (Python, JavaScript or C are all fine), for the instructions used in parts 1 and 2. Test it on both programs: its bytes must match the lab's exactly."
+  resourceName: 'nand2tetris.org: Project 6, the assembler'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project06'
+additionalResources:
+- title: "Assembly language: assembler (Wikipedia)"
+  type: doc
+  meta: how real assemblers work, including two-pass ones
+  url: 'https://en.wikipedia.org/wiki/Assembly_language#Assembler'
+whyThisMatters: "An assembler is the first program that writes programs. Doing its two passes by hand shows that nothing magic turns text into machine code, only a careful procedure, and it's the first step toward the compiler and linker you'll meet in the next course."
+---
+
+You're the assembler. In each lab, fill in what each pass works out; every cell is checked against the real assembler as you type. Addresses can be written as hex (0x0A or 0A) or decimal (10). Bytes are two hex bytes, like `08 03`.
+
+You'll need the opcodes. Here are the ones used below; byte0 is `opcode << 3 | Rd << 1`.
+
+<TruthTable caption='Opcodes used in this project' rowsJson='[["instruction", "opcode", "byte0 with R0", "byte1"], ["LDI Rd, n", "1", "08", "n"], ["OUT Rd", "16", "80", "00"], ["DEC Rd", "23", "B8", "00"], ["INC Rd", "22", "B0", "00"], ["JNZ addr", "15", "78", "addr"], ["CALL addr", "19", "98", "addr"], ["RET", "20", "A0", "00"], ["HALT", "21", "A8", "00"]]' />
+
+A register other than R0 adds `Rd << 1` to byte0: R1 adds 2, R2 adds 4, R3 adds 6.
+
+## Part 1: A loop, both passes
+
+<AssemblerLab caption='Assemble a countdown' programJson='["LDI R0, 3", "loop: OUT R0", "DEC R0", "JNZ loop", "HALT"]' passJson='both' />
+
+<details>
+<summary>Check your answer</summary>
+
+Pass one: the instructions are at 0x00, 0x02, 0x04, 0x06 and 0x08, and `loop` = 0x02 (the label names the instruction on its line).
+
+Pass two: `08 03`, `80 00`, `B8 00`, `78 02`, `A8 00`. JNZ's second byte is the label's address from pass one.
+
+</details>
+
+## Part 2: A forward call
+
+This program calls a subroutine defined after it. Assemble it.
+
+<AssemblerLab caption='Assemble a program with a forward call' programJson='["LDI R1, 2", "CALL show", "CALL show", "HALT", "show: OUT R1", "INC R1", "RET"]' passJson='both' />
+
+<details>
+<summary>Check your answer</summary>
+
+Pass one: 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, and `show` = 0x08.
+
+Pass two: `0A 02` (LDI with R1: 08 + 2), `98 08`, `98 08`, `A8 00`, `82 00` (OUT R1), `B2 00` (INC R1), `A0 00`.
+
+When pass two reaches the first CALL, `show` is already in the label table. A one-pass assembler would have had to leave a gap and come back.
+
+</details>
+
+## Part 3: Find the assembler bug
+
+A classmate's assembler produced these bytes for the program in part 2:
+
+<TruthTable caption='Bytes from a buggy assembler' rowsJson='[["address", "source", "bytes"], ["00", "LDI R1, 2", "0A 02"], ["02", "CALL show", "98 04"], ["04", "CALL show", "98 04"], ["06", "HALT", "A8 00"], ["08", "show: OUT R1", "82 00"], ["0A", "INC R1", "B2 00"], ["0C", "RET", "A0 00"]]' />
+
+What did it get wrong, and what would the program do?
+
+<details>
+<summary>Check your answer</summary>
+
+Both CALLs say 04 instead of 08. `show` is the fifth instruction, index 4, and the assembler used that index instead of the byte address: each instruction is two bytes, so the fifth starts at 8. The program would call 0x04, which is the second CALL itself, calling itself again and again until the stack overflows. One wrong multiplication in pass one breaks every jump to a label.
+
+</details>
+
+## Part 4: Write the procedure
+
+Write the assembler as numbered steps a program could follow, with no "and then you work it out". Then compare with this one.
+
+<details>
+<summary>Check your answer</summary>
+
+Pass one:
+1. Set the location counter to 0 and the label table to empty.
+2. For each line: remove the comment. If it starts with `name:`, record name = location counter. If an instruction is left, add 2 to the location counter.
+
+Pass two:
+1. Set the location counter to 0.
+2. For each line with an instruction: look up its opcode and format; read its register and operand, replacing a label with its address from the table; write byte0 = opcode << 3 | Rd << 1 and byte1 by format at the location counter; add 2.
+3. Report an error for an unknown instruction, a missing label or an operand out of range.
+
+That's a complete assembler. The one this site uses (`assemble` in its source) is these steps plus error messages.
+
+</details>
+
+## Done when
+
+Both labs say "Assembled", you've explained the bug in part 3, and your procedure has no gaps. Then turn it into real code for the assignment.

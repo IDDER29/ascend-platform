@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { assemble, boot, decode, disassemble, encode, run, step, STACK_BOTTOM, STACK_TOP } from "./v2";
+import { assemble, assembleListing, boot, decode, disassemble, encode, run, step, STACK_BOTTOM, STACK_TOP } from "./v2";
 
 const go = (src: string[], data = {}, input: number[] = []) => run(boot(assemble(src, data), input));
 const hexBytes = (mem: number[], n: number) =>
@@ -158,4 +158,19 @@ test("assembler errors are readable", () => {
   assert.throws(() => assemble(["LDA R0, 0x80"]), /brackets/);
   assert.throws(() => assemble(["a: NOP", "a: NOP"]), /twice/);
   assert.throws(() => assemble(["HALT"], { 0: 1 }), /overwrite/);
+});
+
+test("the listing shows each pass's work: addresses and labels, then bytes", () => {
+  const { lines, labels } = assembleListing(["; count down from 2", "LDI R0, 2", "loop: DEC R0", "JNZ loop", "HALT"]);
+  assert.deepEqual(labels, { loop: 2 });
+  assert.deepEqual(
+    lines.map((l) => [l.label, l.address, l.bytes && l.bytes.map((b) => b.toString(16).padStart(2, "0")).join(" ")]),
+    [
+      [null, null, null],
+      [null, 0, "08 02"],
+      ["loop", 2, "b8 00"],
+      [null, 4, "78 02"],
+      [null, 6, "a8 00"],
+    ],
+  );
 });

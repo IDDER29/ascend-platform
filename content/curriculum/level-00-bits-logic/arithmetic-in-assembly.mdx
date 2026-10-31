@@ -1,0 +1,96 @@
+---
+title: "Arithmetic, logic and flags in assembly"
+level: level-00-bits-logic
+slug: arithmetic-in-assembly
+order: 63
+timeMin: 8
+learningOutcomes:
+- Use version 2's arithmetic and logic instructions, with registers and with numbers
+- Predict results that wrap around past 255, and the value of the Z flag after each instruction
+- Say which instructions set Z and which leave it alone
+- Combine a few instructions into a small calculation and check it in the simulator
+primer:
+- title: "Operands: values, registers and addresses"
+  type: doc
+  meta: Reread · 3 min · the operands these instructions take.
+  essential: true
+- title: "Bitwise operations: AND, OR, XOR, shifts and masks"
+  type: doc
+  meta: Reread · 3 min · the logic instructions do these on a byte.
+  essential: false
+knowledgeCheck:
+- question: R1 holds 200. What is in R1 after ADDI R1, 100, and what is Z?
+  answer: "44, because 300 doesn't fit in a byte and wraps around: 300 - 256 = 44. Z is 0, because the result isn't zero. Version 2 has no carry flag, so nothing records that the sum wrapped."
+  jumpToId: the-arithmetic-instructions
+  jumpToLabel: The arithmetic instructions
+- question: After SUBI R0, 5 makes Z = 1, the program runs LDI R1, 200. What is Z now, and why does it matter?
+  answer: "Still 1. LDI doesn't change Z: only arithmetic, logic, shift and compare instructions do. A branch that tests Z after a load is testing a result from earlier, which is a classic bug."
+  jumpToId: which-instructions-set-z
+  jumpToLabel: Which instructions set Z
+assignment:
+  instruction: "Write a version 2 program that computes 3 x A + 1 for the byte A in box 0x80, using only ADD, ADDI, SHL and MOV (no loop). Test it with A = 5 (expect 16) and A = 100 (expect 45, because 301 wraps)."
+  resourceName: 'Wikipedia: Bitwise operation'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Bitwise_operation'
+additionalResources:
+- title: Status register (Wikipedia)
+  type: doc
+  meta: the flags real CPUs keep, many more than Z
+  url: 'https://en.wikipedia.org/wiki/Status_register'
+whyThisMatters: "Every calculation a program makes is built from a handful of instructions like these, and every if is decided by a flag one of them leaves behind. Knowing which instructions touch the flags, and that bytes wrap silently, is what lets you trust a branch and spot an overflow."
+---
+
+You've moved values around; now you'll compute with them. Version 2 has a dozen arithmetic and logic instructions. They all work on a register and leave the result in that register, and most of them also set the Z flag.
+
+By the end you'll be able to write small calculations, predict results that wrap past 255, and know exactly when Z changes.
+
+## The arithmetic instructions
+
+Each instruction names a destination register first. The second operand is either another register or a number written in the instruction:
+
+<TruthTable caption='Arithmetic in version 2' rowsJson='[["instruction", "does", "example"], ["ADD Rd, Rs", "Rd = Rd + Rs", "ADD R0, R1"], ["SUB Rd, Rs", "Rd = Rd - Rs", "SUB R0, R1"], ["ADDI Rd, n", "Rd = Rd + n", "ADDI R0, 2"], ["SUBI Rd, n", "Rd = Rd - n", "SUBI R0, 5"], ["INC Rd", "Rd = Rd + 1", "INC R3"], ["DEC Rd", "Rd = Rd - 1", "DEC R3"]]' />
+
+Every result is a byte, so it wraps around: 200 + 100 is 300, which doesn't fit, so the register holds 300 - 256 = 44. Below zero wraps too: 3 - 5 gives 254, the byte for -2. Version 2 keeps no carry flag, so nothing records that a wrap happened. If it matters, the program has to check for it itself.
+
+## The logic instructions
+
+The logic instructions work on all eight bits at once, exactly as in the bitwise operations lesson:
+
+<TruthTable caption='Logic and shifts in version 2' rowsJson='[["instruction", "does"], ["AND Rd, Rs", "each bit: 1 only if both are 1"], ["OR Rd, Rs", "each bit: 1 if either is 1"], ["XOR Rd, Rs", "each bit: 1 if they differ"], ["SHL Rd, n", "shift left n places (0 to 7), zeros come in"], ["SHR Rd, n", "shift right n places (0 to 7), zeros come in"]]' />
+
+This program takes 0xF0 and 0x3C through each one. Predict all five outputs before you run it.
+
+<TinyCpu2 caption='Logic on two bytes' programJson='["LDI R0, 0xF0","LDI R1, 0x3C","AND R0, R1","OUT R0","LDI R0, 0xF0","OR R0, R1","OUT R0","LDI R0, 0xF0","XOR R0, R1","OUT R0","SHL R1, 1","OUT R1","SHR R1, 3","OUT R1","HALT"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+48, 252, 204, 120, 15. In binary: 1111 0000 AND 0011 1100 is 0011 0000 (48); OR is 1111 1100 (252); XOR is 1100 1100 (204). Shifting 0011 1100 left once gives 0111 1000 (120), doubling it; shifting that right three places gives 0000 1111 (15).
+
+</details>
+
+<KeyIdea>Shifting left by 1 doubles a byte; shifting right by 1 halves it, dropping any remainder. Bits that fall off the end are lost.</KeyIdea>
+
+## Which instructions set Z
+
+Z is set to 1 when an instruction's result is zero, and to 0 when it isn't. But only some instructions do that:
+
+- **Set Z:** ADD, SUB, AND, OR, XOR, SHL, SHR, INC, DEC, ADDI, SUBI, and the compares CMP and CMPI.
+- **Leave Z alone:** LDI, LDA, STA, MOV, LDR, STR, OUT, IN, PUSH, POP and the jumps.
+
+So in `SUBI R0, 5` followed by `LDI R1, 200`, Z is still 1 after the LDI: it's describing the SUBI's result. A branch on Z always answers a question about the last instruction that set it, which may not be the last instruction that ran.
+
+<KeyIdea>Z describes the most recent arithmetic, logic or compare result, not the most recent instruction.</KeyIdea>
+
+## Try it
+
+Boxes 0x80 and 0x81 hold 12 and 9. The program adds them and shows 21. Make it show twice the sum, 42, by adding one instruction. (Hint: a shift.)
+
+<TinyCpu2 editable caption='Show twice the sum' programJson='["LDA R0, [128]","LDA R1, [129]","ADD R0, R1","OUT R0","HALT"]' dataJson='{"128":12,"129":9}' goalJson='{"out":[42]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Add `SHL R0, 1` after the ADD. Shifting left one place doubles 21 to 42. `ADD R0, R0` works too: it also doubles R0.
+
+</details>

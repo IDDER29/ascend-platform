@@ -1,0 +1,96 @@
+---
+title: "Loops as repeated jumps"
+level: level-00-bits-logic
+slug: loops-in-assembly
+order: 65
+timeMin: 8
+learningOutcomes:
+- Write a counting loop with a label, DEC and JNZ, and say how many times its body runs
+- Use a loop to add up a series and to multiply by repeated addition
+- Find and fix an off-by-one error in a loop
+- Explain why a loop counter that starts at 0 runs 256 times on an 8-bit register
+primer:
+- title: "Comparisons and conditional branches"
+  type: doc
+  meta: Reread · 3 min · DEC sets Z, so JNZ can follow it.
+  essential: true
+knowledgeCheck:
+- question: How many times does the body of LDI R0, 3 / loop OUT R0 / DEC R0 / JNZ loop run, and what does it show?
+  answer: "Three times, showing 3, 2, 1. After the third DEC, R0 is 0, Z is 1, and JNZ doesn't jump, so the loop ends before showing 0."
+  jumpToId: a-loop-is-a-jump-backwards
+  jumpToLabel: A loop is a jump backwards
+- question: A countdown should show 5 down to 0 but stops at 1. What's the smallest fix?
+  answer: "Show R0 once more after the loop: add OUT R0 after JNZ. The loop exits as soon as R0 reaches 0, before its OUT runs again. Being off by one at the start or end of a loop is the most common loop bug."
+  jumpToId: off-by-one
+  jumpToLabel: Off by one
+- question: Why does a loop whose counter starts at 0 run 256 times?
+  answer: "The first DEC turns 0 into 255, not -1, because the register is 8 bits wide and wraps around. JNZ sees 255, which isn't zero, and the loop carries on through 254, 253 and so on until it reaches 0 again, 256 passes in all."
+  jumpToId: the-loop-that-starts-at-zero
+  jumpToLabel: The loop that starts at zero
+assignment:
+  instruction: "Write a version 2 loop that computes 2 to the power of the number in box 0x80 (for example, 5 gives 32) by doubling R1 once per pass. Decide what it should show when box 0x80 holds 0, and make sure your loop handles that case without running 256 times."
+  resourceName: 'nand2tetris.org: Project 4, Machine Language'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project04'
+additionalResources:
+- title: Off-by-one error (Wikipedia)
+  type: doc
+  meta: the bug this lesson trains you to spot
+  url: 'https://en.wikipedia.org/wiki/Off-by-one_error'
+whyThisMatters: "Every for and while loop in every language becomes a counter, a test and a jump back. Knowing exactly when that test happens is how you get loops to stop where you meant, and why off-by-one errors and loops that run far too long are among the most common bugs there are."
+---
+
+A loop is a jump backwards. The program does some work, updates a counter, and jumps back to the start if it isn't finished. Version 2's arithmetic sets Z, so the update and the test can be the same instruction.
+
+By the end you'll be able to write loops that count, add up and multiply, and to spot when one runs once too often, once too few, or 256 times.
+
+## A loop is a jump backwards
+
+This loop shows 3, 2, 1:
+
+<TinyCpu2 caption='Count down from 3' programJson='["LDI R0, 3","loop: OUT R0","DEC R0","JNZ loop","HALT"]' />
+
+`loop:` labels the start of the body. Each pass shows R0, takes 1 off it, and jumps back while the result isn't zero. DEC sets Z, so no compare is needed. When R0 reaches 0, JNZ falls through to HALT.
+
+Count the passes: R0 is 3, 2 and 1 at the OUT, so the body runs three times. The counter's starting value is the number of passes.
+
+## Loops that compute
+
+A loop can build up a result as it counts. This one adds 5 + 4 + 3 + 2 + 1 into R1:
+
+<TinyCpu2 caption='Add 1 to 5' programJson='["LDI R0, 5","LDI R1, 0","loop: ADD R1, R0","DEC R0","JNZ loop","OUT R1","HALT"]' />
+
+It shows 15. Multiplying is repeated addition, so the same shape multiplies too: to compute 6 x 7, add 6 to R1 seven times. Box 0x80 holds 6.
+
+<TinyCpu2 caption='6 x 7 by adding' programJson='["LDI R0, 7","LDI R1, 0","LDA R2, [128]","loop: ADD R1, R2","DEC R0","JNZ loop","OUT R1","HALT"]' dataJson='{"128":6}' />
+
+It shows 42, after seven passes through the loop.
+
+<KeyIdea>A counting loop is three parts: a counter set before the loop, a body, and a DEC with a JNZ back to the start.</KeyIdea>
+
+## Off by one
+
+This program should show 5, 4, 3, 2, 1, 0, but it stops at 1. Fix it.
+
+<TinyCpu2 editable caption='Count down to 0' programJson='["LDI R0, 5","loop: OUT R0","DEC R0","JNZ loop","HALT"]' goalJson='{"out":[5,4,3,2,1,0]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Add `OUT R0` after `JNZ loop`, before HALT. The loop leaves as soon as DEC makes R0 zero, so the 0 is never shown inside it. Showing it once after the loop is the smallest fix. Starting the counter at 6 wouldn't work: the loop would show 6 first.
+
+</details>
+
+Loops are easy to get wrong by exactly one pass, at the start or at the end. The habit that catches it: before running a loop, write down the counter's value at each pass and the last value the body sees.
+
+## The loop that starts at zero
+
+What if the counter starts at 0? This loop counts its passes in R1 and shows the count at the end. You might expect it to skip the loop entirely, or run once.
+
+<TinyCpu2 caption='A counter that starts at 0' programJson='["LDI R0, 0","LDI R1, 0","loop: INC R1","DEC R0","JNZ loop","OUT R1","HALT"]' />
+
+It takes 772 steps and shows 0. The first DEC turns 0 into 255, not -1, so JNZ jumps back, and the loop goes on through 254, 253 and so on until R0 reaches 0 again: 256 passes. R1 counted all 256, which also wrapped, back to 0.
+
+To avoid it, test the counter before the loop starts: `CMPI R0, 0` and `JZ` past the loop if there's nothing to do.
+
+<KeyIdea>An 8-bit counter can't go below 0: it wraps to 255. Check for zero before a loop, not only at its end.</KeyIdea>

@@ -1,0 +1,94 @@
+---
+title: "Loading and storing in assembly"
+level: level-00-bits-logic
+slug: loading-and-storing
+order: 62
+timeMin: 7
+learningOutcomes:
+- Copy a value from one box to another with a load and a store
+- Swap two boxes using two registers, without losing either value
+- Store through a register that holds an address, with STR
+- Explain why a store into the code area changes the program, and why nothing stops it
+primer:
+- title: "Operands: values, registers and addresses"
+  type: doc
+  meta: Reread · 3 min · brackets mean "the box at".
+  essential: true
+knowledgeCheck:
+- question: Why does copying box 0x80 into box 0x81 take two instructions, not one?
+  answer: "The CPU can't move a byte straight from one box to another. A load brings it into a register (LDA R0, [0x80]), then a store writes the register into the other box (STA R0, [0x81])."
+  jumpToId: memory-to-register-and-back
+  jumpToLabel: Memory to register and back
+- question: In the broken swap, what went wrong and how do two registers fix it?
+  answer: "The first store overwrote box 0x81 before its value had been read, so the 9 was lost. Loading both boxes into two registers first, then storing them crosswise, keeps both values safe until they're written."
+  jumpToId: swapping-two-boxes
+  jumpToLabel: Swapping two boxes
+- question: A program stored 0xA8 into box 0x06 and then stopped early. Why?
+  answer: "0xA8 is the first byte of HALT, and box 0x06 held the start of an instruction. Code and data share memory and nothing protects the code area, so the store turned that instruction into HALT."
+  jumpToId: nothing-guards-the-code
+  jumpToLabel: Nothing guards the code
+assignment:
+  instruction: "Write a version 2 program that reverses three boxes: 0x80, 0x81 and 0x82 hold 1, 2 and 3, and should end up holding 3, 2 and 1. Predict each register and box after every instruction, then run it in any simulator in this course by typing it in."
+  resourceName: 'Wikipedia: Load-store architecture'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Load%E2%80%93store_architecture'
+additionalResources:
+- title: Load-store architecture (Wikipedia)
+  type: doc
+  meta: CPUs that only touch memory through loads and stores, like this one
+  url: 'https://en.wikipedia.org/wiki/Load%E2%80%93store_architecture'
+whyThisMatters: "Every variable a program uses lives in memory and has to come into a register to be worked on, then go back. Counting the loads and stores in a loop is often the first step in making code faster, and an unexpected store is behind many of the hardest bugs."
+---
+
+The tiny CPU, like most modern CPUs, does its work in registers. Memory only takes part through two kinds of instruction: **loads**, which copy a box into a register, and **stores**, which copy a register into a box.
+
+By the end you'll be able to copy and swap boxes, store through a pointer, and explain why a careless store can rewrite the program itself.
+
+## Memory to register and back
+
+There's no instruction that copies one box straight to another. A copy is always two steps: load, then store.
+
+<TruthTable caption='The loads and stores of version 2' rowsJson='[["instruction", "what it does"], ["LDA R0, [0x80]", "R0 = the value in box 0x80"], ["STA R0, [0x81]", "box 0x81 = R0"], ["LDR R0, [R1]", "R0 = the value in the box R1 points at"], ["STR R0, [R1]", "the box R1 points at = R0"]]' />
+
+None of these change the Z flag. Moving a value isn't a calculation, so it leaves the flags as they were.
+
+## Swapping two boxes
+
+Boxes 0x80 and 0x81 hold 3 and 9. Swap them, so 0x80 holds 9 and 0x81 holds 3. The starting program is a common first try, and it doesn't work: run it and look at the two boxes in the memory grid.
+
+<TinyCpu2 editable caption='Swap boxes 0x80 and 0x81' programJson='["LDA R0, [128]","STA R0, [129]","HALT"]' dataJson='{"128":3,"129":9}' goalJson='{"mem":{"128":9,"129":3}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+The starting program copies the 3 over the 9, and the 9 is gone for good. Load both values first, then store them crosswise:
+
+- `LDA R0, [128]`
+- `LDA R1, [129]`
+- `STA R0, [129]`
+- `STA R1, [128]`
+- `HALT`
+
+On version 1, with one register, you'd need a spare box to hold one value. Four registers make it easier.
+
+</details>
+
+<KeyIdea>A store overwrites. Before you write to a box, make sure its old value is either safe in a register or no longer needed.</KeyIdea>
+
+## Storing through a pointer
+
+STR is the store version of LDR: the address comes from a register. This program puts 0x90 in R1 and 7 in R0, then stores R0 into the box R1 points at.
+
+<TinyCpu2 caption='Store through a pointer' programJson='["LDI R1, 0x90","LDI R0, 7","STR R0, [R1]","HALT"]' />
+
+Box 0x90 becomes 7. Change R1 and the same STR writes a different box: that's how a loop fills a whole list.
+
+## Nothing guards the code
+
+Code and data share one memory, and version 2 doesn't protect the code area: a store can write any box, including one that holds an instruction. This program stores 0xA8, the first byte of HALT, into box 0x06, which holds the start of a NOP. Predict what it shows before you run it.
+
+<TinyCpu2 caption='A store that rewrites the program' programJson='["LDI R0, 0xA8","STA R0, [0x06]","LDI R1, 0","NOP","LDI R0, 9","OUT R0","HALT"]' />
+
+It shows nothing. When the program counter reaches 0x06, the CPU fetches HALT and stops before the OUT. Real computers protect their code from this kind of accident; you'll see how in The Complete System.
+
+<KeyIdea>Memory is just numbered boxes. Code, data and the stack are a convention about which boxes hold what, and on this CPU, nothing enforces it.</KeyIdea>

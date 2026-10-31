@@ -180,7 +180,7 @@ test("guest with no data gets honest empty values", () => {
   assert.equal(model.strength.total, 0);
   assert.equal(model.days.practicedDays, 0);
   assert.equal(model.paths[0].hitRate, null);
-  assert.equal(model.paths[0].lessonCount, 58);
+  assert.equal(model.paths[0].lessonCount, 75);
   assert.equal(model.paths[0].cardCount, FOUNDATIONS_CARDS);
   assert.ok(model.paths[0].steps.every((step) => !step.done));
   // Foundations is always unlocked, so a guest can free-study.

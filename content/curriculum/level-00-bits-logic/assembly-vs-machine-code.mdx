@@ -1,0 +1,99 @@
+---
+title: "Machine code and assembly language"
+level: level-00-bits-logic
+slug: assembly-vs-machine-code
+order: 60
+timeMin: 7
+learningOutcomes:
+- Describe the tiny CPU, version 2, and how it grows the first tiny CPU without changing the idea
+- Explain that machine code is the bytes a CPU runs and assembly is a readable name for each instruction
+- Turn a short line of assembly into its two bytes, and back, using the instruction table
+- Explain why assembly belongs to one kind of CPU and isn't a universal language
+primer:
+- title: "An instruction set: the CPU's vocabulary"
+  type: doc
+  meta: Reread · 3 min · opcodes and operands, on the first tiny CPU.
+  essential: true
+- title: 'The First Programming Languages: Crash Course Computer Science #11'
+  type: video
+  meta: Watch · 11 min · from machine code to assembly and beyond.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=RU1u-js7db8'
+knowledgeCheck:
+- question: What does version 2 of the tiny CPU add to the first one?
+  answer: "Room and reach: 256 boxes instead of 16, four registers R0 to R3 instead of one, a stack pointer, two-byte instructions, input, output, and calls and returns. The idea is the same: fetch the instruction at the program counter, run it, move on."
+  jumpToId: the-same-idea-grown-up
+  jumpToLabel: The same idea, grown up
+- question: What is the difference between machine code and assembly language?
+  answer: "Machine code is the bytes the CPU fetches and runs, such as 08 28. Assembly is the same instruction written for people, such as LDI R0, 40. Each assembly line stands for exactly one instruction; a program called an assembler turns the text into the bytes."
+  jumpToId: names-for-bytes
+  jumpToLabel: Names for bytes
+- question: Why can't a program written in the tiny CPU's assembly run on a laptop's processor?
+  answer: "Assembly names one CPU's own instructions. A laptop's x86 or ARM processor has different instructions, registers and encodings, so the same bytes would mean something else, or nothing at all, to it."
+  jumpToId: one-cpus-language
+  jumpToLabel: One CPU's language
+assignment:
+  instruction: "nand2tetris Project 4 has you write two programs in the Hack computer's assembly language. Read its instruction table and pick three Hack instructions. For each, write down what the closest tiny CPU instruction would be, and one difference between them."
+  resourceName: 'nand2tetris.org: Project 4, Machine Language'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project04'
+additionalResources:
+- title: Assembly language (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Assembly_language'
+- title: Machine code (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Machine_code'
+whyThisMatters: "Every program you'll ever run ends up as machine code for some CPU. Reading assembly is how you see what that code really does: it's what debuggers show when the source isn't there, what compilers produce on the way to bytes, and the only language that can't hide what the hardware is doing."
+---
+
+In Build a CPU you ran programs on a tiny CPU with 16 boxes of memory and one working register. It was small on purpose, so you could see every bit. To write real programs you need more room, and a way to write them that isn't a column of 1s and 0s.
+
+By the end you'll know the tiny CPU's grown-up version, the difference between machine code and assembly, and why assembly is always the language of one particular CPU.
+
+## The same idea, grown up
+
+From now on, the path uses the **tiny CPU, version 2**. Nothing you learned changes: a program counter points at the next instruction, the CPU fetches it, runs it, and moves on. There's just more of everything.
+
+<TruthTable caption='Version 1 and version 2' rowsJson='[["", "version 1", "version 2"], ["memory", "16 boxes", "256 boxes (0x00 to 0xFF)"], ["working registers", "A (and B inside the ALU)", "R0, R1, R2, R3"], ["instructions", "1 byte each", "2 bytes each, at even addresses"], ["flags", "zero and carry", "zero (Z) only"], ["input and output", "OUT to a display", "IN and OUT"], ["subroutines", "none", "a stack, CALL and RET"]]' />
+
+Memory has a layout, by agreement rather than by hardware: code lives in 0x00 to 0x7F, data in 0x80 to 0xBF, and the stack in 0xC0 to 0xEF. The machine itself doesn't stop you from breaking that agreement, as you'll see.
+
+## Names for bytes
+
+The CPU only ever runs **machine code**: bytes. Each version 2 instruction is two of them. The first byte holds the operation code (5 bits) and a register number (2 bits); the second holds an operand, such as a number or an address.
+
+Nobody wants to write programs as bytes, so each instruction also has a short name. Writing a program with those names is **assembly language**, and a program called an **assembler** turns it into the bytes:
+
+<TruthTable caption='Assembly and the machine code it becomes' rowsJson='[["assembly", "bytes (hex)", "what it does"], ["LDI R0, 40", "08 28", "R0 = 40"], ["LDI R1, 2", "0A 02", "R1 = 2"], ["ADD R0, R1", "28 40", "R0 = R0 + R1"], ["OUT R0", "80 00", "send R0 to the output"], ["HALT", "A8 00", "stop"]]' />
+
+Look at the first two rows. LDI is opcode 1, so the first byte starts 00001; then comes the register number, 0 for R0 and 1 for R1. That's why the first bytes are 08 and 0A. The second byte is the number itself: 0x28 is 40.
+
+<KeyIdea>Assembly and machine code are the same program. Each assembly line names exactly one instruction; the assembler only swaps names for bytes.</KeyIdea>
+
+Run it. The output shows 42.
+
+<TinyCpu2 caption='Your first version 2 program' programJson='["LDI R0, 40","LDI R1, 2","ADD R0, R1","OUT R0","HALT"]' />
+
+Now change it. This program shows 40. Make it show 42 by adding one line, using ADDI (add a number written in the instruction).
+
+<TinyCpu2 editable caption='Make it show 42' programJson='["LDI R0, 40","OUT R0","HALT"]' goalJson='{"out":[42]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Add `ADDI R0, 2` between the LDI and the OUT. The program becomes four instructions, eight bytes, and the output is 42.
+
+</details>
+
+## One CPU's language
+
+Assembly isn't one language. Every kind of CPU has its own instructions, registers and encodings, so its assembly is different too. Adding two registers looks like this on three CPUs:
+
+<TruthTable caption='One idea, three languages' rowsJson='[["CPU", "assembly"], ["the tiny CPU, version 2", "ADD R0, R1"], ["x86 (most laptops and PCs)", "add eax, ebx"], ["ARM (most phones)", "ADD R0, R0, R1"]]' />
+
+The ideas carry across: registers, loads and stores, compares and jumps. The details don't. A program in the tiny CPU's assembly only means something to the tiny CPU. That's why languages like C exist, and you'll meet them in From Source to Machine: a program in C can be translated into the machine code of many different CPUs.
+
+<KeyIdea>Assembly is the readable form of one CPU's machine code. Learn one well and the next is mostly new names for the same ideas.</KeyIdea>

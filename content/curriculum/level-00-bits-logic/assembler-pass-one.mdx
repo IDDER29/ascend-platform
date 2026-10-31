@@ -1,0 +1,85 @@
+---
+title: "The assembler, pass one: finding labels"
+level: level-00-bits-logic
+slug: assembler-pass-one
+order: 67
+timeMin: 8
+learningOutcomes:
+- Work out each instruction's address with a location counter that starts at 0 and adds 2 per instruction
+- Explain why comments, blank lines and label-only lines take no space
+- Build the label table for a program, by hand
+- Explain why an assembler reads the program twice when labels can be used before they are defined
+primer:
+- title: "Labels and addresses"
+  type: doc
+  meta: Reread · 3 min · what labels are for.
+  essential: true
+knowledgeCheck:
+- question: In pass one, what happens to the location counter on each line?
+  answer: "It starts at 0. A line with an instruction is given the current count as its address, and the count goes up by 2, because every instruction is two bytes. A comment, a blank line or a line with only a label adds nothing."
+  jumpToId: the-location-counter
+  jumpToLabel: The location counter
+- question: Why can't an assembler write all the bytes in a single pass from top to bottom?
+  answer: "Because a jump can use a label that is only defined further down. When the assembler reaches JZ done it doesn't yet know where done is. Pass one finds every label's address first; pass two can then write every instruction."
+  jumpToId: why-two-passes
+  jumpToLabel: Why two passes
+assignment:
+  instruction: "The nand2tetris assembler project describes the same two passes for the Hack computer. Read its section on the symbol table, then write in two sentences how its first pass differs from ours (hint: how much space does a Hack instruction take?)."
+  resourceName: 'nand2tetris.org: Project 6, The Assembler'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project06'
+additionalResources:
+- title: Symbol table (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Symbol_table'
+- title: Assembly language (Wikipedia)
+  type: doc
+  meta: the section on assemblers, one pass and two
+  url: 'https://en.wikipedia.org/wiki/Assembly_language#Assembler'
+whyThisMatters: "This is the first program-translating tool you'll understand all the way through. Compilers and linkers do the same thing at a bigger scale: walk the code, work out where everything goes, record every name in a table, and only then write the output."
+---
+
+An <b>assembler</b> is the program that turns assembly into bytes. It reads the whole program twice. The first reading, <b>pass one</b>, writes nothing. It only works out where every instruction will go and what every label means.
+
+By the end you'll be able to do pass one by hand, and explain why the second pass is needed.
+
+## The location counter
+
+Pass one keeps a single number, the <b>location counter</b>: the address the next instruction will get. It starts at 0x00. For each line:
+
+- if the line has an instruction, that instruction gets the counter's value as its address, and the counter goes up by 2;
+- if the line defines a label, the label gets the counter's value (the address of the next instruction).
+
+Every tiny CPU instruction is exactly two bytes, so the counter always moves in steps of 2.
+
+## Labels take no space
+
+A comment, a blank line or a line holding only a label isn't an instruction, so it adds nothing to the counter. In this program the line `loop:` stands alone; it names the address of the ADD below it:
+
+<TruthTable caption='Pass one, line by line' rowsJson='[["line", "counter before", "address", "counter after"], ["; sum 5 + 4 + 3 + 2 + 1", "0x00", "none", "0x00"], ["LDI R0, 5", "0x00", "0x00", "0x02"], ["LDI R1, 0", "0x02", "0x02", "0x04"], ["loop:", "0x04", "loop = 0x04", "0x04"], ["ADD R1, R0", "0x04", "0x04", "0x06"], ["DEC R0", "0x06", "0x06", "0x08"], ["JNZ loop", "0x08", "0x08", "0x0A"], ["OUT R1", "0x0A", "0x0A", "0x0C"], ["HALT", "0x0C", "0x0C", "0x0E"]]' />
+
+At the end, the <b>label table</b> holds one entry: loop = 0x04. The program shows 15.
+
+Now do it yourself. Fill in every instruction's address and the label table:
+
+<AssemblerLab caption='Pass one: the sum of 5 to 1' programJson='["; sum 5 + 4 + 3 + 2 + 1", "LDI R0, 5", "LDI R1, 0", "loop:", "ADD R1, R0", "DEC R0", "JNZ loop", "OUT R1", "HALT"]' passJson='1' />
+
+<KeyIdea>Pass one counts. Each instruction moves the counter on by 2; a label just writes down where the counter is.</KeyIdea>
+
+## Why two passes
+
+A label can be used before it's defined. In this program, JZ done comes two lines before `done:`. Do pass one for it:
+
+<AssemblerLab caption='Pass one with a forward jump' programJson='["LDI R0, 3", "loop: OUT R0", "DEC R0", "JZ done", "JMP loop", "done: HALT"]' passJson='1' />
+
+<details>
+<summary>Check your answer</summary>
+
+The addresses are 0x00, 0x02, 0x04, 0x06, 0x08 and 0x0A, so loop = 0x02 and done = 0x0A.
+
+When the assembler first reaches JZ done, at 0x06, it hasn't seen `done:` yet: it only learns that done is 0x0A at the last line. That's why it can't write JZ done's bytes on the way down. After pass one, the label table is complete, and pass two can write every instruction, forward jumps included.
+
+</details>
+
+<KeyIdea>Pass one finds every name; pass two uses them. Two passes are what let a jump point forward.</KeyIdea>

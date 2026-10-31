@@ -1,0 +1,152 @@
+---
+title: "Project: Assembly puzzles"
+level: level-00-bits-logic
+slug: project-assembly-puzzles
+order: 74
+timeMin: 25
+learningOutcomes:
+- Write short assembly programs for the tiny CPU that leave memory and registers exactly as asked
+- Walk through an array with an address held in a register (LDR and STR)
+- Write a counting loop that stops on the right iteration
+- Choose the larger of two numbers on a CPU that can only test for equality
+primer:
+- title: "Loops as repeated jumps"
+  type: doc
+  meta: Reread · 3 min · three of the four puzzles are loops.
+  essential: true
+- title: "Operands: values, registers and addresses"
+  type: doc
+  meta: Reread · 3 min · puzzle 2 uses an address held in a register.
+  essential: true
+knowledgeCheck:
+- question: How does the copy program reach a different box on each trip round its loop?
+  answer: "R1 and R2 hold addresses, not values. LDR R0, [R1] reads the box R1 points at and STR R0, [R2] writes the box R2 points at; INC R1 and INC R2 then move both pointers on by one box."
+  jumpToId: puzzle-2-copy-four-bytes
+  jumpToLabel: "Puzzle 2: Copy four bytes"
+- question: How can a CPU with only an equality test find the larger of two numbers?
+  answer: "Count both down together. Whichever reaches zero first was the smaller, so the other is the larger. It works because CMPI R2, 0 only needs to test for equality with zero."
+  jumpToId: puzzle-4-the-larger-of-two
+  jumpToLabel: "Puzzle 4: The larger of two"
+assignment:
+  instruction: "Write a fifth puzzle for someone else: a goal, a starting program that doesn't meet it, and your own solution. Good ones are small but need one idea, like summing an array, or outputting only the even numbers from 10 down to 0."
+  resourceName: 'nand2tetris.org: Project 4, Machine Language'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project04'
+additionalResources:
+- title: Assembly language (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Assembly_language'
+whyThisMatters: "Reading assembly is useful; writing it is where it sticks. Each puzzle needs exactly one idea (a pointer, a counter, a test), and those same ideas are what a compiler produces when it turns your loops and ifs into instructions."
+---
+
+Four puzzles for the tiny CPU, version 2. Each one has a goal, checked when your program halts, and a starting program that doesn't meet it yet. Edit the program, press Run, and read the line at the bottom.
+
+Data lives at 0x80 and up (128 and up in decimal). The listing on the left shows what your program assembled to.
+
+## Puzzle 1: Add two numbers
+
+Boxes 0x80 and 0x81 hold two numbers. Put their sum in box 0x82.
+
+<TinyCpu2 editable caption='Puzzle 1: the sum goes in 0x82' programJson='["LDA R0, [0x80]", "HALT"]' dataJson='{"128":19,"129":23}' goalJson='{"mem":{"130":42}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+LDA R0, [0x80]
+LDA R1, [0x81]
+ADD R0, R1
+STA R0, [0x82]
+HALT
+```
+
+Two loads, an add, a store. The ALU only works on registers, so both numbers have to come out of memory first and the sum has to go back in.
+
+</details>
+
+## Puzzle 2: Copy four bytes
+
+Copy the four bytes in 0x80 to 0x83 into 0x90 to 0x93, using a loop. You'll want an address in a register: `LDR R0, [R1]` reads the box whose address is in R1.
+
+<TinyCpu2 editable caption='Puzzle 2: copy 0x80..0x83 to 0x90..0x93' programJson='["LDI R1, 0x80", "LDI R2, 0x90", "HALT"]' dataJson='{"128":5,"129":6,"130":7,"131":8}' goalJson='{"mem":{"144":5,"145":6,"146":7,"147":8}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+LDI R1, 0x80    ; where to read
+LDI R2, 0x90    ; where to write
+LDI R3, 4       ; how many
+loop: LDR R0, [R1]
+STR R0, [R2]
+INC R1
+INC R2
+DEC R3
+JNZ loop
+HALT
+```
+
+R1 and R2 are pointers: they hold addresses, and moving on is just adding 1. This is exactly what a loop over an array becomes in any language.
+
+</details>
+
+## Puzzle 3: Count down
+
+Output 5, 4, 3, 2, 1, and then stop: no 0.
+
+<TinyCpu2 editable caption='Puzzle 3: output 5, 4, 3, 2, 1' programJson='["LDI R0, 5", "OUT R0", "HALT"]' goalJson='{"out":[5,4,3,2,1]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+LDI R0, 5
+loop: OUT R0
+DEC R0
+JNZ loop
+HALT
+```
+
+Output first, then count down, then test. With the OUT after the DEC, you'd get 4, 3, 2, 1 and miss the 5; with the test before the DEC, you'd also output 0. Where the test sits decides the first and last trip round.
+
+</details>
+
+## Puzzle 4: The larger of two
+
+Output the larger of the numbers in 0x80 and 0x81. The catch: this CPU can only test for equality. There's no "greater than" branch.
+
+<TinyCpu2 editable caption='Puzzle 4: output the larger number' programJson='["LDA R0, [0x80]", "OUT R0", "HALT"]' dataJson='{"128":9,"129":14}' goalJson='{"out":[14]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Count both down together; whichever reaches zero first was the smaller.
+
+```
+LDA R2, [0x80]
+LDA R3, [0x81]
+loop: CMPI R2, 0
+JZ second        ; the first ran out: the second is larger (or equal)
+CMPI R3, 0
+JZ first         ; the second ran out: the first is larger
+DEC R2
+DEC R3
+JMP loop
+first: LDA R0, [0x80]
+OUT R0
+HALT
+second: LDA R0, [0x81]
+OUT R0
+HALT
+```
+
+Try it with the numbers swapped, and with two equal numbers: it still works. But it takes about 7 steps per count, so with 200 and 199 it would need about 1,400 steps; the simulator stops at 1,000. Real CPUs have a carry or sign flag for exactly this reason: comparing by subtracting once is far faster than counting.
+
+</details>
+
+<KeyIdea>Every puzzle is one idea: a register holding an address, a counter, or a test. Programs are those ideas, combined.</KeyIdea>
+
+## Done when
+
+All four say "the goal is met", and for each you can say which line does the important work. Then write a fifth puzzle for someone else.

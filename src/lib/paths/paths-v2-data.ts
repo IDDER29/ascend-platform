@@ -75,14 +75,16 @@ function pathInput(p: PathDef, lessons: PathLessonInfo[]): PathInput {
     requires: requires ? { slug: requires.slug, title: requires.title } : null,
     courses: p.courses.map((c) => ({
       id: c.id,
-      // A topic goes by its own name (Bits & Logic), not the course's (Foundations).
-      title: c.levelId ? LEVELS[c.levelId].name : c.title,
+      // A whole topic goes by its own name (Bits & Logic); a course that is part of one, by its own title.
+      title: c.levelId && !c.sections ? LEVELS[c.levelId].name : c.title,
       body: c.body,
       levelId: c.levelId,
       href: c.href,
       plannedLessons: c.plannedLessons,
       plannedProjects: c.plannedProjects,
-      sections: c.levelId ? sectionsFor(c.levelId, lessons) : [],
+      sections: c.levelId
+        ? sectionsFor(c.levelId, lessons).filter((s) => !c.sections || c.sections.includes(s.id))
+        : [],
     })),
   };
 }
@@ -121,7 +123,8 @@ function earnIds(lessons: PathLessonInfo[]): Record<string, string[]> {
         }
         return [c.href ? PROJECT_BADGE[c.href] : undefined];
       });
-      return [p.slug, ids.filter((x): x is string => Boolean(x))];
+      // Courses that split one topic share its clan and badge: list each once.
+      return [p.slug, [...new Set(ids.filter((x): x is string => Boolean(x)))]];
     }),
   );
 }

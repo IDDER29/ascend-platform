@@ -62,6 +62,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
       { kind: "live", slug: "project-half-adder", title: "Project: Half-adder", timeMin: 25, role: "project" },
       { kind: "live", slug: "full-adder-and-4-bit-adder", title: "Full adder and the 4-bit adder", timeMin: 9 },
       { kind: "soon", id: "mux-decoder", title: "Choosing with gates: multiplexers and decoders", timeMin: 9 },
+      { kind: "soon", id: "project-4-bit-calculator", title: "Project: A 4-bit calculator", timeMin: 30, role: "project" },
     ],
   },
   {
@@ -96,9 +97,8 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
   {
     id: "conclusion",
     title: "Wrap-up",
-    blurb: "Put it all together, then pick where to go next.",
+    blurb: "Pick where to go next.",
     items: [
-      { kind: "soon", id: "project-4-bit-calculator", title: "Project: A 4-bit calculator", timeMin: 30, role: "project" },
       {
         kind: "link",
         id: "choose-path",

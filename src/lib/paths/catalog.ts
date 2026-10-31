@@ -11,6 +11,11 @@ export type PathCourse = {
   body: string;
   /** Live curriculum level, if any */
   levelId?: LevelId;
+  /**
+   * Only these outline sections of the level (by section id), when one level is split into several
+   * courses (Foundations). Without it the course is the whole level.
+   */
+  sections?: string[];
   /** Capstone / special href when not a level */
   href?: string;
   plannedLessons?: number;
@@ -40,13 +45,35 @@ export const PATHS: PathDef[] = [
     eyebrow: "Foundations",
     title: "Foundations",
     pitch: "Bits, logic and how a machine makes decisions: the ground every other path stands on.",
-    body: "A hands-on introduction to the ideas every real machine is built on: bits and binary, logic and gates, and the loop a processor runs. No background needed. You'll finish by building a half-adder, and every other path starts from here.",
+    body: "A hands-on introduction to the ideas every real machine is built on, in four short courses: how data becomes bits, how circuits compute, how a CPU is built and runs, and how your code reaches it. No background needed, and every other path starts from here.",
     courses: [
       {
-        id: "foundations-course",
-        title: "Foundations",
-        body: "Bits, binary, logic gates and the fetch-execute loop: how on and off become decisions.",
+        id: "foundations-bits-data",
+        title: "Bits & Data",
+        body: "How anything, a number, a negative number, a letter, becomes 0s and 1s.",
         levelId: "level-00-bits-logic",
+        sections: ["bits"],
+      },
+      {
+        id: "foundations-logic-circuits",
+        title: "Logic & Circuits",
+        body: "Boolean logic in real gates, and circuits that add and choose.",
+        levelId: "level-00-bits-logic",
+        sections: ["logic"],
+      },
+      {
+        id: "foundations-build-a-cpu",
+        title: "Build a CPU",
+        body: "Memory from flip-flops, the clock, registers and addresses, then the loop that runs a program.",
+        levelId: "level-00-bits-logic",
+        sections: ["memory", "machine-runs"],
+      },
+      {
+        id: "foundations-hardware-to-software",
+        title: "From Hardware to Software",
+        body: "How the code you write becomes the instructions a CPU runs.",
+        levelId: "level-00-bits-logic",
+        sections: ["software"],
       },
     ],
   },

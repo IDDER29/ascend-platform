@@ -129,7 +129,8 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
           id: course.id,
           title: course.title,
           body: course.body,
-          kind: items.length > 0 ? "topic" : "planned",
+          // A course whose lessons are all still "Coming soon" shows as a topic with its outline.
+          kind: items.length > 0 || sections.some((s) => s.upcoming.length > 0) ? "topic" : "planned",
           crest: CREST_OF[course.levelId as LevelId] ?? null,
           done,
           total: items.length,

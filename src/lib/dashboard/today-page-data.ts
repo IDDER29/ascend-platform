@@ -49,7 +49,13 @@ export async function loadToday(): Promise<{
       slug: p.slug,
       title: p.title,
       href: pathHref(p.slug),
-      courses: p.courses.map((c) => ({ id: c.id, title: c.title, levelId: c.levelId, href: c.href })),
+      courses: p.courses.map((c) => ({
+        id: c.id,
+        title: c.title,
+        levelId: c.levelId,
+        href: c.href,
+        sections: c.sections,
+      })),
     })),
     following: Object.fromEntries(Object.entries(following).map(([slug, at]) => [slug, at.toISOString()])),
     lessons,
@@ -68,7 +74,7 @@ export async function loadToday(): Promise<{
       lead && leadDef
         ? {
             title: lead.title,
-            levels: leadDef.courses.map((c) => c.levelId).filter((l): l is LevelId => Boolean(l)),
+            levels: [...new Set(leadDef.courses.map((c) => c.levelId).filter((l): l is LevelId => Boolean(l)))],
             capstone: capstone ? { title: capstone.title, href: capstone.href } : null,
           }
         : null,

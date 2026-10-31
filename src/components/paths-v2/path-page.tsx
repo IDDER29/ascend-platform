@@ -233,8 +233,9 @@ function CourseCard({ course, index }: { course: PathCourse; index: number }) {
             )}
           </div>
           <p className="m-0 mt-0.5 text-[13px] tabular-nums text-[var(--coach-ink-muted)]">
-            {course.finished ? "Finished · " : ""}
-            {course.done} of {course.total} done · {durationLabel(course.minutes)}
+            {course.total === 0
+              ? "Coming soon"
+              : `${course.finished ? "Finished · " : ""}${course.done} of ${course.total} done · ${durationLabel(course.minutes)}`}
           </p>
         </div>
       </div>

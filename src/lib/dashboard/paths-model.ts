@@ -4,6 +4,7 @@
  * path worked on last leads, and the dashboard's next lesson comes from it.
  * Pure: path definitions, lessons and records come in as data.
  */
+import { courseHasLesson } from "@/lib/paths/course-lessons";
 import { CREST_OF } from "@/lib/achievements/scrolls-model";
 import type { CrestId } from "@/lib/achievements/catalog";
 import type { LevelId } from "@/lib/content/schema";
@@ -13,7 +14,7 @@ export type PathInput = {
   slug: string;
   title: string;
   href: string;
-  courses: { id: string; title: string; levelId?: string; href?: string }[];
+  courses: { id: string; title: string; levelId?: string; href?: string; sections?: string[] }[];
 };
 
 export type PathGroup = {
@@ -68,13 +69,22 @@ export function buildPathCards(input: PathsInput): PathCard[] {
   const cards = input.paths
     .filter((p) => input.following[p.slug])
     .map((path): PathCard => {
-      const topicLessons = path.courses.flatMap((c) => input.lessons.filter((l) => l.level === c.levelId));
+      // A course covers a whole topic, or only some of its sections (Foundations is split in four).
+      const inCourse = (c: PathInput["courses"][number]) =>
+        input.lessons.filter((l) =>
+          courseHasLesson(
+            { levelId: c.levelId as LevelId | undefined, sections: c.sections },
+            l.level,
+            l.key.slice(l.key.indexOf("/") + 1),
+          ),
+        );
+      const topicLessons = [...new Set(path.courses.flatMap(inCourse))];
       const topicsDone = topicLessons.every((l) => doneAt.has(l.key));
       let currentSet = false;
 
       const groups = path.courses.map((course): PathGroup => {
         if (course.levelId) {
-          const lessons = input.lessons.filter((l) => l.level === course.levelId);
+          const lessons = inCourse(course);
           const marks = lessons.map((l) => doneAt.has(l.key));
           const done = marks.filter(Boolean).length;
           const finished = lessons.length > 0 && done === lessons.length;

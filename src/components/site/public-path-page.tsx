@@ -35,7 +35,8 @@ function TopicBlock({ course, index }: { course: PathCourse; index: number }) {
         </span>
         <div className="min-w-0">
           <p className="m-0 text-[13px] font-semibold text-[var(--coach-ink-muted)]">
-            Topic {index + 1} · {course.total} lessons · {durationLabel(course.minutes)}
+            Topic {index + 1} ·{" "}
+            {course.total === 0 ? "coming soon" : `${course.total} lessons · ${durationLabel(course.minutes)}`}
           </p>
           <h3 className="m-0 mt-0.5 text-[21px] font-bold leading-tight">{course.title}</h3>
           <p className="m-0 mt-1.5 text-[15px] leading-relaxed text-[var(--coach-ink-secondary)]">{course.body}</p>

@@ -6,7 +6,7 @@ import type { BadgeView } from "@/lib/achievements/achievements-model";
 import { leavePathV2Action } from "@/lib/paths/actions";
 import { PRACTICE_PATH_TITLES } from "@/lib/practice/path-map";
 import { practiceSessionHref } from "@/lib/practice/routes";
-import { durationLabel, type PathCourse, type PathItem, type PathView } from "@/lib/paths/paths-v2-model";
+import { durationLabel, type PathCourse, type PathItem, type PathView, type UpcomingItem } from "@/lib/paths/paths-v2-model";
 import { LessonMemory } from "./lesson-memory";
 import { CARD, JoinButton, PathGlyph, pathMeta, TopicBar } from "./path-parts";
 
@@ -137,6 +137,30 @@ function ItemRow({ item }: { item: PathItem }) {
   );
 }
 
+/** An outlined lesson or project that isn't written yet: muted, not a link. */
+function UpcomingRow({ item }: { item: UpcomingItem }) {
+  const Icon = item.project ? CircuitBoard : FileText;
+  return (
+    <li className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-2 opacity-70">
+      <span
+        aria-hidden
+        className="flex size-7 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-[var(--coach-border-strong)] text-[var(--coach-ink-muted)]"
+      >
+        <Icon size={14} strokeWidth={2.2} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14.5px] font-semibold leading-snug text-[var(--coach-ink-secondary)]">
+          {item.title}
+        </span>
+        <span className="block text-[12.5px] text-[var(--coach-ink-muted)]">{item.project ? "Project" : "Lesson"}</span>
+      </span>
+      <span className="shrink-0 rounded-full bg-[var(--coach-tint-neutral-bg)] px-2 py-0.5 text-[11.5px] font-semibold text-[var(--coach-ink-muted)]">
+        Coming soon
+      </span>
+    </li>
+  );
+}
+
 function CourseCard({ course, index }: { course: PathCourse; index: number }) {
   if (course.kind === "capstone") {
     return (
@@ -220,14 +244,19 @@ function CourseCard({ course, index }: { course: PathCourse; index: number }) {
           <div key={s.id} className="flex flex-col gap-1">
             <h3 className="m-0 flex items-baseline justify-between gap-3 text-[14.5px] font-bold">
               {s.title}
-              <span className="text-[12px] font-medium tabular-nums text-[var(--coach-ink-muted)]">
-                {s.done}/{s.items.length}
-              </span>
+              {s.items.length > 0 ? (
+                <span className="text-[12px] font-medium tabular-nums text-[var(--coach-ink-muted)]">
+                  {s.done}/{s.items.length}
+                </span>
+              ) : null}
             </h3>
             {s.blurb && <p className="m-0 text-[13px] leading-snug text-[var(--coach-ink-muted)]">{s.blurb}</p>}
             <ul className="m-0 mt-1 flex list-none flex-col gap-0.5 p-0">
               {s.items.map((item) => (
                 <ItemRow key={item.key} item={item} />
+              ))}
+              {s.upcoming.map((item) => (
+                <UpcomingRow key={item.id} item={item} />
               ))}
             </ul>
           </div>

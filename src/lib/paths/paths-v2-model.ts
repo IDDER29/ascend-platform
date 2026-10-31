@@ -29,12 +29,21 @@ export type PathInput = {
     plannedLessons?: number;
     plannedProjects?: number;
     /** Named sections of the topic, each with its lessons (keys, in order). */
-    sections: { id: string; title: string; blurb: string; lessonKeys: string[] }[];
+    sections: { id: string; title: string; blurb: string; lessonKeys: string[]; upcoming?: UpcomingItem[] }[];
   }[];
 };
 
 export type PathItem = PathLessonInfo & { done: boolean; current: boolean };
-export type PathSection = { id: string; title: string; blurb: string; items: PathItem[]; done: number };
+/** An outlined lesson or project that isn't written yet ("Coming soon"). */
+export type UpcomingItem = { id: string; title: string; project: boolean };
+export type PathSection = {
+  id: string;
+  title: string;
+  blurb: string;
+  items: PathItem[];
+  done: number;
+  upcoming: UpcomingItem[];
+};
 export type PathCourse = {
   id: string;
   title: string;
@@ -102,7 +111,14 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
             .map((k) => lessonByKey.get(k))
             .filter((l): l is PathLessonInfo => Boolean(l))
             .map((l) => ({ ...l, done: doneAt.has(l.key), current: l.key === firstOpen }));
-          return { id: s.id, title: s.title, blurb: s.blurb, items, done: items.filter((i) => i.done).length };
+          return {
+            id: s.id,
+            title: s.title,
+            blurb: s.blurb,
+            items,
+            done: items.filter((i) => i.done).length,
+            upcoming: s.upcoming ?? [],
+          };
         });
         const items = sections.flatMap((s) => s.items);
         const done = items.filter((i) => i.done).length;

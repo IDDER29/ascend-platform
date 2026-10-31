@@ -1,6 +1,6 @@
 /**
  * Foundations course outline data.
- * UI renders live rows in topic cards (lessons + projects); soon/link kept for later.
+ * Live items are lessons/projects with a file; "soon" items show on the path page as "Coming soon".
  */
 
 export type FoundationsItemRole = "lesson" | "project";
@@ -41,99 +41,64 @@ export const FOUNDATIONS_LEVEL = "level-00-bits-logic" as const;
 
 export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
   {
-    id: "introduction",
-    title: "Introduction",
-    blurb: "How this course works and why we start at the machine.",
-    items: [
-      {
-        kind: "soon",
-        id: "how-this-course-works",
-        title: "How this course will work",
-        timeMin: 5,
-      },
-      {
-        kind: "soon",
-        id: "why-the-machine-first",
-        title: "Why start with the machine",
-        timeMin: 6,
-      },
-    ],
-  },
-  {
     id: "bits",
     title: "Bits & representation",
-    blurb: "What a bit is, and how patterns of bits become numbers.",
+    blurb: "How anything, a number, a letter or a colour, becomes 0s and 1s.",
     items: [
-      {
-        kind: "live",
-        slug: "what-is-a-bit",
-        title: "What is a bit?",
-        timeMin: 4,
-      },
-      {
-        kind: "live",
-        slug: "binary-and-number-bases",
-        title: "Binary & number bases",
-        timeMin: 7,
-      },
-      {
-        kind: "soon",
-        id: "bytes-words-meaning",
-        title: "Bytes, words, and meaning",
-        timeMin: 8,
-      },
+      { kind: "live", slug: "what-is-a-bit", title: "What is a bit?", timeMin: 4 },
+      { kind: "live", slug: "binary-and-number-bases", title: "Binary & number bases", timeMin: 7 },
+      { kind: "soon", id: "negative-numbers", title: "Negative numbers: two's complement", timeMin: 8 },
+      { kind: "soon", id: "bytes-words-meaning", title: "Bytes, words, and meaning", timeMin: 8 },
+      { kind: "soon", id: "text-ascii-utf8", title: "Text: ASCII and UTF-8", timeMin: 8 },
     ],
   },
   {
     id: "logic",
     title: "Logic & gates",
-    blurb: "Boolean logic, gates in hardware, then a hands-on half-adder project.",
+    blurb: "Boolean logic, gates in hardware, and circuits that add and choose.",
     items: [
-      {
-        kind: "live",
-        slug: "boolean-logic-and-truth-tables",
-        title: "Boolean logic & truth tables",
-        timeMin: 7,
-      },
-      {
-        kind: "live",
-        slug: "logic-gates-from-switches-to-circuits",
-        title: "Logic gates, from switches to circuits",
-        timeMin: 8,
-      },
-      {
-        kind: "live",
-        slug: "project-half-adder",
-        title: "Project: Half-adder",
-        timeMin: 25,
-        role: "project",
-      },
+      { kind: "live", slug: "boolean-logic-and-truth-tables", title: "Boolean logic & truth tables", timeMin: 7 },
+      { kind: "live", slug: "logic-gates-from-switches-to-circuits", title: "Logic gates, from switches to circuits", timeMin: 8 },
+      { kind: "live", slug: "project-half-adder", title: "Project: Half-adder", timeMin: 25, role: "project" },
+      { kind: "soon", id: "full-adder", title: "Full adder and the 4-bit adder", timeMin: 9 },
+      { kind: "soon", id: "mux-decoder", title: "Choosing with gates: multiplexers and decoders", timeMin: 9 },
+    ],
+  },
+  {
+    id: "memory",
+    title: "Memory & time",
+    blurb: "How a circuit remembers: latches, the clock, registers and addressed memory.",
+    items: [
+      { kind: "soon", id: "latches-and-flip-flops", title: "Remembering a bit: latches and flip-flops", timeMin: 9 },
+      { kind: "soon", id: "clocks-and-registers", title: "The clock and registers", timeMin: 8 },
+      { kind: "soon", id: "memory-and-addresses", title: "Memory as numbered boxes", timeMin: 8 },
     ],
   },
   {
     id: "machine-runs",
     title: "How a machine runs",
-    blurb: "The fetch–execute loop: how a CPU runs a program one instruction at a time.",
+    blurb: "The fetch-execute loop, and a tiny CPU built from everything before it.",
     items: [
-      {
-        kind: "live",
-        slug: "the-fetch-execute-loop",
-        title: "The fetch-execute loop",
-        timeMin: 9,
-      },
-      {
-        kind: "soon",
-        id: "from-gates-to-cpu",
-        title: "From gates to a tiny CPU",
-        timeMin: 12,
-      },
+      { kind: "live", slug: "the-fetch-execute-loop", title: "The fetch-execute loop", timeMin: 9 },
+      { kind: "soon", id: "from-gates-to-cpu", title: "From gates to a tiny CPU", timeMin: 12 },
+      { kind: "soon", id: "project-tiny-cpu", title: "Project: Run a program on a tiny CPU", timeMin: 25, role: "project" },
+    ],
+  },
+  {
+    id: "software",
+    title: "From hardware to software",
+    blurb: "How the code you write becomes the instructions the CPU runs.",
+    items: [
+      { kind: "soon", id: "machine-code-to-languages", title: "Machine code, assembly and high-level languages", timeMin: 9 },
+      { kind: "soon", id: "compilers-and-interpreters", title: "Compilers and interpreters", timeMin: 8 },
     ],
   },
   {
     id: "conclusion",
-    title: "Conclusion",
-    blurb: "Where Foundations leaves off, and what to pick next.",
+    title: "Wrap-up",
+    blurb: "Put it all together, then pick where to go next.",
     items: [
+      { kind: "soon", id: "project-4-bit-calculator", title: "Project: A 4-bit calculator", timeMin: 30, role: "project" },
       {
         kind: "link",
         id: "choose-path",
@@ -144,6 +109,18 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
     ],
   },
 ];
+
+/** The outline items not written yet, per section, in order (shown on the path page as "Coming soon"). */
+export function foundationsUpcoming(): Record<string, { id: string; title: string; project: boolean }[]> {
+  return Object.fromEntries(
+    FOUNDATIONS_OUTLINE.map((section) => [
+      section.id,
+      section.items.flatMap((item) =>
+        item.kind === "soon" ? [{ id: item.id, title: item.title, project: item.role === "project" }] : [],
+      ),
+    ]),
+  );
+}
 
 export type FoundationsLiveSection = {
   id: string;

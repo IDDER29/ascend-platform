@@ -8,7 +8,7 @@ import { LEVELS, type LevelId } from "@/lib/content/schema";
 import { completionKey } from "@/lib/practice/session";
 import { PATHS, type PathDef } from "./catalog";
 import { courseOutlineForLevel } from "./course-outlines";
-import { FOUNDATIONS_LEVEL, foundationsLiveSections } from "./foundations-outline";
+import { FOUNDATIONS_LEVEL, FOUNDATIONS_OUTLINE, foundationsUpcoming } from "./foundations-outline";
 import { lessonHref } from "./lesson-urls";
 import { buildPathViews, type PathInput, type PathLessonInfo, type PathView } from "./paths-v2-model";
 import { getFollowingMap } from "./selected-path";
@@ -30,17 +30,19 @@ function sectionsFor(levelId: LevelId, lessons: PathLessonInfo[]): PathInput["co
   const inLevel = lessons.filter((l) => l.key.startsWith(`${levelId}/`));
   const named =
     levelId === FOUNDATIONS_LEVEL
-      ? foundationsLiveSections().map((s) => ({
+      ? FOUNDATIONS_OUTLINE.map((s) => ({
           id: s.id,
           title: s.title,
           blurb: s.blurb ?? "",
-          slugs: s.items.map((i) => i.slug),
+          slugs: s.items.flatMap((i) => (i.kind === "live" ? [i.slug] : [])),
+          upcoming: foundationsUpcoming()[s.id] ?? [],
         }))
       : (courseOutlineForLevel(levelId) ?? []).map((s) => ({
           id: s.id,
           title: s.title,
           blurb: s.blurb ?? "",
           slugs: s.items.map((i) => i.slug),
+          upcoming: [],
         }));
   const sections = named
     .map((s) => ({
@@ -48,8 +50,9 @@ function sectionsFor(levelId: LevelId, lessons: PathLessonInfo[]): PathInput["co
       title: s.title,
       blurb: s.blurb,
       lessonKeys: s.slugs.map((slug) => `${levelId}/${slug}`).filter((k) => inLevel.some((l) => l.key === k)),
+      upcoming: s.upcoming,
     }))
-    .filter((s) => s.lessonKeys.length > 0);
+    .filter((s) => s.lessonKeys.length > 0 || s.upcoming.length > 0);
   const used = new Set(sections.flatMap((s) => s.lessonKeys));
   const rest = inLevel.filter((l) => !used.has(l.key)).map((l) => l.key);
   return rest.length > 0

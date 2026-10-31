@@ -40,58 +40,101 @@ export type FoundationsOutlineSection = {
 export const FOUNDATIONS_LEVEL = "level-00-bits-logic" as const;
 
 export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
+  // Course: Bits & Data
   {
     id: "bits",
-    title: "Bits & representation",
-    blurb: "How anything, a number, a letter or a colour, becomes 0s and 1s.",
+    title: "Numbers in binary",
+    blurb: "Bits, place value, negative numbers, and working on bits directly.",
     items: [
       { kind: "live", slug: "what-is-a-bit", title: "What is a bit?", timeMin: 4 },
       { kind: "live", slug: "binary-and-number-bases", title: "Binary & number bases", timeMin: 7 },
       { kind: "live", slug: "negative-numbers", title: "Negative numbers: two's complement", timeMin: 8 },
-      { kind: "soon", id: "bytes-words-meaning", title: "Bytes, words, and meaning", timeMin: 8 },
-      { kind: "soon", id: "text-ascii-utf8", title: "Text: ASCII and UTF-8", timeMin: 8 },
+      { kind: "soon", id: "bitwise-operations", title: "Bitwise operations: AND, OR, XOR, shifts and masks", timeMin: 9 },
     ],
   },
   {
+    id: "data",
+    title: "Text, sizes and fractions",
+    blurb: "The same bits as letters, types of different widths, and numbers with a point.",
+    items: [
+      { kind: "soon", id: "bytes-words-meaning", title: "Bytes, words and types: how wide is a number?", timeMin: 8 },
+      { kind: "soon", id: "text-ascii-utf8", title: "Text: ASCII and UTF-8", timeMin: 8 },
+      { kind: "soon", id: "floating-point", title: "Fractions: floating point and why 0.1 + 0.2 isn't 0.3", timeMin: 9 },
+    ],
+  },
+  // Course: Logic & Circuits
+  {
     id: "logic",
     title: "Logic & gates",
-    blurb: "Boolean logic, gates in hardware, and circuits that add and choose.",
+    blurb: "Boolean logic, gates in hardware, and circuits that add.",
     items: [
       { kind: "live", slug: "boolean-logic-and-truth-tables", title: "Boolean logic & truth tables", timeMin: 7 },
       { kind: "live", slug: "logic-gates-from-switches-to-circuits", title: "Logic gates, from switches to circuits", timeMin: 8 },
       { kind: "live", slug: "project-half-adder", title: "Project: Half-adder", timeMin: 25, role: "project" },
       { kind: "live", slug: "full-adder-and-4-bit-adder", title: "Full adder and the 4-bit adder", timeMin: 9 },
-      { kind: "soon", id: "mux-decoder", title: "Choosing with gates: multiplexers and decoders", timeMin: 9 },
-      { kind: "soon", id: "project-4-bit-calculator", title: "Project: A 4-bit calculator", timeMin: 30, role: "project" },
     ],
   },
   {
+    id: "circuits",
+    title: "Circuits that calculate",
+    blurb: "Choosing between signals, and the arithmetic unit at the heart of a CPU.",
+    items: [
+      { kind: "soon", id: "mux-decoder", title: "Choosing with gates: multiplexers and decoders", timeMin: 9 },
+      { kind: "soon", id: "the-alu", title: "The ALU: one circuit, many operations", timeMin: 9 },
+      { kind: "soon", id: "project-4-bit-calculator", title: "Project: A 4-bit calculator", timeMin: 30, role: "project" },
+    ],
+  },
+  // Course: Memory & State
+  {
     id: "memory",
     title: "Memory & time",
-    blurb: "How a circuit remembers: latches, the clock, registers and addressed memory.",
+    blurb: "How a circuit remembers: latches, the clock, registers, addressed memory and state.",
     items: [
       { kind: "live", slug: "latches-and-flip-flops", title: "Remembering a bit: latches and flip-flops", timeMin: 9 },
       { kind: "live", slug: "clocks-and-registers", title: "The clock and registers", timeMin: 8 },
       { kind: "live", slug: "memory-and-addresses", title: "Memory as numbered boxes", timeMin: 8 },
+      { kind: "soon", id: "state-machines", title: "State machines: circuits that follow steps", timeMin: 9 },
+    ],
+  },
+  // Course: Build a CPU
+  {
+    id: "isa",
+    title: "Instructions",
+    blurb: "The CPU's vocabulary, and programs stored as bits in memory.",
+    items: [
+      { kind: "soon", id: "instruction-set", title: "An instruction set: the CPU's vocabulary", timeMin: 9 },
     ],
   },
   {
     id: "machine-runs",
     title: "How a machine runs",
-    blurb: "The fetch-execute loop, and a tiny CPU built from everything before it.",
+    blurb: "The fetch-execute loop, branching, input and output, and a tiny CPU built from everything before it.",
     items: [
       { kind: "live", slug: "the-fetch-execute-loop", title: "The fetch-execute loop", timeMin: 9 },
-      { kind: "soon", id: "from-gates-to-cpu", title: "From gates to a tiny CPU", timeMin: 12 },
+      { kind: "soon", id: "jumps-and-loops", title: "Jumps and loops: how a CPU decides", timeMin: 8 },
+      { kind: "soon", id: "from-gates-to-cpu", title: "From gates to a tiny CPU: datapath and control", timeMin: 12 },
+      { kind: "soon", id: "input-and-output", title: "Input and output: talking to the outside world", timeMin: 8 },
       { kind: "soon", id: "project-tiny-cpu", title: "Project: Run a program on a tiny CPU", timeMin: 25, role: "project" },
     ],
   },
+  // Course: From Hardware to Software
   {
     id: "software",
-    title: "From hardware to software",
-    blurb: "How the code you write becomes the instructions the CPU runs.",
+    title: "From code to instructions",
+    blurb: "How the code you write becomes the instructions a CPU runs.",
     items: [
-      { kind: "soon", id: "machine-code-to-languages", title: "Machine code, assembly and high-level languages", timeMin: 9 },
-      { kind: "soon", id: "compilers-and-interpreters", title: "Compilers and interpreters", timeMin: 8 },
+      { kind: "soon", id: "assembly-and-assembler", title: "Assembly and the assembler", timeMin: 9 },
+      { kind: "soon", id: "compilers-and-interpreters", title: "High-level languages: compilers and interpreters", timeMin: 9 },
+      { kind: "soon", id: "compile-link-load", title: "From source to running program: compile, link, load", timeMin: 9 },
+    ],
+  },
+  {
+    id: "runtime",
+    title: "Programs at run time",
+    blurb: "Functions and the call stack, and the operating system every program runs on.",
+    items: [
+      { kind: "soon", id: "functions-and-the-stack", title: "Functions and the call stack", timeMin: 9 },
+      { kind: "soon", id: "the-operating-system", title: "The operating system: processes and system calls", timeMin: 9 },
     ],
   },
   {

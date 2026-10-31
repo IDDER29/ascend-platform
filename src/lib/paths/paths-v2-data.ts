@@ -33,6 +33,10 @@ const PROJECT_BADGE: Record<string, string> = {
   "level-00-bits-logic/project-assembly-puzzles": "puzzle-solver",
   "level-00-bits-logic/project-assembler": "assembler",
   "level-00-bits-logic/project-subroutine-library": "librarian",
+  "level-00-bits-logic/project-memory-visualizer": "memory-watcher",
+  "level-00-bits-logic/project-translator": "translator",
+  "level-00-bits-logic/project-real-c": "compiler-reader",
+  "level-00-bits-logic/project-compiler-variation": "cross-compiler",
   "level-00-bits-logic/project-tiny-cpu": "cpu-tracer",
   "/projects/shellforge": "ship-it",
 };

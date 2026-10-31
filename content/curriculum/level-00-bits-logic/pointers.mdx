@@ -1,0 +1,122 @@
+---
+title: "What a pointer means"
+level: level-00-bits-logic
+slug: pointers
+order: 86
+timeMin: 8
+learningOutcomes:
+- Explain a pointer as a value that refers to a place in memory
+- Tell a pointer apart from the value stored where it points
+- Follow a pointer on the tiny CPU, using an address held in a box and then in a register
+- Explain how passing a pointer lets a function change its caller's variable
+primer:
+- title: "Arrays: values side by side"
+  type: doc
+  meta: Reread · 3 min · an address in a register already walked an array.
+  essential: true
+knowledgeCheck:
+- question: Box 0x80 holds 133, and box 133 holds 42. If 0x80 is a pointer, what does it point to, and what does following it give?
+  answer: "It points to box 133 (0x85). Following it means reading that box: 42. Reading box 0x80 itself just gives the address, 133."
+  jumpToId: follow-the-pointer
+  jumpToLabel: Follow the pointer
+- question: Why can set_to_seven(p) change x, when a function given x itself couldn't?
+  answer: "A function gets copies of its arguments. A copy of x is a different box; a copy of a pointer to x still refers to x's box, so writing through it changes x."
+  jumpToId: pointers-let-functions-reach-back
+  jumpToLabel: Pointers let functions reach back
+assignment:
+  instruction: "Write a C function void add_one(int *p) that adds 1 to the int p points to, and call it three times on the same variable. Print the variable before and after, and explain the result in terms of boxes."
+  resourceName: 'Wikipedia: Pointer (computer programming)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Pointer_%28computer_programming%29'
+additionalResources:
+- title: 'CS50 Week 4: memory and pointers'
+  type: video
+  meta: pointers in C, with pictures of memory
+  url: 'https://cs50.harvard.edu/x/weeks/4/'
+whyThisMatters: "Pointers are the idea people find hardest in C, and the one that makes C what it is. Underneath, a pointer is just a value used as an address, the same thing a register held when it walked an array. Seeing that first is what makes the C version manageable."
+---
+
+In the last lesson, R1 held an address and `LDR R0, [R1]` read the box it named. That register was a <b>pointer</b>: a value that refers to a place in memory, rather than being the data itself.
+
+By the end you'll be able to tell a pointer from what it points to, follow one, and say why functions need them.
+
+## Follow the pointer
+
+A pointer can be stored in memory like any other value. Here, box 0x80 holds 133 (0x85), and box 133 holds 42. Read as a pointer, box 0x80 says "the value you want is in box 133".
+
+This program should output 42, the value the pointer refers to. It outputs 133: it prints the pointer instead of following it.
+
+<TinyCpu2 editable caption='Follow a pointer' programJson='["LDA R0, [0x80]", "OUT R0", "HALT"]' dataJson='{"128":133,"133":42}' goalJson='{"out":[42]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+LDA R1, [0x80]    ; R1 = the pointer: 133
+LDR R0, [R1]      ; R0 = the box it points to: 42
+OUT R0
+HALT
+```
+
+Two reads: one to get the address, one to get what's there. Mixing them up (printing the address, or using a value as an address) is the most common pointer bug there is.
+
+</details>
+
+<KeyIdea>A pointer is a value that says where. Following it, called dereferencing, reads or writes what's there.</KeyIdea>
+
+## Pointers in C
+
+C writes the two operations as `&` (the address of a variable) and `*` (follow a pointer):
+
+```c
+#include <stdio.h>
+
+void set_to_seven(int *p) {
+    *p = 7;
+}
+
+int main(void) {
+    int x = 5;
+    int *p = &x;
+    printf("%d\n", *p);
+    set_to_seven(p);
+    printf("%d\n", x);
+    return 0;
+}
+```
+
+```
+5
+7
+```
+
+`int *p = &x;` makes p refer to x. `*p` reads x through p, and `*p = 7` writes x through p.
+
+A C pointer is best thought of as "refers to this object", not as a raw number for a physical place in the chips. On a modern computer the addresses a program sees are translated by the operating system (you'll see how in The Complete System), and C has rules about which pointers are allowed. On the tiny CPU, where an address really is a box number, the two pictures match.
+
+## Pointers let functions reach back
+
+A function gets copies of its arguments, so a function given `x` gets a copy and can't change the original. Given a pointer to x, it gets a copy of the pointer, and that copy still refers to x's box. This is how a C function swaps two variables:
+
+```c
+#include <stdio.h>
+
+void swap(int *a, int *b) {
+    int t = *a;
+    *a = *b;
+    *b = t;
+}
+
+int main(void) {
+    int x = 5, y = 9;
+    swap(&x, &y);
+    printf("%d %d\n", x, y);
+    return 0;
+}
+```
+
+```
+9 5
+```
+
+It's the same three-step swap from the variables lesson, done through pointers to the caller's boxes.

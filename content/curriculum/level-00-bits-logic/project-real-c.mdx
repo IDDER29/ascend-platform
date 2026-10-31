@@ -1,0 +1,109 @@
+---
+title: "Project: Inspect real compiled C"
+level: level-00-bits-logic
+slug: project-real-c
+order: 96
+timeMin: 30
+learningOutcomes:
+- Read real gcc output for one C function at -O0 and -O2, and say where each variable lives in each
+- Explain how the same C gives the same result with very different instructions
+- Name which observations depend on the compiler, the target and its ABI
+- Describe at least two differences between real x86-64 and the tiny CPU
+primer:
+- title: "Reading real compiler output"
+  type: doc
+  meta: Reread · 4 min · this project annotates that output.
+  essential: true
+knowledgeCheck:
+- question: At -O2, where do total and i live, and what happened to their stack slots?
+  answer: "Only in registers (total in %edx, the counter in %eax). There are no stack slots and no stack frame at all: the variables have names in C but no address in memory, because nothing needed one."
+  jumpToId: part-2-where-do-the-variables-live
+  jumpToLabel: "Part 2: Where do the variables live?"
+- question: Why does n arrive in %edi?
+  answer: "The System V x86-64 calling convention (the ABI used on Linux) passes the first integer argument in %edi/%rdi. That's a rule of the target, not of C: on 32-bit x86 the argument arrives on the stack instead."
+  jumpToId: part-3-what-depends-on-what
+  jumpToLabel: "Part 3: What depends on what"
+assignment:
+  instruction: "Open Compiler Explorer (godbolt.org), paste sum_to, and pick a different compiler (clang) or target (ARM). Compare its -O2 output with this one in three sentences: what's the same, what's different, and which differences come from the target rather than the compiler."
+  resourceName: 'Compiler Explorer'
+  resourceType: site
+  resourceUrl: 'https://godbolt.org/'
+additionalResources:
+- title: 'CS:APP: Computer Systems, a Programmer''s Perspective'
+  type: doc
+  meta: chapter 3 reads machine-level programs like this one
+  url: 'https://csapp.cs.cmu.edu/'
+- title: x86 calling conventions (Wikipedia)
+  type: doc
+  meta: where arguments go on each target
+  url: 'https://en.wikipedia.org/wiki/X86_calling_conventions'
+whyThisMatters: "This is the step from the tiny CPU to real machines. Being able to open a compiler's output and say where each variable went, and why, is how systems programmers debug crashes, find slow code and check that the compiler did what they meant."
+---
+
+This is real output from gcc 15.2 for x86-64 Linux, generated on Ascend's build machine and committed unchanged. Work through it with a pencil: annotate each part, then compare with the answers.
+
+<CompilerOutput evidence="sum-to-n" fn="sum_to" />
+
+## Part 1: Match the loop
+
+In the -O0 listing, find the three parts of the `for` loop: setting i to 1, the test `i <= n`, and `i++`. Where's `total += i`?
+
+<details>
+<summary>Check your answer</summary>
+
+- `movl $1, -4(%rbp)` sets i to 1, then `jmp .L2` jumps straight to the test.
+- The test is at `.L2`: `movl -4(%rbp), %eax`, `cmpl %eax, -20(%rbp)`, and `jnb .L3` ("jump if not below": loop again while n is not below i, so while i &lt;= n, unsigned).
+- `total += i` is the two lines at `.L3`: load i, then `addl %eax, -8(%rbp)`.
+- `i++` is `addl $1, -4(%rbp)`.
+
+Like the tiny language's while, the test sits at the bottom with a jump to it at the start.
+
+</details>
+
+## Part 2: Where do the variables live?
+
+At -O0, where are n, total and i? At -O2?
+
+<details>
+<summary>Check your answer</summary>
+
+At -O0 every variable has a box on the stack: n is copied to `-20(%rbp)`, total is `-8(%rbp)`, i is `-4(%rbp)`, and every use reads or writes memory. At -O2 there are no stack slots: total is `%edx`, the counter is `%eax`, and n stays in `%edi`. Even the stack frame (`pushq %rbp`, `movq %rsp, %rbp`) is gone. Named C variables don't have to have memory addresses; the compiler gives one only when it needs to.
+
+-O2 also handles two numbers per trip (`leal 1(%rdx,%rax,2), %edx` adds i and i + 1 at once), with extra code before the loop for odd n. Both versions return 55 for n = 10.
+
+</details>
+
+## Part 3: What depends on what
+
+Sort these into "C itself", "this compiler and flags" or "this target and its ABI": that the result is 55; that n arrives in %edi; that total lives in %edx at -O2; that the loop handles two numbers per trip; that values are 32 bits.
+
+<details>
+<summary>Check your answer</summary>
+
+- **C itself:** that the result is 55 (C defines what sum_to computes for unsigned values).
+- **This compiler and flags:** total in %edx, and two numbers per trip. Another compiler, or -O1, may choose differently.
+- **This target and its ABI:** n in %edi (the System V x86-64 calling convention) and 32-bit `unsigned` (true here, but C only promises at least 16 bits).
+
+</details>
+
+## Part 4: Real CPU, tiny CPU
+
+Name two differences between this x86-64 code and the tiny CPU, version 2.
+
+<details>
+<summary>Check your answer</summary>
+
+Any two of these:
+- x86-64 has 16 general-purpose 64-bit registers (`%eax` is the low 32 bits of one); the tiny CPU has four 8-bit ones.
+- x86-64 has `cmp` with carry and sign flags, so it can test `<=` directly (`jnb`); the tiny CPU can only test for equality.
+- x86-64 instructions can read and write memory directly (`addl %eax, -8(%rbp)`); on the tiny CPU only loads and stores touch memory.
+- x86-64 instructions vary in length; the tiny CPU's are all two bytes.
+- Arguments arrive in registers by convention (%edi); the tiny CPU has no convention unless you invent one.
+
+</details>
+
+<KeyIdea>The same C can become very different instructions. What C promises is the result; where values live and how the loop runs is the compiler's choice for its target.</KeyIdea>
+
+## Done when
+
+You've annotated both listings and can answer all four parts without looking. This project is required: it's the bridge from the educational machine to real ones.

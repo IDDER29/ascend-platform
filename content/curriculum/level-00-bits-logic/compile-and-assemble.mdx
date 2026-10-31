@@ -1,0 +1,118 @@
+---
+title: "Compiling and assembling"
+level: level-00-bits-logic
+slug: compile-and-assemble
+order: 90
+timeMin: 8
+learningOutcomes:
+- "Name the stages a C file passes through: preprocess, compile, assemble, link"
+- Use gcc -S to stop after compiling and read the assembly it wrote
+- Use gcc -c to stop after assembling and get an object file
+- Explain why one gcc command can still run every stage, and how to watch it do so
+primer:
+- title: "Source files, headers and the preprocessor"
+  type: doc
+  meta: Reread · 3 min · the first stage, and the example program used here.
+  essential: true
+- title: "The assembler, pass two: writing the bytes"
+  type: doc
+  meta: Reread · 3 min · what an assembler does, on the tiny CPU.
+  essential: true
+knowledgeCheck:
+- question: What do gcc -S and gcc -c each stop after, and what file does each leave?
+  answer: "gcc -S stops after compiling and leaves assembly text (square.s). gcc -c goes one stage further, through the assembler, and stops there, leaving an object file of machine code (square.o)."
+  jumpToId: stop-after-compiling-gcc--s
+  jumpToLabel: "Stop after compiling: gcc -S"
+- question: If you just run gcc -o prog main.c square.c, where did the assembly go?
+  answer: "It was written to temporary files and thrown away. gcc is a driver: it runs the preprocessor and compiler (cc1), the assembler (as) and the linker (collect2, which runs ld) in turn. gcc -save-temps keeps every in-between file; gcc -v shows each program it runs."
+  jumpToId: one-command-every-stage
+  jumpToLabel: One command, every stage
+assignment:
+  instruction: "In an empty folder with the three files from the last lesson, run gcc -save-temps -o prog main.c square.c. Open prog-square.s and find the line that multiplies. Then compile square.c again with -O2 and compare: how many instructions are left?"
+  resourceName: 'GCC manual: Overall Options'
+  resourceType: doc
+  resourceUrl: 'https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html'
+additionalResources:
+- title: 'Compiler Explorer (godbolt.org)'
+  type: doc
+  meta: see the assembly for any C function, with many compilers, in the browser
+  url: 'https://godbolt.org/'
+- title: 'Computer Systems: A Programmer''s Perspective (CS:APP)'
+  type: doc
+  meta: chapter 1.2 walks the same four stages
+  url: 'https://csapp.cs.cmu.edu/'
+whyThisMatters: "\"Compile\" usually means four programs run one after another. Knowing where each stage starts and stops tells you which tool to blame for an error, where to look when the code a compiler wrote matters, and how the tiny CPU's assembler you studied connects to a real one."
+---
+
+In the last lesson the preprocessor turned main.c into plain C text. That text still isn't something a CPU can run. Two more programs turn it into machine code: a <b>compiler</b> and an <b>assembler</b>. You've already been an assembler for the tiny CPU; now you'll meet a real one.
+
+By the end you'll be able to name every stage, stop gcc after any of them, and read what it leaves behind.
+
+## Four stages, one command
+
+When you run `gcc -o prog main.c square.c`, each .c file goes through four stages:
+
+<TruthTable caption='The stages of building a C program' rowsJson='[["stage", "program (gcc 15)", "turns", "into"], ["preprocess", "cc1", "main.c", "C text with headers pasted in"], ["compile", "cc1", "C text", "assembly text (main.s)"], ["assemble", "as", "assembly", "an object file of machine code (main.o)"], ["link", "collect2, which runs ld", "object files", "one executable (prog)"]]' />
+
+In gcc the first two stages happen in the same program, cc1. The first three happen once per .c file; linking happens once for the whole program, and is the next lesson.
+
+## Stop after compiling: gcc -S
+
+`gcc -S square.c` stops after the compile stage and writes square.s. Here is the start of it, from gcc 15.2 on x86-64 Linux:
+
+```
+	.file	"square.c"
+	.text
+	.globl	square
+	.type	square, @function
+square:
+.LFB0:
+	.cfi_startproc
+	endbr64
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset 6, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register 6
+	movl	%edi, -4(%rbp)
+	movl	-4(%rbp), %eax
+	imull	%eax, %eax
+	popq	%rbp
+	.cfi_def_cfa 7, 8
+	ret
+...
+```
+
+It's the same kind of text you wrote for the tiny CPU, for a much bigger CPU. Lines starting with a dot are <b>directives</b>, notes for the assembler rather than instructions: `.globl square` says other files may use this name, and the `.cfi` lines describe the stack for debuggers. The instructions are the rest. `imull %eax, %eax` is the `x * x`. The argument x arrived in register `%edi`, and the result leaves in `%eax`.
+
+This listing was made with no optimisation (the default), so x takes a detour through memory (`-4(%rbp)`) before being multiplied. You'll see what optimisation changes in the last lesson of this section.
+
+## Stop after assembling: gcc -c
+
+`gcc -c square.c` goes one stage further: the assembler turns the text into machine code and stops, leaving <b>square.o</b>, an <b>object file</b>. It's no longer text: `file square.o` describes it as:
+
+```
+square.o: ELF 64-bit LSB relocatable, x86-64, version 1 (SYSV), not stripped
+```
+
+"Relocatable" is the important word. The machine code is there, but it isn't finished: main.o calls square without knowing where square will end up, and neither file knows where it will be loaded. Filling in those gaps is the linker's job.
+
+<KeyIdea>The compiler turns C into assembly for one CPU. The assembler turns assembly into an object file: machine code with gaps still to fill.</KeyIdea>
+
+## One command, every stage
+
+Normally you never see .s or .o files: gcc writes them to temporary files and deletes them. gcc is a <b>driver</b> that runs the real tools in order. Two flags let you watch:
+
+- `gcc -save-temps -o prog main.c square.c` keeps every in-between file. In the folder afterwards: `prog-main.i` (preprocessed, 856 lines), `prog-main.s`, `prog-main.o`, the same three for square, and `prog`.
+- `gcc -v -o prog main.c square.c` prints each program it runs. Trimmed to just the program names, gcc 15 on this system ran `/usr/libexec/gcc/x86_64-linux-gnu/15/cc1` and `/usr/bin/x86_64-linux-gnu-as` once per file, then `/usr/libexec/gcc/x86_64-linux-gnu/15/collect2` once to link.
+
+Paths and file names differ between systems and gcc versions; the stages don't.
+
+<details>
+<summary>Check your answer: which stage would report a misspelled instruction in a .s file you wrote by hand?</summary>
+
+The assembler. It's the program that reads assembly text, so a line it can't understand stops it, in the same way the tiny CPU's assembler refuses "LDX R0, 5". A misspelled C keyword, by contrast, is the compiler's to report.
+
+</details>
+
+Next: what's inside an object file, and the gaps the linker fills.

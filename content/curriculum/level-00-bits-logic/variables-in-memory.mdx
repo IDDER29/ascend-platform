@@ -1,0 +1,90 @@
+---
+title: "Variables in memory: x = x + 1, step by step"
+level: level-00-bits-logic
+slug: variables-in-memory
+order: 82
+timeMin: 8
+learningOutcomes:
+- Explain a variable as a name for a box in memory, holding one value at a time
+- Trace x = x + 1 as read the box, add one, write the box back
+- Explain why x = x + 1 is an instruction to update, not an equation
+- Swap two variables correctly, and explain why the obvious two lines don't work
+primer:
+- title: "Loading and storing in assembly"
+  type: doc
+  meta: Reread · 3 min · LDA and STA are what a variable becomes.
+  essential: true
+knowledgeCheck:
+- question: What does x = x + 1 do, step by step, on the tiny CPU?
+  answer: "It reads x's box into a register (LDA), adds 1 (LDI and ADD), and writes the result back into the same box (STA). The old value is gone once the store happens."
+  jumpToId: read-add-write-back
+  jumpToLabel: Read, add, write back
+- question: Why don't the two lines a = b; b = a; swap a and b?
+  answer: "The first line overwrites a with b's value, so the old value of a is lost. The second line then copies that same value back into b, leaving both equal. You need a third variable to keep the old a."
+  jumpToId: the-swap-trap
+  jumpToLabel: The swap trap
+assignment:
+  instruction: "Trace this by hand, writing every variable's value after each line: var a = 3; var b = a; a = a + 4; b = b + a;. Then check it in a Translator Lab by typing it in."
+  resourceName: 'Wikipedia: Assignment (computer science)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Assignment_%28computer_science%29'
+additionalResources:
+- title: Variable (computer science) (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Variable_%28computer_science%29'
+whyThisMatters: "Research on beginners finds that many read x = x + 1 as an equation that can't be true, or as a formula that keeps x updated forever. It's neither: it's one read, one add and one write, at one moment. Every loop counter you'll ever write depends on seeing it that way."
+---
+
+In maths, `x = x + 1` is a contradiction: no number equals itself plus one. In a program it's one of the most common lines there is. The difference is that `=` in a program doesn't state a fact. It's an order: work out the right-hand side, then put the result in the box on the left.
+
+By the end you'll be able to trace any assignment as reads and writes of memory, and avoid the classic swap bug.
+
+## A variable is a named box
+
+When the translator sees `var x = 0;`, it picks a box in memory for x (the first variable gets 0x80, the next 0x81, and so on) and stores 0 there. From then on, the name x means "the box at 0x80". The lab shows each variable's address next to its value.
+
+## Read, add, write back
+
+The translator turns `x = x + 1;` into:
+
+<TruthTable caption='x = x + 1, as instructions' rowsJson='[["instruction", "what it does"], ["LDA R0, [0x80]", "read: copy x into R0"], ["LDI R1, 1", "get the number 1"], ["ADD R0, R1", "add: R0 is now x + 1"], ["STA R0, [0x80]", "write: put R0 back into x"]]' />
+
+Read, add, write back. Nothing happens to x until the last step, and after it the old value is gone. The right-hand side is worked out first, using x's old value; only then does x change.
+
+<KeyIdea>An assignment is an order, not an equation: work out the right side, then overwrite the box on the left.</KeyIdea>
+
+This program should leave x at 3. It only adds once. Make it 3.
+
+<TranslatorLab caption='Count x up to 3' startJson='["var x = 0;","x = x + 1;"]' goalJson='{"vars":{"x":3}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Add `x = x + 1;` twice more. Each line reads the box, adds one and writes it back, so the value climbs 1, 2, 3. A line doesn't keep x updated after it runs: it runs once, at one moment.
+
+</details>
+
+## The swap trap
+
+This program is meant to swap a and b, so a ends as 9 and b as 5. Run it and look at the values.
+
+<TranslatorLab caption='Swap a and b' startJson='["var a = 5;","var b = 9;","a = b;","b = a;"]' goalJson='{"vars":{"a":9,"b":5}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Both end as 9. `a = b;` overwrites a's box with 9, and the 5 is gone for good; `b = a;` then copies that 9 back. The fix is a third box to keep the old value:
+
+```
+var a = 5;
+var b = 9;
+var t = 0;
+t = a;
+a = b;
+b = t;
+```
+
+Seeing a variable as a box that holds one value at a time is exactly what makes this bug obvious.
+
+</details>

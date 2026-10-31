@@ -1,0 +1,96 @@
+---
+title: "Arrays: values side by side"
+level: level-00-bits-logic
+slug: arrays
+order: 85
+timeMin: 7
+learningOutcomes:
+- Explain an array as values of one type stored in neighbouring boxes
+- Work out where element i is from the start address and the element size
+- Walk through an array on the tiny CPU with an address held in a register
+- Explain why reading past the end of an array reads whatever is next in memory
+primer:
+- title: "Operands: values, registers and addresses"
+  type: doc
+  meta: Reread · 3 min · LDR reads the box whose address is in a register.
+  essential: true
+- title: "Types and widths"
+  type: doc
+  meta: Reread · 3 min · each element has the size of its type.
+  essential: true
+knowledgeCheck:
+- question: An int array starts at byte 1000, and ints are 4 bytes. Where is element 3?
+  answer: "At 1000 + 3 × 4 = 1012. Element i is always at the start address plus i times the element size, which is why element 0 is at the start."
+  jumpToId: where-element-i-lives
+  jumpToLabel: Where element i lives
+- question: Why does the broken sum program output 15 instead of 35?
+  answer: "It never moves its pointer on: without INC R1 it reads the first element, 3, five times. The address register is what walks through the array."
+  jumpToId: walk-through-an-array
+  jumpToLabel: Walk through an array
+assignment:
+  instruction: "Write a C program with an array of 5 shorts. Print the distance in bytes of each element from element 0, as this lesson does for ints. Predict the numbers first; then explain why they differ from the int version."
+  resourceName: 'Wikipedia: Array (data structure)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Array_%28data_structure%29'
+additionalResources:
+- title: 'CS50 Week 2: arrays'
+  type: video
+  meta: arrays in C
+  url: 'https://cs50.harvard.edu/x/weeks/2/'
+whyThisMatters: "Arrays are the most common data structure there is, and indexing one is just arithmetic on an address. Knowing that is what explains why array access is fast, why element 0 comes first, and why going past the end is one of the most dangerous bugs in C."
+---
+
+You've stored values in separate variables, one box each. When you have many values of the same kind (scores, pixels, letters of a name) you want them together, so a loop can walk through them. That's an <b>array</b>.
+
+By the end you'll be able to say where any element lives and walk through an array on the tiny CPU.
+
+## Neighbouring boxes
+
+An array is values of one type stored side by side in memory. On the tiny CPU, an array of 5 bytes at 0x90 takes boxes 0x90, 0x91, 0x92, 0x93 and 0x94. Element 0 is at 0x90; element 4 is at 0x94.
+
+## Where element i lives
+
+When elements are bigger than a byte, they're further apart. This C program prints how far each element of an int array is from the first:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    int a[4] = {10, 20, 30, 40};
+    char *start = (char *)&a[0];
+    for (int i = 0; i < 4; i++) {
+        printf("a[%d] = %d, %ld bytes from the start\n", i, a[i], (long)((char *)&a[i] - start));
+    }
+    return 0;
+}
+```
+
+```
+a[0] = 10, 0 bytes from the start
+a[1] = 20, 4 bytes from the start
+a[2] = 30, 8 bytes from the start
+a[3] = 40, 12 bytes from the start
+```
+
+Each int is 4 bytes, so element i is 4 × i bytes along. That's the whole rule:
+
+<KeyIdea>Element i lives at the start address plus i times the element's size. Indexing an array is one multiply and one add.</KeyIdea>
+
+It's also why counting starts at 0: element 0 is 0 elements along from the start.
+
+## Walk through an array
+
+To visit every element, keep the address of the current one in a register and add the size after each step. This program should add up the five bytes at 0x90 and output 35. It outputs 15. Find the missing line.
+
+<TinyCpu2 editable caption='Sum an array' programJson='["LDI R1, 0x90", "LDI R2, 5", "LDI R0, 0", "loop: LDR R3, [R1]", "ADD R0, R3", "DEC R2", "JNZ loop", "OUT R0", "HALT"]' dataJson='{"144":3,"145":5,"146":7,"147":9,"148":11}' goalJson='{"out":[35]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Add `INC R1` after `ADD R0, R3`. Without it, R1 stays at 0x90 and the loop reads element 0 (the 3) five times: 15. With it, R1 walks 0x90, 0x91, ... 0x94 and the total is 3 + 5 + 7 + 9 + 11 = 35. R1 is doing exactly what an array index does in a language.
+
+</details>
+
+## Past the end
+
+Nothing in memory marks where an array stops. If the loop above ran six times, it would read box 0x95 too, whatever happened to be there, and add it in. In C, reading or writing past the end of an array is undefined behaviour: it may read another variable, crash, or appear to work. Keeping the index inside the array is the program's job, which is why the Systems Programmer path spends a whole course on C's rules.

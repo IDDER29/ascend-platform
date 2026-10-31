@@ -1,0 +1,171 @@
+---
+title: "Source files, headers and the preprocessor"
+level: level-00-bits-logic
+slug: source-files-and-headers
+order: 89
+timeMin: 7
+learningOutcomes:
+- Tell a declaration (a name and its type) apart from a definition (the thing itself)
+- Explain why a C program is split into source files and header files
+- Describe #include as pasting one file's text into another, before compiling starts
+- Use gcc -E to see exactly what the compiler receives after the preprocessor has run
+primer:
+- title: "Functions and the call stack"
+  type: doc
+  meta: Reread · 3 min · this lesson splits functions across files.
+  essential: false
+- title: "Types and widths"
+  type: doc
+  meta: Reread · 2 min · a declaration gives a name its type.
+  essential: true
+knowledgeCheck:
+- question: What is the difference between int square(int x); and int square(int x) { return x * x; }?
+  answer: "The first is a declaration: it says a function called square exists, takes an int and returns an int. The second is a definition: it is the function itself, with a body the compiler turns into instructions. A name can be declared in many places but defined only once."
+  jumpToId: declaring-versus-defining
+  jumpToLabel: Declaring versus defining
+- question: What does #include "square.h" do?
+  answer: "Before compiling starts, the preprocessor replaces that line with the whole text of square.h. Nothing clever happens: it is pasting. The compiler then sees the declaration as if you had typed it into the file yourself."
+  jumpToId: include-is-copy-and-paste
+  jumpToLabel: "#include is copy and paste"
+- question: Why might gcc -E main.c print hundreds of lines for a file of twenty?
+  answer: "Because main.c includes stdio.h, and the preprocessor pastes in all of stdio.h (and the headers it includes) to declare printf and everything else that header offers. On the system used for this lesson, the 15-line main.c became 856 lines."
+  jumpToId: seeing-what-the-compiler-sees
+  jumpToLabel: Seeing what the compiler sees
+assignment:
+  instruction: "On a computer with gcc (Linux, macOS with Xcode tools, or WSL on Windows), make the three files from this lesson and run gcc -E main.c. Find the line int square(int x); in the output, and the declaration of printf. Then add a #define LIMIT 3 to main.c, use LIMIT in the loop, and see what the preprocessor turns it into."
+  resourceName: 'GCC manual: Overall Options (-E, -S, -c)'
+  resourceType: doc
+  resourceUrl: 'https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html'
+additionalResources:
+- title: C preprocessor (Wikipedia)
+  type: doc
+  meta: reference, including #define and #if
+  url: 'https://en.wikipedia.org/wiki/C_preprocessor'
+- title: Include directive (Wikipedia)
+  type: doc
+  meta: how #include works in C and other languages
+  url: 'https://en.wikipedia.org/wiki/Include_directive'
+- title: 'Computer Systems: A Programmer''s Perspective (CS:APP)'
+  type: doc
+  meta: chapter 7 covers the whole build pipeline
+  url: 'https://csapp.cs.cmu.edu/'
+whyThisMatters: "Every real C program is many files, and the first error messages you meet (\"implicit declaration\", \"undefined reference\") are about how those files see each other. Knowing that #include is plain text pasting, and that a declaration is only a promise, makes those errors readable instead of mysterious."
+---
+
+So far every program in this course has been one file. Real programs are hundreds or thousands of files. C has a simple, old-fashioned way to let them use each other's functions: header files and a step called the <b>preprocessor</b>.
+
+By the end you'll be able to tell a declaration from a definition, say exactly what #include does, and see the text the compiler really receives.
+
+## Declaring versus defining
+
+A <b>definition</b> is the thing itself. This is a definition of a function: it has a body, and the compiler turns that body into instructions.
+
+```c
+int square(int x) {
+    return x * x;
+}
+```
+
+A <b>declaration</b> only tells the compiler that a name exists and what type it has. It's a promise: "somewhere, there is a function called square that takes an int and returns an int."
+
+```c
+int square(int x);
+```
+
+The compiler needs the promise before it can compile a call. When it reaches `square(i)` in another file, it doesn't need the body; it only needs to know which arguments to pass and what comes back. Finding the actual body is someone else's job, later.
+
+<KeyIdea>A declaration says a name exists and gives its type. A definition is the thing itself. Declare as often as you need; define exactly once.</KeyIdea>
+
+## Header files hold the promises
+
+To use `square` from several files, you'd have to type its declaration into each one. Instead, C programs put shared declarations in a <b>header file</b>, ending in `.h`, and each file that needs them includes it. Here is a small program in three files:
+
+```c
+/* square.h: a declaration only. */
+int square(int x);
+```
+
+```c
+/* square.c */
+#include "square.h"
+
+int square(int x) {
+    return x * x;
+}
+```
+
+```c
+/* main.c */
+#include <stdio.h>
+#include "square.h"
+
+int count = 3;
+int results[3];
+const char greeting[] = "squares:";
+
+int main(void) {
+    printf("%s\n", greeting);
+    for (int i = 1; i <= count; i++) {
+        results[i - 1] = square(i);
+        printf("%d\n", results[i - 1]);
+    }
+    return 0;
+}
+```
+
+`square.c` defines `square`. `main.c` only declares it (through the header) and calls it. `stdio.h` is the standard library's header: it declares `printf`. Angle brackets mean "look in the system's folders"; quotes mean "look next to this file first".
+
+## #include is copy and paste
+
+Lines starting with `#` are not C. They're instructions to the preprocessor, which runs before the compiler and works only on text. `#include "square.h"` means: replace this line with the whole text of square.h.
+
+That's all. The preprocessor doesn't understand C; it pastes. `#define LIMIT 3` is the same idea: from then on, every `LIMIT` in the text is replaced by `3` before the compiler sees it.
+
+<KeyIdea>The preprocessor edits text before compiling: #include pastes a file in, #define replaces a word. The compiler never sees the # lines.</KeyIdea>
+
+## Seeing what the compiler sees
+
+`gcc -E` runs only the preprocessor and prints the result. Here is the end of `gcc -E main.c`, run with gcc 15.2 on x86-64 Linux:
+
+```
+...
+# 2 "main.c" 2
+# 1 "square.h" 1
+
+
+# 2 "square.h"
+int square(int x);
+# 3 "main.c" 2
+
+int count = 3;
+int results[3];
+const char greeting[] = "squares:";
+
+int main(void) {
+    printf("%s\n", greeting);
+...
+```
+
+Three things to notice:
+
+- The text of square.h is now inside main.c, with its comment removed. The lines starting with `# 2 "square.h"` are markers telling the compiler which file each line came from, so its error messages can name the right file.
+- Above this, the preprocessor pasted in all of stdio.h. The 15-line main.c became 856 lines. Somewhere in them is the declaration of printf: `extern int printf (const char *__restrict __format, ...);`.
+- Your own lines arrive unchanged.
+
+The exact output differs between compilers and systems (another C library has a different stdio.h), but the idea is the same everywhere.
+
+<details>
+<summary>Check your answer: what would happen if main.c didn't include square.h?</summary>
+
+The compiler reaches `square(i)` with no declaration. gcc 15 stops with an error:
+
+```
+noinc.c: In function ‘main’:
+noinc.c:10:26: error: implicit declaration of function ‘square’ [-Wimplicit-function-declaration]
+```
+
+It can't check the call against a promise it never saw. The fix is the header: one shared promise, pasted into every file that needs it.
+
+</details>
+
+Next: what the compiler does with this text, and how the result becomes bytes.

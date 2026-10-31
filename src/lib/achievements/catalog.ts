@@ -96,6 +96,10 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "puzzle-solver", group: "building", label: "Puzzle Solver", glyph: "⧩", means: "Solved the assembly puzzles on the tiny CPU, version 2", rules: [{ kind: "project", projectId: "assembly-puzzles" }] },
   { id: "assembler", group: "building", label: "Assembler", glyph: "⇲", means: "Ran both passes of an assembler by hand and wrote them as a procedure", rules: [{ kind: "project", projectId: "assembler" }] },
   { id: "librarian", group: "building", label: "Librarian", glyph: "⧉", means: "Wrote a library of subroutines that call each other (optional project)", rules: [{ kind: "project", projectId: "subroutine-library" }] },
+  { id: "memory-watcher", group: "building", label: "Memory Watcher", glyph: "◫", means: "Predicted variables and arrays in memory, and fixed a swap that didn't", rules: [{ kind: "project", projectId: "memory-visualizer" }] },
+  { id: "translator", group: "building", label: "Translator", glyph: "⇆", means: "Translated a program by hand and diagnosed a translator bug", rules: [{ kind: "project", projectId: "translator" }] },
+  { id: "compiler-reader", group: "building", label: "Compiler Reader", glyph: "⌬", means: "Annotated real gcc output and said what C, the compiler and the target each decide", rules: [{ kind: "project", projectId: "real-c" }] },
+  { id: "cross-compiler", group: "building", label: "Cross Compiler", glyph: "⤨", means: "Compared one function compiled for two targets (optional project)", rules: [{ kind: "project", projectId: "compiler-variation" }] },
   { id: "cpu-tracer", group: "building", label: "CPU Tracer", glyph: "▤", means: "Shipped a program for the tiny CPU", rules: [{ kind: "project", projectId: "tiny-cpu" }] },
   { id: "ship-it", group: "building", label: "Shell Smith", glyph: "◈", means: "Shipped ShellForge, a working shell", rules: [{ kind: "project", projectId: "shellforge" }] },
 
@@ -110,7 +114,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "comeback", group: "habits", label: "Comeback", glyph: "✦", means: "Came back to Practice after two weeks away", rules: [{ kind: "comeback", gapDays: 14 }] },
 
   // Combinations: the parts are the rule, shown openly.
-  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "ship-it"] }] },
+  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "ship-it"] }] },
   { id: "sharp-mind", group: "combination", label: "Sharp Mind", glyph: "✺", means: "Deep memory, a clean run and a week of practice", rules: [{ kind: "badges", ids: ["deep-memory", "clean-run", "week-of-practice"] }] },
   { id: "whole-machine", group: "combination", label: "The Whole Machine", glyph: "✸", means: "Finished every lesson and shipped every project", rules: [{ kind: "allLessons" }, { kind: "badges", ids: ["builder"] }] },
 ];

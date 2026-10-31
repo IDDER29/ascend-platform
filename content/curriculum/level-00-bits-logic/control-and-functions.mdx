@@ -1,0 +1,92 @@
+---
+title: "Conditions, loops and functions"
+level: level-00-bits-logic
+slug: control-and-functions
+order: 83
+timeMin: 8
+learningOutcomes:
+- Write an if/else and a while loop in the tiny language
+- Read the compares and jumps the translator makes from them, and say which jump goes where
+- Explain the difference between an if (runs at most once) and a while (repeats until the test fails)
+- Explain a function as a named piece of code reached with a call and left with a return
+primer:
+- title: "Comparisons and conditional branches"
+  type: doc
+  meta: Reread · 3 min · CMPI and JZ/JNZ, which ifs become.
+  essential: true
+- title: "Calls, return addresses and subroutines"
+  type: doc
+  meta: Reread · 3 min · what a function call becomes.
+  essential: true
+knowledgeCheck:
+- question: What does the translator make from if (x == 0) { … } else { … }?
+  answer: "It loads x, compares it with 0 (CMPI), and jumps to the else part if they're not equal (JNZ). At the end of the then part, a JMP skips over the else part. Labels mark where each part starts and ends."
+  jumpToId: an-if-is-a-compare-and-a-jump
+  jumpToLabel: An if is a compare and a jump
+- question: Why does turning if into while make the program output 3, 2, 1 instead of just 3?
+  answer: "An if runs its body at most once. A while ends its body with a jump back to the test, so the body repeats until the test fails, here when n reaches 0."
+  jumpToId: a-while-jumps-back
+  jumpToLabel: A while jumps back
+assignment:
+  instruction: "Write a tiny-language program that outputs the numbers from 5 down to 1, but only the odd ones (5, 3, 1). Hint: keep a second variable that flips between 0 and 1 each time round the loop. Test it in a Translator Lab."
+  resourceName: 'Wikipedia: Control flow'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Control_flow'
+additionalResources:
+- title: 'CS50 Week 1: conditions and loops in C'
+  type: video
+  meta: the same ideas in C
+  url: 'https://cs50.harvard.edu/x/weeks/1/'
+whyThisMatters: "Every if, else, for and while you'll ever write in any language becomes the compares and jumps in this lesson. When you later step through a program in a debugger and the line jumps somewhere unexpected, this is what you're watching."
+---
+
+Programs choose and repeat. In assembly you did both with compares and jumps, and had to place every label yourself. A language gives you `if` and `while` instead, and the translator places the jumps.
+
+By the end you'll be able to write both, read what they turn into, and say what a function call becomes.
+
+## An if is a compare and a jump
+
+Here is what the translator makes from an if/else:
+
+```
+var x = 0;
+if (x == 0) {
+  output(1);
+} else {
+  output(2);
+}
+```
+
+<TruthTable caption='if (x == 0), as instructions' rowsJson='[["instruction", "why"], ["LDA R0, [0x80]", "load x"], ["CMPI R0, 0", "is x equal to 0? sets Z"], ["JNZ else1", "if not, skip to the else part"], ["LDI R0, 1 and OUT R0", "the then part"], ["JMP endif1", "skip over the else part"], ["else1: LDI R0, 2 and OUT R0", "the else part"], ["endif1: ...", "both ways meet again here"]]' />
+
+The test jumps *away* when the condition is false. The then part follows straight on, and a JMP at its end hops over the else part so that only one of them runs.
+
+## A while jumps back
+
+A <b>while</b> is an if whose body ends with a jump back to the test. So it repeats until the test fails.
+
+This program should output 3, 2 and 1. It only outputs 3. Change one word.
+
+<TranslatorLab caption='Repeat, not once' startJson='["var n = 3;","if (n != 0) {","  output(n);","  n = n - 1;","}"]' goalJson='{"out":[3,2,1]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Change `if` to `while`. In the translation, a `JMP while1` now appears at the end of the body, back to the test. The body runs while n is 3, 2 and 1; when n is 0 the test jumps out to `endwhile1`.
+
+</details>
+
+<KeyIdea>An if jumps over code; a while jumps back to run it again. Both are a compare and a conditional jump.</KeyIdea>
+
+## Functions are calls and returns
+
+The tiny language has no functions, but real languages do. A <b>function</b> is a named piece of code you can run from many places. In C:
+
+```c
+int square(int n) {
+    int result = n * n;
+    return result;
+}
+```
+
+Calling `square(3)` becomes what you did in assembly: put the argument where the function expects it, CALL its first instruction (which saves where to come back to), and when it finishes, RET to that saved address with the result in an agreed register. Arguments, the return address and the function's own variables live in a <b>stack frame</b>, which is the subject of the last lesson in this section.

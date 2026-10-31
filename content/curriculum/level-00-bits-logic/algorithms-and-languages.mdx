@@ -1,0 +1,96 @@
+---
+title: "Algorithms, programs and languages"
+level: level-00-bits-logic
+slug: algorithms-and-languages
+order: 80
+timeMin: 7
+learningOutcomes:
+- Tell an algorithm apart from a program written in a particular language
+- Explain why one algorithm can be written in many languages, and why each becomes different machine instructions
+- Read a short program in the tiny language used in this course, and its translation into tiny CPU assembly
+- Say what a translator (a compiler) does, in one sentence
+primer:
+- title: "Instructions and algorithms"
+  type: doc
+  meta: Reread · 3 min · what an algorithm is.
+  essential: true
+- title: "Assemble and run a complete program"
+  type: doc
+  meta: Reread · 3 min · the assembly this course translates into.
+  essential: false
+knowledgeCheck:
+- question: What is the difference between an algorithm and a program?
+  answer: "An algorithm is the exact procedure, in any notation, even English. A program is that procedure written in one particular programming language, so a computer (through a translator) can run it."
+  jumpToId: one-procedure-three-ways
+  jumpToLabel: One procedure, three ways
+- question: Why do the same few lines of source become many more lines of assembly?
+  answer: "Each source line does one meaningful step, like total = total + n, but the CPU can only load, add and store one register at a time. The translator turns each step into the several instructions that do it."
+  jumpToId: what-a-translator-does
+  jumpToLabel: What a translator does
+assignment:
+  instruction: "Write the algorithm for finding the largest of a list of numbers in plain English, as numbered steps. Then say which steps would need a loop and which a decision, without writing any code."
+  resourceName: 'CS50 Week 0: algorithms and pseudocode'
+  resourceType: site
+  resourceUrl: 'https://cs50.harvard.edu/x/weeks/0/'
+additionalResources:
+- title: Algorithm (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Algorithm'
+- title: Programming language (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Programming_language'
+whyThisMatters: "Every language you'll learn, from C to Python, is one more way to write algorithms down. Seeing the same procedure as English, as a small language and as CPU instructions, all at once, is what makes a new language a new notation rather than a new mystery."
+---
+
+In the last course you wrote programs one instruction at a time. That works, but it's slow and error-prone, and it ties every program to one CPU. This course climbs one layer up: you write what you want in a programming language, and a <b>translator</b> turns it into instructions.
+
+By the end you'll be able to tell an algorithm from a program, read the small language this course uses, and say what a translator does.
+
+## One procedure, three ways
+
+An <b>algorithm</b> is an exact procedure. Here's one, in English: to add up the numbers from 1 to n, start a total at 0; while n isn't 0, add n to the total and take 1 from n; then show the total.
+
+A <b>program</b> is an algorithm written in a particular <b>programming language</b>. This course uses a deliberately tiny language, built for the tiny CPU. The same algorithm in it:
+
+```
+var n = 4;
+var total = 0;
+while (n != 0) {
+  total = total + n;
+  n = n - 1;
+}
+output(total);
+```
+
+And in C, the language you'll meet properly in the Systems Programmer path, it would look much the same, with `while (n != 0)` and `total = total + n;`. One algorithm; many languages; and underneath, always instructions.
+
+<KeyIdea>The algorithm is the idea. A program is that idea written in one language. The CPU only ever runs instructions.</KeyIdea>
+
+## What a translator does
+
+A <b>translator</b> (for a real language, a <b>compiler</b>) reads a program and writes the instructions that do the same thing. The lab below shows both sides: your program on the left, the tiny CPU assembly it becomes on the right, with the source line each instruction came from.
+
+The program is missing its most important line. Add the line that adds n to the total, so it outputs 10.
+
+<TranslatorLab caption='Add up 1 to 4' startJson='["var n = 4;","var total = 0;","while (n != 0) {","  n = n - 1;","}","output(total);"]' goalJson='{"out":[10]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Add `total = total + n;` inside the loop, before `n = n - 1;`. The output is 10 (4 + 3 + 2 + 1). If you put it after, you add 3 + 2 + 1 + 0 = 6: the order of the steps is part of the algorithm.
+
+Look at the right-hand side: that one line became four instructions (load total, load n, add, store total). Seven lines of source became 19 instructions.
+
+</details>
+
+## Why languages exist
+
+If the CPU only runs instructions, why have languages at all?
+
+- <b>People:</b> `total = total + n` says what you mean; four instructions say how. Programs are read far more often than they're written.
+- <b>Portability:</b> assembly belongs to one CPU. The same C program can be compiled for x86 laptops, ARM phones or the tiny CPU (with the right compiler).
+- <b>Safety:</b> a language can refuse nonsense before it runs. Try typing `x = y * 2;` in the lab: the translator stops with an error instead of producing a broken program.
+
+The price is that you can no longer see exactly what the CPU does. The rest of this course is about seeing it anyway.

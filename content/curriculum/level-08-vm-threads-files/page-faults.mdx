@@ -1,0 +1,123 @@
+---
+title: "Page faults and demand paging"
+level: level-08-vm-threads-files
+slug: page-faults
+order: 3
+timeMin: 11
+learningOutcomes:
+- Explain what happens, step by step, when a program touches a page that has no frame yet
+- Tell a minor page fault from a major one, and say why a major fault costs thousands of times more
+- Count a program's page faults with getrusage and /usr/bin/time, and predict the counts
+- Explain copy-on-write after fork, and why reading shared pages costs nothing
+primer:
+- title: "Virtual addresses and page tables"
+  type: doc
+  meta: Reread · 3 min · the present bit, which makes a fault happen.
+  essential: true
+- title: Processes & the process table
+  type: doc
+  meta: "Systems & Software · fork, which copy-on-write makes cheap."
+  essential: false
+knowledgeCheck:
+- question: A program maps 1000 fresh pages and writes one byte in each, twice. How many page faults, and why?
+  answer: "1000, all during the first pass: each first write finds no frame, faults, and the kernel gives the page a zeroed frame. The second pass finds every page present and writable, so it doesn't fault at all."
+  jumpToId: demand-paging
+  jumpToLabel: Demand paging
+- question: After fork, the child reads all 1000 of its parent's pages, then writes to 500. How many faults in the child?
+  answer: "500. fork copied the page tables, not the pages: both processes point at the same frames, marked read-only. Reads just work. Each write faults, and the kernel copies that one page for the child (copy-on-write)."
+  jumpToId: copy-on-write
+  jumpToLabel: Copy-on-write
+assignment:
+  instruction: "Run /usr/bin/time -v on three commands you use (a compiler, an editor opening a file, a script). Compare their minor and major fault counts and maximum resident set size, then run each again and explain why the major faults change between the first and second runs."
+  resourceName: 'OSTEP: Beyond Physical Memory: Mechanisms'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/vm-beyondphys.pdf'
+additionalResources:
+- title: "Linux man page: getrusage(2)"
+  type: doc
+  meta: ru_minflt and ru_majflt
+  url: 'https://man7.org/linux/man-pages/man2/getrusage.2.html'
+- title: "OSTEP: Beyond Physical Memory: Policies"
+  type: pdf
+  meta: which page to evict when memory is full
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/vm-beyondphys-policy.pdf'
+whyThisMatters: "Page faults are how the kernel gets memory to your program only when it's needed, and how fork, file mapping and swapping work at all. They're also a common hidden cost: a program that touches lots of fresh memory, or memory that was swapped out, spends its time in the kernel, not in your code."
+---
+
+A page-table entry can say "not present". When the program touches such a page, the processor can't finish the access. It raises a **page fault**: an exception that stops the instruction and jumps into the kernel. What the kernel does next depends on why the page wasn't there, and that's what makes faults useful rather than just errors.
+
+## What happens in a fault
+
+1. The program loads or stores to an address whose entry isn't present, or isn't writable for a store.
+2. The CPU saves the program's state and enters the kernel's page-fault handler, with the faulting address and the kind of access.
+3. The kernel looks the address up in its own record of the process's memory regions (the `vm_area` list, which `/proc/self/maps` shows).
+   - Not in any region, or the wrong kind of access: the program really made a mistake. The kernel sends **SIGSEGV**.
+   - In a region, but no frame yet: the kernel finds a frame, fills it (with zeros, or from a file), and writes the page-table entry.
+4. The kernel returns, and the CPU **re-runs the same instruction**, which now succeeds. The program never knows.
+
+A fault the kernel can serve from memory is a **minor** fault: a few hundred nanoseconds to a microsecond or so. One that must read the disk is a **major** fault: tens of microseconds on an SSD, milliseconds on a spinning disk.
+
+## Demand paging
+
+When a program allocates memory, the kernel only records the region; frames come later, one page at a time, on first touch. This program maps 1000 fresh pages and writes to each, twice. Predict both fault counts.
+
+<CRun program="vm-threads-files/pf-count" caption='Counting faults with getrusage' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Exactly 1000 faults on the first pass and 0 on the second. `mmap` returned instantly without giving out any memory. Each first write faulted, and the kernel gave that page a zeroed frame. After that the pages are present and writable, so the second pass runs at full speed.
+
+The program turned off huge pages for this region (`MADV_NOHUGEPAGE`). With 2 MiB pages, one fault could fill 512 small pages at once, and the count would be far lower.
+
+</details>
+
+<KeyIdea>Memory is given out lazily. A page gets a frame the first time it's touched, in a page fault the program never sees.</KeyIdea>
+
+## Copy-on-write
+
+`fork` makes a child with a copy of the parent's whole address space. Copying every page would make `fork` slow, and pointless when the child calls `exec` straight away. Instead, the kernel copies only the page tables: both processes point at the same frames, and every writable page is marked read-only in both.
+
+In this program the parent fills 1000 pages, then forks. The child reads all 1000 and writes to 500 of them. Predict the child's fault counts, and what each process sees in page 0.
+
+<CRun program="vm-threads-files/pf-cow" caption='Copy-on-write after fork' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Reading costs **0 faults**: the shared frames are present and readable. Each of the 500 writes faults once, because the page is marked read-only. The kernel sees it's a copy-on-write page, copies that one frame for the child, makes the child's entry writable, and retries the write: **500 faults**. The child sees `c` in page 0, and the parent still sees `p`. They now have separate frames for that page, and still share the 500 pages nobody wrote.
+
+</details>
+
+## Major faults and read-ahead
+
+Faults on file-backed memory may need the disk. This program writes a 400-page file, tells the kernel to drop it from the page cache, maps it, and reads one byte per page, twice: once normally, once with `MADV_RANDOM`. Predict which run has more major faults.
+
+<CRun program="vm-threads-files/pf-major" caption='Major faults, with and without read-ahead' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Normally there is **1 major fault and 16 minor ones** for 400 pages. On the first fault the kernel noticed a file being read in order and **read ahead**: it fetched a large chunk of the file in one disk request. It also maps several neighbouring pages per fault ("fault-around"), so the later touches found their pages already in memory. With `MADV_RANDOM`, the program said its accesses are scattered, so the kernel fetched one page per fault: **400 major faults**.
+
+(This program writes its file in its own folder on the disk, because `/tmp` on this machine is held in RAM, where nothing can cause a major fault. It deletes the file before exiting.)
+
+</details>
+
+## Faults of any command
+
+You can count faults for any command without changing it. `/usr/bin/time -v` prints them, among other numbers. Here it is on this machine (`perf stat` can count them too, but it's restricted for ordinary users here):
+
+```
+$ /usr/bin/time -v gcc --version
+	Command being timed: "gcc --version"
+	Maximum resident set size (kbytes): 3372
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 152
+```
+
+Even printing a version string takes about 150 minor faults: the kernel maps gcc and its libraries lazily, and each page is faulted in on first use. Run it twice and the count changes slightly. There are no major faults here, because the files were already in the page cache.
+
+## Done when
+
+You can walk through a fault, tell minor from major, predict the counts in the three programs, and explain copy-on-write.

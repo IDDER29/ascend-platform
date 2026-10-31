@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/assume-loop-O2",
+  "sourceHash": "44da71bc78d0a8b7",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "",
+    "exitCode": null,
+    "signal": "SIGTERM",
+    "timedOut": true
+  },
+  "generated": "2026-10-31"
+}

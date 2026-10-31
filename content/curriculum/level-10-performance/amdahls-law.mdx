@@ -1,0 +1,130 @@
+---
+title: "Amdahl's law"
+level: level-10-performance
+slug: amdahls-law
+order: 2
+timeMin: 11
+learningOutcomes:
+- Use Amdahl's law to compute the overall speedup from speeding up one part of a program
+- Explain the limit 1 ÷ (1 - p), and why the part you didn't speed up decides it
+- Choose between two improvements by computing the speedup each gives
+- Compare a real multithreaded measurement with Amdahl's prediction, and explain where they differ
+primer:
+- title: "Measuring performance: time, CPI and clock rate"
+  type: doc
+  meta: Reread · 3 min · speedup is a ratio of times.
+  essential: true
+- title: "Threads vs processes"
+  type: doc
+  meta: "Virtual Memory, Threads & Files · the threads used in the measurement."
+  essential: false
+knowledgeCheck:
+- question: 80% of a program's time is in a function you make 4 times faster. What is the overall speedup?
+  answer: "1 ÷ ((1 - 0.8) + 0.8 ÷ 4) = 1 ÷ (0.2 + 0.2) = 2.5. The untouched 20% now takes as long as the whole improved part."
+  jumpToId: the-law
+  jumpToLabel: The law
+- question: Why did the measurement fall short of Amdahl's prediction at 4 and 8 threads?
+  answer: "Amdahl's law assumes identical processors that each run their share perfectly. This laptop has only two fast cores (each shared by two hardware threads) and eight slower efficiency cores, and the work was split evenly, so the parallel part ended only when the slowest thread finished."
+  jumpToId: measuring-it-with-threads
+  jumpToLabel: Measuring it with threads
+assignment:
+  instruction: "Profile a program you wrote (time its main phases with clock_gettime) and find the share of time in its biggest phase. Use Amdahl's law to compute the best overall speedup if that phase became infinitely fast, then decide whether it's worth optimising."
+  resourceName: "Wikipedia: Amdahl's law"
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Amdahl%27s_law'
+additionalResources:
+- title: "Gustafson's law (Wikipedia)"
+  type: doc
+  meta: the scaled-problem view of parallel speedup
+  url: 'https://en.wikipedia.org/wiki/Gustafson%27s_law'
+whyThisMatters: "Amdahl's law tells you, before you write a line of code or design a chip, the most an improvement can ever give. It's why architects don't just add cores, why profiling comes before optimising, and why the slow part nobody touched usually ends up deciding how fast a system really is."
+---
+
+You've made one part of a program much faster. How much faster is the whole program? Usually much less than you hoped, and Amdahl's law says exactly how much less.
+
+## The law
+
+Say a fraction **p** of a program's time is spent in a part you speed up by a factor **s**, and the rest, **1 - p**, stays as it was. Measured against the old time (call it 1), the new time is the untouched part plus the improved part:
+
+**new time = (1 - p) + p ÷ s**
+
+so the overall speedup is
+
+**speedup = 1 ÷ ((1 - p) + p ÷ s)**
+
+80% of a program's time is in one function. You make that function 4 times faster. What is the overall speedup?
+
+<details>
+<summary>Check your answer</summary>
+
+1 ÷ ((1 - 0.8) + 0.8 ÷ 4) = 1 ÷ (0.2 + 0.2) = 1 ÷ 0.4 = **2.5**.
+
+A 4-times faster function gives a 2.5-times faster program. The 20% you didn't touch now takes as long as the whole improved 80%.
+
+</details>
+
+## The limit
+
+Make **s** as large as you like: the improved part's time `p ÷ s` shrinks towards 0, but the untouched part stays. The speedup can never exceed
+
+**1 ÷ (1 - p)**
+
+For p = 0.8 that's 5, however fast the function becomes. For p = 0.9 it's 10, and even p = 0.99 caps the speedup at 100.
+
+A program is 90% parallel: that part can be split between processors. On 16 cores, what speedup does Amdahl's law predict, and what's the limit with unlimited cores?
+
+<details>
+<summary>Check your answer</summary>
+
+On 16 cores: 1 ÷ (0.1 + 0.9 ÷ 16) = 1 ÷ (0.1 + 0.05625) = 1 ÷ 0.15625 = **6.4**. The limit is 1 ÷ 0.1 = **10**. 16 cores give 6.4 times, not 16: each core added is worth less than the one before.
+
+</details>
+
+<KeyIdea>Speedup = 1 ÷ ((1 - p) + p ÷ s), and it can never exceed 1 ÷ (1 - p). The part you didn't improve sets the limit.</KeyIdea>
+
+## Choosing what to improve
+
+A program spends 30% of its time waiting for storage and 70% computing. You can afford one of two upgrades:
+
+- storage 3 times faster, or
+- computing 1.5 times faster.
+
+Which gives the bigger overall speedup?
+
+<details>
+<summary>Check your answer</summary>
+
+- Storage: 1 ÷ (0.7 + 0.3 ÷ 3) = 1 ÷ (0.7 + 0.1) = 1 ÷ 0.8 = **1.25**.
+- Computing: 1 ÷ (0.3 + 0.7 ÷ 1.5) = 1 ÷ (0.3 + 0.467) ≈ 1 ÷ 0.767 ≈ **1.30**.
+
+The modest improvement to the big part wins over the large improvement to the small part. That's the practical lesson of Amdahl's law: make the common case fast, and measure where the time goes before choosing.
+
+</details>
+
+## Measuring it with threads
+
+This program does a fixed serial part on one thread, then a parallel part split evenly between 1, 2, 4 and 8 threads. It's pure computation, with no shared data. It measures **p** on one thread (after a warm-up run, so the clock has sped up), then compares Amdahl's prediction with the real speedup. Before running it, decide whether the measured numbers will match, beat or fall short of the predictions.
+
+<CRun program="architect/amdahl" caption='Amdahl, measured' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+In this run p came out at 0.81, close to the 0.8 the work was designed for. At 2 threads the measurement was close to the prediction (1.61 against 1.68). At 4 and 8 threads it fell well short: 1.89 against 2.54, and 2.28 against 3.41.
+
+The law isn't wrong; its assumptions don't hold on this machine:
+
+- **The cores aren't identical.** This laptop has 2 performance cores, each running two hardware threads that share it, and 8 slower efficiency cores. The work was split evenly, so the parallel part finished only when the slowest thread did.
+- **Busy cores run slower.** With more cores working, the chip lowers its clock speed to stay within its power limit (the subject of a later lesson).
+
+Your numbers will differ: they vary by run, by machine and by what else is running. On a machine with many identical cores, the curve follows Amdahl much more closely.
+
+</details>
+
+## A different question: Gustafson's law
+
+Amdahl's law keeps the **problem size fixed** and asks how much faster it gets. Often, given more processors, people solve a **bigger problem** in the same time instead: a finer simulation or a larger image. If the parallel part grows with the number of processors N while the serial part stays the same, the speedup is **(1 - p) + p × N**, where p is the parallel share measured on the parallel machine. For p = 0.9 and N = 16 that's 0.1 + 14.4 = 14.5. This is **Gustafson's law**: not a contradiction of Amdahl, but an answer to a different question.
+
+## Done when
+
+You can compute a speedup and its limit with Amdahl's law, choose between two improvements by calculation, and explain why a real multithreaded measurement differs from the prediction.

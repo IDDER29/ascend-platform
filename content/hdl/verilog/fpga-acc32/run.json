@@ -1,0 +1,18 @@
+{
+  "id": "verilog/fpga-acc32",
+  "sourceHash": "610a97929e04226d",
+  "tool": "pnr",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "yosys -p \"read_verilog -sv acc.v; synth_ice40 -top acc32 -json design.json\"",
+    "nextpnr-ice40 --hx1k --package tq144 --json design.json --pcf-allow-unconstrained --freq 100"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "       0 LCs used as LUT4 only\n      32 LCs used as LUT4 and DFF\n       0 LCs used as DFF only\n       0 LCs used as CARRY only\n       0 LCs used to legalise carry chains.\nDevice utilisation:\n\t         ICESTORM_LC:      34/   1280     2%\n\t        ICESTORM_RAM:       0/     16     0%\n\t               SB_IO:      42/    112    37%\n\t               SB_GB:       2/      8    25%\nMax frequency for clock 'clk$SB_IO_IN_$glb_clk': 155.59 MHz (PASS at 100.00 MHz)\nMax delay <async>                       -> posedge clk$SB_IO_IN_$glb_clk: 6.54 ns\nMax delay posedge clk$SB_IO_IN_$glb_clk -> <async>                      : 2.70 ns\nCritical path report for clock 'clk$SB_IO_IN_$glb_clk' (posedge -> posedge):\n4.89 ns logic, 1.43 ns routing\nCritical path report for cross-domain path '<async>' -> 'posedge clk$SB_IO_IN_$glb_clk':\n4.37 ns logic, 2.12 ns routing\nCritical path report for cross-domain path 'posedge clk$SB_IO_IN_$glb_clk' -> '<async>':\n0.54 ns logic, 2.39 ns routing\nMax frequency for clock 'clk$SB_IO_IN_$glb_clk': 158.20 MHz (PASS at 100.00 MHz)\nMax delay <async>                       -> posedge clk$SB_IO_IN_$glb_clk: 6.49 ns\nMax delay posedge clk$SB_IO_IN_$glb_clk -> <async>                      : 2.93 ns\nProgram finished normally.",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

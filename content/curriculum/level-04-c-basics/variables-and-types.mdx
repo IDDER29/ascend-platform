@@ -1,0 +1,109 @@
+---
+title: "Variables and types"
+level: level-04-c-basics
+slug: variables-and-types
+order: 2
+timeMin: 9
+learningOutcomes:
+- Declare and initialise variables of type int, char and double, and print each with the right format
+- Explain that each type has a size in bytes and a range of values, and find them with sizeof and limits.h
+- Predict what happens when an unsigned value goes past its range
+- Explain why double values like 0.1 + 0.2 are not exact, and why comparing them with == is risky
+primer:
+- title: "Types and widths"
+  type: doc
+  meta: Reread · 3 min · the same idea from Foundations, in C.
+  essential: true
+- title: "Hello, world: compile and run"
+  type: doc
+  meta: Reread · 2 min · the compile and run loop.
+  essential: true
+knowledgeCheck:
+- question: On this course's machine, sizeof(int) is 4. Is an int 4 bytes on every computer?
+  answer: "No. C only promises minimums (an int is at least 16 bits) and an order (int is no smaller than short). Almost every desktop and server today uses 4 bytes, but C code that must be exact uses types such as int32_t from stdint.h, or checks sizeof."
+  jumpToId: every-type-has-a-size
+  jumpToLabel: Every type has a size
+- question: An unsigned char holds 250. You add 10 and store the result back. What does it hold, and why?
+  answer: "4. An unsigned char holds 0 to 255, and unsigned arithmetic wraps around: 260 is 4 more than 256, so the value stored is 260 - 256 = 4."
+  jumpToId: going-past-the-range
+  jumpToLabel: Going past the range
+assignment:
+  instruction: "Write a program that prints sizeof for char, short, int, long, long long, float, double and a pointer (sizeof(int *)) on your own machine, and compare with this lesson. If you have access to another machine (a Raspberry Pi, a Mac, Windows), run it there too and note any differences."
+  resourceName: 'cppreference: arithmetic types'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/language/arithmetic_types'
+additionalResources:
+- title: "cppreference: numeric limits (limits.h)"
+  type: doc
+  meta: every limit macro, such as INT_MAX
+  url: 'https://en.cppreference.com/w/c/types/limits'
+- title: "Beej's Guide to C: variables and statements"
+  type: doc
+  meta: a friendly walk through C's types
+  url: 'https://beej.us/guide/bgc/html/split/variables-and-statements.html'
+whyThisMatters: "In C a variable is a box of a fixed size, and the type decides both the size and how the bits are read. Knowing the sizes, the ranges and what happens at the edges is what separates C that works on your machine today from C that works everywhere, every time."
+---
+
+In Foundations you met variables as named boxes in memory, and types as widths. C makes both explicit: every variable is declared with a type before it's used, and the type fixes how many bytes the box has and what its bits mean.
+
+## Declaring and using variables
+
+A declaration gives a type and a name, and can give a first value (an **initialiser**):
+
+<CRun program="c-basics/declare-and-use" caption='Three variables, three types' />
+
+- `int apples = 7;` is a whole number. `apples = apples + 5;` reads the box, adds 5, and writes it back, the update you stepped through in Foundations.
+- `double price = 0.45;` is a number with a fractional part. `%.2f` prints it with two decimals.
+- `char grade = 'B';` is one character in single quotes. It's stored as a small number, its character code: `%c` prints it as a letter and `%d` as the number 66.
+
+The format in `printf` must match the type: `%d` for `int`, `%f` for `double`, `%c` for `char`. You'll see in Reading compiler errors what happens when it doesn't.
+
+Always give a variable a value before you read it. A local variable declared without an initialiser holds whatever bytes were already in its box, and reading it is a bug that gcc can only sometimes warn about.
+
+## Every type has a size
+
+`sizeof` gives the size of a type, or of a variable, in bytes. `%zu` is the format for the size type it returns.
+
+<CRun program="c-basics/sizes" caption='How big is each type here?' />
+
+These are the sizes on x86-64 Linux, where this was run. C itself only promises minimums: a `char` is always exactly 1 byte, an `int` is at least 2 bytes and is usually 4, and a `long` is 8 bytes here but 4 on 64-bit Windows. When a size really matters (a file format, a network packet), C has exact types like `int32_t` and `uint8_t` in `<stdint.h>`.
+
+The size fixes the range. `<limits.h>` names the edges:
+
+<CRun program="c-basics/ranges" caption='The edges of each range' />
+
+A 4-byte `int` is two's complement, as in Foundations, so it runs from -2,147,483,648 to 2,147,483,647. The `unsigned` version gives up negative numbers to reach twice as high.
+
+<KeyIdea>A C type says how many bytes a value takes and how to read its bits. sizeof tells you the size; limits.h tells you the range.</KeyIdea>
+
+## Going past the range
+
+What happens when a value doesn't fit? Predict both lines before you run this.
+
+<CRun program="c-basics/wrap" caption='Past the edge' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`4`, then `4294967295`. Unsigned types wrap around, exactly like the byte arithmetic in Foundations: 250 + 10 = 260, which doesn't fit in an `unsigned char` (0 to 255), so 256 is taken off, leaving 4. And 0 - 1 in an `unsigned int` wraps to the largest value, 2³² - 1.
+
+Signed types are different: overflowing an `int` (going past `INT_MAX`) is **undefined behaviour** in C. The language doesn't promise wrapping or anything else, and compilers do take advantage of that. The C Language and The C Contract come back to it; for now, keep `int` values well inside their range.
+
+</details>
+
+## Doubles are close, not exact
+
+`double` stores numbers in binary floating point, and most decimal fractions, 0.1 included, can't be written exactly in binary (you saw why in Foundations). Predict all three lines.
+
+<CRun program="c-basics/float-precision" caption='Is 0.1 + 0.2 equal to 0.3?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`%f` rounds to six decimals and shows `0.300000`, which hides the problem. `%.17f` shows the stored value, `0.30000000000000004`, so `a == 0.3` is false and the program prints `not equal`. Never compare `double` results with `==`; check whether they're close enough instead, such as `fabs(a - 0.3) < 1e-9`. And never use `double` for money: count whole cents in an integer.
+
+</details>
+
+## Done when
+
+You can declare and print `int`, `double` and `char` variables, say how big each type is on your machine and where to look it up, and predict wrapping and floating-point surprises before running the code.

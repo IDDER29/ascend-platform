@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/lifetime-return-local",
+  "sourceHash": "2bc40b294ae89d47",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘make_answer’:\nmain.c:5:12: warning: function returns address of local variable [-Wreturn-local-addr]\n    5 |     return &answer;\n      |            ^~~~~~~\n"
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "",
+    "exitCode": null,
+    "signal": "SIGSEGV",
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

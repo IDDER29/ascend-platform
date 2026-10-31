@@ -1,12 +1,10 @@
 import type { Config } from "drizzle-kit";
 
 /**
- * Generates real SQL migrations for the Postgres/Supabase backend.
- * Run: npx drizzle-kit generate --config drizzle.config.pg.ts
- * Apply against Supabase: npx drizzle-kit migrate --config drizzle.config.pg.ts
- * (requires DATABASE_URL to point at your Supabase connection string).
- * The local SQLite fallback needs none of this -- its schema is applied
- * automatically at runtime, see src/lib/db/sqlite-ddl.ts.
+ * SQL migrations for the production database (Postgres on Neon).
+ * After changing schema.pg.ts: npx drizzle-kit generate --config drizzle.config.pg.ts
+ * Apply (each deploy that changes the schema): DATABASE_URL=<Neon direct, non-pooled URL> npm run db:migrate
+ * Local SQLite needs none of this: its schema is applied at startup (src/lib/db/sqlite-ddl.ts).
  */
 export default {
   schema: "./src/lib/db/schema.pg.ts",

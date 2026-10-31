@@ -1,0 +1,120 @@
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import {
+  answerText,
+  blankWidth,
+  buildMissFigures,
+  looksLikeCode,
+  moveItem,
+  officialWording,
+  orderMarks,
+  outputMatches,
+  scrambledOrder,
+  shuffledOrder,
+  splitBlank,
+  splitCodeBlank,
+} from "./session-view";
+
+test("code-shaped answers are code, plain words are not", () => {
+  for (const code of ["int *p", "0x1F", "0b1010", "argv[0]", "size_t", "printf()", "a = b", "8", "3.14", "#include"]) {
+    assert.equal(looksLikeCode(code), true, code);
+  }
+  for (const words of ["One byte of memory", "two", "Eight switches wired in parallel", "bit", ""]) {
+    assert.equal(looksLikeCode(words), false, words);
+  }
+});
+
+test("a shuffled order is a permutation of every option", () => {
+  const order = shuffledOrder(4, () => 0.5);
+  assert.deepEqual([...order].sort(), [0, 1, 2, 3]);
+  assert.deepEqual(shuffledOrder(0), []);
+});
+
+test("shuffling moves the answer around across showings", () => {
+  let seed = 1;
+  const rng = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+  const firstSlots = new Set(Array.from({ length: 40 }, () => shuffledOrder(4, rng).indexOf(0)));
+  assert.ok(firstSlots.size >= 3);
+});
+
+test("a prose blank splits around {{blank}}", () => {
+  assert.deepEqual(splitBlank("A bit has exactly {{blank}} possible states."), {
+    before: "A bit has exactly ",
+    after: " possible states.",
+  });
+  assert.equal(splitBlank("No blank here"), null);
+  assert.equal(splitBlank(undefined), null);
+});
+
+test("a code blank finds its line", () => {
+  assert.deepEqual(splitCodeBlank(["int main(void) {", "  return {{blank}};", "}"]), {
+    line: 1,
+    before: "  return ",
+    after: ";",
+  });
+  assert.equal(splitCodeBlank(["no blank"]), null);
+});
+
+test("blank inputs fit the answer, within limits", () => {
+  assert.equal(blankWidth(["2"]), 5);
+  assert.equal(blankWidth(["sizeof"]), 8);
+  assert.equal(blankWidth(["a very long accepted answer indeed"]), 24);
+});
+
+test("the official wording shows only when it differs", () => {
+  assert.equal(officialWording("two", ["2", "two"]), "2");
+  assert.equal(officialWording(" 2 ", ["2"]), null);
+  assert.equal(officialWording("Bit", ["bit"]), null);
+  assert.equal(officialWording("x", []), null);
+});
+
+test("predicted output matches apart from trailing whitespace and line endings", () => {
+  const expected = "*p = 10\n*(p + 2) = 30";
+  assert.equal(outputMatches("*p = 10\n*(p + 2) = 30\n", expected), true);
+  assert.equal(outputMatches("*p = 10  \r\n*(p + 2) = 30", expected), true);
+  assert.equal(outputMatches("*p = 10\n*(p+2) = 30", expected), false);
+  assert.equal(outputMatches("*P = 10\n*(p + 2) = 30", expected), false); // output is case-sensitive
+  assert.equal(outputMatches("*p = 10", expected), false);
+});
+
+test("every card type has an answer as text", () => {
+  const base = { id: "x", lessonLevel: "l", lessonSlug: "s", conceptId: "c", reviewLabel: "r" };
+  assert.equal(answerText({ ...base, kind: "output", prompt: "p", code: ["x"], output: "7" }), "7");
+  assert.equal(
+    answerText({ ...base, kind: "bug", prompt: "p", code: ["a", "b"], bugLine: 1, fix: "Use ==." }),
+    "Line 2: Use ==.",
+  );
+  assert.equal(answerText({ ...base, kind: "mcq", prompt: "p", options: ["a", "b"], correct: 1 }), "b");
+});
+
+test("a scrambled order is never already right", () => {
+  for (let i = 0; i < 50; i++) {
+    const order = scrambledOrder(4);
+    assert.deepEqual([...order].sort(), [0, 1, 2, 3]);
+    assert.ok(order.some((v, j) => v !== j));
+  }
+});
+
+test("moving a step swaps it with its neighbour, never off the ends", () => {
+  assert.deepEqual(moveItem(["a", "b", "c"], 0, 1), ["b", "a", "c"]);
+  assert.deepEqual(moveItem(["a", "b", "c"], 2, -1), ["a", "c", "b"]);
+  assert.deepEqual(moveItem(["a", "b", "c"], 0, -1), ["a", "b", "c"]);
+  assert.deepEqual(orderMarks([0, 2, 1]), [true, false, false]);
+});
+
+test("miss diagrams: a named flashcard first, else one on the same concept, never for flashcards", () => {
+  const base = { lessonLevel: "l", lessonSlug: "s", reviewLabel: "r" };
+  const fig = (n: number) => ({ type: "patterns" as const, n });
+  const bank = [
+    { ...base, kind: "flashcard" as const, id: "fc-a", conceptId: "a", front: "f", back: "b", figure: fig(1) },
+    { ...base, kind: "flashcard" as const, id: "fc-b", conceptId: "b", front: "f", back: "b", figure: fig(2) },
+    { ...base, kind: "typed" as const, id: "t-a", conceptId: "a", prompt: "p", answers: ["x"] },
+    { ...base, kind: "typed" as const, id: "t-named", conceptId: "a", prompt: "p", answers: ["x"], figureFrom: "fc-b" },
+    { ...base, kind: "typed" as const, id: "t-none", conceptId: "z", prompt: "p", answers: ["x"] },
+  ];
+  const m = buildMissFigures(bank);
+  assert.deepEqual(m.get("t-a"), fig(1));
+  assert.deepEqual(m.get("t-named"), fig(2));
+  assert.equal(m.has("t-none"), false);
+  assert.equal(m.has("fc-a"), false);
+});

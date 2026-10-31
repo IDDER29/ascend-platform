@@ -1,29 +1,12 @@
-import { SiteHeader } from "@/components/homepage/header";
-import { Hero } from "@/components/homepage/hero";
-import { StatStrip } from "@/components/homepage/stat-strip";
-import { WhySection } from "@/components/homepage/why-section";
-import { PedagogySection } from "@/components/homepage/pedagogy-section";
-import { CurriculumPreview } from "@/components/homepage/curriculum-preview";
-import { MotivationBanner } from "@/components/homepage/motivation-banner";
-import { OpenSourceStrip } from "@/components/homepage/open-source-strip";
-import { FinalCta } from "@/components/homepage/final-cta";
-import { SiteFooter } from "@/components/homepage/footer";
+import type { Metadata } from "next";
+import { HomePage } from "@/components/site/home-page";
+
+export const metadata: Metadata = {
+  title: { absolute: "Ascend · Learn how computers really work" },
+  description:
+    "Free, bottom-up lessons on how computers really work: bits, logic, memory, C and the operating system, up to a shell you write yourself.",
+};
 
 export default function Home() {
-  return (
-    <div className="flex flex-1 flex-col bg-bg text-ink">
-      <SiteHeader />
-      <main className="mx-auto w-full max-w-[1200px] px-6 sm:px-8">
-        <Hero />
-        <StatStrip />
-        <WhySection />
-        <PedagogySection />
-        <CurriculumPreview />
-        <MotivationBanner />
-        <OpenSourceStrip />
-        <FinalCta />
-      </main>
-      <SiteFooter />
-    </div>
-  );
+  return <HomePage />;
 }

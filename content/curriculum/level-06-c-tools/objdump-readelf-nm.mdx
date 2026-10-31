@@ -1,0 +1,194 @@
+---
+title: "objdump, readelf and nm"
+level: level-06-c-tools
+slug: objdump-readelf-nm
+order: 5
+timeMin: 11
+learningOutcomes:
+- Say which section (.text, .data, .bss or .rodata) each part of a C program lands in, and check it with nm, size and objdump -h
+- Read nm's symbol types (T, t, D, d, B, R, U) and explain what upper and lower case mean
+- Read an object file's relocations, and explain why an object file can't run until it's linked
+- Use objdump -d -S and readelf -h, -S and -s to inspect code, headers, sections and symbols
+primer:
+- title: "Object files, sections and symbols"
+  type: doc
+  meta: "Foundations · sections and symbols, the idea."
+  essential: true
+- title: "Linkage: static and extern"
+  type: doc
+  meta: "The C Language · what static at file scope does to a symbol."
+  essential: true
+- title: "Reading what the compiler wrote"
+  type: doc
+  meta: "Machine & Memory · reading the assembly objdump prints."
+  essential: false
+knowledgeCheck:
+- question: Why is table (int table[1000]) 4000 bytes in .bss, but takes no space in the object file?
+  answer: "It's zero-initialised, so there's nothing to store: the file only records that 4000 bytes of zeros are needed, and the loader provides zeroed memory when the program starts. In objdump -h, .bss has the same file offset as the next section, because it occupies no bytes of the file."
+  jumpToId: where-each-part-goes
+  jumpToLabel: Where each part goes
+- question: What is a relocation, and why does parts.o need one for counter?
+  answer: "A relocation is a note left by the assembler: at this offset in the code, put the address of this symbol, once it's known. parts.o was compiled before counter had a final address (the linker decides that), so each instruction that uses counter gets a relocation the linker fills in."
+  jumpToId: holes-for-the-linker
+  jumpToLabel: Holes for the linker
+assignment:
+  instruction: "Compile one of your own multi-file programs with -c and -g. For one object file, list its symbols with nm and match each to a line of your C; find one relocation with objdump -r and say which symbol it's for; then link the program and find the same symbol's final address with readelf -s."
+  resourceName: 'objdump (GNU binutils manual)'
+  resourceType: doc
+  resourceUrl: 'https://sourceware.org/binutils/docs/binutils/objdump.html'
+additionalResources:
+- title: "elf(5) manual page"
+  type: doc
+  meta: the ELF format, field by field
+  url: 'https://man7.org/linux/man-pages/man5/elf.5.html'
+whyThisMatters: "When a link fails, a library has the wrong symbols, a binary is bigger than it should be, or a crash gives you only an address, these three tools let you look inside the file and see what the compiler and linker really produced, instead of guessing."
+---
+
+Foundations introduced object files, sections and symbols as ideas, and The C Language used `nm` to show what `static` does. Now you'll take one program apart with the real tools. Every session is real (gcc 15.2, GNU binutils, Linux); addresses and sizes will differ on your machine.
+
+## The program
+
+It has one of everything:
+
+<CRun program="c-tools/obj-parts" caption='One of everything' />
+
+## Where each part goes
+
+Before running the tools, predict the section of each item in the program:
+- `counter`
+- `table`
+- `hidden`
+- `greeting`
+- `twice`
+- `main`
+
+Then compile to an object file and check:
+
+```
+$ gcc -std=c17 -Wall -Wextra -O0 -g -c parts.c -o parts.o
+$ nm parts.o
+0000000000000000 D counter
+0000000000000000 R greeting
+0000000000000004 d hidden
+0000000000000012 T main
+                 U printf
+0000000000000000 B table
+0000000000000000 t twice
+$ size parts.o
+   text	   data	    bss	    dec	    hex	filename
+    236	      8	   4000	   4244	   1094	parts.o
+$ objdump -h parts.o
+Idx Name          Size      VMA               LMA               File off  Algn
+  0 .text         00000067  0000000000000000  0000000000000000  00000040  2**0
+  1 .data         00000008  0000000000000000  0000000000000000  000000a8  2**2
+  2 .bss          00000fa0  0000000000000000  0000000000000000  000000b0  2**5
+  3 .rodata       0000000d  0000000000000000  0000000000000000  000000b0  2**0
+```
+
+(`objdump -h` also lists debug and note sections; they're trimmed here.)
+
+<details>
+<summary>Check your answer</summary>
+
+- **`.text`**, the code: `main` (`T`) and `twice` (`t`).
+- **`.data`**, initialised data that can change: `counter` (`D`) and `hidden` (`d`). That's 8 bytes, two `int`s.
+- **`.bss`**, zero-initialised data: `table` (`B`), 4000 bytes (0xfa0).
+- **`.rodata`**, read-only data: `greeting` (`R`), plus the format string `"%s %d\n"`. That's why `.rodata` is 13 bytes: 6 for `"hello"` and 7 for the format.
+- **`U printf`**: used here but defined elsewhere. The linker will find it in the C library.
+
+The case of each letter is the linkage. Upper case is **global**, visible to other files. Lower case is **local**: `twice` and `hidden` are `static`, so other files can't link to them.
+
+`.bss` takes no room in the file: its "File off" is the same as `.rodata`'s, because 4000 zeros don't need storing. The file records only the size, and the loader hands the program zeroed memory. That's why a large zero-initialised array doesn't make a program file bigger.
+
+</details>
+
+<KeyIdea>Code goes in .text, initialised data in .data, zeroed data in .bss (which costs no file space), constants in .rodata. nm's letter gives the section; its case gives the linkage.</KeyIdea>
+
+## Holes for the linker
+
+`parts.o` was compiled on its own, so nobody yet knows where `counter` or `printf` will end up in memory. The assembler leaves a **relocation** for each place that needs an address:
+
+```
+$ objdump -r -j .text parts.o
+
+RELOCATION RECORDS FOR [.text]:
+OFFSET           TYPE              VALUE
+000000000000001c R_X86_64_PC32     .data
+0000000000000029 R_X86_64_PC32     table-0x0000000000000004
+0000000000000031 R_X86_64_PC32     counter-0x0000000000000004
+0000000000000039 R_X86_64_PC32     counter-0x0000000000000004
+000000000000003f R_X86_64_PC32     counter-0x0000000000000004
+0000000000000046 R_X86_64_PC32     greeting-0x0000000000000004
+000000000000004d R_X86_64_PC32     .rodata+0x0000000000000002
+000000000000005c R_X86_64_PLT32    printf-0x0000000000000004
+```
+
+Each line says: at this offset in `.text`, fill in the address of this symbol. `R_X86_64_PC32` means "as a 32-bit distance from the current instruction". The `-4` corrects for where that distance is measured from. `hidden` appears as `.data` itself, because a local symbol can be reached through its section. `printf` uses `PLT32`, a jump through a table the dynamic loader fills in, because `printf` lives in a shared library. Until the linker fills every hole, the code can't run: that's why an object file isn't a program.
+
+## Code next to source
+
+`objdump -d` disassembles; with `-S` and a `-g` build, it puts your source above the instructions it became:
+
+```
+$ objdump -d -S --no-show-raw-insn parts.o
+...
+0000000000000000 <twice>:
+...
+static int twice(int x) {
+   0:	endbr64
+   4:	push   %rbp
+   5:	mov    %rsp,%rbp
+   8:	mov    %edi,-0x4(%rbp)
+    return x * 2;
+   b:	mov    -0x4(%rbp),%eax
+   e:	add    %eax,%eax
+}
+  10:	pop    %rbp
+  11:	ret
+...
+```
+
+(Trimmed to one function.) `x * 2` became `add %eax,%eax`: adding a number to itself is the cheapest way to double it.
+
+## After linking: readelf
+
+`readelf` reads ELF files directly, without disassembling. Link the program, then compare:
+
+```
+$ gcc parts.o -o parts
+$ readelf -h parts
+  Class:                             ELF64
+  Type:                              DYN (Position-Independent Executable file)
+  Machine:                           Advanced Micro Devices X86-64
+  Entry point address:               0x1060
+  Number of section headers:         37
+$ readelf -S -W parts | grep -E " \.(text|data|bss|rodata) "
+  [14] .text             PROGBITS        0000000000001060 001060 000150 00  AX  0   0 16
+  [16] .rodata           PROGBITS        0000000000002000 002000 000011 00   A  0   0  4
+  [25] .data             PROGBITS        0000000000004000 003000 000018 00  WA  0   0  8
+  [26] .bss              NOBITS          0000000000004020 003018 000fc0 00  WA  0   0 32
+$ readelf -s parts | grep -E " (counter|table|hidden|greeting|twice|main|printf)"
+    12: 0000000000004014     4 OBJECT  LOCAL  DEFAULT   25 hidden
+    13: 0000000000001149    18 FUNC    LOCAL  DEFAULT   14 twice
+    25: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND printf@GLIBC_2.2.5
+    26: 0000000000004040  4000 OBJECT  GLOBAL DEFAULT   26 table
+    28: 0000000000002004     6 OBJECT  GLOBAL DEFAULT   16 greeting
+    34: 0000000000004010     4 OBJECT  GLOBAL DEFAULT   25 counter
+    36: 000000000000115b    85 FUNC    GLOBAL DEFAULT   14 main
+```
+
+(`readelf -h` and the symbol table are trimmed to the interesting lines.) What changed between `parts.o` and `parts`?
+
+<details>
+<summary>Check your answer</summary>
+
+- **Every symbol has an address now.** In `parts.o`, each section started at 0. In `parts`, `main` is at 0x115b, `counter` at 0x4010 and `table` at 0x4040. They're still small numbers because this is a **position-independent executable**: the loader adds a random base address each run.
+- **The sections are bigger.** `.text` grew from 0x67 to 0x150 bytes, because the linker added the C library's start-up code. The entry point, 0x1060, is that start-up code (`_start`), not `main`.
+- **The flags show permissions.** `AX` means allocated and executable, for code. `WA` means writable, for data and `.bss`. `.rodata` is only `A`: no `W`, so a write to it crashes. `.bss` is `NOBITS`, taking no file space.
+- **`printf` is still `UND`** (undefined), with the version `GLIBC_2.2.5`. It's resolved when the program starts, from `libc.so.6`.
+
+</details>
+
+## Done when
+
+You can predict the section and nm letter for a variable or function, explain why `.bss` costs no file space, read a relocation, disassemble with source, and use `readelf -h`, `-S` and `-s` to read a linked program.

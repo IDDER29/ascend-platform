@@ -1,0 +1,133 @@
+---
+title: "Linked lists"
+level: level-07-data-structures
+slug: linked-lists
+order: 2
+timeMin: 11
+learningOutcomes:
+- Build a singly linked list from nodes joined by pointers, with checked allocation and one clear owner
+- Insert at the front in O(1), and find a value in O(n), counting the nodes visited
+- Remove a node by unlinking it first and freeing it second, using a pointer to the link
+- Free a whole list without reading a node after it has been freed
+primer:
+- title: Structs & unions
+  type: doc
+  meta: Reread · 2 min · a node is a struct.
+  essential: true
+- title: Double pointers
+  type: doc
+  meta: Reread · 3 min · Node ** lets a function change the list's head.
+  essential: true
+- title: "Dynamic arrays that grow"
+  type: doc
+  meta: Reread · 2 min · the structure a list competes with.
+  essential: false
+knowledgeCheck:
+- question: Why does push_front take a Node ** rather than a Node *?
+  answer: "It has to change the caller's head pointer to point at the new node. C passes arguments by value, so a Node * parameter would be a copy of head; changing it wouldn't reach the caller. A pointer to the head lets the function write the new head into the caller's variable."
+  jumpToId: nodes-and-links
+  jumpToLabel: Nodes and links
+- question: What's wrong with for (Node *n = head; n != NULL; n = n->next) free(n);?
+  answer: "After free(n), the loop's step reads n->next from the node it just freed: a use-after-free. Save next = n->next first, then free n, then move on to next."
+  jumpToId: freeing-a-list-without-reading-freed-memory
+  jumpToLabel: Freeing a list without reading freed memory
+assignment:
+  instruction: "Add push_back to the lesson's list. First write it by walking to the end (O(n)), then keep a tail pointer in a List struct so push_back is O(1). Make sure remove_value keeps the tail correct when it removes the last node, and test it under -fsanitize=address."
+  resourceName: 'Wikipedia: Linked list'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Linked_list'
+additionalResources:
+- title: "Singly-Linked Lists (CS50 Shorts)"
+  type: video
+  meta: building and walking a list, drawn step by step
+  url: 'https://www.youtube.com/watch?v=zQI3FyWm144'
+- title: "CS50 Week 5: Data Structures"
+  type: doc
+  meta: lists, hash tables and trees in C
+  url: 'https://cs50.harvard.edu/x/weeks/5/'
+whyThisMatters: "Linked structures are everywhere in systems code: the kernel's process lists, free lists in malloc, the chains in a hash table. Writing one carefully teaches the pointer discipline every C programmer needs: who owns each node, and never touching memory after it's freed."
+---
+
+A dynamic array keeps its items side by side and moves them all when it grows. A **linked list** does the opposite: each item lives in its own small heap block, a **node**, and each node points to the next. Nothing ever moves, and inserting at the front never copies anything, but finding the 500th item means following 500 pointers.
+
+## Nodes and links
+
+```c
+typedef struct Node {
+    int value;
+    struct Node *next;   /* the next node, or NULL at the end */
+} Node;
+```
+
+The list itself is just a pointer to the first node, `Node *head`, and `NULL` means an empty list. Adding at the front makes a node, points it at the old head, and makes it the new head:
+
+```c
+static int push_front(Node **head, int value) {
+    Node *n = malloc(sizeof *n);
+    if (n == NULL) {
+        return -1;           /* the list is unchanged */
+    }
+    n->value = value;
+    n->next = *head;
+    *head = n;
+    return 0;
+}
+```
+
+It takes `Node **` because it must change the caller's `head`. The list **owns** every node: one `list_free` call at the end frees them all, and nothing else frees a node that's still linked in.
+
+## Insert, find, remove
+
+This program pushes 10, 20, 30, 40 and 50 at the front, searches for two values while counting the nodes it visits, then removes 30 and 50. Predict the first line, both counts and the last line.
+
+<CRun program="data-structures/ll-basic" caption='A linked list at work' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Pushing at the front reverses the order: `50 -> 40 -> 30 -> 20 -> 10 -> NULL`. Finding 10 visits all 5 nodes, because it's at the end; finding 50 visits 1. Search is **O(n)**: there's no way to jump into the middle of a list. After removing 30 and 50: `40 -> 20 -> 10 -> NULL`.
+
+`remove_value` walks with a **pointer to the link** (`Node **link`), the field that points at the current node. When it finds the value, it unlinks the node (`*link = dead->next`) and then frees it. Because `link` can be `&head` itself, removing the first node needs no special case.
+
+</details>
+
+| | Dynamic array | Linked list |
+|---|---|---|
+| Get item i | O(1) | O(n) |
+| Add at the front | O(n) (shift everything) | O(1) |
+| Add at the end | O(1) on average | O(n), or O(1) with a tail pointer |
+| Remove a known node | O(n) (shift) | O(1) once you have its link |
+| Memory per item | just the item | the item, a pointer and malloc's overhead |
+
+On a real machine lists are often slower than the table suggests: their nodes are scattered around the heap, so walking one misses the cache at almost every step. The array's items sit side by side. Choose a list when you really insert and remove in the middle often, and hold on to the nodes.
+
+## Freeing a list without reading freed memory
+
+This `list_free` looks fine at a glance. It's built with AddressSanitizer: predict what happens.
+
+<CRun program="data-structures/ll-free-bug" caption='A tidy-looking list_free' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+gcc warns at compile time, "pointer 'n' used after 'free'", and ASan stops the run with a **heap-use-after-free** in `list_free` at `main.c:20`. The loop frees `n`, then its step, `n = n->next`, reads `next` from the node it just freed. "freed it" is never printed.
+
+The fix reads `next` before freeing, as the lesson's `list_free` does:
+
+```c
+while (head != NULL) {
+    Node *next = head->next;   /* read it while the node still exists */
+    free(head);
+    head = next;
+}
+```
+
+Without ASan this bug often seems to work, because freed memory usually keeps its old contents for a while. That's exactly why it's dangerous.
+
+</details>
+
+<KeyIdea>A linked list trades fast access by position for cheap inserts and removals. Its discipline: unlink before you free, and read next before you free.</KeyIdea>
+
+## Done when
+
+You can write push_front, find, remove and free for a list, explain why `push_front` takes `Node **`, compare the list with a dynamic array, and spot the use-after-free in a careless `list_free`.

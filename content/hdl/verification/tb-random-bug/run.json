@@ -1,0 +1,18 @@
+{
+  "id": "verification/tb-random-bug",
+  "sourceHash": "bab018c0f1fa8b9f",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp sat_add.v tb.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "FAIL on test 3: 10 + 14 gave 8, expected 15\n7 of 20 random tests failed\ntb.v:20: $finish called at 20 (1s)\n",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

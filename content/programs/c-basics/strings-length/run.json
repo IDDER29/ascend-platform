@@ -1,0 +1,20 @@
+{
+  "id": "c-basics/strings-length",
+  "sourceHash": "bad0d9fdaa14741c",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "sizeof: 6, strlen: 5\nword[0] = 'h' (104)\nword[1] = 'e' (101)\nword[2] = 'l' (108)\nword[3] = 'l' (108)\nword[4] = 'o' (111)\nword[5] = 0, the end marker\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

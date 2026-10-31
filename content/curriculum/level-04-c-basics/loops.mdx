@@ -1,0 +1,120 @@
+---
+title: "Loops: while, for and do"
+level: level-04-c-basics
+slug: loops
+order: 6
+timeMin: 10
+learningOutcomes:
+- Write while, for and do loops, and say when each one tests its condition
+- Count how many times a loop runs, and avoid running one time too many or too few
+- Use break and continue to leave a loop early or skip to the next pass
+- Recognise loops that never stop, including a countdown with an unsigned counter
+primer:
+- title: "Conditions, loops and functions"
+  type: doc
+  meta: Reread · 3 min · a loop is a test and a jump back.
+  essential: true
+- title: "if, else and switch"
+  type: doc
+  meta: Reread · 2 min · conditions and what counts as true.
+  essential: true
+knowledgeCheck:
+- question: How many times does for (int i = 0; i <= 10; i++) run its body?
+  answer: "11 times, for i = 0, 1, ..., 10. Counting from 0 with < n runs exactly n times, which is why for (int i = 0; i < n; i++) is the usual shape; <= adds one more pass."
+  jumpToId: counting-passes
+  jumpToLabel: Counting passes
+- question: Why does for (unsigned int i = 3; i >= 0; i--) never stop on its own?
+  answer: "An unsigned value is never negative, so i >= 0 is always true. When i is 0, i-- wraps to 4294967295 and the loop carries on. gcc warns that the comparison is always true. Use an int, or test i > 0 and handle 0 separately."
+  jumpToId: loops-that-never-stop
+  jumpToLabel: Loops that never stop
+assignment:
+  instruction: "Write a program that prints the multiplication table from 1 x 1 to 9 x 9 as nine rows with nested for loops, then change it so it skips multiples of 5 with continue. Before running each version, write down how many numbers it will print."
+  resourceName: 'cppreference: for loop'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/language/for'
+additionalResources:
+- title: "cppreference: while loop"
+  type: doc
+  meta: reference
+  url: 'https://en.cppreference.com/w/c/language/while'
+whyThisMatters: "Loops are where programs spend their time, and where most of their bugs hide: one pass too many, a counter that never reaches its limit, a condition that is always true. Being able to count a loop's passes exactly, before running it, is one of the most valuable habits in programming."
+---
+
+In Foundations, a loop was a test at the top and a jump back from the bottom. C gives that shape three spellings, `while`, `for` and `do`, plus two ways to cut a pass short.
+
+## Three kinds of loop
+
+Predict every line this prints, paying attention to the last loop.
+
+<CRun program="c-basics/loop-kinds" caption='for, while and do' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+for: 15
+while: 3
+while: 2
+while: 1
+do: 10
+```
+
+- The `for` loop adds 1 to 5. Its header holds the three parts every counting loop needs: start (`int i = 1`), test (`i <= 5`), and step (`i++`). The `i` declared there exists only inside the loop.
+- The `while` loop tests `n > 0` before each pass, and stops when `n` reaches 0.
+- The `do` loop runs its body first and tests afterwards, so it always runs at least once, even though `k < 5` is false from the start. That's its only difference from `while`, and the reason to use it (for example, asking for input until it's valid).
+
+</details>
+
+`for` and `while` can always replace each other: `for (start; test; step) body` is `start; while (test) { body step }`. Use `for` when you're counting, `while` when you loop until something happens.
+
+## Counting passes
+
+Most loop bugs are off by one. Predict both counts.
+
+<CRun program="c-basics/off-by-one" caption='&lt;= or &lt;?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+11 and 10. `i <= 10` from 0 includes both ends, 0 to 10, which is 11 values. `i < 10` from 0 runs exactly 10 times. To repeat something n times, write `for (int i = 0; i < n; i++)`: start at 0, test with `<`. That is also exactly the set of valid indices of an array of n elements, which you'll meet in Arrays and loops together.
+
+A quick check for any loop: work out the first and last values the counter takes, and count them.
+
+</details>
+
+## break and continue
+
+`break` leaves the loop at once. `continue` skips the rest of this pass and goes on to the next (in a `for`, the step still runs). Predict the numbers printed.
+
+<CRun program="c-basics/break-continue" caption='Skipping and stopping' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`1 2 4 5 7`. 3 and 6 are multiples of 3, so `continue` skips printing them. At 8, `i > 7` is true and `break` ends the loop, so 8, 9 and 10 never print.
+
+</details>
+
+## Loops inside loops
+
+A loop body can contain another loop. The inner loop runs completely for every pass of the outer one.
+
+<CRun program="c-basics/nested" caption='A triangle of stars' />
+
+Row 1 prints one star, row 2 two, and so on, because the inner loop's limit is the outer loop's counter. That's 1 + 2 + 3 + 4 = 10 stars, plus a newline after each row.
+
+## Loops that never stop
+
+A loop whose condition never becomes false runs forever. This one counts down with an `unsigned int`. It was given a hand-written stop after six lines, so it could finish at all.
+
+<CRun program="c-basics/unsigned-countdown" caption='A countdown that never ends' />
+
+An unsigned value can't be negative, so `i >= 0` is always true, and gcc says so in its warning. When `i` is 0, `i--` wraps around to 4294967295 (you saw this wrapping in Variables and types), and the loop carries on. Without the `break` it would print four billion numbers. Count down with a signed `int`, or loop while `i > 0`.
+
+If one of your programs ever seems to hang, press Ctrl+C in the terminal to stop it, then look for a condition that can't become false: a counter that's never updated, updated the wrong way, or compared against the wrong limit.
+
+<KeyIdea>while and for test before each pass; do tests after, so it runs at least once. Count passes by their first and last values, and make sure the condition can become false.</KeyIdea>
+
+## Done when
+
+You can choose between `while`, `for` and `do`, count a loop's passes before running it, use `break` and `continue`, and spot a loop that can never end.

@@ -1,0 +1,20 @@
+{
+  "id": "c-tools/flags-define",
+  "sourceHash": "a0680b3ad1fd0d02",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -DDEBUG -DTIMES=3 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "debug build of main.c\nhello, world\nhello, world\nhello, world\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

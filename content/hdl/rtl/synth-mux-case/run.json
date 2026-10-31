@@ -1,0 +1,17 @@
+{
+  "id": "rtl/synth-mux-case",
+  "sourceHash": "dd8f23761742468a",
+  "tool": "synth",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "yosys -p \"read_verilog -sv mux4.v; synth -top mux4; stat\""
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "=== mux4 ===\n\n   Number of wires:                 50\n   Number of wire bits:             86\n   Number of public wires:           6\n   Number of public wire bits:      42\n   Number of ports:                  6\n   Number of port bits:             42\n   Number of memories:               0\n   Number of memory bits:            0\n   Number of processes:              0\n   Number of cells:                 52\n     $_ANDNOT_                      24\n     $_AND_                          1\n     $_MUX_                          8\n     $_ORNOT_                        2\n     $_OR_                          17",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

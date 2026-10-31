@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/pf-cow",
+  "sourceHash": "09fe3128893f8421",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "child: reading 1000 shared pages: 0 faults\nchild: writing 500 of them: 500 faults\nchild sees 'c' in page 0\nparent still sees 'p' in page 0\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

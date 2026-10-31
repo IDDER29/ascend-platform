@@ -1,0 +1,124 @@
+---
+title: "Project: Build the tiny CPU"
+level: level-00-bits-logic
+slug: project-build-the-cpu
+order: 59
+timeMin: 45
+learningOutcomes:
+- Write the control table (microcode) for every instruction of the tiny CPU
+- Make conditional jumps work by making a step depend on a flag
+- Run real programs on your own control unit and check them against the reference CPU
+- Debug a control table from a trace of signals, tick by tick
+primer:
+- title: "Project: Build the datapath"
+  type: doc
+  meta: Reread · 4 min · you worked out these steps by hand.
+  essential: true
+- title: "Jumps and loops: how a CPU decides"
+  type: doc
+  meta: Reread · 3 min · part 3 is the jumps.
+  essential: true
+knowledgeCheck:
+- question: How does JZ jump only when the zero flag is set?
+  answer: "Its step is written IO J if Z: the control unit only switches IO and J on when Z is 1. Otherwise that tick passes with no signals, and the program counter, already moved on by the fetch, points at the next instruction."
+  jumpToId: part-3-decisions
+  jumpToLabel: "Part 3: Decisions"
+- question: With CE missing from the fetch, what does the countdown program do, and why?
+  answer: "It never gets past its first instruction: the program counter stays at 0, so every fetch reads box 0 again. The trace shows the same fetch over and over, which points straight at the fetch line."
+  jumpToId: part-5-find-the-bug-from-the-trace
+  jumpToLabel: "Part 5: Find the bug from the trace"
+assignment:
+  instruction: "Ben Eater's computer stores this exact table in an EEPROM chip, as bytes. Read his control-logic page, then write the 16 control bits for one step of your table (ADD's third step, EO AI FI) as a binary word, in the order he gives the signals."
+  resourceName: 'eater.net: CPU control logic'
+  resourceType: site
+  resourceUrl: 'https://eater.net/8bit/control'
+additionalResources:
+- title: Microcode (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Microcode'
+- title: Control unit (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Control_unit'
+whyThisMatters: "This is the last piece of the machine. Gates made the ALU, flip-flops made the registers, and now a table makes the control unit. When the programs pass, every part of a working CPU is something you built or wrote, and no part of it is magic."
+---
+
+In "Build the datapath" you were the control unit, choosing signals tick by tick. Now you'll write those choices down as a **control table**: for the fetch and for each instruction, the signals for each step. The lab runs five real programs on your table and compares every result (the display, A and all of memory) with the reference tiny CPU.
+
+Each line is one instruction: `NAME: signals | signals | ...`, one group of signals per tick.
+
+<ControlLab caption='Your control unit' startJson='["FETCH: CO MI | RO II CE", "LDA: IO MI | RO AI", "HLT: HLT"]' programsJson='[{"name":"28 + 14","program":["LDA 14","ADD 15","OUT","HLT"],"data":{"14":28,"15":14}},{"name":"Countdown","program":["LDI 3","OUT","SUB 15","JZ 5","JMP 1","OUT","HLT"],"data":{"15":1}},{"name":"Store and load","program":["LDI 9","STA 13","LDA 13","OUT","HLT"]},{"name":"Count until a carry","program":["OUT","ADD 15","JC 4","JMP 0","HLT"],"data":{"15":64}},{"name":"Multiply 6 by 3","program":["LDA 13","ADD 14","STA 13","LDA 15","SUB 12","STA 15","JZ 8","JMP 0","LDA 13","OUT","HLT"],"data":{"12":1,"13":0,"14":6,"15":3}}]' />
+
+The table starts with the fetch, LDA and HLT. Every program fails until you add more. Click a program to see its trace: every tick, with its signals and the value on the bus.
+
+## Part 1: Add and show
+
+Add lines for ADD and OUT, so that "28 + 14" shows 42.
+
+<details>
+<summary>Check your answer</summary>
+
+- `ADD: IO MI | RO BI | EO AI FI`
+- `OUT: AO OI`
+
+ADD needs the operand's address in the MAR, then that box in B, then the ALU's sum back into A, with FI saving the flags on the same tick.
+
+</details>
+
+## Part 2: Subtract, load a number, store
+
+Add SUB, LDI and STA. "Store and load" should now pass.
+
+<details>
+<summary>Check your answer</summary>
+
+- `SUB: IO MI | RO BI | EO AI SU FI`: the same as ADD, plus SU.
+- `LDI: IO AI`: the operand itself goes into A.
+- `STA: IO MI | AO RI`: the address into the MAR, then A into that box.
+
+</details>
+
+## Part 3: Decisions
+
+Add JMP, JZ and JC, and NOP for completeness. A step that should only happen when a flag is set ends with `if Z` or `if C`. All five programs should pass.
+
+<details>
+<summary>Check your answer</summary>
+
+- `JMP: IO J`: the operand goes into the program counter.
+- `JZ: IO J if Z`
+- `JC: IO J if C`
+- `NOP:` (no steps at all)
+
+When the flag isn't set, the conditional step is a tick with no signals, and the program counter, already moved on during the fetch, points at the next instruction. That's the whole of how a CPU makes decisions.
+
+</details>
+
+<KeyIdea>A control unit is a table: for each instruction, which signals to switch on at each step. Write the table, and the datapath does the rest.</KeyIdea>
+
+## Part 4: Count the ticks
+
+With all five programs passing, look at the tick counts. "28 + 14" takes 15 ticks for 4 instructions. Which instructions take the most ticks, and why?
+
+<details>
+<summary>Check your answer</summary>
+
+ADD and SUB take 5 ticks (2 for the fetch, 3 to execute), LDA and STA take 4, and OUT, LDI and JMP take 3. HLT stops the clock on its third tick. The instructions that touch memory and the ALU need more trips across the single bus. That count, ticks per instruction, is one of the first things computer architects try to reduce.
+
+</details>
+
+## Part 5: Find the bug from the trace
+
+Change the fetch line to `FETCH: CO MI | RO II` (delete CE). Open the countdown program's trace. What do you see, and how does it point at the bug?
+
+<details>
+<summary>Check your answer</summary>
+
+Every program now fails. The countdown's trace shows the program counter's value, 0, going onto the bus at every fetch: the CPU fetches LDI 3 over and over and never reaches anything else. Nothing moves the program counter on, which points straight at the missing CE. Put it back.
+
+</details>
+
+## Done when
+
+All five programs pass with your own table, and you can explain why JZ only needs one conditional step. You've built every part of a CPU: the ALU from gates, registers from flip-flops, memory with a decoder, and now its control unit.

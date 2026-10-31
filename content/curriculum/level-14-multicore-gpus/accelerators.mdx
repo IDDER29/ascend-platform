@@ -1,0 +1,125 @@
+---
+title: "Accelerators built for one job"
+level: level-14-multicore-gpus
+slug: accelerators
+order: 5
+timeMin: 11
+learningOutcomes:
+- Explain why a chip built for one kind of work beats a general CPU at it, in speed and in energy
+- Trace a small matrix multiply through a systolic array, and compute a systolic array's peak throughput
+- "Name the costs of specialisation: flexibility, programmability, and the work left to the CPU"
+- Use Amdahl's law to predict the real speed-up when only part of a job runs on an accelerator
+primer:
+- title: "Amdahl's law"
+  type: doc
+  meta: "Performance & trade-offs · the limit this lesson ends on."
+  essential: true
+- title: "How a GPU runs thousands of threads"
+  type: doc
+  meta: Reread · 3 min · the general-purpose parallel chip, for comparison.
+  essential: false
+knowledgeCheck:
+- question: Where does a systolic array save energy compared with a CPU doing the same multiply-adds?
+  answer: "A CPU fetches and decodes an instruction, reads registers and moves data through caches for every operation, which costs far more energy than the arithmetic itself. A systolic array has no instructions per operation: data flows from each multiply-accumulate cell straight to its neighbour, each value reused many times, so almost all the energy goes into the arithmetic."
+  jumpToId: a-systolic-array
+  jumpToLabel: A systolic array
+- question: A model spends 95% of its time in matrix multiplies, which an accelerator runs 30 times faster. What's the overall speed-up, and what would 300 times faster give?
+  answer: "1 / (0.05 + 0.95 / 30) = 1 / 0.0817, about 12.2 times. At 300 times: 1 / (0.05 + 0.95 / 300) = 1 / 0.0532, about 18.8 times. The 5% left on the CPU caps it below 20 however fast the accelerator gets."
+  jumpToId: amdahl-again
+  jumpToLabel: Amdahl again
+assignment:
+  instruction: "Choose one accelerator in a device you own (a phone's neural engine or image processor, a laptop's video decoder, a GPU's tensor cores) and find out what it does from the maker's documentation. Write a paragraph on what work it handles, why fixed hardware beats software for it, and what the CPU still has to do."
+  resourceName: 'In-Datacenter Performance Analysis of a Tensor Processing Unit (Jouppi et al., 2017)'
+  resourceType: doc
+  resourceUrl: 'https://arxiv.org/abs/1704.04760'
+additionalResources:
+- title: "Systolic array (Wikipedia)"
+  type: doc
+  meta: how the cells pass data along
+  url: 'https://en.wikipedia.org/wiki/Systolic_array'
+- title: "Hardware acceleration (Wikipedia)"
+  type: doc
+  meta: the general idea, with many examples
+  url: 'https://en.wikipedia.org/wiki/Hardware_acceleration'
+whyThisMatters: "As transistors stopped getting faster for free, chips turned to specialisation: almost every phone, laptop and data centre now relies on accelerators for AI, video, graphics and networking. Knowing what they gain, what they give up and how much of a job they really speed up is how you judge them."
+---
+
+A CPU can run any program, and pays for that generality on every instruction: fetch it, decode it, predict its branches, rename its registers, schedule it, move its data through caches. In a modern core, the arithmetic itself is a small part of the energy spent. An **accelerator** drops that generality for one kind of work and spends its transistors and energy on doing that work.
+
+## Why specialise now
+
+Two trends from Performance & trade-offs push the same way:
+
+- **Power is the limit.** Since Dennard scaling ended, more transistors no longer come with lower power each, so a chip can't run all of them at full speed at once. Spending them on hardware that does more useful work per joule is the way forward.
+- **The big workloads are regular.** Neural networks are mostly matrix multiplications; video is a fixed sequence of transforms; networking is packet after packet. Regular work with known patterns is exactly what fixed hardware does best.
+
+## A systolic array
+
+Google's first Tensor Processing Unit (TPU v1, described in Jouppi et al., 2017) was built for neural-network inference. Its heart is a **systolic array**: a 256 by 256 grid of multiply-accumulate cells, 65,536 in all, working on 8-bit integers. Values flow through the grid in a regular rhythm, like a pulse (hence "systolic"):
+
+- **The weights:** each cell holds one weight, preloaded.
+- **The inputs:** they enter at one edge and pass from cell to cell along a row, one step per cycle.
+- **The partial sums:** they pass down the columns. Each cell multiplies the input passing through by its weight, adds the product to the sum coming from above, and hands the new sum to the cell below.
+
+Each input is read from memory once and then reused by all 256 cells in its row; each partial sum never leaves the array until it's complete. No instructions, no register file, no cache lookups per operation.
+
+The paper gives the TPU v1 a clock of 700 MHz. Counting each multiply-accumulate as two operations (a multiply and an add), what is its peak throughput? Check it against the paper's figure of 92 tera-operations per second.
+
+<details>
+<summary>Check your answer</summary>
+
+65,536 cells × 2 operations × 700,000,000 per second = 91,750,400,000,000 operations per second: about **92 TOPS**, the paper's peak figure. Peak means every cell busy on every cycle, which only happens on large, regular matrix multiplies, the very workload it was built for.
+
+The paper reports the TPU 15 to 30 times faster than the CPU and GPU of its time on its inference workloads, with 30 to 80 times better performance per watt. The bigger win was energy, not speed.
+
+</details>
+
+<KeyIdea>An accelerator removes the per-instruction overhead of a general CPU for one regular kind of work: data flows through fixed hardware and is reused many times, so nearly all the energy goes into useful arithmetic.</KeyIdea>
+
+## Other accelerators you use daily
+
+- **Video encoders and decoders.** Fixed-function blocks in GPUs and phone chips decode video formats such as H.264 and HEVC. That's why a laptop can play video for hours on battery while software decoding of the same stream keeps the CPU busy.
+- **Image signal processors** turn a camera sensor's raw data into a photo.
+- **Network cards** offload checksums, encryption and packet handling.
+- **Crypto instructions** inside the CPU itself, such as AES and SHA extensions (this laptop's `lscpu` flags include `sha_ni`), are small accelerators built into the general core.
+
+## What specialisation costs
+
+- **Flexibility.** A fixed-function video decoder can't decode a format invented after it was built. A matrix engine is no help for a branchy workload. If the workload changes, the accelerator may become dead silicon.
+- **Programmability.** Accelerators need their own compilers, libraries and data formats, such as 8-bit integers or reduced-precision floats, and moving a program onto one is real work.
+- **Data movement.** Data has to get to the accelerator and back, often over a bus that's slow compared with the accelerator itself. A job too small to amortise the copy runs faster on the CPU.
+
+Which of these jobs would you send to the TPU-style matrix engine, and which to the CPU?
+
+1. Multiplying two 4096 by 4096 matrices, millions of times a day.
+2. Multiplying two 3 by 3 matrices, once.
+3. Parsing a JSON request before inference.
+
+<details>
+<summary>Check your answer</summary>
+
+1. **The accelerator:** huge, regular, repeated. This is the workload it was built for, and the copy cost is tiny compared with the work.
+2. **The CPU:** 27 multiply-adds take nanoseconds on a CPU. Sending them to an accelerator and back would take far longer than doing them.
+3. **The CPU:** parsing is branchy and irregular, with no matrix in sight. The accelerator can't run it at all.
+
+</details>
+
+## Amdahl again
+
+An accelerator only speeds up the part of a job it can run. Amdahl's law from the first course in this path gives the overall speed-up: 1 / ((1 - p) + p / s), for a fraction p of the time sped up s times.
+
+A model's run time is 95% matrix multiplication. Work out the overall speed-up if the accelerator runs that part 30 times faster, then 300 times faster.
+
+<details>
+<summary>Check your answer</summary>
+
+- **30 times:** 1 / (0.05 + 0.95 / 30) = 1 / (0.05 + 0.0317) = 1 / 0.0817 ≈ **12.2 times**.
+- **300 times:** 1 / (0.05 + 0.95 / 300) = 1 / (0.05 + 0.0032) = 1 / 0.0532 ≈ **18.8 times**.
+
+Making the accelerator ten times faster again bought only about 50% more overall, because the 5% left on the CPU now dominates. The limit is 1 / 0.05 = 20 times. That's why accelerator designers care about everything around the matrix engine too: data movement, the parts that stay on the CPU, and the software that feeds it.
+
+</details>
+
+## Done when
+
+You can explain why accelerators win in speed and energy, trace and compute a systolic array's throughput, name the costs of specialisation, decide which work belongs on an accelerator, and apply Amdahl's law to the part that stays behind.

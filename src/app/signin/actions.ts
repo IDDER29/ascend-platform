@@ -2,6 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { signIn, signUp, AuthError } from "@/lib/auth/auth";
+import { AFTER_SIGN_IN_HREF, AFTER_SIGN_UP_HREF, safeNextHref } from "@/lib/auth/next-href";
+import { atLimit, hitRateLimit, recordAttempt, requestIp } from "@/lib/auth/rate-limit";
+import { LIMITS, TOO_MANY } from "@/lib/auth/rate-limit-rules";
 import { setSessionCookie } from "@/lib/auth/session";
 
 export interface AuthActionState {
@@ -12,17 +15,26 @@ export async function signInAction(_prev: AuthActionState, formData: FormData): 
   const email = String(formData.get("email") || "");
   const password = String(formData.get("password") || "");
   const keepSignedIn = formData.get("keepSignedIn") === "true";
+  const next = safeNextHref(String(formData.get("next") || ""));
+
+  if (await hitRateLimit(LIMITS.signIn(await requestIp()))) return { error: TOO_MANY };
+  const failures = LIMITS.signInFailures(email);
+  if (await atLimit(failures)) return { error: TOO_MANY };
 
   let userId: string;
   try {
     const user = await signIn({ email, password });
     userId = user.id;
   } catch (err) {
-    return { error: err instanceof AuthError ? err.message : "Something went wrong. Try again." };
+    if (err instanceof AuthError) {
+      await recordAttempt(failures);
+      return { error: err.message };
+    }
+    return { error: "Something went wrong. Try again." };
   }
 
   await setSessionCookie(userId, keepSignedIn);
-  redirect("/dashboard");
+  redirect(next ?? AFTER_SIGN_IN_HREF);
 }
 
 export async function signUpAction(_prev: AuthActionState, formData: FormData): Promise<AuthActionState> {
@@ -35,6 +47,7 @@ export async function signUpAction(_prev: AuthActionState, formData: FormData): 
   if (password !== confirm) {
     return { error: "Passwords don't match." };
   }
+  if (await hitRateLimit(LIMITS.signUp(await requestIp()))) return { error: TOO_MANY };
 
   let userId: string;
   try {
@@ -45,5 +58,5 @@ export async function signUpAction(_prev: AuthActionState, formData: FormData): 
   }
 
   await setSessionCookie(userId, keepSignedIn);
-  redirect("/dashboard");
+  redirect(AFTER_SIGN_UP_HREF);
 }

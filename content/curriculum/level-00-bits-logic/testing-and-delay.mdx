@@ -1,0 +1,89 @@
+---
+title: "Testing circuits, delay and trade-offs"
+level: level-00-bits-logic
+slug: testing-and-delay
+order: 35
+timeMin: 7
+learningOutcomes:
+- Work out how many rows an exhaustive test of a circuit needs, and why big circuits are tested with chosen test vectors instead
+- Explain that every gate takes a little time, so a circuit's outputs settle only after its slowest path
+- Find the critical path of a ripple-carry adder and explain why it grows with the number of bits
+- Describe the trade-off between a faster circuit and a bigger one, and how the slowest path limits the clock
+primer:
+- title: "Full adder and the 4-bit adder"
+  type: doc
+  meta: Reread · 3 min · the ripple carry is this lesson's example.
+  essential: true
+- title: "The ALU: one circuit, many operations"
+  type: doc
+  meta: Reread · 2 min · the circuit we want to test.
+  essential: false
+knowledgeCheck:
+- question: Why can't an 8-bit ALU be tested by trying every input by hand?
+  answer: "Two 8-bit inputs make 16 input bits, so 2 to the power 16 = 65,536 rows for each operation. With 8 operations that is 524,288 rows: about six days at one row a second without stopping. Small parts are tested exhaustively by computer, and the whole ALU with chosen test vectors."
+  jumpToId: test-every-row-while-you-can
+  jumpToLabel: Test every row, while you can
+- question: What is the critical path of a circuit?
+  answer: The longest chain of gates from an input to an output. The outputs are only correct once a change has travelled down that chain, so it sets how fast the whole circuit can work.
+  jumpToId: the-critical-path
+  jumpToLabel: The critical path
+- question: Why does a 64-bit ripple-carry adder take longer than an 8-bit one?
+  answer: "Each column's carry out depends on the carry in from the column to its right, so the carry ripples through every column in turn. With about 2 gate delays per column, 8 bits need about 16 and 64 bits about 128."
+  jumpToId: the-critical-path
+  jumpToLabel: The critical path
+assignment:
+  instruction: "Read about the carry-lookahead adder. In two or three sentences, say what it does differently from a ripple-carry adder, what it costs, and why nearly every real CPU uses it or something like it."
+  resourceName: 'Wikipedia: Carry-lookahead adder'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Carry-lookahead_adder'
+additionalResources:
+- title: Propagation delay (Wikipedia)
+  type: doc
+  meta: reference, delay in gates and wires
+  url: 'https://en.wikipedia.org/wiki/Propagation_delay'
+- title: Test vector (Wikipedia)
+  type: doc
+  meta: how circuits are tested with chosen inputs
+  url: 'https://en.wikipedia.org/wiki/Test_vector'
+whyThisMatters: "A circuit that is correct on paper can still be wrong in silicon if it's tested badly or asked to work faster than its slowest path allows. These two ideas, testing what you can and respecting delay, are why a chip has a maximum clock speed and why designers trade extra gates for speed."
+---
+
+So far every circuit in this course has been correct the moment its inputs changed, and checked by filling in its truth table. Real circuits raise two questions. How do you test something too big to check by hand? And how long does a change take to get through the gates?
+
+By the end you'll be able to say when exhaustive testing is possible, explain propagation delay and the critical path, and see why speed costs gates.
+
+## Test every row, while you can
+
+A circuit with n input bits has 2 to the power n possible inputs, one truth-table row each. A half adder has 2 inputs and 4 rows; a full adder has 3 inputs and 8 rows. Checking every row, called <b>exhaustive testing</b>, proves the circuit right.
+
+The rows double with every input bit, though:
+
+<TruthTable caption='Rows in an exhaustive test' rowsJson='[["circuit", "input bits", "rows"], ["half adder", "2", "4"], ["full adder", "3", "8"], ["4-bit adder", "8", "256"], ["8-bit adder", "16", "65,536"], ["8-bit ALU with 8 operations", "16 plus 3 for the operation", "524,288"]]' />
+
+At one row a second, the 8-bit ALU would take about six days without a break. So engineers do two things. They test each small part exhaustively, by computer, and trust that correct parts wired correctly make a correct whole. And they test the big circuit with chosen <b>test vectors</b>: inputs picked to hit the edges, like 0, 255, 127 + 1, and A equal to B.
+
+The Lab below checks every row for you. The starting line for a full adder's carry is wrong in some rows; find them, then fix it.
+
+<GateLab caption='Test every row: a full adder carry' inputsJson='["A","B","CIN"]' outputsJson='["COUT"]' targetJson='{"COUT":"(A AND B) OR (CIN AND (A XOR B))"}' startJson='["COUT = A AND B"]' />
+
+## Gates take time
+
+A gate's output doesn't change the instant its inputs do. Transistors take a moment to switch, so each gate adds a small <b>propagation delay</b>, a tiny fraction of a nanosecond on a modern chip. A signal passing through ten gates in a row arrives after ten delays.
+
+While a change is still travelling through the gates, an output can briefly show a wrong value before it settles. A circuit's output is only trustworthy once every path through it has settled.
+
+## The critical path
+
+The <b>critical path</b> is the longest chain of gates from any input to any output. It decides when the outputs are ready.
+
+In a ripple-carry adder, the critical path is the carry. Each full adder's carry out depends on its carry in, which depends on the column to its right, and so on. With about 2 gate delays per column for the carry:
+
+<TruthTable caption='Ripple carry: roughly 2 gate delays per column' rowsJson='[["adder width", "gate delays for the carry to ripple through"], ["8 bits", "about 16"], ["32 bits", "about 64"], ["64 bits", "about 128"]]' />
+
+Doubling the width doubles the wait. A <b>carry-lookahead adder</b> avoids that by working out the carries in parallel with extra gates, so its delay grows much more slowly. It is faster, and it is bigger. That is the usual trade: more gates for less time.
+
+<KeyIdea>The slowest path through a circuit sets its speed. You can often go faster by spending more gates.</KeyIdea>
+
+## Why this sets the clock
+
+In the next course you'll meet the clock, which tells registers when to store a new value. A register must only store an ALU's result once it has settled, so the time between clock ticks can't be shorter than the circuit's critical path. That is a big part of why every chip has a maximum clock speed, and why shortening the critical path is one of a chip designer's main jobs.

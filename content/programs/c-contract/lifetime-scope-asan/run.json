@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/lifetime-scope-asan",
+  "sourceHash": "ee1ab7422e47bac7",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -fsanitize=address main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "=================================================================\n==567761==ERROR: AddressSanitizer: stack-use-after-scope on address 0x7a718def0020 at pc 0x65336e74035a bp 0x7fff1c900840 sp 0x7fff1c900830\nREAD of size 4 at 0x7a718def0020 thread T0\n    #0 0x65336e740359 in main (/tmp/build/prog+0x1359) (BuildId: a5742bf1aa8e120f2a529e454accacce5aeacb56)\n    #1 0x7e719002a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #2 0x7e719002a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #3 0x65336e740184 in _start (/tmp/build/prog+0x1184) (BuildId: a5742bf1aa8e120f2a529e454accacce5aeacb56)\n\nAddress 0x7a718def0020 is located in stack of thread T0 at offset 32 in frame\n    #0 0x65336e740258 in main (/tmp/build/prog+0x1258) (BuildId: a5742bf1aa8e120f2a529e454accacce5aeacb56)\n\n  This frame has 1 object(s):\n    [32, 36) 'count' (line 6) <== Memory access at offset 32 is inside this variable\nHINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork\n      (longjmp and C++ exceptions *are* supported)\nSUMMARY: AddressSanitizer: stack-use-after-scope (/tmp/build/prog+0x1359) (BuildId: a5742bf1aa8e120f2a529e454accacce5aeacb56) in main\nShadow bytes around the buggy address:\n  0x7a718deefd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a718deefe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a718deefe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a718deeff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a718deeff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x7a718def0000: f1 f1 f1 f1[f8]f3 f3 f3 00 00 00 00 00 00 00 00\n  0x7a718def0080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a718def0100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a718def0180: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a718def0200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7a718def0280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==567761==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

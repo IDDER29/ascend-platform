@@ -1,0 +1,133 @@
+---
+title: "Casts and what they really do"
+level: level-02-the-c-language
+slug: casts
+order: 11
+timeMin: 10
+learningOutcomes:
+- Predict the result of a value cast between integer and floating types, including truncation and wrap-around
+- Tell a cast that converts a value apart from a pointer cast that only changes how the same bytes are read
+- Read an object's bytes safely with memcpy instead of a pointer cast
+- Explain why casting away const, or casting to silence a compiler error, usually hides a bug
+primer:
+- title: "Integer promotions and conversions"
+  type: doc
+  meta: Reread · 3 min · the conversions C does without being asked.
+  essential: true
+- title: "What a pointer really is"
+  type: doc
+  meta: Reread · 2 min · a pointer's type says how to read the bytes it points at.
+  essential: false
+knowledgeCheck:
+- question: (uint32_t) f and memcpy(&bits, &f, 4) both start from float f = 1.0f. Why do they give 1 and 0x3f800000?
+  answer: "(uint32_t) f is a value conversion: it asks for the number 1.0 as an unsigned integer, which is 1. memcpy copies the float's four bytes unchanged, so bits holds the IEEE 754 encoding of 1.0, which is 0x3f800000."
+  jumpToId: converting-a-value-or-reading-bits
+  jumpToLabel: Converting a value, or reading bits
+- question: Why is int *p = (int *) &price; worse than the same line without the cast?
+  answer: "Without the cast gcc refuses to compile it (incompatible pointer types), which is exactly right: reading a double through an int pointer is a mistake. The cast tells gcc \"trust me\", so the program compiles and silently prints a wrong value (0, the low half of 1.5's bits)."
+  jumpToId: a-cast-that-silences-an-error
+  jumpToLabel: A cast that silences an error
+assignment:
+  instruction: "Search a C project you use (or any open-source C code on GitHub) for five casts. For each one, say whether it converts a value or reinterprets a pointer, and whether it's needed. Rewrite one unnecessary cast away, and compile to check nothing changed."
+  resourceName: "cppreference: Cast operator"
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/language/cast'
+additionalResources:
+- title: "cppreference: memcpy"
+  type: doc
+  meta: the safe way to reinterpret an object's bytes
+  url: 'https://en.cppreference.com/w/c/string/byte/memcpy'
+- title: "SEI CERT C: EXP05-C, do not cast away a const qualification"
+  type: doc
+  meta: why const casts are dangerous
+  url: 'https://wiki.sei.cmu.edu/confluence/display/c/EXP05-C.+Do+not+cast+away+a+const+qualification'
+whyThisMatters: "A cast is the one place in C where you overrule the compiler. Used to convert a value on purpose, it's precise and useful. Used to make an error or warning go away, it turns a compile-time message into a run-time bug. Knowing which is which is part of reading and reviewing C."
+---
+
+A cast, written `(type) expression`, tells the compiler: treat this as that type. Behind one syntax there are two very different operations: converting a **value**, and changing how a **pointer**'s target is read. Mixing them up is where most cast bugs come from.
+
+## Casts that convert values
+
+Predict each line, then run it.
+
+<CRun program="c-language/cast-value" caption='Value casts' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `(int)3.99` is 3 and `(int)-3.99` is -3: converting a floating value to an integer **truncates toward zero**. It doesn't round. Use `lround` from `<math.h>` to round.
+- `(unsigned char)300` is 44: converting to an unsigned type keeps the value modulo 2 to the power of its width, so 300 - 256.
+- `(double)7 / 2` is 3.5: the cast applies to 7 first (casts bind tighter than `/`), so the division is done in `double`.
+- `(double)(7 / 2)` is 3.0: `7 / 2` is integer division, giving 3, and only then is 3 converted. Where you put the cast decides when the conversion happens.
+
+A value cast computes a new value of the new type. The bits usually change.
+
+</details>
+
+## Converting a value, or reading bits
+
+A pointer cast is different: it doesn't touch the object, it changes the type you read it as. The two lines in this program look similar and do opposite things.
+
+<CRun program="c-language/cast-bits" caption='The value 1.0, or the bits of 1.0' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`(uint32_t) f` converts the **value** 1.0 to the integer 1. `memcpy(&as_bits, &f, sizeof as_bits)` copies the float's four **bytes** unchanged into an integer, and those bytes are 0x3f800000: the IEEE 754 encoding of 1.0 (sign 0, exponent 127, fraction 0).
+
+Why `memcpy`, and not `*(uint32_t *) &f`? That pointer cast reads a `float` object through a `uint32_t` lvalue, which breaks C's **strict aliasing rule**: an object may only be read through its own type, a compatible one or a character type. Compilers optimise on that rule, so the pointer version can misbehave at `-O2`. `memcpy` is always allowed, and gcc compiles it into a single move.
+
+</details>
+
+<KeyIdea>A value cast computes a new value; a pointer cast only changes how existing bytes are read. To look at an object's bytes as another type, copy them with memcpy.</KeyIdea>
+
+## A cast that silences an error
+
+Without a cast, gcc refuses this line:
+
+<CRun program="c-language/cast-silenced-nocast" caption='Without the cast' />
+
+Since gcc 14, assigning a `double *` to an `int *` is an error. A programmer in a hurry adds a cast, and it compiles. What does it print?
+
+<CRun program="c-language/cast-silenced" caption='With the cast' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+0. The cast didn't fix anything: it made gcc stop checking. `*p` now reads the first four bytes of the `double` 1.5 as an `int`. 1.5 is 0x3FF8000000000000, and on a little-endian machine the first four bytes are its low half, all zeros. (It also breaks the aliasing rule, so it's undefined behaviour besides.)
+
+When the compiler rejects a conversion, the error is information. Find out why the types don't match; don't cast until you could explain to a reviewer what the cast does and why it's safe.
+
+</details>
+
+## Casting away const
+
+`const` promises an object won't be changed through that name. A cast can remove the `const` from a pointer, but not the promise. Here is the same program compiled twice, at `-O0` and at `-O2`:
+
+<CRun program="c-language/cast-const-O0" caption='Writing a const object, at -O0' />
+
+<CRun program="c-language/cast-const-O2" caption='The same program, at -O2' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+At `-O0` it prints `limit = 20, *p = 20`. At `-O2`, `limit = 10, *p = 20`: one variable, two values. Modifying an object defined `const` is undefined behaviour, so the optimiser may assume `limit` is always 10 and use the constant 10 in `printf` without reading memory at all, while `*p` reads the memory that was changed.
+
+The output depends on the optimisation level, which is the classic sign of undefined behaviour. Casting away `const` is only safe when the object itself wasn't defined `const` (for example, an API that takes `const char *` but you know the string is your own writable array). Even then, prefer fixing the types.
+
+</details>
+
+## When a cast is the right tool
+
+Casts are right when you mean a conversion and want it visible:
+
+- `(double) total / count` to get a fractional average.
+- `(unsigned char) c` before passing a `char` to `isdigit` or `toupper`, whose argument must be a valid `unsigned char` value or `EOF`.
+- `(void *) p` when printing a pointer with `%p`.
+- Converting between integer types on purpose, where you've checked the value fits.
+
+A useful habit: every cast should come with a reason you could say out loud. If the reason is "it made the error go away", the cast is hiding a bug.
+
+## Done when
+
+You can predict value casts (truncation, wrap-around, where the cast applies), explain why `memcpy` and not a pointer cast reads an object's bits, and say what went wrong in the two programs above that cast to silence the compiler.

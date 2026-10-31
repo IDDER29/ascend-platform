@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/pool-tests",
+  "sourceHash": "88ba3e10203b060d",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O1 -g -pthread -fsanitize=thread main.c threadpool.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "1000 tasks on 4 workers: sum of squares 333833500 (expected 333833500)\nsecond batch after tp_free: 4000 (expected 4000)\nall tests passed\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

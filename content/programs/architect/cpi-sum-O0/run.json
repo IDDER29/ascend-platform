@@ -1,0 +1,20 @@
+{
+  "id": "architect/cpi-sum-O0",
+  "sourceHash": "539731ee02815aea",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "total:                1032781824\nelements added:       82 million\ntime:                 0.266 s\nTSC ticks per element: 8.10\nTSC rate:             2.50 GHz\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

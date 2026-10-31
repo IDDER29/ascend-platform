@@ -1,0 +1,109 @@
+---
+title: "Out-of-order execution"
+level: level-12-advanced-execution
+slug: out-of-order
+order: 2
+timeMin: 11
+learningOutcomes:
+- Explain how an out-of-order core starts each instruction as soon as its inputs are ready, rather than in program order
+- Trace how independent work fills the cycles a long-latency load would otherwise waste
+- Explain why results still commit in program order, and what the window (reorder buffer) size limits
+- Choose the settings that make a block of code run fastest, and say why each one matters
+primer:
+- title: "Superscalar: more than one at a time"
+  type: doc
+  meta: Reread · 3 min · width, IPC and in-order pairing.
+  essential: true
+- title: "Data hazards and forwarding"
+  type: doc
+  meta: Reread · 2 min · the dependences that decide readiness.
+  essential: false
+knowledgeCheck:
+- question: In order and one at a time, the load block takes 9 cycles; out of order, 7. Where do the 2 cycles come from?
+  answer: "The load takes 3 cycles and the add after it must wait for it. In order, the independent adds behind it can't start either, so those cycles are wasted. Out of order, the add r4 and add r6 chain runs in cycles 2 and 3, during the load's latency, so the work is done sooner."
+  jumpToId: let-the-ready-ones-go
+  jumpToLabel: Let the ready ones go
+- question: With a window of 2, the out-of-order core is back to 9 cycles. Why?
+  answer: "The window holds the instructions in flight, from issue until they commit in order. With room for only 2, the instructions after the load can't even enter until the load and its add commit, so nothing can run ahead of the load."
+  jumpToId: the-window
+  jumpToLabel: The window
+assignment:
+  instruction: "Read the out-of-order section of 'Modern Microprocessors: A 90-Minute Guide' (linked below). Then write down, for a CPU you use, its reorder buffer size and how many instructions it can issue per cycle (search for its microarchitecture name), and explain in two sentences what each number limits."
+  resourceName: 'Modern Microprocessors: A 90-Minute Guide'
+  resourceType: doc
+  resourceUrl: 'https://www.lighterra.com/papers/modernmicroprocessors/'
+additionalResources:
+- title: "Tomasulo's algorithm (Wikipedia)"
+  type: doc
+  meta: the 1967 design behind out-of-order execution
+  url: 'https://en.wikipedia.org/wiki/Tomasulo%27s_algorithm'
+- title: "Out-of-order execution (Wikipedia)"
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Out-of-order_execution'
+whyThisMatters: "Almost every desktop, laptop and phone CPU executes out of order, and it's the main reason code that waits on memory doesn't crawl. It also explains why the order you write instructions in matters less than you'd think, while the dependences between them matter a lot."
+---
+
+In the last lesson, an in-order core could only pair instructions that were already in a good order, and you had to schedule them yourself. An **out-of-order** core does that scheduling in hardware while the program runs: it starts each instruction as soon as its inputs are ready, whatever its place in the program.
+
+## Let the ready ones go
+
+This block starts with a load (3 cycles) and an add that needs it. The other four instructions don't depend on the load at all. Run it in order, one per cycle, then switch to out of order. Predict both times first.
+
+<OooLab caption='A load and work that does not need it' blockJson='["lw r1, 0(r2)","add r3, r1, r1","add r4, r5, r5","add r6, r4, r4","add r7, r6, r6","add r8, r9, r9"]' optionsJson='{"outOfOrder":false,"width":1,"window":32,"renaming":true}' />
+
+<details>
+<summary>Check your answer</summary>
+
+**In order: 9 cycles.** The load issues in cycle 1 and its result is ready in cycle 4, so `add r3` waits until then. Every instruction behind it waits too, even though they don't need r1: they issue in cycles 5 to 8, and the last commits in 9.
+
+**Out of order: 7 cycles.** `add r4` and `add r6` don't need the load, so they issue in cycles 2 and 3, while the load is still running. `add r3` goes at 4, when r1 is ready, and the last two follow. The core used cycles the in-order core wasted.
+
+The rows also show something that didn't change: the **commits** (C) are still in program order. `add r4` executes in cycle 2 but commits in cycle 5, with the load and the add before it.
+
+</details>
+
+## How the hardware does it
+
+An out-of-order core splits each instruction's life into steps:
+
+1. **Fetch and decode in order**, as before.
+2. **Dispatch** into a waiting area (an **issue queue**, or reservation stations), and into the **reorder buffer**, a queue in program order.
+3. **Issue out of order:** each cycle, pick instructions whose inputs are ready and send them to free execution units. When one finishes, it broadcasts its result, and instructions waiting for it **wake up**.
+4. **Commit in order:** the oldest instruction in the reorder buffer leaves once it has finished, writing its result to the program-visible registers.
+
+This is **dataflow** execution: the order comes from the dependences, not from the listing. The idea goes back to Robert Tomasulo's design for the IBM System/360 Model 91 in 1967.
+
+Why commit in order? So the program can never tell. If an instruction faults, or a branch turns out to have been mispredicted, everything after it can still be cancelled, because none of it has committed. The last lesson in this course is about exactly that.
+
+<KeyIdea>Out of order: issue when ready, commit in program order. Independent work fills the gaps that long-latency instructions leave.</KeyIdea>
+
+## The window
+
+Instructions can only run ahead if the core has room to hold them while older ones are still waiting. That room is the **window**: the number of instructions in flight, which is the reorder buffer's size. Real cores hold a few hundred.
+
+Make the load block finish in 6 cycles. You may change any setting: out of order, width and window.
+
+<OooLab caption='Make it fast' blockJson='["lw r1, 0(r2)","add r3, r1, r1","add r4, r5, r5","add r6, r4, r4","add r7, r6, r6","add r8, r9, r9"]' optionsJson='{"outOfOrder":false,"width":1,"window":32,"renaming":true}' goalJson='{"maxCycles":6}' />
+
+<details>
+<summary>Check your answer</summary>
+
+You need all three: **out of order**, a width of **2** or more, and a window of **8** or more. Then it takes 6 cycles.
+
+| Settings | Cycles |
+|---|---|
+| in order, width 1 | 9 |
+| out of order, width 1 | 7 |
+| in order, width 2 | 7 |
+| out of order, width 2, window 32 | 6 |
+| out of order, width 2, window 4 | 7 |
+| out of order, width 2, window 2 | 9 |
+
+With a window of 2, nothing can enter until the two oldest instructions (the load and the add waiting for it) have committed. So the core can't look past the load at all, and it's back to in-order speed. A window of 4 lets two more in, but not the whole block. Width and out-of-order issue are useless without a window big enough to find independent work. That's why real cores spend so much hardware on a large reorder buffer and issue queue.
+
+</details>
+
+## Done when
+
+You can explain where out of order found the 2 cycles, why commit stays in order, and which three settings the 6-cycle schedule needed.

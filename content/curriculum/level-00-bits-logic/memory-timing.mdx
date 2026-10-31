@@ -1,0 +1,113 @@
+---
+title: "Memory timing: a small memory system"
+level: level-00-bits-logic
+slug: memory-timing
+order: 46
+timeMin: 8
+learningOutcomes:
+- Explain why memory changes only on a clock tick, and only when write enable is on
+- Explain why a read follows the address after a short delay, with no tick needed
+- "Describe setup and hold: the address and data must be steady just before and just after the tick"
+- Trace a short series of writes and reads through a memory with an address register, data in and data out
+primer:
+- title: "The clock and registers"
+  type: doc
+  meta: Reread · 3 min · a memory box is a register with a load input.
+  essential: true
+- title: "Memory as numbered boxes"
+  type: doc
+  meta: Reread · 3 min · address, data and write, and the decoder.
+  essential: true
+knowledgeCheck:
+- question: You set the address to 5 and data in to 7, but leave write enable off, then tick. What changes?
+  answer: "Nothing in memory. A box only takes in new data on a tick when write enable is on. Data out still shows whatever box 5 already held, because reading needs no tick."
+  jumpToId: writes-wait-for-the-tick
+  jumpToLabel: Writes wait for the tick
+- question: Why must the address be steady just before the tick, not changing at the same moment?
+  answer: "The decoder needs a little time to settle on one box after the address changes. If the address is still changing at the tick, the wrong box, or two boxes, could take in the data. That required steady time before the tick is the setup time; the steady time after it is the hold time."
+  jumpToId: steady-before-and-after-the-tick
+  jumpToLabel: Steady before and after the tick
+- question: A write to box 4 also changes box 5. What is the likely fault?
+  answer: "The decoder is ignoring the lowest address bit, so 4 (0100) and 5 (0101) look like the same address and both boxes get the write. One address line is broken or not connected."
+  jumpToId: debug-a-broken-memory
+  jumpToLabel: Debug a broken memory
+assignment:
+  instruction: "nand2tetris Project 3 builds RAM8, RAM64 and bigger memories from registers. Read its description and sketch, on paper, how RAM8 uses a decoder for writes and a multiplexer for reads, labelling the address, data in, load and data out wires."
+  resourceName: 'nand2tetris.org: Project 3, Memory'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project03'
+additionalResources:
+- title: "Ben Eater: RAM for the 8-bit computer"
+  type: doc
+  meta: a real 16-byte RAM with an address register, built on breadboards
+  url: 'https://eater.net/8bit/ram'
+- title: 'Registers and RAM: Crash Course Computer Science #6'
+  type: video
+  meta: 12 min
+  url: 'https://www.youtube.com/watch?v=fpnE6UAfbtU'
+whyThisMatters: "A CPU reads and writes memory billions of times a second, and every one of those accesses depends on the rules in this lesson: write only on the tick, only when told, with signals steady at the right moment. When you later meet bugs where a value lands in the wrong place, or hardware that misbehaves when it runs too fast, these rules are what was broken."
+---
+
+You know what memory is: numbered boxes, picked by a decoder. This lesson is about <b>when</b> things happen in it. A memory that changed whenever a wire flickered would be useless, so real memory follows strict timing rules, set by the clock.
+
+By the end you'll be able to say exactly when a box changes, why reading is different from writing, and how memory is wired up ready for a CPU to use.
+
+## Writes wait for the tick
+
+A memory box is a register, and a register only changes on a clock tick when its load input is on. Memory adds one more signal in front of that: <b>write enable</b>. On each tick:
+
+- if write enable is on, the box the address picks takes in the byte on <b>data in</b>;
+- if write enable is off, nothing changes at all.
+
+Every other box keeps its value, whatever is on the wires. The decoder only sends the load signal to one box.
+
+Try it below. Set an address and a value, switch write enable on, and press Tick. Then try a tick with write enable off.
+
+<MemoryBoard caption='Write 7 into box 5, then 9 into box 6' sizeJson='16' goalJson='{"5":7,"6":9}' />
+
+<KeyIdea>Memory changes only on a tick, only when write enable is on, and only in the box the address picks.</KeyIdea>
+
+## Reads follow the address
+
+Reading works differently. <b>Data out</b> always shows the box the address picks, through a multiplexer. There is no tick: change the address and, after a short delay while the multiplexer's gates settle, the new box's value appears.
+
+<TruthTable caption='Reading and writing, side by side' rowsJson='[["", "reading", "writing"], ["needs a tick?", "no", "yes"], ["needs write enable?", "no", "yes, on"], ["what changes", "only data out", "the one box the address picks"], ["when it shows up", "a short delay after the address changes", "at the tick"]]' />
+
+That short delay matters. A CPU that asks for a byte must wait long enough for it to arrive before it uses it. That delay is one of the things that limits how fast the clock can tick.
+
+## Steady before and after the tick
+
+A write only works if the address and data are steady at the right moment. If the address is still changing when the tick arrives, the decoder may not have settled on one box yet, and the wrong box, or two boxes, could take the data.
+
+So every memory chip states two small times:
+
+- <b>setup time</b>: how long before the tick the address and data must already be steady;
+- <b>hold time</b>: how long after the tick they must stay steady.
+
+The clock makes this easy to honour. The CPU changes its signals just after one tick, they settle during the gap, and the memory acts on the next tick. As long as the gap is longer than the settling time, every write lands where it should.
+
+<KeyIdea>Signals settle between ticks; memory acts on the tick. The clock gives every wire time to be ready.</KeyIdea>
+
+## A small memory system
+
+To be ready for a CPU, memory gets a few registers around it. This is how the tiny CPU in this path is wired:
+
+- a <b>memory address register</b> holds the address, so it stays steady while the CPU does other things;
+- <b>data in</b> carries the byte to write, from the bus;
+- <b>data out</b> puts the chosen box's byte back on the bus when the CPU reads;
+- <b>write enable</b> comes from the CPU's control unit, switched on only for an instruction that stores.
+
+To read box 14, the CPU loads 14 into the memory address register on one tick; data out shows box 14 shortly after, and the CPU loads it into a register on the next tick. To write, it loads the address, puts the byte on data in, and switches write enable on for one tick.
+
+## Debug a broken memory
+
+This memory has a fault. Write a value to box 4 and watch the timeline: which boxes changed? Then try box 6. Work out what is broken before you open the answer.
+
+<MemoryBoard caption='A memory with a fault' sizeJson='16' faultJson='{"ignoreAddressBit":0}' />
+
+<details>
+<summary>Check your answer</summary>
+
+A write to box 4 also changes box 5, and a write to box 6 also changes box 7. In binary, 4 is 0100 and 5 is 0101: they differ only in the lowest bit. The decoder is ignoring that bit, so it can't tell the two boxes apart and both take the write. In a real chip this is a broken or unconnected address line. The first thing that went wrong is the write itself, not any later read.
+
+</details>

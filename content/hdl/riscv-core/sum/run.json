@@ -1,0 +1,18 @@
+{
+  "id": "riscv-core/sum",
+  "sourceHash": "aa8bcab28bd3b5a1",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp core.v tb_core.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "out: 5050\nout: 610\nout: 46\nout: 12\nout: 2\nout: -3\nstopped after 70129 cycles\ntb_core.v:23: $finish called at 140259 (1s)\n",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

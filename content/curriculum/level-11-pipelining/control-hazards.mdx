@@ -1,0 +1,117 @@
+---
+title: "Control hazards and stalls"
+level: level-11-pipelining
+slug: control-hazards
+order: 3
+timeMin: 11
+learningOutcomes:
+- Explain why a branch leaves the pipeline unsure which instruction to fetch next
+- Count the bubbles when the pipeline stalls on every branch until it resolves in EX
+- Count the flushed instructions when it guesses not taken, and say when that guess costs nothing
+- Reduce the number of branches a loop executes by unrolling it, and measure the cycles saved
+primer:
+- title: "Data hazards and forwarding"
+  type: doc
+  meta: Reread · 3 min · stalls, and reading the pipeline diagram.
+  essential: true
+knowledgeCheck:
+- question: Why does a branch cost cycles even when it isn't taken, if the pipeline stalls on branches?
+  answer: "The pipeline only knows the branch's direction when it resolves in EX. Stalling means fetching nothing after the branch until then, so two fetch slots are lost on every branch, taken or not. The cost comes from not knowing, not from the jump itself."
+  jumpToId: what-to-fetch-next
+  jumpToLabel: What to fetch next?
+- question: "Guessing not taken, a loop branch that is taken 3 times then falls through: how many instructions are flushed?"
+  answer: "6. Each taken branch has had the next two instructions fetched on the wrong guess, and they are flushed when it resolves in EX: 3 × 2 = 6. The last time the branch falls through, the guess was right and nothing is thrown away."
+  jumpToId: guess-instead-of-waiting
+  jumpToLabel: Guess instead of waiting
+assignment:
+  instruction: "Take the loop from this lesson and count, by hand, the cycles for 4, 8 and 100 iterations under both branch policies. Write the cost per iteration as a formula, then say how much unrolling by 4 would save at 100 iterations."
+  resourceName: 'Wikipedia: Loop unrolling'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Loop_unrolling'
+additionalResources:
+- title: "Hazard (computer architecture): control hazards (Wikipedia)"
+  type: doc
+  meta: branch hazards and the usual remedies
+  url: 'https://en.wikipedia.org/wiki/Hazard_(computer_architecture)'
+whyThisMatters: "About one instruction in five is a branch, and every one of them interrupts the steady flow of a pipeline. How a CPU handles branches decides much of its real speed, and knowing the cost is how you understand why tight loops get unrolled and why unpredictable branches slow programs down."
+---
+
+Data hazards are about values arriving late. A **control hazard** is about not knowing what comes next. After fetching a branch, the pipeline must fetch *something* in the very next cycle, but whether that's the next instruction or the branch target isn't known until the branch is resolved.
+
+## What to fetch next?
+
+In this pipeline, a branch compares its registers in **EX**, the third stage. By then, two more cycles of fetching have gone by. The simplest correct answer is to **stall**: fetch nothing after a branch until it resolves.
+
+This branch isn't taken (x1 is 1, not 0). Run it with branches set to **stall**, then to **guess not taken**.
+
+<PipelineLab caption='A branch that is not taken' programJson='["addi x1, x0, 1", "beq x1, x0, skip", "addi x2, x0, 5", "skip: addi x3, x0, 3"]' branchJson='"stall"' />
+
+What does the stall cost, and what changes when the pipeline guesses?
+
+<details>
+<summary>Check your answer</summary>
+
+- **Stall: 10 cycles, 2 branch bubbles.** Nothing is fetched after `beq` until it resolves at the end of its EX in cycle 4, so `addi x2` is fetched in cycle 5 instead of cycle 3. Two empty fetch slots, even though the branch wasn't taken.
+- **Guess not taken: 8 cycles, nothing flushed.** The pipeline keeps fetching the next instructions as if there were no branch. Here the guess was right, so the branch cost nothing at all: 4 instructions in 4 + 4 cycles.
+
+</details>
+
+## Guess instead of waiting
+
+Guessing "not taken" is free when the branch isn't taken. When it is, the two instructions fetched after it are on the wrong path. When the branch resolves in EX, they are **flushed**: turned into bubbles before they can change any register or memory. That costs the same two cycles as a stall, no more.
+
+This loop adds 4 + 3 + 2 + 1 into x2. Its branch `bne` is taken 3 times, then falls through. Compare the two policies.
+
+<PipelineLab caption='A loop, four times round' programJson='["addi x1, x0, 4", "addi x2, x0, 0", "loop: add x2, x2, x1", "addi x1, x1, -1", "bne x1, x0, loop", "addi x3, x0, 7"]' branchJson='"stall"' />
+
+<details>
+<summary>Check your answer</summary>
+
+The loop runs 15 instructions (2 before it, 3 × 4 in it, 1 after).
+
+- **Stall: 27 cycles** = 15 + 4 + 8 bubbles. Every one of the 4 branches costs 2 cycles.
+- **Guess not taken: 25 cycles** = 15 + 4 + 6 flushed. The 3 taken branches each flush two instructions. In the diagram, the flushed rows are the `addi x3` after the loop and a fetch past the end of the program, struck through. The last branch, which falls through, costs nothing.
+
+Guessing is never worse than stalling here, and it's better whenever a branch isn't taken. But for a loop, where the branch is almost always taken, "not taken" is the wrong guess almost every time. The next lesson fixes that.
+
+</details>
+
+<KeyIdea>A branch is resolved late, so the pipeline either waits (bubbles on every branch) or guesses and throws away the wrong-path work (flushes only when the guess is wrong).</KeyIdea>
+
+## Fewer branches
+
+With the stall policy fixed, every branch costs two cycles. One way to pay less is to execute fewer branches: **unroll** the loop so each trip does two iterations' work. Change the program so it still leaves 10 in x2, in at most **21 cycles**.
+
+<PipelineLab editable fixed caption='Unroll the loop' programJson='["addi x1, x0, 4", "addi x2, x0, 0", "loop: add x2, x2, x1", "addi x1, x1, -1", "bne x1, x0, loop", "addi x3, x0, 7"]' branchJson='"stall"' goalJson='{"maxCycles":21,"regs":{"x2":10}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Repeat the body twice inside the loop:
+
+```
+      addi x1, x0, 4
+      addi x2, x0, 0
+loop: add  x2, x2, x1
+      addi x1, x1, -1
+      add  x2, x2, x1
+      addi x1, x1, -1
+      bne  x1, x0, loop
+      addi x3, x0, 7
+```
+
+Now the loop goes round twice: 13 instructions and only 2 branches, so 13 + 4 + 4 bubbles = **21 cycles**, against 27. It works because 4 is even; a compiler that unrolls also adds code for the iterations left over. Unrolling trades a bigger program for fewer branches and less loop overhead, and gcc does it at `-O2` and `-O3` when it judges it worth it.
+
+</details>
+
+## Other ways out
+
+Real designs attack the same problem from several sides:
+
+- **Resolve branches earlier.** Comparing registers in ID instead of EX makes a wrong guess cost one cycle instead of two, at the price of extra hardware and forwarding into ID.
+- **Delay slots.** Some older instruction sets (MIPS, SPARC) always executed the instruction after a branch, so the compiler could put useful work there. RISC-V deliberately has no delay slots: they complicate deeper pipelines.
+- **Predict better.** Instead of always guessing "not taken", remember what each branch did before. That's branch prediction, next.
+
+## Done when
+
+You can say why branches stall a pipeline, count bubbles and flushes for both policies, explain when guessing is free, and unroll a loop to execute fewer branches.

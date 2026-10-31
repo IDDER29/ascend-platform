@@ -1,0 +1,20 @@
+{
+  "id": "c-tools/tests-runner",
+  "sourceHash": "a065dbad15338a8a",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c strutil.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "FAIL main.c:27: is_palindrome(\"Level\")\n8 checks, 1 failed\n",
+    "stderr": "",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

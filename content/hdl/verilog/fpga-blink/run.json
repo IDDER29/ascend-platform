@@ -1,0 +1,18 @@
+{
+  "id": "verilog/fpga-blink",
+  "sourceHash": "d18f97ea6ed5d05d",
+  "tool": "pnr",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "yosys -p \"read_verilog -sv blink.v; synth_ice40 -top blink -json design.json\"",
+    "nextpnr-ice40 --hx1k --package tq144 --json design.json --pcf-allow-unconstrained --freq 12"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "       0 LCs used as LUT4 only\n      24 LCs used as LUT4 and DFF\n       0 LCs used as DFF only\n       0 LCs used as CARRY only\n       1 LCs used to legalise carry chains.\nDevice utilisation:\n\t         ICESTORM_LC:      27/   1280     2%\n\t        ICESTORM_RAM:       0/     16     0%\n\t               SB_IO:       2/    112     1%\n\t               SB_GB:       1/      8    12%\nMax frequency for clock 'clk$SB_IO_IN_$glb_clk': 200.24 MHz (PASS at 12.00 MHz)\nMax delay posedge clk$SB_IO_IN_$glb_clk -> <async>: 1.13 ns\nCritical path report for clock 'clk$SB_IO_IN_$glb_clk' (posedge -> posedge):\n3.91 ns logic, 1.24 ns routing\nCritical path report for cross-domain path 'posedge clk$SB_IO_IN_$glb_clk' -> '<async>':\n0.54 ns logic, 0.59 ns routing\nMax frequency for clock 'clk$SB_IO_IN_$glb_clk': 194.36 MHz (PASS at 12.00 MHz)\nMax delay posedge clk$SB_IO_IN_$glb_clk -> <async>: 1.13 ns\nProgram finished normally.",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

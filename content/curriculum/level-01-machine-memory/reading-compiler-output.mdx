@@ -1,0 +1,150 @@
+---
+title: "Reading what the compiler wrote"
+level: level-01-machine-memory
+slug: reading-compiler-output
+order: 4
+timeMin: 10
+learningOutcomes:
+- Produce assembly from C with gcc -S or objdump -S, and filter out the directives
+- Match each group of instructions back to the line of C it came from
+- Recognise common optimisation idioms (lea for arithmetic, shifts for division, xor to zero, conditional moves and sets)
+- Explain why -O0 output is the easiest to match to the source and -O2 output the most different
+primer:
+- title: "Calls and returns in assembly"
+  type: doc
+  meta: Reread · 3 min · AT&T syntax, arguments in rdi and esi, the result in eax.
+  essential: true
+- title: "Reading real compiler output"
+  type: doc
+  meta: "Foundations · sum_to at -O0 and -O2, the first look at real gcc output."
+  essential: false
+knowledgeCheck:
+- question: "Why does gcc compute x * 5 + 3 with leal 3(%rdi,%rdi,4), %eax?"
+  answer: "lea computes an address-style expression, base + index × scale + offset, without touching memory. With rdi as both base and index and a scale of 4, that's x + 4x + 3 = 5x + 3 in one instruction, cheaper than a multiply and an add."
+  jumpToId: four-idioms-worth-knowing
+  jumpToLabel: Four idioms worth knowing
+- question: Why is -O0 output easier to match to the source than -O2?
+  answer: "At -O0 gcc translates each line on its own and keeps every variable in its stack slot, so each line of C becomes its own small group of instructions, in order. At -O2 it keeps values in registers, merges and reorders work, inlines calls and computes constants at compile time, so lines blur together or vanish."
+  jumpToId: line-by-line-with-objdump--s
+  jumpToLabel: "Line by line with objdump -S"
+assignment:
+  instruction: "In Compiler Explorer, write a function with a loop (summing an array, say). Compare -O0, -O1 and -O2, and for -O2 find the loop's label and backward jump. Use the colour matching to tie each instruction to its line, and note one idiom from this lesson that appears."
+  resourceName: 'Compiler Explorer'
+  resourceType: site
+  resourceUrl: 'https://godbolt.org/'
+additionalResources:
+- title: "Matt Godbolt: What has my compiler done for me lately?"
+  type: video
+  meta: CppCon 2017 · compiler idioms, live
+  url: 'https://www.youtube.com/watch?v=bSkpMdDe4g4'
+- title: "x86 instruction reference (Félix Cloutier)"
+  type: doc
+  meta: look up any instruction
+  url: 'https://www.felixcloutier.com/x86/'
+whyThisMatters: "Reading compiler output is how you check what your code really does: whether a loop was vectorised, why a function is slow, what a crash address means. It's a skill you'll use with every compiled language for the rest of your career."
+---
+
+The compiler is the most careful translator you'll ever work with, and it shows you its work if you ask. This lesson is about reading that work: getting the assembly, finding your code in it, and recognising the tricks an optimiser uses.
+
+## Getting the assembly
+
+Two ways, both with real gcc:
+
+- `gcc -O2 -S source.c` writes `source.s`: assembly with **directives**, the lines starting with a dot (`.text`, `.globl`, `.size`, `.p2align`). Directives tell the assembler how to lay things out; they aren't instructions. Skip them when reading.
+- `objdump -d -S program` disassembles a compiled program, and with `-g` at compile time, `-S` puts each line of C above its instructions.
+
+Online, [Compiler Explorer](https://godbolt.org/) does the same and colours each line of C to match its instructions.
+
+## Line by line with objdump -S
+
+This is `objdump -d -S` on a real -O0 build (with `-g`) of this function:
+
+```
+int scale(int x) {
+   0:	endbr64
+   4:	push   %rbp
+   5:	mov    %rsp,%rbp
+   8:	mov    %edi,-0x4(%rbp)
+    return x * 5 + 3;
+   b:	mov    -0x4(%rbp),%edx
+   e:	mov    %edx,%eax
+  10:	shl    $0x2,%eax
+  13:	add    %edx,%eax
+  15:	add    $0x3,%eax
+}
+  18:	pop    %rbp
+  19:	ret
+```
+
+The numbers on the left are each instruction's offset in bytes. (`endbr64` is a security marker that says a jump may land here; ignore it.) Match each line of C to its instructions, and say how `x * 5` was done without a multiply.
+
+<details>
+<summary>Check your answer</summary>
+
+- `int scale(int x) {` is the prologue, plus `mov %edi,-0x4(%rbp)`, which stores the argument in its stack slot.
+- `return x * 5 + 3;` loads x into `edx` and `eax`, shifts `eax` left by 2 (× 4), adds x once more (× 5), then adds 3. The result is left in `eax`, the return register.
+- `}` is the epilogue: `pop %rbp` and `ret`.
+
+At -O0 each line of C turns into its own little group, in order, and every variable lives in memory. That's why -O0 output is the easiest to read, and the slowest to run.
+
+</details>
+
+## Four idioms worth knowing
+
+At -O2, gcc picks the cheapest instructions it can find. These four functions show idioms you'll see in any optimised code:
+
+```c
+int scale(int x)          { return x * 5 + 3; }
+unsigned eighth(unsigned x) { return x / 8; }
+int clamp(int x)          { return x < 0 ? 0 : x; }
+int is_zero(int x)        { return x == 0; }
+```
+
+<CompilerOutput evidence="idioms" fn="scale" caption='scale: x * 5 + 3' />
+
+<CompilerOutput evidence="idioms" fn="eighth" caption='eighth: x / 8, unsigned' />
+
+<CompilerOutput evidence="idioms" fn="clamp" caption='clamp: negative numbers become 0' />
+
+<CompilerOutput evidence="idioms" fn="is_zero" caption='is_zero: x == 0' />
+
+For each -O2 version, say what the trick is.
+
+<details>
+<summary>Check your answer</summary>
+
+- **scale:** `leal 3(%rdi,%rdi,4), %eax`. `lea` ("load effective address") computes base + index × scale + offset, the arithmetic used for addresses, but without reading memory. Here that's x + x × 4 + 3, all of `x * 5 + 3` in one instruction.
+- **eighth:** `shrl $3, %eax`. Dividing an unsigned number by 8 is shifting right by 3 bits, far cheaper than a divide. (For a signed `int`, gcc must add a correction first, because a shift rounds negative numbers the wrong way.)
+- **clamp:** `xorl %eax, %eax` sets the result to 0 (xor-ing a register with itself is the shortest way to zero it). `testl %edi, %edi` sets the flags from x, and `cmovns %edi, %eax` copies x into the result only if x is "not signed", that is, not negative. A conditional move instead of a jump means no branch to mispredict.
+- **is_zero:** zero `eax`, test x, then `sete %al` sets the low byte to 1 if the zero flag is set. A comparison becomes a 0 or 1 without any jump.
+
+</details>
+
+<KeyIdea>Read -O0 to match code to source; read -O2 to see what the machine really runs. Optimised code is the same answer, computed with the cheapest instructions the compiler can prove give that answer.</KeyIdea>
+
+## Constants vanish
+
+In the last lesson's program, `main` called `sum_squares(3, 4)`. At -O2 its body was:
+
+```
+movl	$25, %edx
+movl	$.LC0, %esi
+xorl	%eax, %eax
+movl	$2, %edi
+call	__printf_chk
+```
+
+Where did `sum_squares` go, and what is 25?
+
+<details>
+<summary>Check your answer</summary>
+
+gcc knew both arguments, inlined `sum_squares` and `square`, and computed 3 × 3 + 4 × 4 = 25 while compiling. This is **constant folding**: work whose inputs are known at compile time is done once, by the compiler, and never at run time. (`__printf_chk` is a checked `printf` that Ubuntu's gcc uses by default, and `movl $2, %edi` is its first argument, a checking level. `xorl %eax, %eax` tells a function that takes a variable number of arguments that no vector registers carry any.)
+
+When you look for your code in -O2 output and it isn't there, the compiler has usually done it already.
+
+</details>
+
+## Done when
+
+You can get assembly from gcc, skip the directives, match -O0 instructions to source lines, and name the trick in each of the four idioms.

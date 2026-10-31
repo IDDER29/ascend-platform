@@ -1,0 +1,113 @@
+---
+title: "Project: Number workbench"
+level: level-00-bits-logic
+slug: project-number-workbench
+order: 22
+timeMin: 20
+learningOutcomes:
+- Convert numbers between decimal, binary and hex without a calculator
+- Read the same byte as an unsigned and as a two's complement number
+- Predict, for an 8-bit addition, both the unsigned carry and the signed overflow
+- Check every prediction in the Byte Lab and explain any that were wrong
+primer:
+- title: "Binary & number bases"
+  type: doc
+  meta: Reread · 3 min · place values and hex.
+  essential: true
+- title: "Overflow: when numbers run out of bits"
+  type: doc
+  meta: Reread · 3 min · carry and overflow are different verdicts.
+  essential: true
+knowledgeCheck:
+- question: Why is 11001000 both 200 and -56?
+  answer: The bits don't say which reading to use. Read as unsigned, the top bit is worth 128, giving 200. Read as two's complement, the top bit is worth -128, giving -128 + 72 = -56.
+  jumpToId: part-2-one-byte-two-numbers
+  jumpToLabel: "Part 2: One byte, two numbers"
+- question: "In 8 bits, 100 + 100 carries nothing out of the top bit, yet it overflows. How?"
+  answer: "The unsigned sum, 200, fits in 8 bits, so there's no carry. But read as signed numbers, 100 + 100 should be 200, and the largest signed byte is 127, so the result 11001000 reads as -56: a signed overflow."
+  jumpToId: part-3-carry-or-overflow
+  jumpToLabel: "Part 3: Carry or overflow?"
+assignment:
+  instruction: "Make up four 8-bit additions of your own: one with neither a carry nor an overflow, one with only a carry, one with only an overflow, and one with both. Write each in binary, predict both verdicts, then check them in the Byte Lab."
+  resourceName: 'Wikipedia: Two''s complement'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Two%27s_complement'
+additionalResources:
+- title: Overflow flag (Wikipedia)
+  type: doc
+  meta: how a real CPU reports signed overflow
+  url: 'https://en.wikipedia.org/wiki/Overflow_flag'
+- title: Carry flag (Wikipedia)
+  type: doc
+  meta: and how it reports an unsigned carry
+  url: 'https://en.wikipedia.org/wiki/Carry_flag'
+whyThisMatters: "Every number in a computer has a fixed width, and every bug where a count goes negative, a balance wraps around or a loop never ends comes back to the questions in this project. Doing them by hand, then checking, is how they become automatic."
+---
+
+This project is practice with a checker. Do every part on paper first, then check your answers in the Byte Lab at the end of the page. Only open "Check your answer" after you've compared.
+
+## Part 1: Convert by hand
+
+Fill in the gaps. Each row is one number, written three ways.
+
+<TruthTable caption='Fill in the gaps' rowsJson='[["decimal", "binary", "hex"], ["45", "?", "?"], ["?", "1100 1000", "?"], ["?", "?", "7F"], ["?", "1001 0110", "?"]]' />
+
+<details>
+<summary>Check your answer</summary>
+
+- 45 is 0010 1101, which is 2D.
+- 1100 1000 is 200, which is C8.
+- 7F is 0111 1111, which is 127.
+- 1001 0110 is 150, which is 96. A hex 96 is not the decimal number 96: each hex digit is four bits, and 9 and 6 are 1001 and 0110.
+
+</details>
+
+## Part 2: One byte, two numbers
+
+Read each byte twice: as an unsigned number, and as an 8-bit two's complement number.
+
+<TruthTable caption='Two readings of each byte' rowsJson='[["byte", "unsigned", "signed"], ["1111 1111", "?", "?"], ["1000 0000", "?", "?"], ["0111 1111", "?", "?"], ["1100 1000", "?", "?"]]' />
+
+<details>
+<summary>Check your answer</summary>
+
+- 1111 1111 is 255 unsigned and -1 signed.
+- 1000 0000 is 128 unsigned and -128 signed, the most negative byte.
+- 0111 1111 is 127 either way: the top bit is 0, so the two readings agree.
+- 1100 1000 is 200 unsigned and -56 signed (-128 + 64 + 8).
+
+The two readings differ only when the top bit is 1. Nothing in the byte says which reading is meant.
+
+</details>
+
+## Part 3: Carry or overflow?
+
+For each 8-bit addition, predict three things: the byte you end up with, whether a carry comes out of the top bit (the unsigned verdict), and whether the signed answer is wrong (the signed verdict).
+
+<TruthTable caption='Four additions, two verdicts each' rowsJson='[["sum", "result byte", "carry out?", "signed overflow?"], ["100 + 100", "?", "?", "?"], ["200 + 100", "?", "?", "?"], ["60 + 70", "?", "?", "?"], ["250 + 10", "?", "?", "?"]]' />
+
+<details>
+<summary>Check your answer</summary>
+
+- 100 + 100 gives 200 (1100 1000). No carry, since 200 fits. But signed, 100 + 100 reads as -56: a signed overflow.
+- 200 + 100 gives 44, with a carry out (300 doesn't fit). Signed, that's -56 + 100 = 44, which is right: no signed overflow.
+- 60 + 70 gives 130. No carry, but signed it reads as -126: a signed overflow.
+- 250 + 10 gives 4, with a carry. Signed, -6 + 10 = 4: right.
+
+A carry and a signed overflow are separate questions about the same bits. Each can happen without the other.
+
+</details>
+
+<KeyIdea>The adder gives one byte. Whether that byte is the right answer depends on whether you meant unsigned or signed numbers.</KeyIdea>
+
+## Part 4: Check it in the Byte Lab
+
+Use this Byte Lab to check every answer above. Type a value into a byte (65, 0x41, 0b1000001 or -1 all work), or click its bits. For the additions, type the result byte and read it both ways.
+
+<ByteLab caption='Your checker' bytesJson='[45, 200]' />
+
+For each answer you got wrong, write one sentence saying what you did differently from the Byte Lab. That sentence is the point of the project.
+
+## Done when
+
+Every gap is filled and checked, and you can say for any 8-bit addition whether it carries, whether it overflows, and why those are different questions. Then do the assignment: four additions of your own, one for each combination.

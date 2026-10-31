@@ -1,0 +1,18 @@
+{
+  "id": "verification/assert-sim",
+  "sourceHash": "9a6b4c0b1e3317da",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp sat_add.v tb.sv",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "ERROR: tb.sv:9: y = 2 is smaller than an input (a = 9, b = 9)\n       Time: 2  Scope: tb\nsimulation finished\ntb.sv:11: $finish called at 2 (1s)\n",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

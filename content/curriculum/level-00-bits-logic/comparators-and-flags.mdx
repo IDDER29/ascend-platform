@@ -1,0 +1,110 @@
+---
+title: "Subtracting, comparing and status flags"
+level: level-00-bits-logic
+slug: comparators-and-flags
+order: 33
+timeMin: 8
+learningOutcomes:
+- Subtract with an adder by feeding it NOT B and a carry in of 1, and trace a 4-bit example
+- Compare two numbers by subtracting them and reading the zero and carry results
+- Build an equality checker from XOR and NOT gates, one bit pair at a time
+- Explain what the zero and carry flags record, and why a CPU keeps them after each operation
+primer:
+- title: "Full adder and the 4-bit adder"
+  type: doc
+  meta: Reread · 3 min · its last section shows the adder subtracting.
+  essential: true
+- title: "Negative numbers: two's complement"
+  type: doc
+  meta: Reread · 3 min · flip the bits, add one.
+  essential: true
+knowledgeCheck:
+- question: How can a circuit tell whether A is less than B using only a subtractor?
+  answer: "Work out A - B with the adder (NOT B and a carry in of 1). For unsigned numbers, a carry out of 1 means no borrow was needed, so A is at least B. A carry out of 0 means A is less than B. A result of exactly 0 means they are equal."
+  jumpToId: comparing-by-subtracting
+  jumpToLabel: Comparing by subtracting
+- question: How do you build a circuit that says whether two 2-bit numbers are equal?
+  answer: "Compare each bit pair with NOT (A XOR B), which is 1 when the bits match, then AND the results: EQ = NOT (A1 XOR B1) AND NOT (A0 XOR B0)."
+  jumpToId: checking-equality-directly
+  jumpToLabel: Checking equality directly
+- question: What do the zero and carry flags record?
+  answer: "The zero flag is 1 when every bit of the last result was 0 (a NOR of the result bits). The carry flag is the carry out of the top bit of the last addition or subtraction. They are kept so later instructions can decide what to do."
+  jumpToId: status-flags-what-the-result-was-like
+  jumpToLabel: "Status flags: what the result was like"
+assignment:
+  instruction: "nand2tetris Project 2 builds an ALU with two status outputs, zr (the result is zero) and ng (the result is negative). Read how they are defined, then write in your own words how zr relates to this lesson's zero flag and why ng is just the top bit of the result."
+  resourceName: 'nand2tetris.org: Project 2, Boolean Arithmetic'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project02'
+additionalResources:
+- title: Adder-subtractor (Wikipedia)
+  type: doc
+  meta: one circuit that does both, with the control wire
+  url: 'https://en.wikipedia.org/wiki/Adder%E2%80%93subtractor'
+- title: Digital comparator (Wikipedia)
+  type: doc
+  meta: reference, equality and magnitude comparators
+  url: 'https://en.wikipedia.org/wiki/Digital_comparator'
+- title: Status register (Wikipedia)
+  type: doc
+  meta: the flags real CPUs keep
+  url: 'https://en.wikipedia.org/wiki/Status_register'
+whyThisMatters: "Every if in every program comes down to a comparison, and almost every comparison a CPU makes is a subtraction whose result it throws away, keeping only the flags. Once you see that, conditions stop being abstract: they are bits left behind by the adder you already built."
+---
+
+You can add with a row of full adders, and the last lesson on adders showed that the same row subtracts. Subtraction turns out to be useful for much more than arithmetic: it is how a circuit compares two numbers. This lesson goes from subtracting to comparing, and then to the small one-bit records, called flags, that a CPU keeps about every result.
+
+By the end you'll be able to subtract with an adder, compare two numbers by subtracting them, build an equality checker from gates, and say what the zero and carry flags mean.
+
+## Subtracting with the adder
+
+From two's complement, A - B is A + (-B), and -B is "flip every bit of B, then add 1". The adder does both at once: feed it NOT B, and set the carry into the first column to 1 instead of 0.
+
+Take 6 - 3 in 4 bits. B is 0011, so NOT B is 1100. Add 0110 + 1100 + 1:
+
+<TruthTable caption='6 - 3 in 4 bits, done by adding' rowsJson='[["", "bits"], ["A (6)", "0110"], ["NOT B (B is 3)", "1100"], ["carry in", "1"], ["sum", "1 0011"], ["keep 4 bits", "0011, which is 3"]]' />
+
+The answer is 0011, which is 3, and a 1 carries out of the top. That carry out is not a mistake. It tells you something, as the next section shows.
+
+## Comparing by subtracting
+
+To compare A and B, a circuit works out A - B and looks at what came out, not at the answer itself:
+
+- If the result is exactly 0, then A equals B.
+- If the carry out is 1, no borrow was needed, so A is at least B (reading both as unsigned numbers).
+- If the carry out is 0, the subtraction had to borrow, so A is less than B.
+
+Here are three 8-bit comparisons:
+
+<TruthTable caption='Comparing by subtracting, in 8 bits' rowsJson='[["A", "B", "A - B kept", "carry out", "result zero?", "so"], ["9", "5", "4", "1", "no", "A is bigger"], ["5", "9", "252", "0", "no", "A is smaller"], ["7", "7", "0", "1", "yes", "they are equal"]]' />
+
+Notice 5 - 9. The kept byte, 252, is -4 in two's complement, but the circuit doesn't need to read it at all. The carry out of 0 already says "A was smaller".
+
+<KeyIdea>To compare two numbers, subtract them and look at the zero and carry results, not at the difference.</KeyIdea>
+
+## Checking equality directly
+
+Sometimes you only need to know whether two numbers are equal, and a subtractor is more than you need. XOR is 1 when two bits differ, so NOT (A XOR B) is 1 exactly when they match. (That combination has its own name: XNOR.)
+
+For a multi-bit number, check each pair of bits and AND the answers together: the numbers are equal only if every pair matches. Try it for 2-bit numbers. The starting line only checks the low bits, so it says 01 equals 11. Fix it until every row matches:
+
+<GateLab caption='Are two 2-bit numbers equal?' inputsJson='["A1","A0","B1","B0"]' outputsJson='["EQ"]' targetJson='{"EQ":"NOT (A1 XOR B1) AND NOT (A0 XOR B0)"}' startJson='["EQ = NOT (A0 XOR B0)"]' />
+
+The same pattern scales: an 8-bit equality checker is eight XNORs feeding one big AND.
+
+## Status flags: what the result was like
+
+A CPU doesn't compare and decide in one step. It does the arithmetic first and keeps a few one-bit facts about the result in a small register. These bits are called <b>flags</b>. The two the tiny CPU in this path uses are:
+
+- The <b>zero flag</b> (Z) is 1 when every bit of the result is 0. It is a NOR of all the result bits: NOT (R3 OR R2 OR R1 OR R0) for a 4-bit result.
+- The <b>carry flag</b> (C) is the carry out of the top column of the last addition or subtraction.
+
+Build the zero flag for a 4-bit result. The starting line only looks at one bit:
+
+<GateLab caption='The zero flag for a 4-bit result' inputsJson='["R3","R2","R1","R0"]' outputsJson='["Z"]' targetJson='{"Z":"NOT (R3 OR R2 OR R1 OR R0)"}' startJson='["Z = NOT R0"]' />
+
+Real CPUs keep a few more, such as a negative flag (simply the top bit of the result) and an overflow flag for signed arithmetic, which you met in the overflow lesson.
+
+Later in this path, the tiny CPU's jump instructions read these flags. JZ jumps only when the zero flag is set, and JC only when the carry flag is set. So a comparison in a program is a subtraction that throws away its answer and keeps its flags, followed by a jump that reads them.
+
+<KeyIdea>Flags are one-bit notes about the last result: was it zero, did it carry. Decisions are made by reading them.</KeyIdea>

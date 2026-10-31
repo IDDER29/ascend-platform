@@ -1,0 +1,120 @@
+---
+title: "Big-O: counting the work"
+level: level-07-data-structures
+slug: big-o
+order: 7
+timeMin: 11
+learningOutcomes:
+- Count the basic steps a function takes as its input grows, and read the growth from a table of counts
+- Describe that growth with Big-O (O(1), O(log n), O(n), O(n log n), O(n²)) and say what each looks like when n doubles
+- Distinguish worst case, average case and amortised cost, and say which one a claim is about
+- Explain what Big-O hides (constant factors, small inputs, memory and cache behaviour) and when that matters
+primer:
+- title: "Dynamic arrays that grow"
+  type: doc
+  meta: Reread · 2 min · amortised cost, which this lesson names.
+  essential: false
+- title: "Heaps and priority queues"
+  type: doc
+  meta: Reread · 2 min · O(log n) operations you've already met.
+  essential: true
+knowledgeCheck:
+- question: When n doubles, what happens to the work of an O(n²) algorithm, and of an O(log n) one?
+  answer: "O(n²) work roughly quadruples, since (2n)² is 4n²; the pair-checking program's counts went up by exactly 4.00 each time. O(log n) work grows by about one step, since log2(2n) is log2 n + 1; binary search took 2 more steps each time n was multiplied by 4."
+  jumpToId: doubling-the-input
+  jumpToLabel: Doubling the input
+- question: Algorithm A takes 100n steps and B takes n² steps. Which is better?
+  answer: "It depends on n. B does fewer steps below n = 100, they tie at 100, and A wins from there on, by more and more. Big-O says A (O(n)) wins for large enough inputs; it doesn't say where large enough starts, which is the constant factor it hides."
+  jumpToId: what-big-o-hides
+  jumpToLabel: What Big-O hides
+assignment:
+  instruction: "Add a step counter to two functions you wrote earlier (a search, a sort, or a loop over a 2D array), run them for n = 1000, 2000, 4000 and 8000, and put the counts in a table. Say which Big-O class each one is in from the ratios, and check it against your reading of the code."
+  resourceName: "Wikipedia: Big O notation"
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Big_O_notation'
+additionalResources:
+- title: "Big-O cheat sheet"
+  type: doc
+  meta: common data structures and their operation costs
+  url: 'https://www.bigocheatsheet.com/'
+- title: "Analysis of algorithms (Wikipedia)"
+  type: doc
+  meta: worst, average and amortised cost
+  url: 'https://en.wikipedia.org/wiki/Analysis_of_algorithms'
+whyThisMatters: "A program that's fast on your 100-item test can take hours on a million real items. Big-O is how programmers predict that before it happens, and how they choose between data structures; knowing what it hides is how they avoid being fooled by it."
+---
+
+Timing a program tells you how long it took on one machine, today. To compare **algorithms**, we want something that doesn't depend on the machine: how the amount of **work grows** as the input grows. This lesson counts work in real programs and gives the growth a name.
+
+## Counting steps
+
+Pick one basic step and count it: here, comparing a search key with an element. This program searches sorted arrays of growing size n for a key that isn't there, the **worst case** for both searches, and counts the comparisons. Linear search looks at each element in turn; binary search halves the range each time. Predict both columns before you run it.
+
+<CRun program="data-structures/bigo-search" caption='Comparisons in a failed search' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Linear search compares every element: exactly n. Binary search took 10 comparisons for 1000 elements and only 20 for over a million. Each comparison halves the range, so it needs about log2 n of them: 2 to the 10th is 1024, 2 to the 20th is about a million.
+
+Each time n was multiplied by 4, linear search did 4 times the work, and binary search did 2 more steps. That difference in **growth** is what Big-O describes.
+
+</details>
+
+## Big-O names the growth
+
+We say a function's work is **O(f(n))** ("order f of n") if, for large enough n, it's at most a constant times f(n). Constants and smaller terms are dropped: 3n + 7 is O(n), and n²/2 - n/2 is O(n²). The common classes, from cheapest to dearest:
+
+| Class | Name | When n doubles | Example |
+|---|---|---|---|
+| O(1) | constant | the same | reading `a[i]`; a heap's top |
+| O(log n) | logarithmic | one more step | binary search; heap push and pop |
+| O(n) | linear | twice the work | linear search; summing an array |
+| O(n log n) | linearithmic | a bit more than twice | good sorts: merge sort, heapsort |
+| O(n²) | quadratic | four times | comparing every pair |
+
+## Doubling the input
+
+A quick experiment tells you which class you're in: double n and look at the ratio of the counts. This program checks whether any pair of numbers adds up to a target, by trying every pair. Predict the ratio column.
+
+<CRun program="data-structures/bigo-pairs" caption='Checking every pair' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The ratio is 4.00 every time: doubling n quadruples the pairs. The exact count is n(n - 1)/2 (499,500 for n = 1000), which is O(n²). At 16,000 numbers it already checks 128 million pairs; at a million it would be about 500 billion. A quadratic algorithm that's fine on a test file can be hopeless on real data.
+
+A better design changes the class, not the constant: sort the numbers first (O(n log n)) and walk inwards from both ends (O(n)), or put them in a hash table and look up target minus each number (O(n) on average).
+
+</details>
+
+<KeyIdea>Big-O describes how work grows with the input, ignoring constants. Double n and watch the ratio: 1 means O(1), about 2 means O(n), 4 means O(n²); one extra step means O(log n).</KeyIdea>
+
+## Worst, average and amortised
+
+A claim about cost is only clear when it says which case it's about:
+
+- **Worst case:** the most work any input of size n can cause. Linear search for a missing key: n comparisons.
+- **Average case:** the expected work over typical inputs. Linear search for a key that's present, equally likely anywhere: about n/2 comparisons, still O(n). A hash table lookup is O(1) on average, but O(n) in the worst case, if every key lands in one slot.
+- **Amortised:** the average over a sequence of operations. One append to a dynamic array that has to grow copies everything (O(n)), but doubling the capacity makes that rare, so n appends cost O(n) in total: O(1) amortised per append.
+
+"Hash tables are O(1)" is an average-case claim. "Binary search is O(log n)" holds in the worst case too.
+
+## What Big-O hides
+
+Big-O drops constants, so it only tells you who wins for **large enough** n. Two made-up algorithms with exact step counts show where large enough starts:
+
+<CRun program="data-structures/bigo-constants" caption='100n against n squared' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The quadratic B does fewer steps up to n = 100, they tie at 100, and the linear A wins from there: ten times over at n = 1000, a hundred times at n = 10,000, and more after that. For small inputs a "worse" class can be faster. That's why real sorting libraries switch to insertion sort (O(n²)) for small pieces of the array.
+
+Big-O also says nothing about **memory** used, or about **what each step costs**. A step that hits the cache can be a hundred times cheaper than one that misses it, so two O(n) loops can differ by a large factor in real time. The next lesson measures exactly that.
+
+</details>
+
+## Done when
+
+You can count steps in a function, name its class from a doubling table, say whether a claim is worst, average or amortised, and name two things Big-O hides.

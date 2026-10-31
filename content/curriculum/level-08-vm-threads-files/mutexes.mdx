@@ -1,0 +1,121 @@
+---
+title: "Mutexes and locks"
+level: level-08-vm-threads-files
+slug: mutexes
+order: 7
+timeMin: 10
+learningOutcomes:
+- Protect a critical section with a pthread mutex, locking before and unlocking after every access to the shared data
+- Fix a check-then-act race by putting the check and the action under one lock
+- Explain what a mutex costs, and how locking less often (coarser granularity) can make a program much faster
+- Avoid the common mistakes, such as a path that returns without unlocking, or protecting the same data with different locks
+primer:
+- title: "Race conditions"
+  type: doc
+  meta: Reread · 3 min · the two races this lesson fixes.
+  essential: true
+knowledgeCheck:
+- question: Why must the balance check and the subtraction both be inside the locked section?
+  answer: "If the lock covered only the subtraction, two threads could both check balance >= 80 while it was 100 and then subtract one after the other. Holding the lock from the check through the action makes them one indivisible step, so the second thread checks only after the first has finished."
+  jumpToId: check-and-act-together
+  jumpToLabel: Check and act together
+- question: Locking for every addition took about 430 ms; summing privately and locking once took about 1 ms. Why so different?
+  answer: "Every lock and unlock is an atomic operation, and with four threads fighting over one lock most attempts have to wait, so the cache line holding the lock bounces between cores. Locking once per thread removes almost all of that. Lock what's shared, for as short a time as possible, as rarely as possible."
+  jumpToId: how-much-to-lock
+  jumpToLabel: How much to lock
+assignment:
+  instruction: "Write a small thread-safe bank: a struct account with a balance and its own pthread_mutex_t, and functions deposit and withdraw that lock it. Start 8 threads doing 10000 random deposits and withdrawals each, track the expected total separately, and check the final balance matches. Run it under -fsanitize=thread too."
+  resourceName: 'OSTEP: Locks'
+  resourceType: doc
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/threads-locks.pdf'
+additionalResources:
+- title: "pthread_mutex_lock(3p)"
+  type: doc
+  meta: lock, trylock and unlock, exactly
+  url: 'https://man7.org/linux/man-pages/man3/pthread_mutex_lock.3p.html'
+whyThisMatters: "A mutex is the basic tool for making shared data safe, and nearly every threaded program uses one. Using it correctly, and knowing what it costs, decides whether a threaded program is both right and fast."
+---
+
+The last lesson's races all had the same cause: several threads in the middle of the same read-modify-write, or the same check-then-act, at once. A **mutex** (mutual exclusion lock) makes a stretch of code one-thread-at-a-time. While one thread holds it, any other thread that tries to lock it waits until it's unlocked. The code between lock and unlock is the **critical section**.
+
+## Fixing the counter
+
+```c
+pthread_mutex_t count_lock = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_mutex_lock(&count_lock);
+count++;                          /* only one thread at a time gets here */
+pthread_mutex_unlock(&count_lock);
+```
+
+Here's the racy counter from the last lesson, now with the increment inside a mutex, built with `-O0` so every increment really happens. Predict the total.
+
+<CRun program="vm-threads-files/th-mutex-counter" caption='The counter, with a mutex' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Exactly 2000000, on every run. A thread that wants the lock while the other holds it simply waits, so the three steps of `count++` can never interleave. The mutex is also a **memory barrier**: everything a thread wrote before unlocking is visible to the next thread that locks. That's why it fixes the problem completely, not just most of the time.
+
+</details>
+
+<KeyIdea>Every access to shared data that anyone writes must happen with the same lock held. One lock per piece of shared data, and no exceptions for "just reading".</KeyIdea>
+
+## Check and act together
+
+The bank race had a check and an action that had to happen together. Here the lock is taken before the check and released after the action, with the same 1 ms pause in the middle. Predict the balance.
+
+<CRun program="vm-threads-files/th-mutex-bank" caption='Two withdrawals, check and act under one lock' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Balance 20, and one withdrawal refused. The first thread to get the lock checks, waits, subtracts and unlocks. Only then can the second thread check, and it sees 20. Which thread wins changes from run to run, but the result never does.
+
+A tempting half-fix is to lock only around `balance -= 80`. That still lets both threads pass the check before either subtracts: the race survives. The lock must cover everything that has to happen together.
+
+</details>
+
+## How much to lock
+
+A mutex isn't free. Locking and unlocking are atomic operations, and when several threads want the same lock at once they queue, and the memory holding the lock bounces between cores. Here four threads add up to four million twice. First they lock for every single addition, then each adds into its own local variable and locks once at the end to add its part to the total. The times are real, measured on this run; yours will differ.
+
+<CRun program="vm-threads-files/th-mutex-grain" caption='Locking every time, or once per thread' />
+
+<details>
+<summary>Check your answer</summary>
+
+Both totals are right, but locking every time took about 430 ms, and locking once per thread about 1 ms: hundreds of times faster. Most of the first version's time is threads waiting for each other: on the same machine, one thread doing all four million locked additions alone took about 120 ms, so four threads made it more than three times slower.
+
+This is **lock granularity**. Do as much work as possible on private data, and lock only to touch what's shared. Keep critical sections short, and never call something slow (I/O, sleeping) while holding a lock others are waiting for.
+
+</details>
+
+## Mistakes to avoid
+
+What's wrong with this function?
+
+```c
+int withdraw(int amount) {
+    pthread_mutex_lock(&account);
+    if (balance < amount) {
+        return -1;
+    }
+    balance -= amount;
+    pthread_mutex_unlock(&account);
+    return 0;
+}
+```
+
+<details>
+<summary>Check your answer</summary>
+
+The early `return -1` leaves the mutex locked. The next thread that calls `withdraw` waits forever. Every path out of a critical section must unlock, so put the unlock before each return, or arrange the function so there's a single exit.
+
+Other classic mistakes: protecting the same data with two different mutexes (each thread "has the lock", but not the same one), unlocking a mutex you don't hold, and locking a normal mutex twice in the same thread, which deadlocks. That last one is the start of the lesson after next.
+
+</details>
+
+## Done when
+
+You can protect shared data with a mutex, fix a check-then-act race with one lock around both, explain why fewer, shorter critical sections are faster, and spot a path that forgets to unlock.

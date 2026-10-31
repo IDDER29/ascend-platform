@@ -1,0 +1,154 @@
+---
+title: "Scope: where a name lives"
+level: level-04-c-basics
+slug: scope
+order: 8
+timeMin: 8
+learningOutcomes:
+- Say where a name declared in a block, a function or a whole file can be used
+- Predict which variable a name refers to when one name shadows another
+- Explain the difference between a normal local variable and a static local, which keeps its value between calls
+- Use -Wshadow to catch accidental shadowing
+primer:
+- title: "Functions, parameters and return values"
+  type: doc
+  meta: Reread · 2 min · parameters are local variables of their function.
+  essential: true
+- title: "Variables in memory: x = x + 1, step by step"
+  type: doc
+  meta: Reread · 2 min · a variable is a named box.
+  essential: false
+knowledgeCheck:
+- question: Inside a block, int count = 2; is declared while a global count = 100 exists. Which count does printf in that block use, and what happens to the global?
+  answer: "The innermost one, the block's count = 2. It shadows the global, which still exists unchanged (100) and is visible again once the block ends."
+  jumpToId: shadowing
+  jumpToLabel: Shadowing
+- question: What's the difference between int calls = 0; and static int calls = 0; inside a function?
+  answer: "The normal local is created fresh on every call, so it starts at 0 each time. The static local is created once, before the program runs, and keeps its value between calls; its scope is still only that function."
+  jumpToId: static-locals-remember
+  jumpToLabel: Static locals remember
+assignment:
+  instruction: "Take a program you wrote earlier in C Basics and compile it with gcc -std=c17 -Wall -Wextra -Wshadow. If it warns, rename the inner variable. Then write a function int next_id(void) that returns 1, 2, 3, ... on successive calls using a static local, and test it."
+  resourceName: "Beej's Guide to C: Scope"
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/scope.html'
+additionalResources:
+- title: "cppreference: Scope"
+  type: doc
+  meta: block, file and function prototype scope, exactly
+  url: 'https://en.cppreference.com/w/c/language/scope'
+- title: "cppreference: Storage duration"
+  type: doc
+  meta: automatic and static storage, the other half of this lesson
+  url: 'https://en.cppreference.com/w/c/language/storage_duration'
+whyThisMatters: "Every name in a program is only visible somewhere. Knowing exactly where lets you keep variables local, avoid two variables with one name confusing you, and use a static local when a function genuinely needs to remember something. Small scopes are one of the simplest habits that keep C programs correct."
+---
+
+Every name in a C program, a variable, a parameter or a function, is visible only in part of the program. That region is its **scope**. Getting scope right keeps variables where they belong, and explains some surprising output.
+
+## Blocks make scopes
+
+A **block** is anything between `{` and `}`: a function body, the body of an `if` or a loop, or just a pair of braces on their own. A variable declared inside a block can be used from its declaration to the end of that block, and nowhere else.
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    int total = 0;
+    for (int i = 1; i <= 3; i++) {
+        int doubled = i * 2;
+        total += doubled;
+    }
+    printf("%d\n", total);
+    return 0;
+}
+```
+
+This prints `12`. `total` lives in all of `main`. `i` exists only in the `for` loop, and `doubled` only inside its body, made fresh on every pass. Writing `printf("%d", i);` after the loop is a compile error: `'i' undeclared`.
+
+Parameters are local to their function in the same way, which is why two functions can both have a parameter called `n` without any clash.
+
+A name declared outside every function has **file scope**: every function below it in the file can use it. That's a **global variable**.
+
+## Shadowing
+
+What if an inner block declares a name that already exists outside it? Predict every line:
+
+<CRun program="c-basics/scope-shadow" caption='Three variables called count' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`main sees count = 100`, `main sees count = 1`, `block sees count = 2`, `main sees count = 1`, `show sees count = 100`.
+
+There are three different variables here, all called `count`. A name always means the **innermost** declaration visible at that point:
+
+- Before `int count = 1;`, `main` can only see the global, 100.
+- After it, `main`'s own `count` (1) **shadows** the global: hides it without changing it.
+- In the inner block, `count` is that block's own variable, 2. When the block ends, it's gone and `main`'s `count` is visible again.
+- `show` can't see anything inside `main`, so it sees the global, still 100.
+
+We compiled with `-Wshadow`, and gcc points at both shadowing declarations. Shadowing is legal, but it's easy to change the wrong variable by accident, so many projects turn this warning on.
+
+</details>
+
+<KeyIdea>A name means the innermost declaration of it that's in scope. Inner declarations hide outer ones without changing them.</KeyIdea>
+
+## Static locals remember
+
+A local variable normally lives only while its block runs: it gets a slot in the function's stack frame on each call. Adding `static` changes how long it lives, but not where its name can be seen:
+
+<CRun program="c-basics/scope-static-counter" caption='A fresh variable and a remembered one' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+fresh 1, remembered 1
+fresh 1, remembered 2
+fresh 1, remembered 3
+```
+
+`fresh`'s `calls` is made and set to 0 on every call, so it always returns 1. `remembered`'s `calls` is `static`: it's created once, before `main` starts, and lives in the program's data area rather than in a stack frame. Its initialiser `= 0` runs only that once, so each call sees the value the last one left. Its *scope* is still only `remembered`: no other function can touch it by name.
+
+</details>
+
+Static locals are handy for counters and one-time setup, but they make a function remember things between calls, which makes it harder to test. Use them on purpose, not by habit.
+
+## Keep scopes small
+
+Which variables in this function could be declared in a smaller scope?
+
+```c
+#include <stdio.h>
+
+int count_evens(const int values[], int n) {
+    int i;
+    int count = 0;
+    int value;
+    for (i = 0; i < n; i++) {
+        value = values[i];
+        if (value % 2 == 0) {
+            count++;
+        }
+    }
+    return count;
+}
+
+int main(void) {
+    int data[] = {3, 8, 12, 7, 10};
+    printf("%d\n", count_evens(data, 5));
+    return 0;
+}
+```
+
+It prints `3`.
+
+<details>
+<summary>Check your answer</summary>
+
+`i` can move into the loop (`for (int i = 0; ...)`), and `value` into the loop body (`int value = values[i];`). Only `count` needs to live in the whole function, because it's returned at the end.
+
+Declaring each variable in the smallest scope that works, right where it gets its first value, means a reader can see everything about it in a few lines, and you can't use it by mistake before it's ready or after it's done.
+
+</details>

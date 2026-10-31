@@ -1,0 +1,126 @@
+---
+title: "Object files, sections and symbols"
+level: level-00-bits-logic
+slug: object-files
+order: 90
+timeMin: 8
+learningOutcomes:
+- Name the main sections of an object file and say what goes in each (.text, .data, .bss, .rodata)
+- Read nm output and tell a symbol a file defines (T, D, B, R) from one it only uses (U)
+- Explain what a relocation is, and why calls in an object file point at address 0 for now
+- Predict which section each variable in a C file will land in
+primer:
+- title: "Compiling and assembling"
+  type: doc
+  meta: Reread · 3 min · where object files come from.
+  essential: true
+- title: "Labels and addresses"
+  type: doc
+  meta: Reread · 2 min · symbols are labels that other files can see.
+  essential: false
+knowledgeCheck:
+- question: In main.o, nm prints U square. What does that mean, and who fixes it?
+  answer: "U means undefined: main.o uses the name square but doesn't contain it. The linker fixes it, by finding square defined (T) in another object file, square.o, and filling in its address."
+  jumpToId: symbols-names-the-linker-can-see
+  jumpToLabel: "Symbols: names the linker can see"
+- question: Why does int results[3]; make .bss 12 bytes but add nothing to the file's contents?
+  answer: "results has no starting value, so it starts as all zeros. The object file only records that 12 bytes of zeros are needed (three 4-byte ints) instead of storing the zeros; the space is made when the program is loaded."
+  jumpToId: sections-code-and-data-kept-apart
+  jumpToLabel: "Sections: code and data kept apart"
+- question: Why does the call to square in main.o read e8 00 00 00 00?
+  answer: "When main.c was compiled, nobody knew where square would end up, so the assembler wrote 0 as a placeholder and left a relocation: a note saying \"put the address of square here\". The linker reads the note and patches the four bytes."
+  jumpToId: relocations-notes-for-the-linker
+  jumpToLabel: "Relocations: notes for the linker"
+assignment:
+  instruction: "Compile main.c and square.c from this section with gcc -c, then run nm on both object files. For every symbol, say which file defines it and which only uses it. Then add static to the definition of count, recompile, and see how its nm letter changes (lowercase means it's private to the file)."
+  resourceName: 'Wikipedia: Object file'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Object_file'
+additionalResources:
+- title: Executable and Linkable Format (Wikipedia)
+  type: doc
+  meta: the ELF format these files use on Linux
+  url: 'https://en.wikipedia.org/wiki/Executable_and_Linkable_Format'
+- title: 'Computer Systems: A Programmer''s Perspective (CS:APP)'
+  type: doc
+  meta: chapter 7, linking, goes deep on all of this
+  url: 'https://csapp.cs.cmu.edu/'
+whyThisMatters: "Every \"undefined reference\" and \"multiple definition\" error, and every question about where a global variable lives, is answered by looking inside object files. nm and objdump are the tools systems programmers reach for first, and they only look hard until you know the three ideas here: sections, symbols and relocations."
+---
+
+An object file is the assembler's output: machine code that isn't finished. In this lesson you'll open one and find three things inside it: <b>sections</b>, <b>symbols</b> and <b>relocations</b>.
+
+By the end you'll be able to say where each part of a C file lands, read nm output, and explain the gaps the linker will fill. The example is main.o, compiled with `gcc -c main.c` from this section's program (gcc 15.2, x86-64 Linux); other systems print slightly different details.
+
+## Sections: code and data kept apart
+
+An object file is divided into <b>sections</b>, one per kind of content. `objdump -h main.o` lists them; here are the first four:
+
+```
+Sections:
+Idx Name          Size      VMA               LMA               File off  Algn
+  0 .text         00000094  0000000000000000  0000000000000000  00000040  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+  1 .data         00000004  0000000000000000  0000000000000000  000000d4  2**2
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .bss          0000000c  0000000000000000  0000000000000000  000000d8  2**3
+                  ALLOC
+  3 .rodata       0000000d  0000000000000000  0000000000000000  000000d8  2**3
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+...
+```
+
+The sizes are in hex, and each one matches something in main.c:
+
+<TruthTable caption='Where main.c went' rowsJson='[["section", "size", "what it holds", "from main.c"], [".text", "0x94 = 148 bytes", "machine code", "main"], [".data", "4 bytes", "variables with a starting value", "int count = 3;"], [".bss", "0xc = 12 bytes", "variables that start at zero (no bytes stored)", "int results[3];"], [".rodata", "0xd = 13 bytes", "read-only data", "the text squares: (9 bytes) and the format for each number (4 bytes)"]]' />
+
+.bss has no CONTENTS flag: the file only records "12 bytes, all zero", and the space is made when the program is loaded. Keeping read-only data apart means it can be loaded where writing to it is forbidden.
+
+<KeyIdea>Sections sort a file's bytes by kind: code, data with a value, zeroed data, read-only data. Each will be loaded with its own rules.</KeyIdea>
+
+## Symbols: names the linker can see
+
+A <b>symbol</b> is a name the object file shares with the outside: a function or global variable it defines, or one it needs. `nm` lists them. For square.o:
+
+```
+0000000000000000 T square
+```
+
+And for main.o:
+
+```
+0000000000000000 D count
+0000000000000000 R greeting
+0000000000000000 T main
+                 U printf
+                 U puts
+0000000000000000 B results
+                 U square
+```
+
+The letter says where each symbol lives: T in .text (code), D in .data, B in .bss, R in read-only data. U means <b>undefined</b>: main.o uses the name but doesn't contain it. Every U must be matched by a definition somewhere else, or the program can't be built.
+
+One surprise: `puts`. main.c never mentions it. gcc noticed that `printf("%s\n", greeting)` prints a string and a newline, which is exactly what `puts` does, and called that instead. The object file shows what the compiler really did, not what the source says.
+
+## Relocations: notes for the linker
+
+`objdump -d -r main.o` disassembles the code and shows the gaps. Here is the call to square:
+
+```
+  2e:	89 c7                	mov    %eax,%edi
+  30:	e8 00 00 00 00       	call   35 <main+0x35>
+			31: R_X86_64_PLT32	square-0x4
+```
+
+`e8` is x86's call instruction, followed by four bytes of where to go. They're all zero, because when main.c was compiled nobody knew where square would be. Instead the assembler left a <b>relocation</b>, the line under it: at byte 0x31, put the address of square (written the way this kind of call needs it). There's one for every use of an outside name or a global: `greeting`, `results`, `puts`.
+
+It's the same problem a two-pass assembler solves for labels, one step later: labels in another file can't be known until all the files meet.
+
+<details>
+<summary>Check your answer: which section would const int limit = 10; at the top of a file go in, and which would static int seen; inside a function go in?</summary>
+
+`limit` has a value and can't change: .rodata (nm shows R). `seen` lives for the whole program and starts at zero: .bss. gcc 15 lists it as `b seen.0`: a lowercase b because static makes it private to the file, and `.0` added so it can't clash with another `seen`.
+
+</details>
+
+Next: the linker, which joins object files, fills every gap, and makes something that can run.

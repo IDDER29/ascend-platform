@@ -1,0 +1,119 @@
+---
+title: "Optional project: Model a system call"
+level: level-00-bits-logic
+slug: project-system-call-model
+order: 112
+timeMin: 30
+learningOutcomes:
+- Audit a system-call trace, counting the switches between user mode and kernel mode
+- Fix a program whose requests the kernel refuses, using the kernel's answers as the clue
+- "Design a new system call on paper: its arguments, the kernel's checks, the device work and the return value"
+- Explain what the tiny CPU would need before it could protect a real kernel
+primer:
+- title: "Privilege, traps and system calls"
+  type: doc
+  meta: Reread · 3 min · traps, modes and why the kernel checks.
+  essential: true
+- title: "Project: Follow a request across the OS boundary"
+  type: doc
+  meta: Reread · 2 min · the lab used here.
+  essential: true
+knowledgeCheck:
+- question: How many switches between user and kernel mode does a program with four system calls make?
+  answer: "Eight: each call traps into kernel mode once and returns to user mode once. (exit is the exception: it never returns, because the process is gone.)"
+  jumpToId: part-1-audit-a-trace
+  jumpToLabel: "Part 1: Audit a trace"
+- question: Why does the kernel check a buffer address before using it?
+  answer: "The address comes from the app, which may be buggy or hostile. Without the check, an app could pass an address in the kernel's own memory, or another program's, and get the kernel to read or overwrite it on its behalf."
+  jumpToId: part-2-refused-requests
+  jumpToLabel: "Part 2: Refused requests"
+assignment:
+  instruction: "On a Linux machine (or in an online Linux sandbox), run strace on a command you know, such as strace -c ls. Pick three system calls from its summary, look each up with man 2 <name>, and write one line each: what it asks the kernel for, and what the kernel must check."
+  resourceName: 'Linux man pages: syscalls(2)'
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man2/syscalls.2.html'
+additionalResources:
+- title: "OSTEP: Limited Direct Execution"
+  type: doc
+  meta: how real kernels use traps, with the details this model leaves out
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-mechanisms.pdf'
+whyThisMatters: "System calls are the contract between every program and its operating system. Reading a trace, reasoning from the kernel's error answers and thinking about what a call must check are exactly the skills you'll use with strace, in C, and when you study operating systems properly."
+---
+
+This optional project goes further with the system-call model from the last project. It's a teaching visualisation written for this course, not a kernel: the tiny CPU has no privileged mode to protect one. You'll audit traces, fix refused requests, and then design a call of your own.
+
+## Part 1: Audit a trace
+
+This program appends a line to a log that's already on the disk. Step through it and count how many times the CPU switches mode. Then say which steps touched the disk.
+
+<SyscallLab caption='Appending to a log' startJson='["open \"log.txt\"", "read 3", "write 3 \"day2;\"", "close 3"]' diskJson='{"log.txt":"day1;"}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Eight switches: four system calls, each with a trap into kernel mode and a return to user mode. The disk is touched twice:
+
+- `read 3`: log.txt isn't in RAM yet, so the storage controller reads it.
+- `close 3`: in this model, the new contents "day1;day2;" are written back.
+
+`write 3` only changes the copy in RAM. A real kernel would also keep the log in RAM after the read, so a second read wouldn't need the disk at all. That's the memory hierarchy at work inside the OS.
+
+</details>
+
+## Part 2: Refused requests
+
+This program should show "ok" on the screen, save "42" in out.txt and exit with 0. The kernel refuses two of its requests. Step through it, read the kernel's answers, and fix the program.
+
+<SyscallLab editable caption='Two refused requests' startJson='["open \"out.txt\"", "write 4 \"42\"", "write 1 @0x9000", "exit 0"]' goalJson='{"screen":"ok","disk":{"out.txt":"42"},"exit":0,"notKilled":true}' />
+
+<details>
+<summary>Check your answer</summary>
+
+- `open` returned 3, but the program wrote to descriptor 4, which isn't open: "bad file descriptor". Use `write 3 "42"`.
+- `write 1 @0x9000` passes a buffer address outside the app's memory (0x4000 to 0x7FFF in this model): "bad address". Pass the text instead: `write 1 "ok"`.
+
+The kernel refused both without stopping the program: it returned an error and let the app decide what to do. On Linux these are the errors EBADF and EFAULT. A program that ignores the return value of a system call can quietly lose data, which is why careful C code checks every one.
+
+</details>
+
+## Part 3: Design a call
+
+Design a new system call, `gettime()`, that tells a program the current time. Write its trace the way the lab does, as lines that each start with App, CPU, Kernel or Device. Then answer: what is there for the kernel to check, and why can't the app just read the clock itself?
+
+<details>
+<summary>Check your answer</summary>
+
+One reasonable trace:
+
+1. **App:** puts the call's number in a register; there are no arguments.
+2. **CPU:** the trap saves where the app was and switches to kernel mode.
+3. **Kernel:** reads the time it keeps, which it set at boot from the real-time clock device and has advanced with timer interrupts since.
+4. **Kernel:** puts the time in the return register.
+5. **CPU:** switches back to user mode; the app continues with the time.
+
+There's little to check: no buffer and no descriptor. If the call wrote the time into a buffer, the kernel would have to check that the buffer's address was the app's own. The app can't read the clock itself because talking to devices is privileged, and because the kernel keeps one agreed time for every program. Real systems often make this one call so cheap that Linux answers it without a full trap (the vDSO), an optimisation the model leaves out.
+
+</details>
+
+## Part 4: What the tiny CPU would need
+
+The model switches modes in words. List what the tiny CPU (version 2) would need, in hardware, before a real kernel could run on it and be protected from the programs it runs.
+
+<details>
+<summary>Check your answer</summary>
+
+- **A mode bit:** a flag saying user or kernel mode, which only kernel mode may change.
+- **Privileged instructions:** `IN`, `OUT` and the instruction that changes the mode refused in user mode, with a fault instead.
+- **A trap instruction and a fixed entry point:** a way for a program to enter the kernel only at an address the kernel chose, saving where it came from.
+- **Memory protection:** a way to stop a user program reading or writing the kernel's memory, or another program's. Real CPUs do this with an MMU.
+- **A timer interrupt:** so the kernel gets control back even from a program that loops forever.
+
+Without these, any program could simply jump into the kernel's code or overwrite it, and the "protection" would be a polite agreement.
+
+</details>
+
+<KeyIdea>A system call is a narrow, checked door into the kernel. The kernel trusts nothing the app passes in, and hardware support (modes, traps, memory protection) is what makes the door the only way in.</KeyIdea>
+
+## Done when
+
+You've counted the mode switches, fixed both refused requests so the goal is met, written a trace for `gettime()`, and listed what the tiny CPU would need to protect a kernel.

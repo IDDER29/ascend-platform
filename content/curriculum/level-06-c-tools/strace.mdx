@@ -1,0 +1,267 @@
+---
+title: "strace: watching system calls"
+level: level-06-c-tools
+slug: strace
+order: 6
+timeMin: 11
+learningOutcomes:
+- Run a program under strace and read each line as a system call, its arguments, its result and any error
+- Narrow a trace with -e trace=, follow child processes with -f, save it with -o, and time calls with -T
+- Diagnose a missing file (ENOENT), a permission error (EACCES) and a hang from a trace alone
+- Summarise where a program spends its system calls with strace -c
+primer:
+- title: "System calls: the real API"
+  type: doc
+  meta: "Systems & Software · what a system call is and how a program makes one."
+  essential: true
+- title: "File descriptors & redirection"
+  type: doc
+  meta: "Systems & Software · the numbers that open and read return."
+  essential: false
+knowledgeCheck:
+- question: "A trace ends with openat(AT_FDCWD, \"jobs\", O_RDONLY and nothing after it. What does that tell you?"
+  answer: "The program is blocked inside that openat: the call started and hasn't returned. strace prints the result only when a call finishes. Here jobs is a named pipe (FIFO), and opening one for reading waits until something opens it for writing."
+  jumpToId: diagnosing-a-hang
+  jumpToLabel: Diagnosing a hang
+- question: Why run strace with -f when a program starts other programs?
+  answer: "Without -f, strace follows only the first process. A child created with fork or clone, and anything it runs with execve, is invisible. With -f, strace follows every child too and labels each line with [pid N]."
+  jumpToId: following-children-with--f
+  jumpToLabel: "Following children with -f"
+assignment:
+  instruction: "Pick a command you use every day (ls, cat, git status, or a program of your own) and run strace -c on it, then strace -e trace=openat on it. Write down the three most frequent system calls and two files it opened that you didn't expect, and look each one up with man 2 <call> or by its path."
+  resourceName: 'strace(1) manual page'
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man1/strace.1.html'
+additionalResources:
+- title: "strace.io: the project's site"
+  type: doc
+  meta: options, examples and the FAQ
+  url: 'https://strace.io/'
+- title: "Julia Evans: strace zine"
+  type: doc
+  meta: a short illustrated introduction
+  url: 'https://wizardzines.com/zines/strace/'
+whyThisMatters: "When a program fails without saying why, the kernel still knows: every file it couldn't open and every call that's waiting is visible in a trace. strace answers 'what is it actually doing?' for any program, even one you didn't write and can't rebuild, which makes it one of the fastest debugging tools a systems programmer has."
+---
+
+A program talks to the outside world only through **system calls**: opening files, reading, writing, starting processes, sleeping. `strace` runs a program and prints every system call it makes, with the arguments, the result and the error, if there was one. You don't need the source, and you don't need to rebuild anything.
+
+All the sessions below are real, run on Linux 7.0 with gcc 15.2. Addresses, process ids and timings will differ on your machine.
+
+## Reading a trace
+
+This program loads a settings file:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    FILE *f = fopen("settings.conf", "r");
+    if (f == NULL) {
+        printf("could not load settings\n");
+        return 1;
+    }
+    char line[100];
+    while (fgets(line, sizeof line, f) != NULL) {
+        fputs(line, stdout);
+    }
+    fclose(f);
+    return 0;
+}
+```
+
+It prints "could not load settings", and that's all it says. Here it is under strace, with `-e trace=openat` so only `openat` calls are shown:
+
+```
+$ strace -e trace=openat ./readconf
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "settings.conf", O_RDONLY) = -1 ENOENT (No such file or directory)
+could not load settings
++++ exited with 1 +++
+```
+
+Each line is `name(arguments) = result`. A result of `-1` comes with the error code and its meaning.
+
+- The first two opens are the dynamic loader finding the C library, before `main` even starts.
+- The third is `fopen`. `AT_FDCWD` means the path is relative to the current directory.
+- The last line is how the process ended.
+
+What's wrong, and how would you have found it without strace?
+
+<details>
+<summary>Check your answer</summary>
+
+`settings.conf` doesn't exist in the directory the program runs from: **ENOENT**, "No such file or directory". Note the path is relative, so the same program works from one directory and fails from another. That's a classic cause of "it works on my machine".
+
+Without strace you'd need the program to say why. `fopen` sets `errno`, and `perror` prints it:
+
+<CRun program="c-tools/strace-perror" caption='The same program with perror' />
+
+Good programs report the reason. strace is how you find it when they don't.
+
+</details>
+
+## A permission error
+
+Now the file exists, but it's unreadable (`chmod 000 settings.conf`). With `-e trace=openat,read,write`:
+
+```
+$ strace -e trace=openat,read,write ./readconf
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 \250\2\0\0\0\0\0"..., 832) = 832
+openat(AT_FDCWD, "settings.conf", O_RDONLY) = -1 EACCES (Permission denied)
+write(1, "could not load settings\n", 24could not load settings
+) = 24
++++ exited with 1 +++
+```
+
+The same message from the program, but a different cause: **EACCES**, "Permission denied". The `read` of 832 bytes starting `\177ELF` is the loader reading the C library's header. Notice that the program's own output appears in the middle of the `write` line, because strace prints to stderr while the program writes to the same terminal.
+
+After `chmod 644`, the working run shows the whole story of a file read: open returns descriptor 3, the first `read` gets all 21 bytes, the next returns 0 (end of file), and one `write` prints it.
+
+```
+openat(AT_FDCWD, "settings.conf", O_RDONLY) = 3
+read(3, "colour=green\nsize=12\n", 4096) = 21
+read(3, "", 4096)                       = 0
+write(1, "colour=green\nsize=12\n", 21colour=green
+size=12
+) = 21
++++ exited with 0 +++
+```
+
+## Diagnosing a hang
+
+A worker program prints "worker starting" and then does nothing. No error, no output, no exit. Under strace, stopped after 2 seconds with `timeout`:
+
+```
+$ timeout 2 strace -e trace=openat,read,write ./worker
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 \250\2\0\0\0\0\0"..., 832) = 832
+write(1, "worker starting\n", 16worker starting
+)       = 16
+openat(AT_FDCWD, "jobs", O_RDONLYstrace: Process 601472 detached
+ <detached ...>
+```
+
+Where is it stuck, and why?
+
+<details>
+<summary>Check your answer</summary>
+
+In the last `openat`: it has no `= result`, because strace prints the result only when a call returns, and this one never did. `jobs` is a **named pipe** (made with `mkfifo jobs`), and opening a pipe for reading waits until another process opens it for writing. Nobody did. The program isn't looping or crashing; it's asleep inside the kernel, waiting.
+
+A trace that ends in an unfinished call (`read`, `openat` on a pipe, `connect`, `wait4`, `futex`) tells you exactly what a stuck program is waiting for.
+
+You can also attach to a program that's already running, with `strace -p PID`. On many Linux systems that's restricted. Here, `/proc/sys/kernel/yama/ptrace_scope` is 1, which allows tracing only your own child processes, so attaching gave:
+
+```
+$ strace -p 602449
+strace: attach: ptrace(PTRACE_SEIZE, 602449): Operation not permitted
+```
+
+Starting the program under strace, as above, always works.
+
+</details>
+
+## Following children with -f
+
+This program forks, and the child runs `echo`. With `-f`, strace follows both processes. (It was run with a minimal environment, `env -i PATH=/usr/local/bin:/usr/bin:/bin`, to keep the trace short.)
+
+```
+$ strace -f -e trace=execve,clone,wait4,write,exit_group ./forker
+execve("./forker", ["./forker"], 0x7ffd5a6b78a8 /* 1 var */) = 0
+clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7d5c816c2a10) = 602420
+wait4(602420strace: Process 602420 attached
+ <unfinished ...>
+[pid 602420] execve("/usr/local/bin/echo", ["echo", "hello from the child"], 0x7fffe85b9458 /* 1 var */) = -1 ENOENT (No such file or directory)
+[pid 602420] execve("/usr/bin/echo", ["echo", "hello from the child"], 0x7fffe85b9458 /* 1 var */) = 0
+[pid 602420] write(1, "hello from the child\n", 21hello from the child
+) = 21
+[pid 602420] exit_group(0)              = ?
+[pid 602420] +++ exited with 0 +++
+<... wait4 resumed>, NULL, 0, NULL)     = 602420
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=602420, si_uid=1001, si_status=0, si_utime=0, si_stime=0} ---
+write(1, "parent done\n", 12parent done
+)           = 12
+exit_group(0)                           = ?
++++ exited with 0 +++
+```
+
+Explain the two `execve` lines in the child, and the `<unfinished ...>` / `<... resumed>` pair.
+
+<details>
+<summary>Check your answer</summary>
+
+- **Two `execve` calls:** `fork` shows up as `clone`, the system call underneath it. The child's `execlp` searches `PATH`: `/usr/local/bin/echo` doesn't exist (ENOENT), and `/usr/bin/echo` does, so the second `execve` replaces the child with `echo`. Failed `execve` calls like these are how you spot a program picking up the wrong binary from `PATH`.
+- **The pair:** the parent's `wait4` started, then the child's lines interrupted it. strace marks the parent's call `<unfinished ...>`, and later `<... wait4 resumed>` with its result, the child's pid. The `SIGCHLD` line is the kernel telling the parent its child exited.
+
+</details>
+
+## Timing and saving traces
+
+`-T` adds the time spent inside each call, in seconds:
+
+```
+$ strace -T -e trace=clock_nanosleep sleep 0.3
+clock_nanosleep(CLOCK_REALTIME, 0, {tv_sec=0, tv_nsec=300000000}, 0x7ffd32112820) = 0 <0.300447>
++++ exited with 0 +++
+```
+
+For an I/O call it shows how long the program waited for the kernel or the device, which is often where a slow program's time goes.
+
+Traces get long. `-o trace.txt` writes the trace to a file, so the program's own output stays clean. Then you can `grep` it. That run of `readconf` made 41 system calls (the file has 41 lines), and `grep settings trace.txt` finds the one that matters.
+
+`-c` replaces the trace with a summary table (trimmed here: 18 rows in all, 39 calls):
+
+```
+$ strace -c ./readconf
+colour=green
+size=12
+% time     seconds  usecs/call     calls    errors syscall
+------ ----------- ----------- --------- --------- ----------------
+ 56.55    0.000384         384         1           execve
+ 14.29    0.000097          12         8           mmap
+  4.71    0.000032          10         3           mprotect
+  4.12    0.000028           9         3           openat
+...
+  1.03    0.000007           7         1         1 access
+...
+------ ----------- ----------- --------- --------- ----------------
+100.00    0.000679          17        39         1 total
+```
+
+Most of a tiny program's system calls are the loader setting up memory (`mmap`, `mprotect`) before `main`. The `errors` column counts failed calls. Here one `access` call by the loader failed, which is normal.
+
+<KeyIdea>strace shows every request a program makes to the kernel and every answer. An error code names why it failed; an unfinished call names what it's waiting for.</KeyIdea>
+
+## Try it
+
+A program prints "cannot start" and exits with status 1. Its real trace ends like this:
+
+```
+$ strace ./app
+...
+openat(AT_FDCWD, "/var/lib/state.db", O_RDWR|O_CREAT, 0644) = -1 EACCES (Permission denied)
+write(2, "cannot start\n", 13cannot start
+)          = 13
+exit_group(1)                           = ?
++++ exited with 1 +++
+```
+
+What's wrong, and name two different fixes.
+
+<details>
+<summary>Check your answer</summary>
+
+It tried to open (or create) `/var/lib/state.db` for reading and writing, and the kernel refused: **EACCES**. The user running the program isn't allowed to create a file there: `/var/lib` belongs to root and is `drwxr-xr-x`, so only root may add files to it. Fixes:
+
+- Run it as a user that may write there.
+- Change the ownership or permissions of the directory.
+- Configure the program to keep its state somewhere the user can write.
+
+The program's own message never said which file or why. The trace says both.
+
+</details>

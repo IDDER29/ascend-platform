@@ -1,0 +1,233 @@
+---
+title: "git for a C project"
+level: level-06-c-tools
+slug: git
+order: 9
+timeMin: 11
+learningOutcomes:
+- Put a C project under git, with a .gitignore that keeps build output out of the repository
+- Make small commits with clear messages, and read the history with git log and git diff
+- Fix a bug on a branch and merge it back
+- Use git bisect run with the project's tests to find the commit that broke something
+primer:
+- title: "Writing small tests in C"
+  type: doc
+  meta: Read next · the tests bisect relies on.
+  essential: false
+- title: "make: building only what changed"
+  type: doc
+  meta: Reread · 3 min · make test is the command bisect runs.
+  essential: true
+knowledgeCheck:
+- question: Why does the .gitignore list test_stats and *.o?
+  answer: "They're build output: files make creates from the sources. They differ between machines, change on every build and can always be rebuilt, so committing them only adds noise and conflicts. The repository should hold the sources, the Makefile and the tests."
+  jumpToId: start-a-repository
+  jumpToLabel: Start a repository
+- question: How did git bisect run find the bad commit without you testing anything by hand?
+  answer: "You gave it one good commit and one bad one. It checked out commits in between, binary-search style, and ran make test on each: exit status 0 marks a commit good, and a non-zero status (here the failed assert) marks it bad. After two steps it named the first bad commit."
+  jumpToId: find-the-commit-that-broke-it
+  jumpToLabel: Find the commit that broke it
+assignment:
+  instruction: "Put one of your earlier C projects (the guessing game or the hash map, say) under git: write a .gitignore, commit it in small steps with clear messages, and add a make test target. Then deliberately break something in a commit, add two more commits after it, and use git bisect run make test to find it."
+  resourceName: 'Pro Git (free book)'
+  resourceType: doc
+  resourceUrl: 'https://git-scm.com/book/en/v2'
+additionalResources:
+- title: "git bisect documentation"
+  type: doc
+  meta: the run subcommand and its exit codes
+  url: 'https://git-scm.com/docs/git-bisect'
+- title: "Missing Semester: Version Control (Git)"
+  type: video
+  meta: MIT lecture on how git works underneath
+  url: 'https://missing.csail.mit.edu/2020/version-control/'
+whyThisMatters: "Every real C project lives in version control. git lets you change code without fear, see exactly what changed and when, work on fixes without disturbing anyone, and, with bisect and a good test, find which of hundreds of commits introduced a bug in minutes instead of days."
+---
+
+git records snapshots of a project, called **commits**, so you can see what changed, go back, work on several things at once, and find where a bug came in. This lesson follows one small C project through all of that.
+
+Everything below is a real session (git 2.53, gcc 15.2), in a fresh repository whose author is set to "Learner". Commit hashes, dates and paths will differ on your machine; the `/tmp/...` path in the first line is shortened.
+
+## Start a repository
+
+The project is a tiny library, `stats.c` and `stats.h`, with `sum` and `max`, plus a test program and a Makefile whose `make test` builds and runs the tests.
+
+```
+$ git init
+Initialized empty Git repository in /tmp/.../calc/.git/
+$ make test
+cc -std=c17 -Wall -Wextra -g test_stats.c stats.c -o test_stats
+./test_stats
+all tests passed
+$ git status --short
+?? Makefile
+?? stats.c
+?? stats.h
+?? test_stats
+?? test_stats.c
+```
+
+`??` means untracked: git sees the file but isn't recording it. One of these shouldn't be committed. Which, and how do you stop git offering it?
+
+<details>
+<summary>Check your answer</summary>
+
+`test_stats` is the compiled test program, **build output**: make recreates it from the sources, it differs between machines and compilers, and it changes on every build. A `.gitignore` file lists names git should ignore:
+
+```
+$ printf 'test_stats\n*.o\n' > .gitignore
+$ git status --short
+?? .gitignore
+?? Makefile
+?? stats.c
+?? stats.h
+?? test_stats.c
+$ git add .
+$ git commit -m "Add sum and max with tests"
+$ git log --oneline
+277ba7c Add sum and max with tests
+```
+
+`*.o` covers the object files a larger build makes. Commit the `.gitignore` itself, so everyone shares it.
+
+</details>
+
+## Small commits, and reading them back
+
+The project gains a few commits: a comment, a "simplified" `max`, a new function `count_above` and a test for it. Before committing the change to `max`, `git diff` showed exactly what changed:
+
+```
+$ git diff
+diff --git a/stats.c b/stats.c
+index bb296e3..d8d4ead 100644
+--- a/stats.c
++++ b/stats.c
+@@ -10,8 +10,8 @@ int sum(const int *a, int n) {
+ }
+ 
+ int max(const int *a, int n) {
+-    int best = a[0];
+-    for (int i = 1; i < n; i++) {
++    int best = 0;
++    for (int i = 0; i < n; i++) {
+         if (a[i] > best) {
+             best = a[i];
+         }
+$ git commit -am "Simplify max"
+```
+
+Lines starting with `-` were removed and lines with `+` added; the `@@` line says where. Here's that version of `max` on its own. Predict both lines.
+
+<CRun program="c-tools/git-max-bug" caption='The "simplified" max' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+9, then **0**. Starting `best` at 0 is fine for positive numbers, but when every number is negative, none is greater than 0, so the function wrongly returns 0. The original started from `a[0]`, which is always a real element. A "simplification" that changes behaviour is a classic regression. Reading the diff before committing is the cheapest chance to catch one.
+
+</details>
+
+Two more commits went in after it, and then the tests were run:
+
+```
+$ git log --oneline
+81c206b Test count_above
+639db77 Add count_above
+940bae0 Simplify max
+b0eb73c Document sum
+277ba7c Add sum and max with tests
+$ make test
+./test_stats
+test_stats: test_stats.c:10: main: Assertion `max(neg, 3) == -2' failed.
+make: *** [Makefile:7: test] Aborted (core dumped)
+```
+
+## Find the commit that broke it
+
+Here it's easy to guess. In a real project with hundreds of commits, it isn't. `git bisect` does a binary search through history. Give it a bad commit and a good one, and with `run` it tests each step itself, using the command's exit status: 0 means good, and anything else (except 125) means bad.
+
+```
+$ git bisect start HEAD 277ba7c
+$ git bisect run make test
+Bisecting: 1 revision left to test after this (roughly 1 step)
+[940bae0e6ea8afa3eebcd91248eee6652eea9b2e] Simplify max
+running 'make' 'test'
+./test_stats
+test_stats: test_stats.c:10: main: Assertion `max(neg, 3) == -2' failed.
+make: *** [Makefile:7: test] Aborted (core dumped)
+Bisecting: 0 revisions left to test after this (roughly 0 steps)
+[b0eb73c574b19a18c21afa802fe47b5d026a7cd5] Document sum
+running 'make' 'test'
+./test_stats
+all tests passed
+940bae0e6ea8afa3eebcd91248eee6652eea9b2e is the first bad commit
+commit 940bae0e6ea8afa3eebcd91248eee6652eea9b2e
+Author: Learner <learner@example.com>
+...
+    Simplify max
+
+ stats.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+$ git bisect reset
+```
+
+(The compiler lines make printed were trimmed, and so was the commit date.) Why did it need only two test runs, and what makes bisect trustworthy?
+
+<details>
+<summary>Check your answer</summary>
+
+Between the good commit and the bad one there were three commits to search. Bisect tests the middle one first: "Simplify max" failed, so the bug is at or before it. Then it tested the one before that: "Document sum" passed. So "Simplify max" is the first bad commit. Each test halves what's left, so even 1000 commits take about 10 runs.
+
+It's only as good as the test and the commits:
+
+- The test must fail for this bug and pass otherwise, so every commit must build.
+- Small commits pin the bug down: a commit that changes one thing points straight at the cause.
+- A huge "lots of changes" commit leaves you searching inside it by hand.
+- `git bisect reset` returns you to where you started.
+
+</details>
+
+## Fix it on a branch
+
+A **branch** is a separate line of commits, so a fix or a feature can be built without disturbing `main` until it's ready:
+
+```
+$ git switch -c fix-max
+Switched to a new branch 'fix-max'
+$ git diff --stat
+ stats.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+$ make test
+...
+all tests passed
+$ git commit -am "Fix max for all-negative input"
+$ git switch main
+Switched to branch 'main'
+$ git merge fix-max
+Updating 81c206b..837ea59
+Fast-forward
+ stats.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+$ git log --oneline --graph
+* 837ea59 Fix max for all-negative input
+* 81c206b Test count_above
+* 639db77 Add count_above
+* 940bae0 Simplify max
+* b0eb73c Document sum
+* 277ba7c Add sum and max with tests
+```
+
+"Fast-forward" means `main` had no new commits of its own, so git just moved `main` forward to the branch's commit. If both had moved on, the merge would make a merge commit joining the two lines.
+
+<KeyIdea>Commit sources, not build output; commit small, tested steps with clear messages; and keep a make test that exits non-zero on failure, so git bisect run can find any regression for you.</KeyIdea>
+
+## Try it
+
+A teammate's commit message says "various fixes", it changes 40 files, and bisect says it's the first bad commit. Why is that a poor result, and what habit would have prevented it?
+
+<details>
+<summary>Check your answer</summary>
+
+Bisect can only narrow a bug down to one commit. When that commit changes 40 files for several reasons, you're left searching through all of it by hand, and you can't revert the bad part without losing the good ones. The habit: **one logical change per commit**, with a message saying what and why, and the tests passing at every commit. Then a bisect result points straight at the cause, and `git revert` of that one commit undoes exactly the bug.
+
+</details>

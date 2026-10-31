@@ -1,0 +1,108 @@
+---
+title: "From CPU to computer system"
+level: level-00-bits-logic
+slug: from-cpu-to-system
+order: 96
+timeMin: 7
+learningOutcomes:
+- Name the main parts of a computer system and the one job each part does
+- Explain why a CPU on its own can't run a useful program
+- Say which parts the tiny CPU models and which it leaves out
+- Follow a keypress from a device, through the CPU and memory, to the display
+primer:
+- title: "Input and output: talking to the outside world"
+  type: doc
+  meta: Reread · 3 min · OUT and IN are how the tiny CPU reaches devices.
+  essential: true
+- title: "Reading real compiler output"
+  type: doc
+  meta: Reread · 2 min · real programs run on a real CPU, under a real OS.
+  essential: false
+knowledgeCheck:
+- question: A CPU has registers, an ALU and a control unit. Why can't it run a program with nothing else attached?
+  answer: "The program and its data have to live somewhere the CPU can fetch them from: memory. And a program that can't take input or show output can't do anything anyone can see, so it also needs devices."
+  jumpToId: the-cpu-alone
+  jumpToLabel: The CPU alone
+- question: Which part keeps your files when the power is off, and which part holds the program that is running right now?
+  answer: "Storage (an SSD or a disk) keeps files with the power off. Memory (RAM) holds the running program and its data, and forgets them when the power goes."
+  jumpToId: six-parts-six-jobs
+  jumpToLabel: Six parts, six jobs
+- question: Name two parts of a real computer that the tiny CPU doesn't have.
+  answer: "Any two of: storage that keeps data without power, firmware that runs first at power-on, an operating system, and real device controllers (it only has IN and OUT)."
+  jumpToId: the-toy-and-the-real-thing
+  jumpToLabel: The toy and the real thing
+assignment:
+  instruction: "Pick one device you use every day (a phone, a laptop, a games console). List its CPU, how much memory (RAM) and storage it has, two input devices and two output devices. Then say in one sentence what each part does when you open an app."
+  resourceName: 'Wikipedia: Von Neumann architecture'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Von_Neumann_architecture'
+additionalResources:
+- title: 'Crash Course Computer Science #8: Instructions & Programs'
+  type: video
+  meta: the CPU and memory working together
+  url: 'https://www.youtube.com/watch?v=zltgXvg6r3k'
+- title: 'Wikipedia: Motherboard'
+  type: doc
+  meta: the board that connects the parts of a PC
+  url: 'https://en.wikipedia.org/wiki/Motherboard'
+whyThisMatters: "So far the CPU has been the star. A real computer is a team: memory, storage, firmware, devices and an operating system, each with one job. Knowing who does what is how you work out where a slow program, a lost file or a frozen screen is coming from."
+---
+
+You've built a CPU from gates, written its programs in assembly, and translated a small language into them. This course puts that CPU back where it lives: inside a whole computer.
+
+By the end you'll be able to name each part of a computer system, say what job it does, and say which parts the tiny CPU leaves out.
+
+## The CPU alone
+
+A CPU fetches an instruction, does it, and fetches the next. That's all it does. On its own it has nowhere to fetch instructions from, nowhere to keep more than a few values, and no way to show anyone a result.
+
+The tiny CPU already needed two more things to be useful: 256 bytes of **memory** holding its program and data, and **devices** reached through `IN` and `OUT`. Here it reads a number from an input device and shows it on the display. It should show one more than it reads.
+
+<TinyCpu2 editable caption='Read a key, show the next number' programJson='["IN R0", "OUT R0", "HALT"]' inputJson='[5]' goalJson='{"out":[6]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+IN R0         ; the input device gives the CPU a 5
+ADDI R0, 1    ; the CPU does the work: 6
+OUT R0        ; the display shows 6
+HALT
+```
+
+Three parts were involved: a device brought the 5 in, the CPU (with the program from memory) worked out 6, and another device showed it.
+
+</details>
+
+## Six parts, six jobs
+
+A real computer has more parts, and each has one clear job:
+
+<TruthTable caption='The parts of a computer system' rowsJson='[["part", "its job", "keeps data with the power off?"], ["CPU", "runs instructions, one after another", "no"], ["memory (RAM)", "holds the running programs and their data", "no"], ["storage (SSD or disk)", "keeps programs and files for later", "yes"], ["firmware", "the first program to run at power-on", "yes, in a small chip"], ["devices", "keyboard, display, network, sound and more", "depends on the device"], ["operating system", "runs programs and shares the hardware between them", "kept in storage"]]' />
+
+The parts talk through agreed **interfaces**: the CPU reads memory by address, sends bytes to a device through its controller, and asks storage for blocks of data. Because each part only has to keep its side of the interface, you can swap a bigger SSD or a faster memory stick into a PC and the rest keeps working.
+
+<KeyIdea>A computer is a CPU plus memory, storage, firmware, devices and software, each with one job, connected by agreed interfaces.</KeyIdea>
+
+## Following one keypress
+
+Press a key in a text editor, and every part takes a turn:
+
+1. The keyboard's controller notices the key and tells the CPU, as you saw in *Input and output*.
+2. The operating system's keyboard code, running on the CPU, reads the key and hands it to the editor.
+3. The editor, also running on the CPU, adds the letter to the text it keeps in memory.
+4. The operating system and the display controller draw the new letter on the screen.
+5. Nothing reaches storage until you save. Then the file's bytes go to the SSD, where they stay with the power off.
+
+The rest of this course takes those parts one at a time: memory and storage, the hierarchy of faster and slower memory, startup, and then the operating system.
+
+## The toy and the real thing
+
+The tiny CPU is honest about its own machine, but it leaves a lot out:
+
+- Its memory is 256 bytes and starts already loaded with the program. Real memory starts empty, and something has to load the program in.
+- It has no storage, so nothing it does survives.
+- It has no firmware and no operating system: one program owns the whole machine.
+- Its devices are just numbered ports for `IN` and `OUT`.
+
+None of that makes it wrong. It makes it small. Each lesson from here adds back one of those missing pieces and shows what it's for.

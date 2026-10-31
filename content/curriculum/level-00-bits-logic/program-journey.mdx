@@ -1,0 +1,139 @@
+---
+title: "The complete journey of a program"
+level: level-00-bits-logic
+slug: program-journey
+order: 109
+timeMin: 10
+learningOutcomes:
+- Trace a small program from source code to bits, instructions, memory, execution and output
+- Explain the program's output as a chain of causes, stage by stage
+- Name at least three ways the tiny CPU and its tools simplify a real computer
+- Follow the same journey for real C on Linux, and tell the two pipelines apart
+primer:
+- title: "Linking, loading and starting a program"
+  type: doc
+  meta: Reread · 3 min · from an executable file to a running process.
+  essential: true
+- title: "Privilege, traps and system calls"
+  type: doc
+  meta: Reread · 3 min · how a real program asks for output.
+  essential: true
+knowledgeCheck:
+- question: The tiny program outputs 10. Give the chain of causes, from the source to the display, in five or six steps.
+  answer: "The source says to add n down to 0 into t and output t. The translator turned it into 19 tiny CPU instructions; the assembler turned those into bytes; loading put the bytes in memory from 0x00, with n at 0x80 and t at 0x81. The CPU fetched and ran them, looping 4 times so t became 10, and OUT R0 sent 10 to the display."
+  jumpToId: stage-by-stage
+  jumpToLabel: Stage by stage
+- question: A walkthrough says "the tiny CPU's OUT instruction is a Linux system call, and its PC is a virtual address translated by the MMU". What's wrong with each claim?
+  answer: "OUT is one of the tiny CPU's own instructions: it sends a byte straight to the modelled display, with no OS, no kernel mode and no system call. The tiny CPU has no MMU: its PC is a real box number from 0x00 to 0xFF. Both claims mix the toy machine up with a real system."
+  jumpToId: what-the-tiny-cpu-simplifies
+  jumpToLabel: What the tiny CPU simplifies
+- question: In the real C version, which program puts 55 on your screen, and how?
+  answer: "Not the C program directly: it calls printf, which ends in the write system call (write(1, \"55\\n\", 3)). The kernel takes the bytes and passes them to the terminal, which draws them. The program only ever asked."
+  jumpToId: the-same-journey-in-real-c
+  jumpToLabel: The same journey in real C
+assignment:
+  instruction: "Write a different tiny-language program (for example, one that outputs a countdown from 5 to 1). Take it through every stage of the End-to-End Explorer and write one sentence per stage saying what changed. Then write the same program in C, compile and run it under strace -e trace=execve,write,exit_group, and write a short paragraph contrasting the two journeys, naming three things the tiny CPU leaves out."
+  resourceName: 'Wikipedia: Compiler'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Compiler'
+additionalResources:
+- title: 'Operating Systems: Three Easy Pieces'
+  type: doc
+  meta: the free book to read next for processes, memory and files
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/'
+- title: 'CS50 Week 4: memory'
+  type: video
+  meta: a second look at memory and addresses in C
+  url: 'https://cs50.harvard.edu/x/weeks/4/'
+whyThisMatters: "This is the whole of Foundations in one picture. When a program misbehaves, the question is always which stage it went wrong in: the source, the translation, the memory layout, the CPU, the OS or the device. Being able to walk the journey in both the toy and the real version is what lets you ask that question."
+---
+
+You've built every piece separately: bits, gates, memory, a CPU, assembly, a translator, and the OS around them. This lesson puts them in one line. First, a tiny-language program through our own pipeline, every stage visible. Then the same kind of journey for real C on Linux, which you can only partly see.
+
+## The program
+
+```
+var n = 4;
+var t = 0;
+while (n != 0) {
+  t = t + n;
+  n = n - 1;
+}
+output(t);
+```
+
+It adds 4 + 3 + 2 + 1 and outputs 10. Open each stage of the explorer below in turn. Then change the program so it outputs 15 instead, and run it again.
+
+<EndToEnd caption='One program, every stage' startJson='["var n = 4;", "var t = 0;", "while (n != 0) {", "  t = t + n;", "  n = n - 1;", "}", "output(t);"]' goalJson='{"out":[15]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Change the first line to `var n = 5;`. 5 + 4 + 3 + 2 + 1 is 15. Only one byte of the machine code changes: the first instruction, `LDI R0, 4`, assembles to `08 04`, and becomes `08 05`. Every later stage follows from that byte.
+
+</details>
+
+## Stage by stage
+
+1. **Source.** Text in the tiny language: characters, stored as bytes like any text.
+2. **Translate.** Our translator turns each line into tiny CPU assembly: 19 instructions, with labels `while1` and `endwhile1` for the loop. It gives n box 0x80 and t box 0x81.
+3. **Assemble.** The assembler gives each instruction an address (0x00, 0x02, ...) and two bytes. `LDI R0, 4` becomes `08 04`; `STA R0, [0x80]` becomes `18 80`.
+4. **Load.** The 38 bytes are copied into memory from 0x00. PC starts at 0x00.
+5. **Run.** The CPU fetches, decodes and executes, one instruction at a time: 58 steps. Each loop trip reads n and t from memory, adds, and writes them back.
+6. **Output.** `OUT R0` sends 10 to the modelled display.
+
+Every stage is something you've built or used in Foundations: the translator in From Source to Machine, the assembler in Assembly Language, the fetch and execute cycle in Build a CPU, the gates underneath in Logic &amp; Circuits.
+
+<KeyIdea>A program's output is the end of a chain: source, translation, bytes, memory, execution, device. Each stage only does what the one before it set up.</KeyIdea>
+
+## What the tiny CPU simplifies
+
+The tiny CPU is a real design that really runs, but it leaves out most of what a real computer has. Be precise about what's missing:
+
+<TruthTable caption='The tiny CPU next to a real computer' rowsJson='[["", "tiny CPU (version 2)", "a real computer"], ["memory", "256 bytes, one real box per address", "gigabytes, reached through virtual addresses and an MMU"], ["programs", "one at a time, from 0x00 to HALT", "hundreds of processes sharing cores, switched by the OS"], ["output", "OUT sends a byte straight to a display", "programs ask the kernel with a system call; drivers talk to devices"], ["protection", "none: no user mode, any program can touch anything", "user and kernel mode, per-process address spaces"], ["loading", "bytes copied to 0x00", "the OS loader maps an executable file, links libraries, starts at _start"], ["storage", "none", "files on disks, through a file system"], ["speed", "one instruction at a time", "pipelines, caches, several instructions at once"]]' />
+
+So: on the tiny CPU, `OUT` is not a system call, and its PC is not a virtual address. Mixing the two pictures up is the most common mistake when people first connect a teaching machine to a real one.
+
+<details>
+<summary>Check your answer: someone says "a real CPU is just the tiny CPU with more memory". Name three things that's missing.</summary>
+
+Any three of: privilege modes (user and kernel), address translation (an MMU and per-process address spaces), an operating system that shares the CPU and does I/O through system calls, interrupts, caches, files and storage, and a loader that maps programs and libraries. More memory alone gives you none of them.
+
+</details>
+
+## The same journey in real C
+
+Now a real program. This is the sum-to-n evidence from From Source to Machine, compiled by gcc for x86-64 Linux:
+
+<CompilerOutput evidence="sum-to-n" fn="sum_to" />
+
+The journey has the same shape, with more stages and more hidden:
+
+1. **Source**: a `.c` file, run through the preprocessor (`#include <stdio.h>` pulls in printf's declaration).
+2. **Compile and assemble**: gcc makes x86-64 instructions, as above, into an object file.
+3. **Link**: the linker joins it with the C library's startup code and printf, into an executable file.
+4. **Load**: the shell asks the kernel to run it (`execve`). The kernel creates a process with its own virtual address space and maps the file into it; the loader joins the shared C library.
+5. **Run**: the CPU runs `_start`, then main, then sum_to, in user mode, through virtual addresses, sharing cores with everything else.
+6. **Output**: printf ends in a system call. The kernel hands the bytes to the terminal, which draws "55".
+
+`strace` shows the moments this process crossed into the kernel (gcc 15.2 on Linux; details differ by system):
+
+```
+execve("./sum", ["./sum"], 0x7ffd3c485150 /* 73 vars */) = 0
+write(1, "55\n", 3)                     = 3
+exit_group(0)                           = ?
++++ exited with 0 +++
+```
+
+Those are three of the 34 system calls this short run made; the rest are the loader and the C library setting up. Compare: the tiny program needed none, because it had no OS to ask.
+
+<details>
+<summary>Check your answer: in each pipeline, what actually turns the number into something on a screen?</summary>
+
+Tiny CPU: the `OUT R0` instruction itself sends the byte to the modelled display; there is no OS in between. Real C: printf formats "55\n" in the program's memory, then the `write` system call traps into the kernel, which passes the bytes to the terminal program and on to the display hardware. The program never touches the device.
+
+</details>
+
+## Where to go next
+
+You can now follow a program from a key press in your editor to light on your screen, and say what happens at every layer. Each layer is a whole field: C and systems programming, operating systems, computer architecture, networks, security. The paths after Foundations go deeper into each one, starting from the picture you just built.

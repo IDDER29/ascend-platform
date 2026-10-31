@@ -1,0 +1,17 @@
+{
+  "id": "rtl/synth-operator",
+  "sourceHash": "6416f40fd353bc5d",
+  "tool": "synth",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "yosys -p \"read_verilog -sv add8.v; synth -top add8; stat\""
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "=== add8 ===\n\n   Number of wires:                 43\n   Number of wire bits:             65\n   Number of public wires:           3\n   Number of public wire bits:      25\n   Number of ports:                  3\n   Number of port bits:             25\n   Number of memories:               0\n   Number of memory bits:            0\n   Number of processes:              0\n   Number of cells:                 49\n     $_ANDNOT_                      15\n     $_AND_                          2\n     $_NAND_                         7\n     $_NOR_                          5\n     $_ORNOT_                        2\n     $_OR_                           3\n     $_XNOR_                         5\n     $_XOR_                         10",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

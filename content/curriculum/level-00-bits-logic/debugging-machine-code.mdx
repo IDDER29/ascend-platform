@@ -1,0 +1,84 @@
+---
+title: "Debugging one instruction at a time"
+level: level-00-bits-logic
+slug: debugging-machine-code
+order: 75
+timeMin: 8
+learningOutcomes:
+- Debug by predicting each step first, then stepping and comparing
+- Find the first step where the machine's state differs from what you expected
+- Tell the step where a bug shows up apart from the line that causes it
+- Fix a broken loop and check the fix against the expected result
+primer:
+- title: "Loops as repeated jumps"
+  type: doc
+  meta: Reread · 3 min · the bug here is in a loop.
+  essential: true
+knowledgeCheck:
+- question: When a program gives the wrong answer, why look for the first wrong step rather than the last one?
+  answer: "Every step starts from the state the one before left behind. After the first wrong step, everything that follows is built on a wrong state, so it looks wrong too even though the cause is that one step. The first difference points at the cause."
+  jumpToId: find-the-first-wrong-step
+  jumpToLabel: Find the first wrong step
+- question: In the array-sum bug, the second LDR reads box 0x80 again. Which line is wrong?
+  answer: "None of the visible lines: the bug is a missing INC R2. The LDR is where the wrong state first shows up, because R2 should have moved on to 0x81. The step where a bug shows up and the line that causes it are often different."
+  jumpToId: a-worked-example
+  jumpToLabel: A worked example
+assignment:
+  instruction: "Change the fixed array program so it adds up only the bytes in boxes 0x82 and 0x83. Before you run it, write the values of R1, R2 and R3 you expect after every pass round the loop. Then step through it and note the first place, if any, where you were wrong."
+  resourceName: 'Wikipedia: Debugger'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Debugger'
+additionalResources:
+- title: Breakpoint (Wikipedia)
+  type: doc
+  meta: stopping a program at a chosen instruction
+  url: 'https://en.wikipedia.org/wiki/Breakpoint'
+whyThisMatters: "Debuggers like gdb, which you'll use in the Systems Programmer path, do exactly what this lesson does by hand: step one instruction, show the registers and memory, and let you find the first moment the program goes wrong. The habit matters more than the tool."
+---
+
+A wrong answer tells you something is broken, not where. On the tiny CPU you can see everything, every register and every byte, so you can find exactly where a program goes wrong. The trick is knowing what to look for.
+
+By the end you'll be able to debug a short program one step at a time, and find the step where things first go wrong.
+
+## Predict, then step
+
+Debugging this way is a loop of three moves:
+
+1. **Predict** what the next instruction will change: which register, which box, which flag.
+2. **Step** one instruction.
+3. **Compare** what happened with what you predicted.
+
+As long as they match, carry on. The first time they don't, you've found where to look. A breakpoint, in a real debugger, is just a way to run quickly up to the part you care about and start stepping there.
+
+## Find the first wrong step
+
+Every step starts from the state the step before left behind. So once one step goes wrong, every later step is working from a wrong state, and the final answer is just the last of many consequences. The useful step is the <b>first</b> one that differs from your prediction.
+
+<KeyIdea>Don't stare at the wrong answer. Find the first step that differs from what you expected.</KeyIdea>
+
+## A worked example
+
+This program should add up the four bytes in boxes 0x80 to 0x83 (3, 4, 5 and 6) and show 18. R2 points at the next byte, R3 counts the bytes left, R1 is the total. It shows 12.
+
+<TinyCpu2 caption='A sum that comes out wrong' programJson='["LDI R2, 0x80", "LDI R3, 4", "LDI R1, 0", "loop: LDR R0, [R2]", "ADD R1, R0", "DEC R3", "JNZ loop", "OUT R1", "HALT"]' dataJson='{"128":3,"129":4,"130":5,"131":6}' />
+
+Step through it and predict as you go:
+
+<TruthTable caption='The first steps, predicted and actual' rowsJson='[["step", "instruction", "predicted", "actual"], ["4", "LDR R0, [R2]", "R0 = 3, from box 0x80", "R0 = 3"], ["5", "ADD R1, R0", "R1 = 3", "R1 = 3"], ["6", "DEC R3", "R3 = 3", "R3 = 3"], ["7", "JNZ loop", "jump back to the LDR", "jumped"], ["8", "LDR R0, [R2]", "R0 = 4, from box 0x81", "R0 = 3, from box 0x80"]]' />
+
+Step 8 is the first that differs: the second LDR reads box 0x80 again, because R2 is still 0x80. Yet the LDR itself is fine. The cause is a line that isn't there: nothing moves R2 on to the next box. The program adds 3 four times, giving 12.
+
+The fix is `INC R2` after the ADD. The step where a bug shows up and the line that causes it are often different, and finding the first wrong step is what leads you from one to the other.
+
+## Your turn
+
+Fix this program so it shows 18.
+
+<TinyCpu2 editable caption='Fix the sum' programJson='["LDI R2, 0x80", "LDI R3, 4", "LDI R1, 0", "loop: LDR R0, [R2]", "ADD R1, R0", "DEC R3", "JNZ loop", "OUT R1", "HALT"]' dataJson='{"128":3,"129":4,"130":5,"131":6}' goalJson='{"out":[18]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Add `INC R2` after `ADD R1, R0`. Each pass now reads the next box: 3, 4, 5 and 6, a total of 18. When it halts, R2 holds 0x84, one past the last byte, which is exactly what a pointer that has walked off the end of an array looks like.
+
+</details>

@@ -1,0 +1,20 @@
+{
+  "id": "c-tools/san-ub-norecover",
+  "sourceHash": "7b6c972acb234014",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=undefined -fno-sanitize-recover=undefined main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "main.c:7:5: runtime error: signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

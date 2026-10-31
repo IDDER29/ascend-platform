@@ -1,0 +1,125 @@
+---
+title: "Hash tables"
+level: level-07-data-structures
+slug: hash-tables
+order: 4
+timeMin: 12
+learningOutcomes:
+- Explain how a hash function turns a key into a bucket index, and why lookups are O(1) on average
+- Build a hash table with separate chaining that owns copies of its keys
+- Compare a good and a poor hash function by bucket use, chain length and key comparisons
+- Handle collisions with chaining or with open addressing (linear probing), and explain the trade-off
+primer:
+- title: "Linked lists"
+  type: doc
+  meta: Reread · 2 min · each bucket's chain is one.
+  essential: true
+- title: "Strings and the terminating zero"
+  type: doc
+  meta: Reread · 2 min · keys here are strings, and copying them matters.
+  essential: true
+knowledgeCheck:
+- question: "With the same 68 words, the first-letter hash needed 266 key comparisons and FNV-1a needed 110. Why?"
+  answer: "Hashing on the first letter sends every word starting with the same letter to the same bucket, so only 20 of 64 buckets were used and chains grew to 10 long. FNV-1a mixes every character into the hash, spreading the words over 43 buckets with chains of at most 5, so each lookup compares fewer keys."
+  jumpToId: a-good-hash-and-a-bad-one
+  jumpToLabel: A good hash and a bad one
+- question: The table stored key = word, where word is the buffer scanf reads into. Why did every slot end up printing "red"?
+  answer: "Every slot stored the same pointer, to the one input buffer, not its own copy of the word. Each scanf overwrote that buffer, so all stored keys changed with it, and the comparisons matched the wrong slots too. The table must copy each new key (malloc and strcpy) and free the copies at the end."
+  jumpToId: who-owns-the-key
+  jumpToLabel: Who owns the key
+assignment:
+  instruction: "Make the lesson's chained table grow: when the number of entries passes 0.75 times the number of buckets, allocate twice as many buckets and move every entry to its new bucket (its hash modulo the new size). Count key comparisons before and after on a text of a few thousand words."
+  resourceName: 'Wikipedia: Hash table'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Hash_table'
+additionalResources:
+- title: "FNV hash (Landon Curt Noll)"
+  type: doc
+  meta: the hash used here, from its authors
+  url: 'http://www.isthe.com/chongo/tech/comp/fnv/'
+- title: "CS50 Week 5: Data Structures"
+  type: doc
+  meta: hash tables and tries in C
+  url: 'https://cs50.harvard.edu/x/weeks/5/'
+whyThisMatters: "Hash tables are how programs find things fast: dictionaries in Python, objects in JavaScript, symbol tables in compilers, caches, routing tables and database indexes. Knowing what makes one fast, and what makes one quietly slow or wrong, is everyday systems engineering."
+---
+
+An array finds item i instantly, but only by its position. Real programs look things up by **key**: a word, a username, a file name. A **hash table** turns each key into a position with a **hash function**, so a lookup jumps almost straight to the right place.
+
+## Keys to buckets
+
+A hash function turns a key into a number. The table takes that number modulo its number of **buckets**, and the key belongs in that bucket:
+
+```c
+unsigned b = hash(key) % BUCKETS;
+```
+
+Different keys can land in the same bucket: a **collision**. With **separate chaining**, each bucket holds a linked list of the entries that landed there. A lookup hashes the key, goes to its bucket, and compares keys along that one short chain. If the keys spread evenly and chains stay short, that's **O(1) on average**, however many keys there are. If they all pile into a few buckets, it decays towards a list search: O(n).
+
+## A good hash and a bad one
+
+This program counts the words of a paragraph about memory in two tables of 64 buckets. One uses **FNV-1a**, which mixes every character into the hash; the other uses only the first letter. It reports how many buckets each used, the longest chain, and how many key comparisons the inserts did. Predict which table does more comparisons, and roughly how many more.
+
+<CRun program="data-structures/ht-words" caption='Counting words with two hash functions' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Both tables hold the same 68 distinct words. FNV-1a spread them over 43 of the 64 buckets, with chains of at most 5, and did 110 key comparisons. The first-letter hash used only 20 buckets (words start with only so many letters, and some letters far more than others), had chains up to 10 long, and did 266 comparisons: about 2.4 times as many. With more text and more words starting with "s" or "t", the gap keeps growing.
+
+A good hash function makes similar keys land far apart, so the buckets fill evenly. The **load factor**, entries divided by buckets, then sets the average chain length: 68 / 64 is about 1. Real tables grow their bucket array when the load factor passes a limit (often 0.75) to keep chains short.
+
+</details>
+
+```c
+/* Add one to key's count, inserting it if new. */
+static int add_word(Table *t, const char *key) {
+    unsigned b = t->hash(key) % BUCKETS;
+    for (Entry *e = t->buckets[b]; e != NULL; e = e->next) {
+        if (strcmp(e->key, key) == 0) {
+            e->count++;
+            return 0;
+        }
+    }
+    Entry *e = malloc(sizeof *e);
+    char *copy = malloc(strlen(key) + 1);
+    if (e == NULL || copy == NULL) {
+        free(e);
+        free(copy);
+        return -1;
+    }
+    strcpy(copy, key);
+    e->key = copy;          /* the table owns its own copy of the key */
+    e->count = 1;
+    e->next = t->buckets[b];
+    t->buckets[b] = e;
+    return 0;
+}
+```
+
+## Who owns the key
+
+This smaller table uses **open addressing** instead of chains: every entry lives in the slot array itself, and on a collision it tries the next slot (**linear probing**). It reads six words and counts them. Predict the output.
+
+<CRun program="data-structures/ht-shared-key" caption='Counting red, green and blue' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It prints `slot 4: red x5` and `slot 5: red x1`: two slots, both "red", and the wrong counts. The correct answer is red 3, green 2, blue 1.
+
+The bug is `t[i].key = key;`. `key` points at `word`, the single buffer `scanf` reads into, so every slot stores the **same pointer** and each new word overwrites what all of them see. "red" goes into the empty slot 4. Then "green" overwrites the buffer, hashes to slot 4 too, finds it "equal" (both pointers lead to the same text) and adds to red's count. After that, only "blue" reached an empty slot, slot 5, and every later word matched one of the two. At the end the buffer holds the last word read, "red", so both slots print it.
+
+The table must own its keys: copy each new key into its own heap block, and free the copies when the table goes away. With that fix, under AddressSanitizer:
+
+<CRun program="data-structures/ht-copied-key" caption='The table owns copies of its keys' />
+
+Green and red both hash to slot 4, so green probes on to slot 5, and blue, which hashes to 5, probes on to 6. Chaining keeps colliding keys in a list outside the array; open addressing keeps everything in one array, which is friendlier to the cache, but it needs a low load factor, because probes grow long as the array fills.
+
+</details>
+
+<KeyIdea>A hash table is fast when its hash spreads keys evenly and its load factor stays low, and correct only when it owns copies of its keys.</KeyIdea>
+
+## Done when
+
+You can explain buckets, collisions and the load factor, compare the two hash functions with their real numbers, and fix a table that stores borrowed pointers instead of its own copies of the keys.

@@ -3,8 +3,24 @@ import { z } from "zod";
 export const levelIds = [
   "level-00-bits-logic",
   "level-01-machine-memory",
+  "level-04-c-basics",
   "level-02-the-c-language",
+  "level-05-c-contract",
+  "level-06-c-tools",
+  "level-07-data-structures",
   "level-03-systems-software",
+  "level-08-vm-threads-files",
+  "level-09-memory-allocator",
+  "level-10-performance",
+  "level-11-pipelining",
+  "level-12-advanced-execution",
+  "level-13-caches-memory",
+  "level-14-multicore-gpus",
+  "level-15-verilog",
+  "level-16-verification",
+  "level-17-rtl-to-silicon",
+  "level-18-compilers-theory",
+  "level-19-riscv-core",
 ] as const;
 
 export const LevelIdSchema = z.enum(levelIds);
@@ -16,6 +32,17 @@ export const KnowledgeCheckItemSchema = z.object({
   jumpToId: z.string(),
   jumpToLabel: z.string(),
   jumpToDetail: z.string().optional(),
+  /** Hand-picked reading or viewing for this question; without it, the lesson's own resources are matched to it. */
+  resources: z
+    .array(
+      z.object({
+        title: z.string(),
+        type: z.enum(["video", "doc", "pdf"]),
+        meta: z.string().optional(),
+        url: z.string().url(),
+      }),
+    )
+    .optional(),
 });
 export type KnowledgeCheckItem = z.infer<typeof KnowledgeCheckItemSchema>;
 
@@ -67,31 +94,126 @@ export interface Lesson {
 
 export const LEVELS: Record<
   LevelId,
-  { name: string; short: string; totalConcepts: number; timeLabel: string; locked?: boolean }
+  { name: string; short: string; totalConcepts: number; timeLabel: string }
 > = {
   "level-00-bits-logic": {
     name: "Bits & Logic",
     short: "The Groundwork",
-    totalConcepts: 5,
-    timeLabel: "~35 min",
+    totalConcepts: 112,
+    timeLabel: "~24 hr",
   },
   "level-01-machine-memory": {
     name: "Machine & Memory",
     short: "The Machine",
-    totalConcepts: 6,
-    timeLabel: "~47 min",
+    totalConcepts: 8,
+    timeLabel: "~67 min",
+  },
+  "level-04-c-basics": {
+    name: "C Basics",
+    short: "The First Programs",
+    totalConcepts: 12,
+    timeLabel: "~2.5 hr",
   },
   "level-02-the-c-language": {
     name: "The C Language",
     short: "The Craft",
+    totalConcepts: 17,
+    timeLabel: "~2.5 hr",
+  },
+  "level-05-c-contract": {
+    name: "The C Contract",
+    short: "The Fine Print",
     totalConcepts: 8,
-    timeLabel: "~62 min",
+    timeLabel: "~2 hr",
+  },
+  "level-06-c-tools": {
+    name: "Tools",
+    short: "The Workshop",
+    totalConcepts: 11,
+    timeLabel: "~2.5 hr",
+  },
+  "level-07-data-structures": {
+    name: "Data Structures in C",
+    short: "The Toolbox",
+    totalConcepts: 9,
+    timeLabel: "~2.5 hr",
   },
   "level-03-systems-software": {
     name: "Systems & Software",
     short: "The Architect",
-    totalConcepts: 6,
-    timeLabel: "~7 hrs",
-    locked: true,
+    totalConcepts: 10,
+    timeLabel: "~1 hr 45 min",
+  },
+  "level-08-vm-threads-files": {
+    name: "Virtual Memory, Threads & Files",
+    short: "The Engine Room",
+    totalConcepts: 14,
+    timeLabel: "~3 hr",
+  },
+  "level-09-memory-allocator": {
+    name: "Your own malloc",
+    short: "The Capstone",
+    totalConcepts: 1,
+    timeLabel: "~1 hr",
+  },
+  "level-10-performance": {
+    name: "Performance & trade-offs",
+    short: "The Measure",
+    totalConcepts: 4,
+    timeLabel: "~45 min",
+  },
+  "level-11-pipelining": {
+    name: "Pipelining",
+    short: "The Assembly Line",
+    totalConcepts: 5,
+    timeLabel: "~1.5 hr",
+  },
+  "level-12-advanced-execution": {
+    name: "Advanced execution",
+    short: "The Juggler",
+    totalConcepts: 4,
+    timeLabel: "~45 min",
+  },
+  "level-13-caches-memory": {
+    name: "Caches & memory systems",
+    short: "The Memory Wall",
+    totalConcepts: 5,
+    timeLabel: "~1.5 hr",
+  },
+  "level-14-multicore-gpus": {
+    name: "Multicore & GPUs",
+    short: "The Crowd",
+    totalConcepts: 5,
+    timeLabel: "~1 hr",
+  },
+  "level-15-verilog": {
+    name: "Digital design with Verilog",
+    short: "The Describer",
+    totalConcepts: 5,
+    timeLabel: "~1.5 hr",
+  },
+  "level-16-verification": {
+    name: "Verification",
+    short: "The Prover",
+    totalConcepts: 3,
+    timeLabel: "~35 min",
+  },
+  "level-17-rtl-to-silicon": {
+    name: "From RTL to silicon",
+    short: "The Fab",
+    totalConcepts: 3,
+    timeLabel: "~35 min",
+  },
+  "level-18-compilers-theory": {
+    name: "Compilers & theory",
+    short: "The Translator",
+    totalConcepts: 4,
+    timeLabel: "~45 min",
+  },
+  "level-19-riscv-core": {
+    name: "A RISC-V core",
+    short: "The Capstone Core",
+    totalConcepts: 2,
+    timeLabel: "~1.5 hr",
   },
 };

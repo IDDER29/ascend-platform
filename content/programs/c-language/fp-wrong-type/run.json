@@ -1,0 +1,14 @@
+{
+  "id": "c-language/fp-wrong-type",
+  "sourceHash": "1e2b965c4a22295a",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "main.c: In function ‘main’:\nmain.c:11:30: error: passing argument 4 of ‘qsort’ from incompatible pointer type [-Wincompatible-pointer-types]\n   11 |     qsort(v, 3, sizeof v[0], compare);\n      |                              ^~~~~~~\n      |                              |\n      |                              int (*)(int *, int *)\nIn file included from main.c:2:\n/usr/include/stdlib.h:999:34: note: expected ‘__compar_fn_t’ {aka ‘int (*)(const void *, const void *)’} but argument is of type ‘int (*)(int *, int *)’\n  999 |                    __compar_fn_t __compar) __nonnull ((1, 4));\n      |                    ~~~~~~~~~~~~~~^~~~~~~~\nmain.c:5:5: note: ‘compare’ declared here\n    5 | int compare(int *a, int *b) {\n      |     ^~~~~~~\n/usr/include/stdlib.h:970:15: note: ‘__compar_fn_t’ declared here\n  970 | typedef int (*__compar_fn_t) (const void *, const void *);\n      |               ^~~~~~~~~~~~~\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

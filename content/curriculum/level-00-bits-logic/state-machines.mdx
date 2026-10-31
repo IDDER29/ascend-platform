@@ -1,0 +1,119 @@
+---
+title: "State machines: circuits that follow steps"
+level: level-00-bits-logic
+slug: state-machines
+order: 43
+timeMin: 9
+learningOutcomes:
+- Describe a finite state machine as states, inputs, transitions and outputs
+- Write a state machine as a next-state table, and encode its states in bits
+- Build a state machine's next-state logic and outputs from gates, with a register holding the state
+- Trace a state machine tick by tick and find the first tick where it goes wrong
+primer:
+- title: "State, time and step-by-step execution"
+  type: doc
+  meta: Reread · 3 min · the turnstile you'll now build.
+  essential: true
+- title: "Counters: registers that count"
+  type: doc
+  meta: Reread · 3 min · a counter is the simplest state machine.
+  essential: true
+knowledgeCheck:
+- question: What four things describe a finite state machine?
+  answer: "Its states (a fixed list), its inputs, its transitions (for each state and input, the next state) and its outputs (what it shows or does in each state)."
+  jumpToId: states-transitions-outputs
+  jumpToLabel: States, transitions, outputs
+- question: How many bits do you need to encode a machine with 3 states, and why?
+  answer: "Two. One bit gives only 2 patterns; two bits give 4, enough for 3 states with one pattern left unused."
+  jumpToId: states-as-bits
+  jumpToLabel: States as bits
+- question: "Why is the turnstile's next state U := COIN OR (U AND NOT PUSH)?"
+  answer: "A coin always unlocks it. Otherwise it stays unlocked only if it was unlocked and nobody pushed through; a push on an unlocked turnstile locks it again."
+  jumpToId: build-the-turnstile
+  jumpToLabel: Build the turnstile
+assignment:
+  instruction: "Design a state machine for a combination lock that opens after the buttons 1, 2, 3 are pressed in order and goes back to the start on any wrong press. List its states, draw its next-state table, and say how many bits its state register needs."
+  resourceName: 'Wikipedia: Finite-state machine'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Finite-state_machine'
+additionalResources:
+- title: Finite-state machine (Wikipedia)
+  type: doc
+  meta: reference, with the turnstile as its main example
+  url: 'https://en.wikipedia.org/wiki/Finite-state_machine'
+- title: Traffic light control and coordination (Wikipedia)
+  type: doc
+  meta: real traffic lights as state machines with timers and sensors
+  url: 'https://en.wikipedia.org/wiki/Traffic_light_control_and_coordination'
+whyThisMatters: "State machines run lifts, vending machines, network protocols and the text box you type into. Most importantly for this path, the control unit of a CPU is one: it steps through fetch, decode and execute. Knowing how to turn a table of steps into a register and some gates is what makes that control unit buildable."
+---
+
+A counter always does the same thing: add 1. Many machines need to follow different steps depending on what happens: a turnstile, a traffic light, the control unit of a CPU. These are <b>state machines</b>, and they're built from exactly the two pieces you already have: a register to hold the state, and gates to work out the next one.
+
+By the end you'll be able to describe a machine as a table of states, encode the states in bits, and build it in a clocked circuit.
+
+## States, transitions, outputs
+
+A <b>finite state machine</b> is described by four things:
+
+- its <b>states</b>: a fixed list, like locked and unlocked;
+- its <b>inputs</b>: what can happen, like a coin or a push;
+- its <b>transitions</b>: for every state and input, which state comes next;
+- its <b>outputs</b>: what it shows or does in each state.
+
+"Finite" means the list of states is fixed in advance. That's what makes it buildable: a fixed number of states fits in a fixed number of bits.
+
+The transitions are usually drawn as circles joined by arrows. A table says the same thing and is easier to turn into gates:
+
+<TruthTable caption='The turnstile as a next-state table' rowsJson='[["state now", "input", "next state"], ["locked", "coin", "unlocked"], ["locked", "push", "locked"], ["unlocked", "push", "locked"], ["unlocked", "coin", "unlocked"]]' />
+
+## States as bits
+
+To build a state machine, give every state a bit pattern. The turnstile has two states, so one bit is enough: U = 1 for unlocked, U = 0 for locked. A machine with 3 or 4 states needs 2 bits, one with 5 to 8 states needs 3, and so on: the same "each bit doubles the patterns" rule from the codebook.
+
+Once the states are bits, the next-state table is a truth table: the current state bits and the inputs go in, the next state bits come out. And any truth table can be built from gates.
+
+<KeyIdea>Encode the states in bits, and the next-state table becomes a truth table. The register holds the bits; gates compute the next ones.</KeyIdea>
+
+## Build the turnstile
+
+The turnstile has one state bit, U, and two inputs, COIN and PUSH (one at a time). Reading the table row by row:
+
+- A coin always leads to unlocked.
+- Without a coin, it ends up unlocked only if it was unlocked and nobody pushed.
+
+The starting line below only listens to the coin, so it locks again as soon as nobody is paying, even if nobody has gone through. Fix it, then check the whole timeline matches.
+
+<ClockLab caption='The turnstile' inputsJson='["COIN","PUSH"]' registersJson='["U"]' startJson='["U := COIN"]' targetJson='["U := COIN OR (U AND NOT PUSH)"]' ticksJson='[{"COIN":0,"PUSH":1},{"COIN":1,"PUSH":0},{"COIN":0,"PUSH":0},{"COIN":0,"PUSH":1},{"COIN":0,"PUSH":1},{"COIN":1,"PUSH":0},{"COIN":1,"PUSH":0},{"COIN":0,"PUSH":1}]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`U := COIN OR (U AND NOT PUSH)`. The third tick is where the starting circuit first goes wrong: nothing happens, so the turnstile should stay unlocked, but `U := COIN` locks it. When a machine misbehaves, look for that first wrong tick; everything after it follows from it.
+
+</details>
+
+## A traffic light with two bits
+
+A traffic light cycles green, yellow, red, green, and so on, one step per tick. Three states need two bits, S1 and S0:
+
+<TruthTable caption='The traffic light, encoded' rowsJson='[["state", "S1", "S0", "next state"], ["green", "0", "0", "yellow (0 1)"], ["yellow", "0", "1", "red (1 0)"], ["red", "1", "0", "green (0 0)"]]' />
+
+The pattern 1 1 is never used. From the table: S1 is 1 next only when the state now is yellow, so S1 := S0. S0 is 1 next only when the state now is green, so S0 := NOT S1 AND NOT S0.
+
+The outputs are combinational: each light is a gate reading the state bits. GREEN is NOT S1 AND NOT S0, YELLOW is S0, and RED is S1.
+
+The starting circuit below gets S1 right but S0 wrong: it goes back to yellow after red, skipping green. Fix S0.
+
+<ClockLab caption='A traffic light' inputsJson='[]' registersJson='["S1","S0"]' startJson='["GREEN = NOT S1 AND NOT S0", "YELLOW = S0", "RED = S1", "S0 := NOT S0", "S1 := S0"]' targetJson='["GREEN = NOT S1 AND NOT S0", "YELLOW = S0", "RED = S1", "S0 := NOT S1 AND NOT S0", "S1 := S0"]' outputsJson='["GREEN","YELLOW","RED"]' ticksJson='[{},{},{},{},{},{}]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`S0 := NOT S1 AND NOT S0`. The lights then go yellow, red, green, yellow, red, green. With `S0 := NOT S0`, red (1 0) went to 0 1, yellow again, because nothing stopped S0 from flipping on.
+
+</details>
+
+<KeyIdea>A state machine is a table of steps turned into a register and gates. Change the table, and you change what the machine does.</KeyIdea>
+
+You'll meet one more state machine in Build a CPU, the most important one of all: the control unit, which steps through fetching, decoding and running each instruction.

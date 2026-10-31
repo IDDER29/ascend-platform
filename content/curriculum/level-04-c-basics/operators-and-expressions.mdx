@@ -1,0 +1,111 @@
+---
+title: "Operators and expressions"
+level: level-04-c-basics
+slug: operators-and-expressions
+order: 3
+timeMin: 9
+learningOutcomes:
+- Predict the result of integer division and the remainder operator, including with negative numbers
+- Use a cast or a double operand to get a fractional result, and explain why total / count can lose it
+- Apply C's precedence and left-to-right rules to evaluate an expression with several operators
+- Explain what comparison and logical operators produce in C, and what i++, ++i and += do
+primer:
+- title: "Expressions and evaluation order"
+  type: doc
+  meta: Reread · 3 min · precedence and order, from Foundations.
+  essential: true
+- title: "Variables and types"
+  type: doc
+  meta: Reread · 2 min · int versus double.
+  essential: true
+knowledgeCheck:
+- question: Why does double average = 17 / 4; give 4.000000 and not 4.25?
+  answer: "17 / 4 is computed first, with two ints, so it's integer division: 4, with the fraction thrown away. Only then is 4 converted to a double for the variable. Make one operand a double, (double)17 / 4 or 17 / 4.0, to divide as doubles."
+  jumpToId: integer-division-throws-away-the-fraction
+  jumpToLabel: Integer division throws away the fraction
+- question: What does printf("%d", 7 > 3 && 2 > 5) print, and why?
+  answer: "0. A comparison gives the int 1 when true and 0 when false. 7 > 3 is 1 and 2 > 5 is 0, and && is 1 only when both sides are nonzero, so the result is 0."
+  jumpToId: comparisons-and-logic-give-0-or-1
+  jumpToLabel: Comparisons and logic give 0 or 1
+assignment:
+  instruction: "Write a program that reads nothing, but computes and prints the average of the whole numbers 3, 8 and 10 twice: once with ints only, once correctly as a double. Then print 1 + 2 * 3 - 4 / 2 and work out its value by hand first, using the precedence table."
+  resourceName: 'cppreference: C operator precedence'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/language/operator_precedence'
+additionalResources:
+- title: "cppreference: arithmetic operators"
+  type: doc
+  meta: division, remainder and the conversions behind them
+  url: 'https://en.cppreference.com/w/c/language/operator_arithmetic'
+whyThisMatters: "Most wrong answers in beginner C aren't crashes, they're expressions that quietly compute something else: an average that lost its fraction, a remainder that went negative, a condition that's always true. Knowing exactly what each operator does to each type makes those bugs visible before you run anything."
+---
+
+In Foundations you evaluated expressions by precedence, one operator at a time. C has more operators and one big new rule: what an operator does depends on the types of its operands.
+
+## Integer division throws away the fraction
+
+When both operands of `/` are integers, C does integer division: the result is an integer, with the fraction thrown away (rounded toward zero). `%` gives the remainder. Predict all six lines.
+
+<CRun program="c-basics/division" caption='Dividing ints and doubles' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `7 / 2` is `3` and `7 % 2` is `1`: 7 = 2 × 3 + 1.
+- `-7 / 2` is `-3`, not -4: C rounds toward zero. And `-7 % 2` is `-1`, because C keeps `(a / b) * b + a % b == a`. So `n % 2 == 1` is not a safe test for odd numbers when `n` can be negative; use `n % 2 != 0`.
+- `7 / 2.0` is `3.500000`: one `double` operand makes it a `double` division.
+- `(double)7 / 2` is also `3.5`. `(double)` is a **cast**: it converts 7 to a `double` before the division.
+
+</details>
+
+The classic trap is an average:
+
+<CRun program="c-basics/average-bug" caption='A lost fraction' />
+
+`total / count` is worked out first, as ints, giving 4. Only then is it stored in a `double`. Converting afterwards can't bring the fraction back. Write `(double)total / count` instead, and it prints `4.250000`.
+
+## Precedence and order
+
+C applies `*`, `/` and `%` before `+` and `-`, and operators of the same rank go left to right. Brackets override both. Predict the four numbers.
+
+<CRun program="c-basics/precedence" caption='Which operator goes first?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`14 20 10 2`. `2 + 3 * 4` multiplies first: 14. Brackets make `(2 + 3) * 4` 20. `20 - 6 - 4` goes left to right: (20 - 6) - 4 = 10. `2 * 3 % 4`: `*` and `%` share a rank, so left to right, (2 × 3) % 4 = 2.
+
+When you're not sure, add brackets. They cost nothing and tell the next reader what you meant.
+
+</details>
+
+## Comparisons and logic give 0 or 1
+
+C89 had no true and false: a comparison gives the `int` 1 when it holds and 0 when it doesn't, and C still works that way (`<stdbool.h>` adds the names `true` and `false` for 1 and 0).
+
+<CRun program="c-basics/truth-values" caption='What a comparison is worth' />
+
+`&&` (and) is 1 when both sides are nonzero, `||` (or) when either is, and `!` turns nonzero into 0 and 0 into 1. `&&` and `||` also **short-circuit**: if the left side already decides the answer, the right side isn't evaluated at all. That's why `count != 0 && total / count > 2` is safe: when `count` is 0, the division never happens.
+
+Watch the difference between `==` (compare) and `=` (assign). `if (x = 5)` stores 5 in x and is always true; the next lesson shows gcc warning about it.
+
+## Increment and compound assignment
+
+`i++` and `++i` both add 1 to `i`. The difference is the value the expression gives: `i++` gives the old value, `++i` the new one. `total += 5` is short for `total = total + 5`, and `-=`, `*=`, `/=` work the same way.
+
+<CRun program="c-basics/increment" caption='Before or after the increment?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`a = 5, b = 7, i = 7`, then `total = 29`. `a = i++` copies 5 and then makes i 6. `b = ++i` makes i 7 first and copies 7. For total: 10 + 5 = 15, × 2 = 30, - 1 = 29.
+
+Keep `++` on a line of its own, or in a `for` header. Using the same variable twice in one expression with `++`, such as `i = i++ + 1`, is undefined behaviour in C.
+
+</details>
+
+<KeyIdea>An operator's result depends on its operands' types: two ints divide as ints. Comparisons and logic give 1 or 0, and brackets beat any precedence rule you half remember.</KeyIdea>
+
+## Done when
+
+You can predict integer division and remainders (negatives included), fix a lost fraction with a cast, evaluate an expression by precedence, and say what `i++`, `++i` and `&&` give.

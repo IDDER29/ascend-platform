@@ -1,0 +1,112 @@
+---
+title: "Stacks and queues"
+level: level-07-data-structures
+slug: stacks-and-queues
+order: 3
+timeMin: 10
+learningOutcomes:
+- Explain last-in first-out and first-in first-out order, and pick the right one for a problem
+- Build a stack on a growing array and use it to check that brackets are balanced
+- Build a queue in a fixed ring buffer, and follow its head and tail as they wrap around
+- Make pop and dequeue report an empty structure instead of reading outside the array
+primer:
+- title: "Dynamic arrays that grow"
+  type: doc
+  meta: Reread · 2 min · the stack here is one.
+  essential: true
+- title: "Linked lists"
+  type: doc
+  meta: Reread · 2 min · the other way to build both.
+  essential: false
+knowledgeCheck:
+- question: Why does a stack suit bracket checking?
+  answer: "The bracket that must be closed next is always the most recently opened one, which is exactly what a stack's top holds. Each opening bracket is pushed; each closing one pops and must match. An empty stack at a close, or a non-empty stack at the end, means the brackets don't balance."
+  jumpToId: a-stack-checks-brackets
+  jumpToLabel: A stack checks brackets
+- question: In a ring of 4 slots with head 2 and count 3, which slot does the next enqueue use?
+  answer: "Slot (head + count) % 4 = (2 + 3) % 4 = 1. The tail wraps around past the end of the array to the front, which is what lets a fixed array serve as a queue forever."
+  jumpToId: a-queue-in-a-ring
+  jumpToLabel: A queue in a ring
+assignment:
+  instruction: "Build a queue that grows: when the ring is full, allocate a ring twice the size and copy the items into it in queue order (starting at head, wrapping around), then reset head to 0. Test it by enqueueing and dequeueing in a pattern that wraps around several times, under -fsanitize=address."
+  resourceName: 'Wikipedia: Circular buffer'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Circular_buffer'
+additionalResources:
+- title: "Stack (abstract data type) (Wikipedia)"
+  type: doc
+  meta: uses, from undo to parsing
+  url: 'https://en.wikipedia.org/wiki/Stack_(abstract_data_type)'
+whyThisMatters: "Stacks and queues are the shapes of most systems problems: the call stack itself, undo histories, parsers, keyboard and network buffers, and work waiting for a CPU. Both are small enough to write from memory, and a ring buffer is one of the most useful tricks in systems code."
+---
+
+Some structures are defined less by how they store data than by the **order** they give it back. A **stack** returns the last item added first: last in, first out (LIFO), like a pile of plates. A **queue** returns the first item added first: first in, first out (FIFO), like a line at a till. You've met a stack already: the call stack, where the most recent call returns first.
+
+## A stack checks brackets
+
+A stack needs only two operations, **push** onto the top and **pop** from the top, and both are O(1). On a growing array the top is simply `items[len - 1]`:
+
+```c
+static int pop(Stack *s, char *out) {
+    if (s->len == 0) {
+        return -1;              /* empty: report it, never read items[-1] */
+    }
+    *out = s->items[--s->len];
+    return 0;
+}
+```
+
+This program checks brackets with a stack: every `(`, `[` or `{` is pushed, and every closing bracket pops and must match. Predict which of the five input lines are balanced.
+
+<CRun program="data-structures/sq-brackets" caption='Checking brackets with a stack' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `a[i] = f(x) + {1}`: balanced.
+- `if (a[0] > (b)) {`: **not** balanced. The `{` is pushed and never closed, so the stack isn't empty at the end.
+- `(]`: not balanced. `]` pops `(`, which isn't its match.
+- `)(`: not balanced. `)` tries to pop an empty stack, and `pop` reports that instead of reading outside the array.
+- `{[()()]}`: balanced. The nesting unwinds in exactly reverse order.
+
+Compilers check your brackets the same way. The stack owns its array, and `balanced` frees it before returning, whichever way the check ends.
+
+</details>
+
+## A queue in a ring
+
+A queue adds at the **tail** and removes from the **head**. On a plain array, removing from the front would mean shifting every item down: O(n). A **ring buffer** avoids that. It keeps the head's index and the item count, and wraps around with `%`: the tail slot is `(head + count) % SLOTS`, and dequeue moves `head` forward one slot. Both operations are O(1), and nothing is ever shifted.
+
+This queue has 4 slots. Follow the slot numbers as items come and go, and predict where 500 and 600 go and what happens to 700.
+
+<CRun program="data-structures/sq-queue" caption='A ring buffer of 4 slots' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+100, 200 and 300 fill slots 0 to 2, and dequeueing two items moves the head to slot 2. 400 takes slot 3, then the tail **wraps**: 500 goes to slot 0 and 600 to slot 1, the slots freed by the dequeues. Now all 4 slots are in use, so enqueueing 700 reports "full". Dequeueing then returns 300, 400, 500 and 600, in the order they arrived, from slots 2, 3, 0 and 1.
+
+Keeping a `count`, rather than just head and tail, is what tells "full" apart from "empty": in both, the head and tail point at the same slot.
+
+</details>
+
+<KeyIdea>A stack gives back the newest item, a queue the oldest. On an array, both run in O(1): the stack works at the end, and the queue wraps around a ring.</KeyIdea>
+
+## Popping an empty stack
+
+This stack's `pop` trusts its caller. One item is pushed and two are popped. It's built with AddressSanitizer: predict what the second pop does.
+
+<CRun program="data-structures/sq-pop-empty" caption='A pop that trusts its caller' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The first pop returns 7. The second runs `--s->len`, making `len` -1, and reads `items[-1]`, 4 bytes **before** the heap block. ASan reports a **heap-buffer-overflow** in `pop` at `main.c:10`. Without ASan it would quietly return whatever bytes sit there, often part of malloc's own bookkeeping.
+
+The fix is the check from the first section: `pop` returns -1 for an empty stack and gives the value through a pointer, so the caller has to look at the result. A structure should guard its own invariants rather than hope every caller will.
+
+</details>
+
+## Done when
+
+You can say when you'd use a stack and when a queue, check brackets with a stack, follow a ring buffer's slots as it wraps, and make pop refuse to read outside its array.

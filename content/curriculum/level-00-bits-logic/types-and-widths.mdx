@@ -1,0 +1,115 @@
+---
+title: "Types and widths"
+level: level-00-bits-logic
+slug: types-and-widths
+order: 82
+timeMin: 7
+learningOutcomes:
+- Explain a type as how many bits a value has and how they are read
+- Give the sizes of C's char, short, int and long on a typical 64-bit Linux machine
+- Predict what happens when a value doesn't fit its type's width
+- Explain how the same byte reads as 255 or -1 depending on its type
+primer:
+- title: "Bits, nibbles, bytes and words"
+  type: doc
+  meta: Reread · 3 min · widths and how many values they hold.
+  essential: true
+- title: "Negative numbers: two's complement"
+  type: doc
+  meta: Reread · 3 min · signed and unsigned readings of the same bits.
+  essential: true
+knowledgeCheck:
+- question: What two things does a type tell the computer about a value?
+  answer: "How many bits it takes up (its width), and how to read those bits: as an unsigned number, a signed number, a character, and so on. The bits themselves don't say."
+  jumpToId: what-a-type-says
+  jumpToLabel: What a type says
+- question: An unsigned char holds 250 and you add 10. What does it hold, and why?
+  answer: "4. An unsigned char is 8 bits, so it holds 0 to 255; 260 doesn't fit and wraps round to 260 - 256 = 4."
+  jumpToId: when-a-value-doesnt-fit
+  jumpToLabel: "When a value doesn't fit"
+assignment:
+  instruction: "Write a C program that prints sizeof for char, short, int, long, float and double, plus the largest value an unsigned short can hold. Run it, and explain each number from what you know about bits."
+  resourceName: 'Wikipedia: Data type'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Data_type'
+additionalResources:
+- title: 'CS50 Week 1: types in C'
+  type: video
+  meta: int, char, float and their sizes
+  url: 'https://cs50.harvard.edu/x/weeks/1/'
+whyThisMatters: "Every value in a real program has a type, and most numeric bugs (a count that goes negative, a total that wraps, a character that prints as a number) come from forgetting what the type's width and reading are. C makes you choose them; this lesson is why."
+---
+
+In the tiny language every value is one byte, read as a number from 0 to 255. Real languages offer many kinds of values, called <b>types</b>, and the choice matters.
+
+By the end you'll be able to say what a type tells the computer, give the common C sizes, and predict what happens when a value doesn't fit.
+
+## What a type says
+
+A type tells the computer two things:
+
+- its <b>width</b>: how many bits the value takes up;
+- its <b>reading</b>: how to interpret those bits (unsigned number, signed number, character, fraction).
+
+The bits don't say which. You saw this in Binary & Data: one byte can be 255, -1, a letter or part of a colour. A type is the program's promise about which reading it means.
+
+On a typical 64-bit Linux machine, C's integer types have these widths. This program prints them:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    printf("%zu %zu %zu %zu\n", sizeof(char), sizeof(short), sizeof(int), sizeof(long));
+    unsigned char c = 250;
+    c = c + 10;
+    printf("%d\n", c);
+    return 0;
+}
+```
+
+```
+1 2 4 8
+4
+```
+
+<TruthTable caption='Common C integer types (64-bit Linux)' rowsJson='[["type", "bytes", "bits", "unsigned range"], ["char", "1", "8", "0 to 255"], ["short", "2", "16", "0 to 65,535"], ["int", "4", "32", "0 to about 4.3 billion"], ["long", "8", "64", "0 to about 18 billion billion"]]' />
+
+These sizes are what most machines use today, but C only guarantees minimums: an int is at least 16 bits. That's why programs that care use `sizeof`, as above, instead of assuming.
+
+## When a value doesn't fit
+
+The second line of output above is the interesting one. An unsigned char holds 0 to 255; 250 + 10 is 260, which needs 9 bits, so the top bit is dropped and 4 is left. That's the overflow you met in Binary & Data, now attached to a type.
+
+The tiny language has the same rule, since every variable is one byte. Make x end at exactly 0 by changing one number:
+
+<TranslatorLab caption='Make x wrap to 0' startJson='["var x = 200;","x = x + 50;"]' goalJson='{"vars":{"x":0}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+`x = x + 56;`. 200 + 56 is 256, one more than a byte can hold, so it wraps to 0. A wider type would have held 256 without any surprise.
+
+</details>
+
+## Same bits, different type
+
+Reading is the other half of a type. This C program copies one byte into a signed char:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    unsigned char u = 255;
+    signed char s = (signed char)u;
+    printf("%d %d\n", u, s);
+    return 0;
+}
+```
+
+```
+255 -1
+```
+
+Both variables hold the bits 1111 1111. The unsigned type reads them as 255; the signed type, using two's complement, as -1. Nothing changed in memory: only the promise about how to read it.
+
+<KeyIdea>A type is a width and a reading. Choose it for the largest value you'll ever need, and the meaning you want the bits to have.</KeyIdea>

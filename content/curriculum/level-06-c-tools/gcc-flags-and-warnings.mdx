@@ -1,0 +1,184 @@
+---
+title: "What gcc really does: flags and warnings"
+level: level-06-c-tools
+slug: gcc-flags-and-warnings
+order: 1
+timeMin: 11
+learningOutcomes:
+- Stop gcc after any stage of its pipeline with -E, -S or -c, and say what each output file holds
+- Choose an optimisation flag and -g for a debug build and for a release build, and say what each changes
+- Turn on the warnings that catch real bugs (-Wall -Wextra, plus -Wshadow, -Wconversion and -Wpedantic) and make them errors with -Werror
+- "Use -std, -D, -I, -L and -l to control the language version, macros, header search and libraries"
+primer:
+- title: "Compiling and assembling"
+  type: doc
+  meta: "Foundations · the four stages, met once in theory."
+  essential: true
+- title: "Reading compiler errors"
+  type: doc
+  meta: "C Basics · how to read the messages gcc prints."
+  essential: false
+knowledgeCheck:
+- question: What does each of gcc -E, -S and -c stop after, and what file does each leave you?
+  answer: "-E stops after the preprocessor and prints the expanded C (a .i file if you name one). -S stops after compiling and leaves assembly (.s). -c stops after assembling and leaves an object file (.o), machine code that isn't linked yet. With none of them, gcc also links and makes an executable."
+  jumpToId: one-command-four-programs
+  jumpToLabel: "One command, four programs"
+- question: The averaging program compiled cleanly with -Wall -Wextra but printed 44. Which extra warning pointed at the bug, and what was it?
+  answer: "-Wconversion: storing int avg * 2 (300) in an unsigned char keeps only the low 8 bits, so 300 becomes 44. -Wall -Wextra don't include -Wconversion, so the narrowing went unreported until it was turned on."
+  jumpToId: warnings-beyond--wall
+  jumpToLabel: "Warnings beyond -Wall"
+assignment:
+  instruction: "Take the largest C program you have written so far and rebuild it with -std=c17 -Wall -Wextra -Wshadow -Wconversion -Wpedantic. Fix every warning, or write one sentence for each you decide to keep and why. Then add -Werror so the next one can't slip in."
+  resourceName: 'GCC manual: Options to Request or Suppress Warnings'
+  resourceType: doc
+  resourceUrl: 'https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html'
+additionalResources:
+- title: "GCC manual: Options Controlling the Kind of Output"
+  type: doc
+  meta: -E, -S, -c, -o and the pipeline
+  url: 'https://gcc.gnu.org/onlinedocs/gcc/Overall-Options.html'
+whyThisMatters: "gcc is the tool you'll run more than any other, and most people only ever type gcc file.c. Knowing its stages lets you look at any step when something is wrong, and the right warnings find bugs for free, before a single test runs."
+---
+
+In Foundations you saw that "compiling" is really four steps: preprocess, compile, assemble, link. gcc is a driver that runs a separate program for each step. This lesson is about controlling it: stopping at any stage, choosing how it optimises, and asking it for every warning that's worth having.
+
+## One command, four programs
+
+Here is a real session on a small program. The sessions in this course ran on Linux with gcc 15.2; file sizes and addresses will differ on your machine.
+
+```c
+#include <stdio.h>
+
+#define NAME "world"
+
+int main(void) {
+    printf("hello, %s\n", NAME);
+    return 0;
+}
+```
+
+```
+$ gcc -E hello.c -o hello.i      # stop after the preprocessor
+$ wc -l hello.i
+846 hello.i
+$ tail -5 hello.i
+# 5 "hello.c"
+int main(void) {
+    printf("hello, %s\n", "world");
+    return 0;
+}
+$ gcc -S hello.c -o hello.s      # stop after compiling: assembly
+$ gcc -c hello.c -o hello.o      # stop after assembling: an object file
+$ file hello.o
+hello.o: ELF 64-bit LSB relocatable, x86-64, version 1 (SYSV), not stripped
+$ gcc hello.o -o hello           # link
+$ ./hello
+hello, world
+```
+
+Here are the key lines of `hello.s` (directives trimmed):
+
+```
+.LC0:
+	.string	"world"
+.LC1:
+	.string	"hello, %s\n"
+main:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	leaq	.LC0(%rip), %rdx
+	leaq	.LC1(%rip), %rax
+	movq	%rdx, %rsi
+	movq	%rax, %rdi
+	movl	$0, %eax
+	call	printf@PLT
+	...
+```
+
+And the sizes of each stage's output, in bytes:
+
+```
+108   hello.c
+21446 hello.i
+739   hello.s
+1536  hello.o
+15952 hello
+```
+
+Why is `hello.i` 846 lines long when `hello.c` is 8, and where did `NAME` go?
+
+<details>
+<summary>Check your answer</summary>
+
+The preprocessor pasted the whole of `stdio.h` (and the headers it includes) in place of the `#include`. That's hundreds of declarations, such as `printf`'s, which is all the compiler needs to check your call. It also replaced the macro `NAME` with `"world"`, so by the time the compiler proper sees the code, macros no longer exist. The `# 5 "hello.c"` line is a marker telling the compiler which file and line the next code came from, so error messages still point at your source.
+
+`hello.o` is an object file: machine code and data, but with holes where `printf`'s address will go, because `printf` lives in the C library. Linking fills those holes and adds the startup code, which is why the executable is ten times larger.
+
+</details>
+
+`gcc -v` shows the real programs it runs: `cc1` (preprocessor and compiler in one), `as` (the assembler) and `collect2`, which runs `ld` (the linker).
+
+## Optimisation and debug information
+
+- **`-O0`** (the default) translates each line on its own and keeps every variable in memory. It compiles fastest and is easiest to debug.
+- **`-O1`, `-O2`, `-O3`** optimise more and more. `-O2` is the usual choice for release builds. `-Os` optimises for size.
+- **`-g`** adds debug information: which machine code came from which line, and where each variable lives. It doesn't change the code, only adds a description of it for gdb.
+
+A typical debug build is `-O0 -g`, and a release build is `-O2` (often with `-g` too, kept in a separate file). As you saw in The C Contract, some bugs only show at `-O2`, so test both.
+
+<KeyIdea>-E, -S and -c stop gcc after preprocessing, compiling and assembling. -O chooses how hard it optimises; -g adds a map from machine code back to your source.</KeyIdea>
+
+## Warnings beyond -Wall
+
+This program averages three scores and doubles the result. It's built with the usual `-Wall -Wextra`. Predict the output.
+
+<CRun program="c-tools/flags-quiet" caption='-Wall -Wextra: no warnings' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+No warnings, and "twice the average" is 44. The average of 200, 150 and 100 is 150, so twice it is 300. But the result is stored in an `unsigned char`, which holds 0 to 255, so only the low 8 bits survive: 300 minus 256 is 44.
+
+`-Wall` doesn't mean "all warnings". It's a set the gcc developers consider rarely wrong, and `-Wextra` adds more. Neither includes the warnings for this bug.
+
+</details>
+
+Now the same file with three more warnings turned on:
+
+<CRun program="c-tools/flags-loud" caption='Adding -Wshadow -Wconversion -Wpedantic' />
+
+- **`-Wshadow`** flags a local `count` hiding the global `count`. Here it's harmless, but code that meant the global would silently use the local.
+- **`-Wconversion`** flags both narrowing assignments: `long` into `int`, and `int` into `unsigned char`. The second is exactly the 44.
+- **`-Wpedantic`** reports anything outside strict ISO C for the chosen `-std`. There was nothing here.
+
+`-Wconversion` is noisy on large old code bases, but on new code it finds real bugs like this one.
+
+## Warnings as errors
+
+A warning that scrolls past is a warning nobody reads. `-Werror` turns every warning into an error, so the build fails until it's fixed:
+
+<CRun program="c-tools/flags-werror" caption='-Werror' />
+
+The same three problems are now errors (`-Werror=shadow`, `-Werror=conversion`), and no program is built. Many projects use `-Werror` in their automated builds, and you can make one warning an error on its own with `-Werror=conversion`.
+
+## Choosing the language and the inputs
+
+- **`-std=c17`** (or `c11`, `c23`, `gnu17`) chooses the C standard. The `gnu` versions add GNU extensions. With `-std=c17`, gcc also hides some POSIX functions unless you ask for them with a macro such as `-D_POSIX_C_SOURCE=200809L`.
+- **`-DNAME`** and **`-DNAME=value`** define a macro, as if the file started with `#define`.
+- **`-I dir`** adds a folder to search for `#include "..."` and `<...>` headers.
+- **`-L dir`** adds a folder to search for libraries, and **`-l name`** links `libname.so` or `libname.a`. The next two lessons use these.
+
+This program prints extra output only in a debug build, and repeats its greeting `TIMES` times. It's built with `-DDEBUG -DTIMES=3`. Predict the output.
+
+<CRun program="c-tools/flags-define" caption='Macros from the command line' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+"debug build of main.c", then "hello, world" three times. `-DDEBUG` defines `DEBUG`, so the `#ifdef DEBUG` line is kept. `-DTIMES=3` defines `TIMES` as 3, so the `#ifndef TIMES` default of 1 is skipped. Without either flag, the same source prints "hello, world" once. This is how one source builds both a debug and a release version.
+
+</details>
+
+## Done when
+
+You can stop gcc at each stage and say what you get, pick flags for a debug and a release build, explain why the 44 slipped past `-Wall -Wextra`, and use `-D`, `-I`, `-L` and `-l`.

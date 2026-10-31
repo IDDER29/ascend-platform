@@ -1,0 +1,155 @@
+---
+title: "Lifetime: dangling pointers and uninitialised reads"
+level: level-05-c-contract
+slug: lifetime
+order: 6
+timeMin: 10
+learningOutcomes:
+- Explain what C17 means by an object's lifetime, and when an automatic object's lifetime begins and ends
+- Explain why a pointer becomes indeterminate when its object's lifetime ends, even if the memory is still there
+- Recognise a dangling pointer to a returned local or to a block-scoped variable, and catch it with gcc's warnings and AddressSanitizer
+- Explain why reading an uninitialised automatic variable is undefined, and why the result can change between runs and optimisation levels
+primer:
+- title: "Storage duration: automatic, static and allocated"
+  type: doc
+  meta: "The C Language · how long each kind of object exists."
+  essential: true
+- title: "Ownership: who frees what"
+  type: doc
+  meta: "The C Language · use after free, the heap version of this lesson."
+  essential: false
+knowledgeCheck:
+- question: "The scope program printed 7 at -O0, the value it stored. Why is it still a bug?"
+  answer: "count's lifetime ended at the closing brace of its block, so p became an indeterminate pointer and reading *p is undefined (C17 6.2.4p2). The bytes happened to be untouched at -O0. gcc's -Wdangling-pointer warned, and AddressSanitizer stopped the same program with stack-use-after-scope."
+  jumpToId: a-pointer-that-outlives-its-object
+  jumpToLabel: A pointer that outlives its object
+- question: Why did total() print 12 once and a huge number the second time, at -O0 with no warning?
+  answer: "sum was never initialised, so it started with whatever was left in its stack slot. The first time that happened to be 0; after busy() ran, the slot held leftover data. Reading an uninitialised automatic variable whose address is never taken is undefined (C17 6.3.2.1p2), and gcc only warned once optimisation was on."
+  jumpToId: reading-a-variable-nobody-set
+  jumpToLabel: Reading a variable nobody set
+assignment:
+  instruction: "Write a function that returns a pointer to a buffer it fills with a greeting. Write it three ways: returning a local array (watch gcc's warning), using a static array, and using malloc with the caller freeing. Compile each with -Wall -Wextra and -fsanitize=address, and write one sentence each on who owns the buffer and how long it lives."
+  resourceName: 'cppreference: Lifetime'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/language/lifetime'
+additionalResources:
+- title: "AddressSanitizer (Google sanitizers wiki)"
+  type: doc
+  meta: what ASan detects, including stack-use-after-scope
+  url: 'https://github.com/google/sanitizers/wiki/AddressSanitizer'
+- title: "C17 draft standard (N2176)"
+  type: pdf
+  meta: 6.2.4 storage durations and lifetime, 6.3.2.1p2 uninitialised reads
+  url: 'https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2176.pdf'
+whyThisMatters: "Dangling pointers and uninitialised reads are the bugs that pass every test on your machine and fail on someone else's: the memory still holds the right bytes, until it doesn't. Knowing exactly when an object's life ends, and letting the compiler and sanitizers check it, turns them from mysteries into one-line fixes."
+---
+
+The C Language showed you storage duration: automatic objects live in a function's frame, static ones for the whole run, allocated ones until `free`. This lesson is about the exact rule that sits under all three, and the two bugs that break it most often.
+
+## What lifetime means
+
+C17 6.2.4p2 defines an object's **lifetime** as the part of the program's run during which storage is guaranteed to be reserved for it. During its lifetime an object has a constant address and keeps its last-stored value. Then two sentences that matter here:
+
+- If an object is referred to outside of its lifetime, the behaviour is undefined.
+- The value of a pointer becomes **indeterminate** when the object it points to reaches the end of its lifetime.
+
+For an ordinary automatic variable, the lifetime runs from entry into its **block** until execution of that block ends. Not the function: the block, the `{ ... }` it was declared in.
+
+The second sentence is the surprising one. The pointer itself isn't changed, and the bytes it points at may still be there. But the standard says you may not use its value any more. A dangling pointer isn't a pointer to garbage; it's a pointer you're not allowed to use at all.
+
+<KeyIdea>An object's lifetime ends when its block ends, its function returns, or it is freed. After that, every pointer to it is indeterminate, whatever the memory still holds.</KeyIdea>
+
+## A pointer that outlives its object
+
+`count` lives only inside the inner block, but `p` keeps its address after the block ends. Predict what this prints at -O0.
+
+<CRun program="c-contract/lifetime-scope" caption='Reading count after its block' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It prints 7, the value stored. The program "works", which is exactly what makes this bug dangerous: nothing had reused `count`'s stack slot yet. gcc's `-Wdangling-pointer` warning (part of `-Wall` since gcc 12) is the only sign, and it's right: `count`'s lifetime ended at the closing brace, so `*p` is undefined.
+
+</details>
+
+The same source, built with AddressSanitizer (`-fsanitize=address`):
+
+<CRun program="c-contract/lifetime-scope-asan" caption='The same program under AddressSanitizer' />
+
+ASan marks a variable's stack bytes as poisoned when its scope ends, so the read is caught at once: `stack-use-after-scope`, with the variable named (`'count' (line 6)`). Build your tests with `-fsanitize=address`; it finds what a lucky run hides.
+
+## Returning the address of a local
+
+This is the most common way to make a dangling pointer:
+
+<CRun program="c-contract/lifetime-return-local" caption='Returning a pointer to a local' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+gcc warns `function returns address of local variable`, and the program is killed by a segmentation fault. You might have expected 42, or garbage, since the frame's memory is still there for a moment. It crashed because gcc, knowing the returned pointer can never be used legally, returns a null pointer instead. This is what `make_answer` compiled to at -O0:
+
+```
+movl	$42, -12(%rbp)
+movl	$0, %eax
+```
+
+It stores 42 in the frame and then returns 0. `main` then reads through a null pointer and crashes. A crash is the kindest outcome undefined behaviour can give you; other compilers may hand back the stale address and print 42 for years.
+
+The fixes depend on who should own the value: return the `int` itself, write into a buffer the caller provides, use a `static` object, or `malloc` it and make the caller free it.
+
+</details>
+
+## Reading a variable nobody set
+
+`total` forgets to start `sum` at 0. `main` calls it twice, with a call to `busy` in between. Predict both lines.
+
+<CRun program="c-contract/lifetime-uninit-O0" caption='An uninitialised sum, at -O0' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The first call printed 12, correct by luck: `sum`'s stack slot happened to hold 0. Then `busy` used the same stack area, and the second call started from whatever was left there. The second number is different on every run (on three runs here it was -529586164, 1973855756 and 209830156), because part of what's left on the stack depends on where the operating system placed it.
+
+There was no warning. At -O0 gcc doesn't do the analysis that finds this.
+
+</details>
+
+Now the identical source at -O2:
+
+<CRun program="c-contract/lifetime-uninit-O2" caption='The same program at -O2' />
+
+With optimisation on, gcc does the data-flow analysis and warns three times: `may be used uninitialized` for `total` itself, then `is used uninitialized` for each of the two places it was inlined into `main`. The output changed too: this build printed 12 both times. Which output is "right"? Neither. C17 6.3.2.1p2 says that reading an automatic object that was never initialised and whose address is never taken (one that "could have been declared with the register storage class") is undefined behaviour. `sum` is exactly that.
+
+Two habits follow: initialise every variable where you declare it, and compile at least once with optimisation and `-Wall -Wextra`, because some warnings only exist there.
+
+## Try it
+
+Which line creates the dangling pointer, and when does it become a bug?
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+const char *greeting(int formal) {
+    char text[32];
+    strcpy(text, formal ? "Good evening" : "Hi");
+    return text;
+}
+
+int main(void) {
+    puts(greeting(1));
+    return 0;
+}
+```
+
+<details>
+<summary>Check your answer</summary>
+
+`return text;` returns the address of a local array. `text`'s lifetime ends when `greeting` returns, so the pointer `main` receives is indeterminate before `puts` even starts. gcc warns `function returns address of local variable` here too. Fix it by making `text` `static` (one shared buffer, fine for a single-threaded program), by returning a string literal directly (`return formal ? "Good evening" : "Hi";`), whose storage is static, or by letting the caller pass in a buffer.
+
+</details>
+
+## Done when
+
+You can say when an automatic object's lifetime ends, explain why a dangling pointer is undefined even when the bytes are intact, and catch both bugs with gcc's warnings and AddressSanitizer.

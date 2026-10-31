@@ -1,0 +1,181 @@
+---
+title: "Arguments, environment and exit codes"
+level: level-03-systems-software
+slug: environment-and-exit
+order: 4
+timeMin: 10
+learningOutcomes:
+- Explain where argc, argv and the environment come from, and show them arriving through execve
+- Predict what a program receives when the shell splits, quotes and expands its command line
+- Explain why a child's environment is a copy, so its changes never reach the parent
+- Read an exit status, including the shell's special values 126, 127 and 128 plus a signal number, and why exit(256) reports 0
+primer:
+- title: "Processes & the process table"
+  type: doc
+  meta: Reread · 3 min · fork and wait, which this lesson builds on.
+  essential: true
+- title: "System calls: the real API"
+  type: doc
+  meta: Reread · 2 min · execve is the system call that delivers arguments.
+  essential: false
+knowledgeCheck:
+- question: You type ./args one "two words" ''. What is argc, and why?
+  answer: "4. The shell, not the program, splits the line into words: argv[0] is the program, then one, then two words (the quotes keep it as one word), then an empty string (the empty quotes are still a word). execve passes exactly that array, ending with a NULL at argv[4]."
+  jumpToId: where-arguments-come-from
+  jumpToLabel: Where arguments come from
+- question: Why did the parent still see "hello from the parent" after its child set GREETING to something else?
+  answer: "fork gives the child its own copy of the parent's memory, environment included. setenv in the child changes only the child's copy (and what it passes on to programs it starts with exec). Nothing flows back to the parent, which is why a program can't change your shell's environment and cd has to be built into the shell."
+  jumpToId: the-environment-is-copied-down
+  jumpToLabel: The environment is copied down
+- question: A child calls exit(300). What status does its parent see, and why?
+  answer: "44. Only the low 8 bits of the exit value are kept, so the status is 300 mod 256 = 44. Keep exit codes between 0 and 255; 0 means success, anything else means some kind of failure."
+  jumpToId: exit-status-one-byte-of-news
+  jumpToLabel: "Exit status: one byte of news"
+assignment:
+  instruction: "Write a small C program, sum_args, that adds up its integer arguments and exits with status 0, or prints a message to stderr and exits with status 2 if any argument isn't a number. Test it from the shell with echo $? after each run, including a run with no arguments."
+  resourceName: 'execve(2) manual page'
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man2/execve.2.html'
+additionalResources:
+- title: "environ(7) manual page"
+  type: doc
+  meta: how the environment is stored and passed on
+  url: 'https://man7.org/linux/man-pages/man7/environ.7.html'
+- title: "Bash manual: exit status"
+  type: doc
+  meta: the meaning of 126, 127 and 128 + n
+  url: 'https://www.gnu.org/software/bash/manual/html_node/Exit-Status.html'
+whyThisMatters: "Arguments, environment variables and exit codes are how programs talk to the shell, to scripts and to each other. Every shell script, build system and container runtime is built on these three channels, and your shell in ShellForge has to handle all of them correctly."
+---
+
+A process starts with three things from whoever started it: its **arguments**, its **environment**, and an open set of file descriptors. When it ends, it hands back one thing: its **exit status**. This lesson follows the first two in and the last one out.
+
+## Where arguments come from
+
+`main(int argc, char *argv[])` doesn't parse anything: the arguments arrive already split into strings. Here is a program that prints what it received, run by the build machine with three arguments:
+
+<CRun program="systems/env-args" caption='What main receives' />
+
+The splitting happened before the program ran. Here is the same program run from a real shell, with `strace` showing the `execve` system call that started it:
+
+```
+$ strace -e trace=execve ./args one "two words"
+execve("./args", ["./args", "one", "two words"], 0x7ffed7d826a0 /* 73 vars */) = 0
+argc = 3, program name = args
+argv[1] = [one]
+argv[2] = [two words]
+argv[3] is NULL
++++ exited with 0 +++
+```
+
+`execve` takes the program's path, an array of argument strings and an array of environment strings (73 of them here). The kernel copies both arrays onto the new process's stack, and the C start-up code turns them into `argc`, `argv` and `environ` before calling `main`.
+
+Predict `argc` and every `argv[i]` for each command, run from a shell in an empty folder:
+
+```
+$ ./args one "two words" ''
+$ ./args *.nothing-matches-this
+```
+
+<details>
+<summary>Check your answer</summary>
+
+```
+$ ./args one "two words" ''
+argc = 4, program name = args
+argv[1] = [one]
+argv[2] = [two words]
+argv[3] = []
+argv[4] is NULL
+$ ./args *.nothing-matches-this
+argc = 2, program name = args
+argv[1] = [*.nothing-matches-this]
+argv[2] is NULL
+```
+
+The **shell** decides the words: quotes keep `two words` together, and `''` is a real, empty argument. A `*` pattern is expanded by the shell into matching file names; with no matches, bash passes the pattern through unchanged. The program only ever sees the final array, and `argv[argc]` is always `NULL`, which is why loops that walk `argv` until `NULL` work.
+
+</details>
+
+## The environment is copied down
+
+The environment is a list of `NAME=value` strings: `PATH`, `HOME`, `LANG` and dozens more. `getenv` reads it, and `setenv` changes it, but only in your own process. Predict the two lines this program prints:
+
+<CRun program="systems/env-inherit" caption='A child changes its environment' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The child sets `GREETING` and then runs `printenv`, which prints the child's value: `changed by the child`. A program started with `exec` gets the environment of the process that started it. The parent's own `GREETING` is untouched, because after `fork` the child's environment is a separate copy.
+
+That's why no program you run can change your shell's environment, and why `cd` and `export` must be **built into the shell**: an external `cd` program would change only its own directory, then exit.
+
+</details>
+
+You can also start a program with a chosen environment. `env -i` clears it:
+
+```
+$ strace -e trace=execve env -i GREETING=hi /tmp/args x
+execve("/usr/bin/env", ["env", "-i", "GREETING=hi", "/tmp/args", "x"], 0x7ffe5f9908f0 /* 73 vars */) = 0
+execve("/tmp/args", ["/tmp/args", "x"], 0x5db51c113790 /* 1 var */) = 0
+```
+
+`env` received the shell's 73 variables and passed exactly one on: `GREETING=hi`.
+
+## Exit status: one byte of news
+
+When a process ends, the kernel keeps a small **status** for its parent, which `waitpid` collects. The macros `WIFEXITED` and `WEXITSTATUS` read a normal exit; `WIFSIGNALED` and `WTERMSIG` read a death by signal. Predict each line:
+
+<CRun program="systems/env-exit-codes" caption='Six ways to end' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `exit(0)`, `exit(3)` and `exit(255)` come through unchanged.
+- `exit(256)` reports **0** and `exit(300)` reports **44**: only the low 8 bits of the exit value survive (256 mod 256 = 0, 300 mod 256 = 44). A program that exits with "number of errors" can report success after 256 errors.
+- `abort()` doesn't exit at all: it raises `SIGABRT`, signal 6, and the parent sees "killed by signal 6".
+
+The convention: **0 means success**, 1 to 255 mean failure, and many programs document what each value means (`grep` uses 1 for "no match" and 2 for "error").
+
+</details>
+
+## What the shell reports in $?
+
+The shell puts the last command's status in `$?`, and adds a few values of its own. These are real results from bash:
+
+```
+$ false; echo $?
+1
+$ ls /no/such/file; echo $?
+ls: cannot access '/no/such/file': No such file or directory
+2
+$ no_such_command; echo $?
+bash: no_such_command: command not found
+127
+$ ./notexec.sh; echo $?          # a script without execute permission
+bash: ./notexec.sh: Permission denied
+126
+$ sh -c "exit 300"; echo $?
+44
+$ sleep 5 & kill $!; wait $!; echo $?
+143
+```
+
+Explain 127, 126 and 143.
+
+<details>
+<summary>Check your answer</summary>
+
+- **127:** the shell couldn't find the command at all, so there was no process to exit; the shell reports 127 itself.
+- **126:** the file was found but couldn't be executed (here, no execute permission). `execve` failed, and the shell reports 126.
+- **143:** the process was killed by a signal, and the shell reports 128 plus the signal number. `kill` sends `SIGTERM`, signal 15: 128 + 15 = 143. That's also why an exit status above 128 usually means "killed", and why your own programs should stay below it.
+
+Your ShellForge shell will set `$?` exactly this way from what `waitpid` returns.
+
+</details>
+
+<KeyIdea>Arguments and environment flow down, copied into each new process by execve; one byte of exit status flows back up through waitpid. The shell splits words, expands patterns and reports special statuses on top.</KeyIdea>
+
+## Done when
+
+You can trace a command line from the shell through `execve` into `argv`, predict what a child's environment change does, and read any exit status, including 126, 127 and 128 + n.

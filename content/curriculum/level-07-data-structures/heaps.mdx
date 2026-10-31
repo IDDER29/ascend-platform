@@ -1,0 +1,131 @@
+---
+title: "Heaps and priority queues"
+level: level-07-data-structures
+slug: heaps
+order: 6
+timeMin: 11
+learningOutcomes:
+- Explain the heap property and how a complete binary tree is stored in a plain array with index arithmetic
+- Trace sift up after an insert and sift down after removing the top, and say why each costs O(log n)
+- Use a min-heap as a priority queue that always hands out the most urgent item next
+- Find a broken sift down by its symptom, and explain how heapsort follows from a heap
+primer:
+- title: "Binary search trees"
+  type: doc
+  meta: Reread · 3 min · a different tree with a different promise; compare the two.
+  essential: false
+- title: "Arrays and loops together"
+  type: doc
+  meta: "C Basics · the heap is just an array with clever indexing."
+  essential: true
+knowledgeCheck:
+- question: In an array-backed heap, where are the children and the parent of the element at index i?
+  answer: "Its children are at 2i + 1 and 2i + 2, and its parent is at (i - 1) / 2 (integer division). Because the tree is complete, filled row by row from the left, no pointers are needed."
+  jumpToId: a-tree-in-an-array
+  jumpToLabel: A tree in an array
+- question: Why does popping the smallest item from a heap of n items cost only O(log n)?
+  answer: "The last item moves to the top and sifts down, swapping with its smaller child at most once per row of the tree. A complete tree with n items has about log2 n rows, so there are at most about log2 n swaps."
+  jumpToId: taking-the-top-sift-down
+  jumpToLabel: "Taking the top: sift down"
+assignment:
+  instruction: "Write a max-heap of ints (the largest on top) by changing the comparisons in the min-heap, and use it to print the 3 largest of 20 numbers you choose. Then write heapsort: push all the numbers, pop them all, and check the result is sorted."
+  resourceName: "Wikipedia: Binary heap"
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Binary_heap'
+additionalResources:
+- title: "Heap (data structure) (Wikipedia)"
+  type: doc
+  meta: heaps, operations and their costs
+  url: 'https://en.wikipedia.org/wiki/Heap_(data_structure)'
+- title: "Heapsort (Wikipedia)"
+  type: doc
+  meta: sorting in place with a heap
+  url: 'https://en.wikipedia.org/wiki/Heapsort'
+whyThisMatters: "Whenever a program needs the most urgent thing next (the next timer to fire, the cheapest path to try, the next task to run) a heap is usually behind it. It's a tree with no pointers at all, which makes it both fast and a lovely example of how layout and arithmetic can replace structure."
+---
+
+A queue hands things out in the order they arrived. Often you want something else: the **most urgent** item next, whenever it arrived. That's a **priority queue**, and the usual way to build one is a **binary heap**: a tree kept in a plain array, which gives you the smallest item in O(1) and adds or removes items in O(log n).
+
+## The heap property
+
+A **min-heap** is a binary tree with one rule: every parent is less than or equal to its children. Nothing is said about left versus right, so a heap is much looser than a binary search tree. But the rule is enough to put the smallest item at the root, where it's always ready.
+
+The tree is also **complete**: every row is full except perhaps the last, which fills from the left. That shape is what lets it live in an array.
+
+## A tree in an array
+
+Number the nodes row by row, starting at 0 for the root, and store node i at `heap[i]`. Then, for any index i:
+
+- its children are at `2*i + 1` and `2*i + 2`;
+- its parent is at `(i - 1) / 2`, with C's integer division.
+
+No pointers, no allocation per node, and every node sits next to its neighbours in memory.
+
+| index | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|---|
+| value | 3 | 8 | 12 | 42 | 25 | 31 | 17 |
+
+Here 3 is the root; its children (indexes 1 and 2) are 8 and 12; 8's children (3 and 4) are 42 and 25; 12's (5 and 6) are 31 and 17. Every parent is smaller than its children.
+
+## Adding: sift up
+
+To add a value, put it in the first free slot at the end, which keeps the tree complete. That may break the rule with its parent, so **sift up**: while the new value is smaller than its parent, swap them. It climbs at most one row per swap.
+
+## Taking the top: sift down
+
+The smallest value is `heap[0]`. To remove it, move the **last** value into the root, shrink the heap by one, then **sift down**: while a child is smaller, swap with the **smaller** of the two children. It descends at most one row per swap.
+
+A tree of n items has about log2 n rows, so both operations cost **O(log n)**. Reading the top without removing it is O(1).
+
+Here is the whole heap in C. It pushes 42, 17, 8, 25, 3, 31 and 12, prints the array, then pops everything. Predict the array first: trace each push's sift up.
+
+<CRun program="data-structures/heap-pq" caption='A min-heap of ints' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The array is `3 8 12 42 25 31 17`, the one in the table above. Two pushes did real work: 25 went to index 3 under 42, and swapped up once; 3 went to index 4, swapped past 25 and then past 8 to become the root. 12 landed under 17 at index 6 and swapped once.
+
+The pops come out sorted, `3 8 12 17 25 31 42`, because each pop removes the smallest item that's left. Notice the array itself isn't sorted: a heap only promises that parents are smaller than their children.
+
+</details>
+
+<KeyIdea>A heap keeps just enough order to find the smallest item at once: each parent is no bigger than its children. Storing the complete tree in an array makes the moves pure index arithmetic.</KeyIdea>
+
+## A priority queue of tasks
+
+Store structs instead of ints, and compare by a priority field. Lower numbers are more urgent. This program pushes four tasks, takes one, adds an emergency, then takes the rest. Predict the order.
+
+<CRun program="data-structures/heap-tasks" caption='Tasks by urgency' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+"fix the outage" (priority 1) comes first. Then the fire alarm (priority 0), pushed later, jumps straight to the front of what's left: arrival time doesn't matter, only priority. Then priorities 2, 3 and 4.
+
+This is how an operating system can pick the next timer to fire, and how path-finding algorithms such as Dijkstra's pick the closest unvisited place. If two tasks share a priority, a binary heap doesn't promise which comes first, so add a tie-breaker (an arrival counter) when that matters.
+
+</details>
+
+## Find the bug
+
+This version's pops come out in the wrong order. The only change is in `pop`'s sift down. Run it, then find the mistake.
+
+<CRun program="data-structures/heap-bug" caption='A broken sift down' />
+
+<details>
+<summary>Check your answer</summary>
+
+The sift down only ever looks at the **left** child (`2*i + 1`). If the right child is the smaller one, it's never compared, so a larger value can stay above it and the heap property breaks. After a few pops, 17 comes out before 12, and 31 before 12.
+
+The fix is the one in the first program: compare both children, pick the smaller, and swap with that one, while either child is smaller than the parent. Swapping with the smaller child also matters: swap with the larger and the new parent would be bigger than its other child.
+
+</details>
+
+## Heapsort, in one sentence
+
+Push all n items into a heap, then pop them all: they come out sorted, in O(n log n) total. **Heapsort** does the same inside the array being sorted, using a max-heap and no extra memory. It's never worse than O(n log n), but in practice it's usually slower than a good quicksort: its jumps between parents and children far apart in the array are hard on the cache, as the cache-friendly layout lesson shows.
+
+## Done when
+
+You can give the index formulas, trace sift up and sift down, explain why both are O(log n), and spot a sift down that ignores a child.

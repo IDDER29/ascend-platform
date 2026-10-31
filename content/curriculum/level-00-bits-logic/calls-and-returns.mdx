@@ -1,0 +1,93 @@
+---
+title: "Calls, return addresses and subroutines"
+level: level-00-bits-logic
+slug: calls-and-returns
+order: 73
+timeMin: 9
+learningOutcomes:
+- Explain why a subroutine needs to know where to come back to, and why a plain jump can't do it
+- Trace CALL and RET, including the return address they push and pop
+- Follow nested calls, and say why the stack keeps the return addresses in the right order
+- Save and restore a register inside a subroutine with PUSH and POP
+primer:
+- title: "The stack: last in, first out"
+  type: doc
+  meta: Reread · 3 min · CALL and RET use the stack.
+  essential: true
+knowledgeCheck:
+- question: What does CALL double do, if CALL is at address 0x02?
+  answer: "It pushes the return address 0x04 (the address of the instruction after the CALL) onto the stack, then jumps to the address of double. When double reaches RET, RET pops 0x04 into the program counter, and the program carries on after the CALL."
+  jumpToId: call-and-ret
+  jumpToLabel: CALL and RET
+- question: Why does a subroutine that uses R1 for its own work push R1 first and pop it before RET?
+  answer: "Because the caller may be keeping something in R1. Saving it on the stack at the start and restoring it at the end means the subroutine gives back every register except its result exactly as it found it."
+  jumpToId: saving-the-registers-you-use
+  jumpToLabel: Saving the registers you use
+assignment:
+  instruction: "Write a subroutine square that sets R0 to R0 × R0 for small numbers, by adding R0 to a total R0 times in a loop, and that saves and restores every register it uses besides R0. Call it twice from a main program, on 3 and on 5, and output both results (9 and 25)."
+  resourceName: 'Wikipedia: Call stack'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Call_stack'
+additionalResources:
+- title: Function (computer programming) (Wikipedia)
+  type: doc
+  meta: subroutines, procedures and functions
+  url: 'https://en.wikipedia.org/wiki/Function_(computer_programming)'
+whyThisMatters: "Every function call in every language works like this: save where to come back to, jump, and return. When you later read a C function's assembly, see a backtrace in a debugger, or meet a bug that overwrites a return address, it's this mechanism you're looking at."
+---
+
+Sometimes a program needs the same few instructions in several places: double a number, add up a list, show a value. Copying them each time wastes memory and invites mistakes. A <b>subroutine</b> is one copy that every part of the program can use, as long as it can find its way back afterwards.
+
+By the end you'll be able to call a subroutine, trace how it returns, and write one that doesn't disturb the registers of the code that called it.
+
+## Jumping and coming back
+
+A JMP can get you to the subroutine, but not back: the subroutine doesn't know where it was called from, and it's called from more than one place. It needs a <b>return address</b>, the address of the instruction just after the call. And the place to keep it is the stack.
+
+## CALL and RET
+
+- <b>CALL label</b> pushes the return address (its own address + 2) onto the stack, then jumps to the label.
+- <b>RET</b> pops the return address off the stack into the program counter.
+
+This program calls the subroutine `double` from two places:
+
+<TinyCpu2 caption='One subroutine, called twice' programJson='["LDI R0, 5", "CALL double", "OUT R0", "LDI R0, 21", "CALL double", "OUT R0", "HALT", "double: ADD R0, R0", "RET"]' />
+
+It shows 10, then 42. The first CALL is at 0x02, so it pushes 0x04; the second is at 0x08 and pushes 0x0A. Each time, RET pops the right address, and the program carries on just after the call that was made.
+
+<KeyIdea>CALL = push the return address, then jump. RET = pop it back into the program counter.</KeyIdea>
+
+## Calls inside calls
+
+A subroutine can call another. Each CALL pushes one more return address, and each RET pops the newest, so they unwind in the right order:
+
+<TinyCpu2 caption='A call inside a call' programJson='["CALL a", "HALT", "a: LDI R0, 1", "OUT R0", "CALL b", "OUT R0", "RET", "b: LDI R0, 2", "OUT R0", "RET"]' />
+
+It shows 1, 2, 2. Inside b the stack holds two return addresses: one back into a, and one back into the main program. Last in, first out is exactly the order calls finish in.
+
+## Saving the registers you use
+
+This program keeps 100 in R1, then calls `triple`, which uses R1 for its own working. Step through it:
+
+<TinyCpu2 caption='A subroutine that clobbers R1' programJson='["LDI R1, 100", "LDI R0, 2", "CALL triple", "ADD R0, R1", "OUT R0", "HALT", "triple: MOV R1, R0", "ADD R0, R1", "ADD R0, R1", "RET"]' />
+
+It shows 8, not 106: triple left 2 in R1, so the main program's 100 was lost. The fix is for triple to save R1 on the stack first and restore it before returning:
+
+<TinyCpu2 caption='Saving R1 on the stack' programJson='["LDI R1, 100", "LDI R0, 2", "CALL triple", "ADD R0, R1", "OUT R0", "HALT", "triple: PUSH R1", "MOV R1, R0", "ADD R0, R1", "ADD R0, R1", "POP R1", "RET"]' />
+
+Now it shows 106. Push and pop must pair up exactly inside the subroutine: if they didn't, RET would pop the wrong value as its return address.
+
+<KeyIdea>A good subroutine gives back every register it doesn't return a result in. PUSH at the start, POP before RET.</KeyIdea>
+
+## Fix the subroutine
+
+This program should show 6 and 9, using a subroutine that triples R0. Run it, see what goes wrong, and fix it.
+
+<TinyCpu2 editable caption='A subroutine that never returns' programJson='["LDI R0, 2", "CALL triple", "OUT R0", "LDI R0, 3", "CALL triple", "OUT R0", "HALT", "triple: MOV R1, R0", "ADD R0, R1", "ADD R0, R1"]' goalJson='{"out":[6,9]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+triple has no RET. After its last ADD the CPU just carries on into the empty memory after it, through zeros (each one a NOP), until it runs off the end of the code area at 0x80 and stops with BAD_PC. It never shows anything. Add `RET` as the last line, and it shows 6 and 9.
+
+</details>

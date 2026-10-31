@@ -1,0 +1,103 @@
+---
+title: "Registers, RAM, ROM and storage"
+level: level-00-bits-logic
+slug: ram-rom-storage
+order: 45
+timeMin: 7
+learningOutcomes:
+- Name four places a computer keeps bits (registers, RAM, ROM and storage) and the job each one does
+- Explain the difference between memory that forgets when the power goes off and memory that keeps its bits
+- Explain why RAM and storage both exist, rather than one doing both jobs
+- Say where a program's code, its working values and its saved files live while it runs
+primer:
+- title: "Memory as numbered boxes"
+  type: doc
+  meta: Reread · 3 min · RAM is the row of numbered boxes from that lesson.
+  essential: true
+- title: 'Registers and RAM: Crash Course Computer Science #6'
+  type: video
+  meta: Watch · 12 min · registers and RAM built from latches.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=fpnE6UAfbtU'
+knowledgeCheck:
+- question: What happens to the bits in RAM, and in an SSD, when the power goes off?
+  answer: "RAM is volatile: it needs power to hold its bits, so they are lost. An SSD is non-volatile: its flash cells keep their charge without power, so the bits are still there when the computer turns back on."
+  jumpToId: forgetting-and-keeping
+  jumpToLabel: Forgetting and keeping
+- question: Why doesn't a computer just use storage for everything and skip RAM?
+  answer: "Storage is far slower to reach than RAM, so a CPU working straight from it would spend most of its time waiting. RAM is fast but forgets and costs more per byte. So a program is copied from storage into RAM to run, and its results are written back to storage to keep."
+  jumpToId: why-not-one-kind-of-memory
+  jumpToLabel: Why not one kind of memory?
+- question: Where does a computer's firmware live, and why there?
+  answer: "In ROM or flash on the motherboard (or inside the chip). It has to be there before anything else runs, so it must survive the power being off and must not depend on storage that hasn't been read yet."
+  jumpToId: four-places-for-bits
+  jumpToLabel: Four places for bits
+assignment:
+  instruction: "Open your computer's or phone's settings and find two numbers: how much RAM it has and how much storage it has. Work out roughly how many times bigger the storage is. Then write two sentences: one on what would happen to an unsaved document if the power cut out, and one on what would happen to a saved one."
+  resourceName: 'Wikipedia: Non-volatile memory'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Non-volatile_memory'
+additionalResources:
+- title: Random-access memory (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Random-access_memory'
+- title: Read-only memory (Wikipedia)
+  type: doc
+  meta: reference, including how ROM became flash
+  url: 'https://en.wikipedia.org/wiki/Read-only_memory'
+- title: Processor register (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Processor_register'
+whyThisMatters: "Losing work in a crash, a program that is slow to start, a phone that needs a reboot to fix itself: all three come from the difference between memory that forgets and storage that keeps. Knowing which bits live where is the first step to reasoning about what survives, what is fast and what has to be copied."
+---
+
+You've built two places to keep bits: a register (a few flip-flops in a row) and memory (thousands of registers with addresses). A real computer has more than these, and they don't all do the same job. Some forget everything when the power goes off; some keep it for years.
+
+By the end you'll be able to name four places a computer keeps bits, say what each one is for, and explain why a computer needs both memory and storage.
+
+## Four places for bits
+
+<TruthTable caption='Where bits live' rowsJson='[["place", "what it holds", "roughly how much", "power off"], ["registers", "the values the CPU is working on this instant", "a few to a few dozen", "lost"], ["RAM", "running programs and their data", "billions of bytes", "lost"], ["ROM or flash firmware", "the first program that runs at power on", "thousands to millions of bytes", "kept"], ["storage (SSD or disk)", "files, apps and the operating system", "hundreds of billions of bytes and more", "kept"]]' />
+
+- <b>Registers</b> are inside the CPU itself. There are only a handful, and the CPU can use them on every clock tick. The tiny CPU in this path has register A and register B.
+- <b>RAM</b> (random-access memory) is the row of numbered boxes from the last lesson. "Random access" means any box can be reached by its address, as quickly as any other.
+- <b>ROM</b> (read-only memory) holds bits that are set when the chip is made, or, in modern machines, <b>flash</b> that can be rewritten but rarely is. It holds <b>firmware</b>: the small program that runs first when the computer switches on.
+- <b>Storage</b> is an SSD or a hard disk. It holds everything you save, and it is far larger than RAM.
+
+## Forgetting and keeping
+
+The biggest difference is what happens when the power goes off.
+
+Registers and RAM are <b>volatile</b>: they need power to keep their bits. A latch holds a bit only because its feedback loop is powered. RAM in a real computer is even more fragile: each bit is a tiny charge that leaks away, so the chip rewrites every bit many times a second just to keep it. Cut the power, and everything in them is gone.
+
+ROM, flash and disks are <b>non-volatile</b>. Flash traps charge in cells that hold it for years without power; a hard disk stores bits as magnetised spots. Switch off, switch on, and the bits are still there.
+
+<KeyIdea>Volatile memory forgets when the power goes off. Non-volatile memory keeps its bits. That one difference decides what each kind is used for.</KeyIdea>
+
+## Why not one kind of memory?
+
+A common belief is that RAM and storage do the same job: both "store things". They don't, and the reason is a trade-off.
+
+- Storage is <b>slow to reach</b>. Even a fast SSD takes roughly hundreds to thousands of times longer to answer than RAM does, and a hard disk, which has to move a head over a spinning platter, roughly a hundred times longer again. A CPU working straight from storage would spend nearly all its time waiting.
+- RAM is <b>fast but forgetful</b>, and it costs much more per byte, which is why a computer has many times more storage than RAM.
+
+So they work as a pair. When you open an app, its code and data are copied from storage into RAM, and the CPU works on that copy. When you save, the changes are written back to storage. Anything you haven't saved exists only in RAM, which is why a power cut loses it.
+
+<KeyIdea>RAM is where a program works. Storage is where it is kept. Opening copies from storage to RAM; saving copies back.</KeyIdea>
+
+You can try the "working copy" idea on a small memory below. Write a few values: they are in this memory only while the page is open. Reload the page and they are gone, just like RAM losing power.
+
+<MemoryBoard caption='A small RAM: write a value, then read it back' sizeJson='16' startJson='{"3":42}' />
+
+## Where a running program lives
+
+Put together, a program you are using right now is spread over all four places:
+
+- its <b>code and data</b> are copied into RAM from storage when it starts;
+- the <b>values it is computing with this instant</b> sit in registers;
+- the <b>firmware</b> that started the computer is in ROM or flash;
+- its <b>saved files</b>, and the program itself, are kept in storage for next time.
+
+The Complete System course comes back to this, with the ladder of faster and smaller memories between the CPU and storage. For now, the rule to keep is simple: registers and RAM are fast and forget; ROM and storage are slow to change and remember.

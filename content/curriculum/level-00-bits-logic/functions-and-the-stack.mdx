@@ -1,0 +1,97 @@
+---
+title: "Functions and the call stack"
+level: level-00-bits-logic
+slug: functions-and-the-stack
+order: 86
+timeMin: 9
+learningOutcomes:
+- Explain a stack frame as the space one unfinished call uses on the stack
+- Trace a function called twice on the tiny CPU, with its return address saved each time
+- Explain why each call needs its own frame, and how calls that call other calls stack up
+- Describe what a real C compiler puts in a frame, and why
+primer:
+- title: "Calls, return addresses and subroutines"
+  type: doc
+  meta: Reread · 3 min · CALL, RET and SP.
+  essential: true
+- title: "Conditions, loops and functions"
+  type: doc
+  meta: Reread · 3 min · what a function is.
+  essential: true
+knowledgeCheck:
+- question: What is a stack frame?
+  answer: "The part of the stack one unfinished call uses: its return address, plus, in a real language, its arguments, saved registers and local variables. It's pushed when the call starts and popped when it returns."
+  jumpToId: one-frame-per-unfinished-call
+  jumpToLabel: One frame per unfinished call
+- question: When sum_of_squares calls square, how many frames are on the stack, and why?
+  answer: "Three: main's, sum_of_squares's and square's. Each call that hasn't returned yet keeps its own frame, newest on top; square's is popped first when it returns."
+  jumpToId: frames-in-real-c
+  jumpToLabel: Frames in real C
+assignment:
+  instruction: "Draw the stack, frame by frame, for main calling sum_of_squares(3, 4), at the moment the second call to square is running. Label each frame with its function and what it holds. Then check your picture against the one in CS:APP chapter 3 or the CS50 lecture on memory."
+  resourceName: 'Wikipedia: Call stack'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Call_stack'
+additionalResources:
+- title: 'CS50 Week 4: memory, including the stack'
+  type: video
+  meta: the call stack, drawn
+  url: 'https://cs50.harvard.edu/x/weeks/4/'
+whyThisMatters: "Every function call in every language uses a stack like this. It's what a debugger's backtrace shows, what a stack overflow runs out of, and the setting for the most famous security bug of all, writing past a buffer into a return address."
+---
+
+In Assembly Language you used CALL and RET, and watched the return address go onto the stack. Real programs call functions all the time, often from inside other functions, so the stack is always busy. This lesson puts a name on what each call leaves there.
+
+By the end you'll be able to trace calls on the stack and say what a real compiler keeps in each call's frame.
+
+## A function called twice
+
+This program should call add3 twice, starting from 1, and output 7. The subroutine is empty, so it outputs 1. Fill it in, then step through and watch SP and the stack area of memory.
+
+<TinyCpu2 editable caption='Call add3 twice' programJson='["LDI R0, 1", "CALL add3", "CALL add3", "OUT R0", "HALT", "add3: RET"]' goalJson='{"out":[7]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+add3: ADDI R0, 3
+RET
+```
+
+Each CALL pushes a different return address: the first saves 0x04 (the second CALL), the second saves 0x06 (the OUT). SP drops to 0xEF during each call and comes back to 0xF0 after each RET. One piece of code, used twice, and each use knows where to go back to.
+
+</details>
+
+## One frame per unfinished call
+
+The space one call uses on the stack is its <b>stack frame</b>. On the tiny CPU a frame is just the return address, plus anything the routine PUSHes to save. In real languages a frame also holds the call's arguments (when they don't fit in registers) and its <b>local variables</b>.
+
+Because every call gets its own frame, a function can be running several times at once, each with its own locals: when a function calls itself (recursion), or when one call is waiting for another to finish.
+
+<KeyIdea>Each call that hasn't finished owns one frame on the stack, newest on top. Returning pops it.</KeyIdea>
+
+## Frames in real C
+
+```c
+#include <stdio.h>
+
+int square(int n) {
+    int result = n * n;
+    return result;
+}
+
+int sum_of_squares(int a, int b) {
+    return square(a) + square(b);
+}
+
+int main(void) {
+    printf("%d\n", sum_of_squares(3, 4));
+    return 0;
+}
+```
+
+This prints 25. While the first `square(3)` runs, three frames are on the stack, newest on top:
+
+<TruthTable caption='The stack during square(3)' rowsJson='[["frame", "holds"], ["square (top)", "return address into sum_of_squares; n = 3; result"], ["sum_of_squares", "return address into main; a = 3, b = 4; room for the first result"], ["main (bottom)", "return address into the startup code"]]' />
+
+When square returns, its frame is popped; the second call to square then gets a fresh frame in the same place. Which values actually go in memory and which stay in registers is the compiler's choice: you'll see real compiler output, with and without optimisation, in the toolchain section of this course.

@@ -1,0 +1,124 @@
+---
+title: "Optional project: Make the circuit smaller"
+level: level-00-bits-logic
+slug: project-smaller-circuit
+order: 38
+timeMin: 25
+learningOutcomes:
+- Simplify a circuit to fewer gates and prove it still matches the original's truth table
+- Rebuild a full adder from NAND gates only, sharing a gate where two outputs need the same signal
+- Compare two designs by gate count and by longest path, and explain the trade-off between them
+- Explain why counting gates is not the same as measuring a real chip's size or speed
+primer:
+- title: Full adder and the 4-bit adder
+  type: doc
+  meta: Reread · 3 min · the circuit you'll rebuild.
+  essential: true
+- title: "Testing circuits, delay and trade-offs"
+  type: doc
+  meta: Reread · 3 min · the longest path sets the speed.
+  essential: true
+- title: "Project: Logic gate workbench"
+  type: doc
+  meta: Reread · 2 min · NOT, AND, OR and XOR from NAND.
+  essential: false
+knowledgeCheck:
+- question: Why does (A AND B) OR (A AND NOT B) need no gates at all?
+  answer: "Whatever B is, one of the two brackets is just A: when B is 1 the first is A, when B is 0 the second is A. So the whole thing is always A, and a plain wire does the job."
+  jumpToId: part-1-say-it-with-fewer-gates
+  jumpToLabel: "Part 1: Say it with fewer gates"
+- question: The NAND-only full adder has 9 gates and a longest path of 6; the mixed one has 5 gates and a longest path of 3. Is the mixed one simply better?
+  answer: "Not simply. It uses fewer gates, but XOR, AND and OR gates are each built from several transistors, more than a NAND, and a design made of one kind of gate is easier to build and check. Which is better depends on what you count; gate count and path length are a model, not a chip's real area or speed."
+  jumpToId: part-3-compare-the-two
+  jumpToLabel: "Part 3: Compare the two"
+assignment:
+  instruction: "Pick one output of your ALU slice from the 8-bit ALU project and try to rebuild it with fewer gates, or from NAND only. Record both versions' gate counts and longest paths, and write two sentences on which you'd choose and why."
+  resourceName: 'Nand2Tetris: Boolean logic project'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project01'
+additionalResources:
+- title: "NAND logic (Wikipedia)"
+  type: doc
+  meta: every gate from NAND, with gate counts
+  url: 'https://en.wikipedia.org/wiki/NAND_logic'
+whyThisMatters: "Every gate on a chip costs space, power and time, so designers constantly look for the same behaviour from less. Simplifying a circuit, and weighing fewer gates against shorter paths, is the first taste of the trade-offs that drive real processor design."
+---
+
+You built circuits that work. In this optional project you make them smaller, and see that "smaller" has more than one meaning.
+
+The Gate Lab now shows two numbers for every circuit: **gates used** and the **longest path**, the most gates any signal passes through from an input to an output. Treat both as a simple model: they're not a real chip's area or speed, because real gates differ in size and timing.
+
+## Part 1: Say it with fewer gates
+
+This circuit is correct but wasteful. Make it match its own truth table with no gates at all.
+
+<GateLab caption='Four gates, or none?' inputsJson='["A","B"]' outputsJson='["OUT"]' targetJson='{"OUT":"(A AND B) OR (A AND NOT B)"}' startJson='["OUT = (A AND B) OR (A AND NOT B)"]' maxGatesJson='0' />
+
+Now this one, with at most two gates:
+
+<GateLab caption='Three gates into two' inputsJson='["A","B","C"]' outputsJson='["OUT"]' targetJson='{"OUT":"(A OR B) AND (A OR C)"}' startJson='["OUT = (A OR B) AND (A OR C)"]' maxGatesJson='2' />
+
+<details>
+<summary>Check your answer</summary>
+
+- `OUT = A`. When B is 1, `A AND B` is A; when B is 0, `A AND NOT B` is A. Either way the output is A, so the four gates did nothing a wire can't.
+- `OUT = A OR (B AND C)`. If A is 1, both brackets are 1. If A is 0, the output is `B AND C`. That's two gates instead of three, with the same longest path (2).
+
+These are the algebra rules of Boolean logic at work. Tools that design chips apply thousands of them automatically, but they're the same rules.
+
+</details>
+
+## Part 2: A full adder from NAND only
+
+Build a full adder (SUM and COUT from A, B and a carry in, CIN) from NAND gates only, with at most 9 of them.
+
+<GateLab caption='A NAND-only full adder' inputsJson='["A","B","CIN"]' outputsJson='["SUM","COUT"]' targetJson='{"SUM":"A XOR B XOR CIN","COUT":"(A AND B) OR (CIN AND (A XOR B))"}' startJson='["SUM = 0","COUT = 0"]' allowJson='["NAND"]' maxGatesJson='9' />
+
+Hint: you know XOR from NAND in 4 gates. A full adder needs two XORs, and the carry can reuse gates the XORs already made.
+
+<details>
+<summary>Check your answer</summary>
+
+```
+N1 = A NAND B
+N2 = A NAND N1
+N3 = B NAND N1
+X = N2 NAND N3       # A XOR B
+N5 = X NAND CIN
+N6 = X NAND N5
+N7 = CIN NAND N5
+SUM = N6 NAND N7     # X XOR CIN
+COUT = N5 NAND N1
+```
+
+Nine gates. The trick is COUT: `N5` is NOT (X AND CIN) and `N1` is NOT (A AND B), so `N5 NAND N1` is (X AND CIN) OR (A AND B), exactly the carry. Both were already built for the XORs, so the carry costs a single extra gate. Building two XORs and the carry separately would take far more.
+
+</details>
+
+## Part 3: Compare the two
+
+Here is the full adder written with mixed gates. Check it's solved, then compare its numbers with your NAND-only version.
+
+<GateLab caption='The mixed-gate full adder' inputsJson='["A","B","CIN"]' outputsJson='["SUM","COUT"]' targetJson='{"SUM":"A XOR B XOR CIN","COUT":"(A AND B) OR (CIN AND (A XOR B))"}' startJson='["X = A XOR B","SUM = X XOR CIN","COUT = (A AND B) OR (CIN AND X)"]' />
+
+Which design is smaller? Which is faster? Which would you build, and what would you need to know to decide properly?
+
+<details>
+<summary>Check your answer</summary>
+
+| | Mixed gates | NAND only |
+|---|---|---|
+| Gates | 5 | 9 |
+| Longest path | 3 | 6 |
+
+By this model the mixed version wins on both counts. But the model hides a lot. An XOR gate is itself several transistors, more than a NAND, so 5 mixed gates aren't necessarily smaller than 9 NANDs. Real gates also differ in delay. To decide properly you'd need the real cost of each gate in your technology: transistor counts, area and timing. That's why chip designers measure with real cell libraries, not by counting boxes.
+
+What the model does show truthfully: one gate kind is enough for everything, sharing a signal saves gates, and a longer path means a slower circuit when gates take similar time. In a 32-bit adder those paths add up, which is why fast adders are designed to shorten them.
+
+</details>
+
+<KeyIdea>The same truth table can be built many ways. Simplify by Boolean rules, share signals between outputs, and judge a design by what you're really counting: fewer gates and shorter paths often pull in different directions.</KeyIdea>
+
+## Done when
+
+Both simplifications are solved within their budgets, your NAND-only full adder is solved with at most 9 gates, and you've compared it with the mixed version and said what the comparison leaves out.

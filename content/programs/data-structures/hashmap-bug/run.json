@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/hashmap-bug",
+  "sourceHash": "94a92de2647149ce",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O1 -g -fsanitize=address,undefined main.c hashmap.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "prog: main.c:48: test_keys_are_copied: Assertion `hm_get(m, \"cat\", &v) && v == 7' failed.\n",
+    "exitCode": null,
+    "signal": "SIGABRT",
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

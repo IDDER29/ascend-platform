@@ -1,0 +1,20 @@
+{
+  "id": "c-tools/san-ub-recover",
+  "sourceHash": "5ff5177a9100d11e",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=undefined main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "big + 1 = -2147483648\n1 << shift = 256\nfinished\n",
+    "stderr": "main.c:7:5: runtime error: signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'\nmain.c:8:35: runtime error: shift exponent 40 is too large for 32-bit type 'int'\n",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

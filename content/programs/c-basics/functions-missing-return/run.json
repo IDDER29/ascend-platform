@@ -1,0 +1,14 @@
+{
+  "id": "c-basics/functions-missing-return",
+  "sourceHash": "00ee3db0d206d8de",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -Werror=return-type -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "main.c: In function ‘sign’:\nmain.c:9:1: error: control reaches end of non-void function [-Werror=return-type]\n    9 | }\n      | ^\ncc1: some warnings being treated as errors\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

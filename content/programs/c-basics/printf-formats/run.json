@@ -1,0 +1,20 @@
+{
+  "id": "c-basics/printf-formats",
+  "sourceHash": "aa2fc09eaf3f44d7",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "[42] [   42] [42   ] [00042]\n[ff] [FF] [10]\n[3.141590] [3.14] [   3.142] [3.141590e+00]\n[B] [66]\n[hi] [        hi] [hi        ]\n[4] [%]\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

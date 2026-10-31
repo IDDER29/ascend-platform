@@ -1,0 +1,20 @@
+{
+  "id": "systems/iso-read-memory",
+  "sourceHash": "9a5b905e2f86027c",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "parent's own secret: \"nothing yet\"\nparent reads its child's secret: read \"the child's secret\"\nparent reads process 1 at the same address: Operation not permitted\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

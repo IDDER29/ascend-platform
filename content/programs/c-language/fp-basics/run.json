@@ -1,0 +1,20 @@
+{
+  "id": "c-language/fp-basics",
+  "sourceHash": "dfdfef1afc6ffe85",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "f(5) = 10\nf(5) = 25\nafter step 1: 6\nafter step 2: 36\nafter step 3: 72\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

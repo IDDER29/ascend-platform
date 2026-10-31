@@ -1,0 +1,91 @@
+---
+title: "The stack: last in, first out"
+level: level-00-bits-logic
+slug: the-stack
+order: 72
+timeMin: 8
+learningOutcomes:
+- "Describe a stack: the last value pushed is the first popped"
+- Trace PUSH and POP on the tiny CPU, including every change to SP and to memory
+- Explain that the stack is a convention over ordinary memory, not a special kind of RAM
+- Say what happens when a program pushes onto a full stack or pops an empty one
+primer:
+- title: "Loading and storing in assembly"
+  type: doc
+  meta: Reread · 3 min · a push is a store, a pop is a load.
+  essential: true
+knowledgeCheck:
+- question: What does PUSH R0 do, step by step?
+  answer: "It takes 1 off SP, then stores R0 at the address SP now holds. Starting from SP = 0xF0, the first push writes to box 0xEF and leaves SP = 0xEF."
+  jumpToId: push-and-pop
+  jumpToLabel: PUSH and POP
+- question: Is the stack a special memory chip?
+  answer: "No. It's the ordinary RAM boxes 0xC0 to 0xEF, used in a particular way by agreement. Only PUSH, POP, CALL and RET treat them as a stack; a normal STA can write there like anywhere else."
+  jumpToId: the-stack-is-ordinary-memory
+  jumpToLabel: The stack is ordinary memory
+- question: What happens on the 49th push, and why?
+  answer: "The CPU stops with STACK_OVERFLOW and changes nothing. The stack area holds 48 bytes (0xC0 to 0xEF), so once SP reaches 0xC0 there is no room left."
+  jumpToId: when-the-stack-runs-out
+  jumpToLabel: When the stack runs out
+assignment:
+  instruction: "On paper, trace PUSH R0, PUSH R1, PUSH R2, POP R3, PUSH R0, POP R1 from a fresh start where R0 = 10, R1 = 20 and R2 = 30. After each instruction write SP and every stack box written so far; at the end, write all four registers. Then type the program into the editable simulator above (after LDI lines that set R0, R1 and R2) and check every step."
+  resourceName: 'Wikipedia: Stack (abstract data type)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Stack_(abstract_data_type)'
+additionalResources:
+- title: Call stack (Wikipedia)
+  type: doc
+  meta: what the stack is used for in every program
+  url: 'https://en.wikipedia.org/wiki/Call_stack'
+whyThisMatters: "Every program you'll ever run uses a stack: it's where function calls keep their return addresses and their local variables. Stack overflows, corrupted return addresses and many security bugs are all stack bugs, and they start from exactly this push and pop."
+---
+
+You'll often want to put a value aside for a moment and get it back later. A <b>stack</b> is the simplest way: you can only add to the top, and only take from the top, like a pile of plates. The last value in is the first one out.
+
+By the end you'll be able to trace PUSH and POP on the tiny CPU, say where the stack lives, and say what happens when it fills up or runs dry.
+
+## PUSH and POP
+
+The tiny CPU keeps the top of the stack in a register called <b>SP</b>, the stack pointer. At the start SP is 0xF0, just above the stack area.
+
+- <b>PUSH Rd</b> first takes 1 off SP, then stores Rd at the box SP points to.
+- <b>POP Rd</b> first loads the box SP points to into Rd, then adds 1 to SP.
+
+So the stack grows downwards. Step through this program and watch SP and the shaded stack boxes:
+
+<TinyCpu2 caption='Push two values, pop them back' programJson='["LDI R0, 1", "LDI R1, 2", "PUSH R0", "PUSH R1", "POP R2", "POP R3", "HALT"]' />
+
+<TruthTable caption='What each step changes' rowsJson='[["instruction", "SP after", "memory", "registers"], ["PUSH R0", "0xEF", "box 0xEF = 1", ""], ["PUSH R1", "0xEE", "box 0xEE = 2", ""], ["POP R2", "0xEF", "", "R2 = 2"], ["POP R3", "0xF0", "", "R3 = 1"]]' />
+
+R2 gets 2 and R3 gets 1: the values come back in the opposite order. And notice that POP doesn't wipe the box. It only moves SP; the old value is still there until something overwrites it.
+
+<KeyIdea>Last in, first out. PUSH: SP down, then write. POP: read, then SP up.</KeyIdea>
+
+## The stack is ordinary memory
+
+There is no stack chip. The stack is the ordinary RAM boxes 0xC0 to 0xEF, 48 bytes, that everyone agrees to use this way. PUSH, POP, CALL and RET follow the agreement; a plain STA R0, [0xEE] could still write in the middle of the stack, and nothing would stop it. Keeping out of the stack's way is the programmer's job.
+
+## Reverse three numbers
+
+Boxes 0x80, 0x81 and 0x82 hold 1, 2 and 3. This program shows them in order. Change it to use the stack so that it shows 3, 2, 1.
+
+<TinyCpu2 editable caption='Reverse with the stack' programJson='["LDA R0, [0x80]", "OUT R0", "LDA R0, [0x81]", "OUT R0", "LDA R0, [0x82]", "OUT R0", "HALT"]' dataJson='{"128":1,"129":2,"130":3}' goalJson='{"out":[3,2,1]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Load and push all three first, then pop and show three times:
+
+LDA R0, [0x80] / PUSH R0 / LDA R0, [0x81] / PUSH R0 / LDA R0, [0x82] / PUSH R0 / POP R0 / OUT R0 / POP R0 / OUT R0 / POP R0 / OUT R0 / HALT.
+
+The last value pushed, 3, is the first popped. Reversing is what a stack does naturally.
+
+</details>
+
+## When the stack runs out
+
+The stack has room for 48 bytes. This loop pushes forever:
+
+<TinyCpu2 caption='Push until it is full' programJson='["loop: PUSH R0", "JMP loop"]' />
+
+After 48 pushes SP is 0xC0, the bottom of the stack. The 49th push would write outside the stack area, so the CPU stops with <b>STACK_OVERFLOW</b> and changes nothing. Popping an empty stack (SP = 0xF0) stops with <b>STACK_UNDERFLOW</b> in the same way. Real computers have the same problem; a program that recurses forever ends with a "stack overflow" error.

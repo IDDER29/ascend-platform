@@ -1,0 +1,139 @@
+---
+title: "Virtual addresses and page tables"
+level: level-08-vm-threads-files
+slug: page-tables
+order: 1
+timeMin: 11
+learningOutcomes:
+- Split an x86-64 virtual address into four 9-bit table indices and a 12-bit page offset
+- Trace the page-table walk from CR3 through four tables to a physical frame
+- Explain why page tables have several levels instead of one flat table per process
+- Explain what the present bit and the permission bits in a page-table entry are for
+primer:
+- title: "Virtual and physical addresses"
+  type: doc
+  meta: "Foundations · why each process gets its own addresses, without the mechanism."
+  essential: true
+- title: "Why one process can't read another's memory"
+  type: doc
+  meta: Reread · 3 min · the isolation this lesson's tables provide.
+  essential: true
+knowledgeCheck:
+- question: How does the CPU split the virtual address 0x401136 for the page-table walk?
+  answer: "Bits 47 to 39 index the top table (PML4), 38 to 30 the next (PDPT), 29 to 21 the page directory, 20 to 12 the page table, and bits 11 to 0 are the offset inside the 4 KiB page. For 0x401136 that's PML4 0, PDPT 0, PD 2, PT 1 and offset 0x136."
+  jumpToId: splitting-an-address
+  jumpToLabel: Splitting an address
+- question: Why not one flat table with an entry for every page of a 48-bit address space?
+  answer: "There are 2^36 pages of 4 KiB in 48 bits. At 8 bytes per entry that's 512 GiB of table per process. With four levels, a table only exists for regions actually in use, so a small program needs just a handful of 4 KiB tables."
+  jumpToId: why-four-tables
+  jumpToLabel: Why four tables
+assignment:
+  instruction: "Write a program that prints the addresses of a global, a local, a malloc'd block and main itself, then split each one into its four indices and offset by hand (or with the splitting program from this lesson). Which ones share a PML4 entry? Run it twice and explain what changes and what doesn't."
+  resourceName: 'OSTEP: Paging, Faster Translations and Smaller Tables'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/vm-smalltables.pdf'
+additionalResources:
+- title: "OSTEP: Paging: Introduction"
+  type: pdf
+  meta: the first chapter on page tables
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/vm-paging.pdf'
+- title: "Linux man page: /proc/pid/pagemap"
+  type: doc
+  meta: what the kernel shows about each virtual page
+  url: 'https://man7.org/linux/man-pages/man5/proc_pid_pagemap.5.html'
+whyThisMatters: "Every load and store your programs make goes through this translation. Knowing how a virtual address becomes a physical one explains why processes can't see each other, why touching memory can be slow the first time, and what a segmentation fault really is."
+---
+
+In Foundations you learned that each process sees its own addresses, and that the hardware translates them into real memory. This lesson opens that box: how an x86-64 processor turns a 48-bit virtual address into a physical one, using tables the kernel builds for each process.
+
+## Pages and frames
+
+Memory is managed in **pages** of 4 KiB (4096 bytes). Virtual memory is cut into virtual pages, and physical memory into **frames** of the same size. Translation maps a virtual page to a frame; the position inside the page, the **offset**, passes through unchanged.
+
+A 4 KiB page needs 12 bits of offset (2^12 = 4096). On x86-64, virtual addresses are 48 bits wide, so 36 bits are left to choose the page. Here's this machine confirming the sizes:
+
+```
+$ getconf PAGESIZE
+4096
+$ grep -m1 "address sizes" /proc/cpuinfo
+address sizes	: 39 bits physical, 48 bits virtual
+```
+
+(39 physical bits is this laptop's processor; your numbers may differ.)
+
+## Splitting an address
+
+The 36 page bits aren't used as one big index. They're cut into four groups of 9 bits, one per table:
+
+| Bits | Name | Picks an entry in |
+|---|---|---|
+| 47 to 39 | PML4 index | the top table |
+| 38 to 30 | PDPT index | the second table |
+| 29 to 21 | PD index | the page directory |
+| 20 to 12 | PT index | the page table |
+| 11 to 0 | offset | the byte inside the 4 KiB page |
+
+9 bits pick one of 512 entries, and 512 entries of 8 bytes fill exactly one 4 KiB page, so every table is itself one page. This program splits four addresses. The first three look like code addresses of a small program; the last looks like a stack address. Predict which of them share a page before you run it.
+
+<CRun program="vm-threads-files/vm-split" caption='Splitting virtual addresses' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`0x401136` and `0x401137` share all four indices and differ only in the offset: they're in the same page, so one translation serves both. `0x402000` has page-table index 2 instead of 1: the next page, at offset 0. The stack address is far away: PML4 entry 255, the last entry of the lower half of the address space, where Linux puts the stack.
+
+The split is just shifts and masks: `(va >> 39) & 0x1ff`, and so on, and `va & 0xfff` for the offset.
+
+</details>
+
+## The walk
+
+To translate an address, the processor's memory-management unit (MMU) walks the tables:
+
+1. A register, **CR3**, holds the physical address of this process's PML4 table. Switching processes means loading a different CR3.
+2. The PML4 index picks an entry, which holds the physical address of a PDPT table.
+3. The PDPT index picks an entry pointing to a page directory, and so on down to a page table.
+4. The page-table entry holds the **frame number**. Frame × 4096 + offset is the physical address.
+
+So a single load can cost four extra memory reads before the real one. The next lesson shows how the processor avoids paying that every time.
+
+<KeyIdea>A virtual address is four table indices and an offset. The MMU walks four tables, starting from CR3, to find the frame, then adds the offset.</KeyIdea>
+
+## What an entry holds
+
+Each 8-byte entry holds a frame number and flag bits. The most important flags:
+
+- **Present:** is there a frame at all? If not, the access causes a **page fault**, and the kernel decides what to do.
+- **Writable** and **user**: may this page be written, and may user-mode code touch it at all? Kernel pages are marked supervisor-only, so user code can't touch them even where they're mapped.
+- **No-execute:** may instructions be fetched from it? Stacks and heaps are marked no-execute.
+- **Accessed** and **dirty:** set by the hardware when the page is read or written, so the kernel knows which pages are in use and which must be saved before reuse.
+
+Linux lets a process look at its own entries through `/proc/self/pagemap`: 8 bytes per virtual page. This program asks about one heap page before and after writing to it. Predict both answers, and what the frame number will be.
+
+<CRun program="vm-threads-files/vm-pagemap" caption='Looking up a page in /proc/self/pagemap' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Before the write, the page is **not in RAM**: `malloc` reserved the address range, but no frame was given to that page yet. After the first write it's present. The kernel gave it a frame on the spot, in a page fault; that's demand paging, the subject of a later lesson.
+
+The frame number shows as 0 both times. Since Linux 4.2 the kernel zeroes it for unprivileged processes, because knowing physical addresses helps attacks like Rowhammer. A process with the CAP_SYS_ADMIN capability would see the real number.
+
+</details>
+
+## Why four tables
+
+Why not one table with an entry for every virtual page? Work out its size for one process.
+
+<details>
+<summary>Check your answer</summary>
+
+48 bits of address space with 4 KiB pages is 2^36 pages. At 8 bytes per entry, a flat table would be 2^39 bytes: 512 GiB, for every process.
+
+With four levels, an entry that isn't needed points nowhere, and everything below it is never allocated. A small program uses a few regions (code, heap, libraries and stack), so it needs one PML4 table, a few tables below it, and a handful of page tables: tens of kilobytes, not gigabytes. The price is the longer walk.
+
+</details>
+
+## Done when
+
+You can split an address into indices and offset, describe the walk from CR3 to a frame, name what the flag bits are for, and explain why the tables have levels.

@@ -1,0 +1,86 @@
+---
+title: "Assemble and run a complete program"
+level: level-00-bits-logic
+slug: complete-program
+order: 76
+timeMin: 10
+learningOutcomes:
+- Plan a program before writing it, deciding what each register and memory box is for
+- Combine a loop, memory access, arithmetic, output and a subroutine into one program
+- Document a program with comments so another person can follow it
+- Change a working program safely, and check it against the expected result
+primer:
+- title: "Calls, return addresses and subroutines"
+  type: doc
+  meta: Reread · 3 min · the program calls a subroutine.
+  essential: true
+- title: "Debugging one instruction at a time"
+  type: doc
+  meta: Reread · 2 min · predict, step, compare.
+  essential: false
+knowledgeCheck:
+- question: Before writing the program, what did the plan decide for each register?
+  answer: "R2 points at the next score, R3 counts how many scores are left, R1 keeps the running total, and R0 holds the score being worked on (the subroutine doubles it in place)."
+  jumpToId: plan-it-first
+  jumpToLabel: Plan it first
+- question: To handle six scores instead of five, what has to change, and why only that?
+  answer: "Only the count: LDI R3, 5 becomes LDI R3, 6. The loop reads scores through the pointer R2 until the count reaches zero, so nothing else in the program depends on how many there are."
+  jumpToId: change-it
+  jumpToLabel: Change it
+assignment:
+  instruction: "Write your own complete program for this machine: it reads numbers with IN until a 0, outputs each one tripled using a subroutine that saves the registers it uses, and finally stores the count of numbers read in box 0x90. Plan the registers first, comment every block, and test it in an editable simulator in this course."
+  resourceName: 'nand2tetris.org: Project 6, The Assembler'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project06'
+additionalResources:
+- title: Assembly language (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Assembly_language'
+- title: Call stack (Wikipedia)
+  type: doc
+  meta: what CALL and RET are doing underneath
+  url: 'https://en.wikipedia.org/wiki/Call_stack'
+whyThisMatters: "Writing a complete program, not just a fragment, is a different skill: you have to decide what goes where, keep it readable, and change it without breaking it. Every larger program you write, in any language, starts with the same plan and the same habits."
+---
+
+This lesson puts the whole course together in one program: a loop, memory, arithmetic, output and a subroutine. The program itself is short. What matters is how it's planned, written and checked.
+
+By the end you'll be able to plan a small program, write it with comments, and change it safely.
+
+## The task
+
+Boxes 0x80 to 0x84 hold five scores: 3, 1, 4, 1 and 5. The program should show each score doubled, then the total of the doubled scores, and also keep that total in box 0x90.
+
+The expected result, worked out by hand first: 6, 2, 8, 2, 10, and a total of 28.
+
+## Plan it first
+
+Before any instruction, decide what each register and box is for. Writing it down is what keeps the program readable later.
+
+<TruthTable caption='The plan' rowsJson='[["where", "what it holds"], ["R2", "the address of the next score (a pointer)"], ["R3", "how many scores are left"], ["R1", "the running total"], ["R0", "the score being worked on"], ["0x80 to 0x84", "the scores"], ["0x90", "the final total"], ["double", "a subroutine: R0 = R0 + R0"]]' />
+
+<KeyIdea>Plan the registers before the instructions. A program is easy to read when every register has one job.</KeyIdea>
+
+## The program
+
+Each block has a comment saying what it does. Run it, then step through one pass of the loop and check it against the plan.
+
+<TinyCpu2 caption='Double each score, then show the total' programJson='["; Double each score, show it, and show the total.", "LDI R2, 0x80      ; R2 points at the first score", "LDI R3, 5         ; R3 counts the scores left", "LDI R1, 0         ; R1 is the running total", "next: LDR R0, [R2] ; R0 = this score", "CALL double", "OUT R0", "ADD R1, R0", "INC R2", "DEC R3", "JNZ next", "OUT R1", "STA R1, [0x90]", "HALT", "double: ADD R0, R0 ; R0 = R0 + R0", "RET"]' dataJson='{"128":3,"129":1,"130":4,"131":1,"132":5}' />
+
+It shows 6, 2, 8, 2, 10 and 28, and leaves 28 in box 0x90. The comments take no space: the program is 15 instructions, from 0x00 to 0x1C, with `next` at 0x06 and `double` at 0x1A.
+
+## Change it
+
+Programs change. Box 0x85 now holds a sixth score, 9. Change the program so it handles six scores. It should show 6, 2, 8, 2, 10, 18 and then the total, 46.
+
+<TinyCpu2 editable caption='Six scores' programJson='["; Double each score, show it, and show the total.", "LDI R2, 0x80      ; R2 points at the first score", "LDI R3, 5         ; R3 counts the scores left", "LDI R1, 0         ; R1 is the running total", "next: LDR R0, [R2] ; R0 = this score", "CALL double", "OUT R0", "ADD R1, R0", "INC R2", "DEC R3", "JNZ next", "OUT R1", "STA R1, [0x90]", "HALT", "double: ADD R0, R0 ; R0 = R0 + R0", "RET"]' dataJson='{"128":3,"129":1,"130":4,"131":1,"132":5,"133":9}' goalJson='{"out":[6,2,8,2,10,18,46],"mem":{"144":46}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Only one line changes: `LDI R3, 6`. The loop walks the scores with the pointer R2 until the count reaches zero, so nothing else depends on how many scores there are. That's what the plan bought you: a change in one place, with no surprises elsewhere.
+
+</details>
+
+<KeyIdea>Plan, comment, then check against a result worked out by hand. That's how a program stays correct as it changes.</KeyIdea>

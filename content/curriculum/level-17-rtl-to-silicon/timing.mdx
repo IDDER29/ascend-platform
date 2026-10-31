@@ -1,0 +1,122 @@
+---
+title: "Timing: setup, hold and the critical path"
+level: level-17-rtl-to-silicon
+slug: timing
+order: 2
+timeMin: 12
+learningOutcomes:
+- Explain setup and hold time, and why every path between two flip-flops must settle within one clock period
+- Find the critical path in a timing report, and convert its delay into a maximum clock frequency
+- Explain why routing delay can be as large as logic delay on a real chip
+- Raise a design's clock rate by pipelining it, and say what that costs
+primer:
+- title: "Testing circuits, delay and trade-offs"
+  type: doc
+  meta: "Foundations · gate delay and the longest path."
+  essential: true
+- title: "Sequential logic and state machines"
+  type: doc
+  meta: "Digital design with Verilog · flip-flops and clock edges."
+  essential: true
+- title: "A five-stage pipeline"
+  type: doc
+  meta: "Pipelining · the same trade-off, at the scale of a processor."
+  essential: false
+knowledgeCheck:
+- question: The multiplier's critical path was 6.37 ns of logic and 8.62 ns of routing. What is its maximum clock frequency, and what does the split tell you?
+  answer: "The path takes about 14.99 ns, so the clock period must be at least that: 1 / 14.99 ns is about 66.7 MHz, matching nextpnr's 66.69 MHz. More than half the delay is in the wires, not the gates: on a real chip, signals spend much of their time travelling between cells."
+  jumpToId: reading-a-real-timing-report
+  jumpToLabel: Reading a real timing report
+- question: Pipelining the multiplier raised its clock from 66.69 MHz to 91.81 MHz. What did it cost?
+  answer: "Latency and registers. Each product now takes two clock cycles instead of one, and the design needs extra flip-flops to hold the partial products between the stages. Throughput goes up (one product per faster cycle), but each individual result arrives later."
+  jumpToId: pipelining-for-speed
+  jumpToLabel: Pipelining for speed
+assignment:
+  instruction: "With Yosys and nextpnr (apt install yosys nextpnr-ice40 fpga-icestorm), place and route a 32-bit counter for the iCE40 HX1K (yosys -p \"synth_ice40 -json c.json\" then nextpnr-ice40 --hx1k --package tq144 --json c.json --pcf-allow-unconstrained --freq 100). Record the maximum frequency, then try a 64-bit counter and explain the change from the critical path report."
+  resourceName: 'Wikipedia: Static timing analysis'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Static_timing_analysis'
+additionalResources:
+- title: "nextpnr"
+  type: doc
+  meta: the open-source place-and-route tool used here
+  url: 'https://github.com/YosysHQ/nextpnr'
+- title: "Project IceStorm"
+  type: doc
+  meta: the open documentation of the iCE40 FPGAs
+  url: 'https://prjicestorm.readthedocs.io/en/latest/'
+whyThisMatters: "Every synchronous chip runs only as fast as its slowest path between two flip-flops. Timing reports say what that path is and how far it is from meeting the clock, and \"closing timing\" is a large part of every chip and FPGA project."
+---
+
+In Foundations you saw that the longest path through a circuit sets how quickly its outputs settle. In a clocked design that becomes a hard rule with a name: **timing**. This lesson uses real reports from **nextpnr**, which places and routes designs onto a real FPGA, the Lattice iCE40 HX1K (1,280 logic cells), and then measures every path.
+
+## Setup and hold
+
+A flip-flop samples its input at the clock edge. For that to work reliably, the input must be steady for a short window around the edge:
+
+- **Setup time:** the input must arrive some time *before* the edge.
+- **Hold time:** it must stay unchanged some time *after* the edge.
+
+Between two flip-flops sits combinational logic. When the first flip-flop changes, its new value travels through the logic and must reach the second one before the next edge, minus its setup time. So for every path from one flip-flop to the next:
+
+```
+clock-to-output delay + logic delay + routing delay + setup time  ≤  clock period
+```
+
+The path with the largest total is the **critical path**, and it sets the maximum clock frequency: 1 divided by its delay. A **hold** violation is the opposite problem: a path so short that the new value races through before the receiving flip-flop has finished capturing the old one. Hold problems don't depend on the clock rate, which is why they can break a chip at any speed.
+
+## Reading a real timing report
+
+This design multiplies two 16-bit numbers between two sets of registers. The operands come from two linear-feedback shift registers (pseudo-random sequences generated on the chip), so the design needs only a clock pin and one output pin. The whole multiply happens in one clock period, and the target is 50 MHz.
+
+<HdlRun design="rtl/timing-mult" caption='A 16 x 16 multiplier, placed and routed on an iCE40 HX1K' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- **Size:** the design uses 698 of the 1,280 logic cells (54%).
+- **Two frequency figures:**
+  - **68.70 MHz** is an **estimate after placement**, when the cells have positions but the wires don't exist yet.
+  - **66.69 MHz** is the real figure **after routing**: the actual wires add delay.
+  - Both pass the 50 MHz target.
+- **The critical path report** (it belongs to the routed design): 6.37 ns of logic plus 8.62 ns of routing, about 14.99 ns, and 1 / 14.99 ns is 66.7 MHz.
+
+More than half the delay is in the **wires**. On a real chip a signal crosses switch boxes and long tracks between cells, and on modern chips routing often dominates. That's why place and route, the next lesson, matters so much for speed.
+
+</details>
+
+## When timing fails
+
+The same design, with a 100 MHz target:
+
+<HdlRun design="rtl/timing-mult-100" caption='The same multiplier, asked for 100 MHz' show="mult.v" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`FAIL at 100.00 MHz`, and nextpnr reports it as an `ERROR` and exits with an error status. The routed design still reaches only 66.69 MHz: a 100 MHz clock gives a 10 ns period, and the critical path needs about 15 ns. A chip run at 100 MHz would capture half-finished products.
+
+To **close timing**, you either lower the clock, find a faster circuit, or cut the path into shorter pieces.
+
+</details>
+
+## Pipelining for speed
+
+This version splits the multiply into two stages. Stage one computes four 8 × 8 partial products and stores them in registers. Stage two adds them up. Each stage has less logic between its registers.
+
+<HdlRun design="rtl/timing-mult-pipe" caption='The multiplier in two pipeline stages' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The routed clock rises from 66.69 MHz to **91.81 MHz**, and the critical path is now 4.21 + 6.68 = 10.89 ns. It uses 680 logic cells, about the same: 103 cells now hold both a LUT and a flip-flop, against 50 before, because of the extra registers. (Here the routed figure even beat the post-placement estimate of 91.02 MHz; estimates are only estimates.)
+
+The cost is **latency**: each product now takes two clock cycles to come out, and the extra registers take area. The gain is **throughput**: a new product every faster cycle. It's the same trade-off as the five-stage processor pipeline in the Pipelining course, at the scale of one multiplier.
+
+</details>
+
+<KeyIdea>Every path between two flip-flops must settle within one clock period, minus setup time. The slowest one, logic plus routing, sets the maximum frequency. Pipelining shortens paths, trading latency and registers for clock rate.</KeyIdea>
+
+## Done when
+
+You can explain setup and hold, convert a critical path into a frequency, say why there are two frequency figures in the report, explain why routing matters, and say what the pipelined multiplier gained and lost.

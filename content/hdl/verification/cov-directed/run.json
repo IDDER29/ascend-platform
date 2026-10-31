@@ -1,0 +1,18 @@
+{
+  "id": "verification/cov-directed",
+  "sourceHash": "23b612f90deeb63e",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp add8.v tb.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "FAIL: 200 + 56 gave sum 0 carry 1 zero 0\n2 failures in 104 tests\ncoverage: carry 50, sum wraps to zero 3, a == b 3, an operand is 255 3\ntb.v:40: $finish called at 104 (1s)\n",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

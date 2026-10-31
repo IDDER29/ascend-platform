@@ -1,0 +1,97 @@
+---
+title: "The assembler, pass two: writing the bytes"
+level: level-00-bits-logic
+slug: assembler-pass-two
+order: 70
+timeMin: 8
+learningOutcomes:
+- Build an instruction's first byte from its opcode and register field
+- Build the second byte from the instruction's format, using the label table for jumps
+- Encode a short program into hex, byte by byte, and check it against the real assembler
+- Explain why every reserved bit must be 0
+primer:
+- title: "The assembler, pass one: finding labels"
+  type: doc
+  meta: Reread · 3 min · pass two uses the label table it builds.
+  essential: true
+knowledgeCheck:
+- question: How is the first byte of ADD R0, R1 built?
+  answer: "The opcode of ADD is 5, written in 5 bits as 00101. Then the destination register, R0, as 2 bits (00), then a reserved 0. Together: 0010 1000, which is 0x28."
+  jumpToId: the-first-byte-opcode-and-register
+  jumpToLabel: "The first byte: opcode and register"
+- question: What is the second byte of JNZ loop, if pass one found loop = 0x04?
+  answer: "0x04. For a jump the second byte is the target address, and pass two looks it up in the label table. The whole instruction is 78 04."
+  jumpToId: the-second-byte-depends-on-the-format
+  jumpToLabel: The second byte depends on the format
+assignment:
+  instruction: "Encode this program by hand, writing each instruction's two bytes in hex: LDI R2, 0x80 / LDR R0, [R2] / MOV R3, R0 / OUT R3 / JMP 0x00. Use only the opcode table and the second-byte rules in this lesson. Then explain in one sentence why LDR R0, [R2] and LDA R0, [0x80] read the same box but encode differently."
+  resourceName: 'nand2tetris.org: Project 6, The Assembler'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project06'
+additionalResources:
+- title: Instruction set architecture (Wikipedia)
+  type: doc
+  meta: instruction formats in real CPUs
+  url: 'https://en.wikipedia.org/wiki/Instruction_set_architecture'
+- title: Assembly language (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Assembly_language'
+whyThisMatters: "Machine code is only bits laid out by a rule. Once you can apply that rule by hand, a hex dump of a program stops being noise: you can read it, spot a wrong byte, and see exactly what any assembler or compiler produced."
+---
+
+After pass one, the assembler knows every instruction's address and every label's value. <b>Pass two</b> walks the program again and writes each instruction as its two bytes.
+
+By the end you'll be able to encode any tiny CPU instruction by hand, and check your bytes against the real assembler.
+
+## Two bytes per instruction
+
+Every instruction is two bytes. The first byte always has the same layout; the second depends on the kind of instruction:
+
+<TruthTable caption='The first byte' rowsJson='[["bits 7 to 3", "bits 2 and 1", "bit 0"], ["the opcode (5 bits)", "Rd, a register (2 bits)", "always 0"]]' />
+
+Each opcode is a number from 0 to 29. These are the ones in this lesson:
+
+<TruthTable caption='Some opcodes, and their first byte with R0' rowsJson='[["instruction", "opcode", "first byte (Rd = R0)"], ["LDI", "1", "0x08"], ["LDA", "2", "0x10"], ["STA", "3", "0x18"], ["MOV", "4", "0x20"], ["ADD", "5", "0x28"], ["JMP", "13", "0x68"], ["JNZ", "15", "0x78"], ["OUT", "16", "0x80"], ["HALT", "21", "0xA8"], ["DEC", "23", "0xB8"], ["LDR", "24", "0xC0"]]' />
+
+## The first byte: opcode and register
+
+Take ADD R0, R1. ADD's opcode is 5, which is 00101 in five bits. The destination register Rd is R0, which is 00. The last bit is 0. Put together: 00101 00 0, which is 0010 1000, or 0x28.
+
+A different register changes only bits 2 and 1. R1 is 01, so it adds 0x02; R2 adds 0x04; R3 adds 0x06. LDA R1, [0x80] starts with 0x10 + 0x02 = 0x12.
+
+<KeyIdea>First byte = opcode × 8 + register × 2. The opcode sits in the top five bits, the register just below it.</KeyIdea>
+
+## The second byte depends on the format
+
+<TruthTable caption='The second byte' rowsJson='[["format", "examples", "second byte"], ["register", "ADD R0, R1 and MOV R3, R0", "Rs in the top 2 bits, the rest 0"], ["immediate", "LDI R0, 7", "the number itself"], ["address", "LDA R1, [0x80]", "the address"], ["jump", "JNZ loop", "the target address, from the label table"], ["one register", "OUT R0 and DEC R0", "0"], ["none", "HALT and RET", "0"]]' />
+
+So ADD R0, R1 is 28 40: R1 is 01, in the top two bits, 0100 0000. LDA R1, [0x80] is 12 80. And JNZ loop, with loop = 0x04, is 78 04.
+
+The bits marked 0 are <b>reserved</b>: they must be 0. If one isn't, the CPU refuses to run the instruction, so a corrupted byte is caught at once instead of doing something strange.
+
+## Encode a program
+
+The addresses are given. Write each instruction's two bytes, in hex:
+
+<AssemblerLab caption='Pass two: write the bytes' programJson='["LDI R0, 7", "LDA R1, [0x80]", "ADD R0, R1", "STA R0, [0x81]", "HALT"]' passJson='2' />
+
+<details>
+<summary>Check your answer</summary>
+
+08 07, 12 80, 28 40, 18 81, A8 00. If box 0x80 holds 5, this program leaves 12 in box 0x81.
+
+</details>
+
+Now do both passes, on a program with a label used before it's defined:
+
+<AssemblerLab caption='Both passes' programJson='["LDI R0, 3", "loop: OUT R0", "DEC R0", "JZ done", "JMP loop", "done: HALT"]' passJson='both' />
+
+<details>
+<summary>Check your answer</summary>
+
+Pass one: 0x00 to 0x0A in steps of 2, with loop = 0x02 and done = 0x0A. Pass two: 08 03, 80 00, B8 00, 70 0A, 68 02, A8 00. JZ is opcode 14, so it starts 0x70; its target, done, comes from the label table.
+
+</details>
+
+<KeyIdea>Pass two is a lookup and a few shifts: the opcode, the registers, and the label table give every byte.</KeyIdea>

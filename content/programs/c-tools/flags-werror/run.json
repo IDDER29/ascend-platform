@@ -1,0 +1,14 @@
+{
+  "id": "c-tools/flags-werror",
+  "sourceHash": "2abdd6f6ec5bfbea",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -Wshadow -Wconversion -Werror -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "main.c: In function ‘average’:\nmain.c:9:13: error: declaration of ‘count’ shadows a global declaration [-Werror=shadow]\n    9 |         int count = scores[i];  /* a second \"count\" */\n      |             ^~~~~\nmain.c:3:5: note: shadowed declaration is here\n    3 | int count = 0;\n      |     ^~~~~\nmain.c:12:15: error: conversion from ‘long int’ to ‘int’ may change value [-Werror=conversion]\n   12 |     int avg = total / n;        /* long into int */\n      |               ^~~~~\nmain.c:13:29: error: conversion from ‘int’ to ‘unsigned char’ may change value [-Werror=conversion]\n   13 |     unsigned char doubled = avg * 2;  /* int into unsigned char */\n      |                             ^~~\ncc1: all warnings being treated as errors\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

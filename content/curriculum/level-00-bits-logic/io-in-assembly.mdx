@@ -1,0 +1,83 @@
+---
+title: "Input and output instructions"
+level: level-00-bits-logic
+slug: io-in-assembly
+order: 74
+timeMin: 7
+learningOutcomes:
+- Read a byte from the input with IN, and send one to the output with OUT
+- Explain what the CPU does when IN finds no input waiting
+- Write a loop that reads input until a stop value
+- Tell port I/O apart from memory-mapped I/O
+primer:
+- title: "Input and output: talking to the outside world"
+  type: doc
+  meta: Reread · 3 min · devices, polling and interrupts.
+  essential: true
+knowledgeCheck:
+- question: What happens when the program runs IN R0 but no input is waiting?
+  answer: "Nothing changes: not R0, not the flag, not the program counter. The CPU simply waits on that instruction, and carries on as soon as a byte arrives."
+  jumpToId: in-waits-for-input
+  jumpToLabel: IN waits for input
+- question: How is the tiny CPU's IN different from reading a memory-mapped device?
+  answer: "IN is a separate instruction that talks to the input device directly: port I/O. With memory-mapped I/O there is no special instruction; the device answers at a memory address, and an ordinary load reads it."
+  jumpToId: port-io-and-memory-mapped-io
+  jumpToLabel: Port I/O and memory-mapped I/O
+assignment:
+  instruction: "Write a program that reads bytes until it reads a 0, and outputs each byte doubled as it goes. Type it into the editable simulator on this page, whose input is 5, 10, 20, 0: it should show 10, 20, 40 and halt. Then say what your program would do if the input never contained a 0."
+  resourceName: 'Wikipedia: Memory-mapped I/O and port-mapped I/O'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Memory-mapped_I/O_and_port-mapped_I/O'
+additionalResources:
+- title: Input/output (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Input/output'
+whyThisMatters: "Every program that does something useful reads input and writes output. On a real machine those go through the operating system, but underneath it's the same idea: instructions that move a byte between the CPU and a device, and a CPU that has to wait when nothing has arrived."
+---
+
+So far, every number a program used was already in memory or written into the program. Real programs take input from outside (a keyboard, a sensor, a network) and send results back out. The tiny CPU has one instruction for each direction.
+
+By the end you'll be able to read and write bytes in assembly, explain what happens when input hasn't arrived, and say how this compares with the memory-mapped I/O you met in Build a CPU.
+
+## Talking to the outside
+
+- <b>OUT Rd</b> sends the byte in Rd to the output. You've used it in every program so far.
+- <b>IN Rd</b> takes the next byte from the input and puts it in Rd.
+
+The input is a queue: bytes wait in order, and each IN takes the oldest one. This program reads two numbers and shows their sum. The input queue starts with 7 and 9:
+
+<TinyCpu2 caption='Read two numbers, show the sum' programJson='["IN R0", "IN R1", "ADD R0, R1", "OUT R0", "HALT"]' inputJson='[7, 9]' />
+
+It shows 16. Watch the input queue shrink as each IN runs.
+
+## IN waits for input
+
+Now the same program, but with only one byte waiting:
+
+<TinyCpu2 caption='Only one byte arrives' programJson='["IN R0", "IN R1", "ADD R0, R1", "OUT R0", "HALT"]' inputJson='[7]' />
+
+The first IN takes 7. The second finds nothing, so the CPU waits: R1, the flag and the program counter all stay as they were, and it would carry on the moment another byte arrived. That's different from a fault. Nothing is wrong; the program is just ahead of its input.
+
+<KeyIdea>IN with nothing to read changes nothing and waits. The program resumes when input arrives.</KeyIdea>
+
+## Read until a stop value
+
+A loop that reads, then decides, can handle input of any length. This program should add up numbers until it reads a 0, then show the total. The input is 5, 10, 20, 0. Run it, then fix it.
+
+<TinyCpu2 editable caption='Sum until 0' programJson='["LDI R1, 0", "loop: IN R0", "ADD R1, R0", "JMP loop", "done: OUT R1", "HALT"]' inputJson='[5, 10, 20, 0]' goalJson='{"out":[35]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+As written it never checks for the 0, so after the last byte it waits forever on IN. Add a check right after IN: `CMPI R0, 0` then `JZ done`. The loop becomes IN, CMPI, JZ, ADD, JMP, and the program shows 35.
+
+</details>
+
+## Port I/O and memory-mapped I/O
+
+There are two common ways for a CPU to reach a device:
+
+<TruthTable caption='Two ways to reach a device' rowsJson='[["", "port I/O", "memory-mapped I/O"], ["how the CPU asks", "special instructions, like IN and OUT", "ordinary loads and stores"], ["where the device is", "on its own port, outside memory", "at a memory address"], ["examples", "the tiny CPU, and x86 in and out", "most ARM and RISC-V devices"]]' />
+
+The tiny CPU uses port I/O: IN and OUT are the only way to reach its devices, and no memory box is a device. The memory-mapped design you met in "Input and output: talking to the outside world" turns devices into addresses instead. Both reach the same place, the boundary where the CPU ends and the rest of the world begins.

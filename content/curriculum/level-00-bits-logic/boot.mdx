@@ -1,0 +1,132 @@
+---
+title: "Firmware, bootloaders and startup"
+level: level-00-bits-logic
+slug: boot
+order: 100
+timeMin: 8
+learningOutcomes:
+- Explain what a CPU does at reset, and why a fixed starting address matters
+- Describe firmware as the first program, kept in a chip that doesn't forget
+- Explain a bootloader as a program whose job is to load the next program into memory
+- Trace one real boot chain, and say why different devices boot in different ways
+primer:
+- title: "Memory versus storage"
+  type: doc
+  meta: Reread · 2 min · RAM starts empty at power-on; storage keeps programs.
+  essential: true
+- title: "What a pointer means"
+  type: doc
+  meta: Reread · 2 min · STR R0, [R1] writes to the address in R1.
+  essential: false
+knowledgeCheck:
+- question: RAM is empty at power-on, but the CPU starts fetching instructions straight away. Where does the very first instruction come from?
+  answer: "From firmware: a small program kept in a chip that doesn't forget (flash or ROM), wired to sit at the address the CPU starts from at reset."
+  jumpToId: firmware-the-first-program
+  jumpToLabel: "Firmware: the first program"
+- question: What does a bootloader do, in one sentence?
+  answer: "It copies the next program (often an operating system kernel) from storage into memory, then jumps to it so the CPU starts running it."
+  jumpToId: a-bootloader-loads-the-next-program
+  jumpToLabel: A bootloader loads the next program
+- question: Why can't a lesson give one exact list of steps for how every computer starts?
+  answer: "Different machines boot differently: a PC uses UEFI or older BIOS firmware and a bootloader, a phone has its own chain of boot stages, and a small microcontroller may run its one program straight from flash. Only the idea (a fixed start, then each stage loads the next) is shared."
+  jumpToId: no-single-recipe
+  jumpToLabel: No single recipe
+assignment:
+  instruction: "Write the boot chain of one device you own as a numbered list, from pressing power to your first app, naming what each stage loads. Mark which steps you know for sure and which you're guessing, then check one guess against the Wikipedia Booting article."
+  resourceName: 'Wikipedia: Booting'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Booting'
+additionalResources:
+- title: 'Wikipedia: UEFI'
+  type: doc
+  meta: the firmware most PCs start with today
+  url: 'https://en.wikipedia.org/wiki/UEFI'
+- title: 'Wikipedia: Bootloader'
+  type: doc
+  meta: the program that loads the operating system
+  url: 'https://en.wikipedia.org/wiki/Bootloader'
+whyThisMatters: "Startup is the one moment when nothing is running yet, so something has to bring the machine up from nothing. Seeing how that chain works explains boot menus, firmware updates and why a broken bootloader stops a computer before the OS even appears."
+---
+
+The tiny CPU always starts with its program already sitting in memory. A real computer doesn't get that luxury: at power-on, RAM is empty. Something has to fill it before the operating system can run.
+
+By the end you'll be able to describe what happens from reset to a running OS, and why each stage exists.
+
+## Reset: where the CPU starts
+
+When power comes on, or the reset button is pressed, a CPU sets its registers to fixed values and starts fetching. The important one is the program counter: every CPU design fixes where the first fetch happens. On the tiny CPU, reset sets PC to 0x00, which is why every program you wrote started there. On a PC's x86 processor, the first fetch is from a fixed address near the top of the first 4 GB.
+
+A fixed starting address means the designers can put something at that address that is always there, even when RAM is blank.
+
+## Firmware: the first program
+
+That something is **firmware**: a program kept in a flash chip on the board (on older machines, a ROM) and wired to answer at the reset address. Because flash keeps its bits without power, firmware is there at every start.
+
+Firmware's job is to bring the hardware up: check and set up the memory, find the devices, and then find the next program to run on some storage device. On most PCs today the firmware is **UEFI**; older PCs used **BIOS**. You meet it as the setup screen or boot menu you can open while a PC starts.
+
+<KeyIdea>Reset sends the CPU to a fixed address; firmware, kept in a chip that doesn't forget, is waiting there as the first program.</KeyIdea>
+
+## A bootloader loads the next program
+
+The operating system is big and lives on storage. Firmware usually doesn't load it directly. It loads a **bootloader**: a program whose only job is to copy the next program from storage into memory and jump to it.
+
+Here's the idea on the tiny CPU. The input device stands in for storage: it holds the six bytes of a program (`LDI R0, 42`, `OUT R0`, `HALT`). The loader at 0x00 reads them one at a time and stores them from 0x40 on, then jumps there. It should show 42. It doesn't: one line is missing.
+
+<TinyCpu2 editable caption='A bootloader, six bytes at a time' programJson='["LDI R1, 0x40", "LDI R2, 6", "loop: IN R0", "STR R0, [R1]", "DEC R2", "JNZ loop", "JMP 0x40"]' inputJson='[8,42,128,0,168,0]' goalJson='{"out":[42]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+R1 is where the next byte goes, but nothing moves it on, so all six bytes land in 0x40, each on top of the last. Add `INC R1` after the store:
+
+```
+      LDI R1, 0x40     ; load the program here
+      LDI R2, 6        ; six bytes to load
+loop: IN R0            ; read a byte from the device
+      STR R0, [R1]     ; store it in memory
+      INC R1           ; move on to the next box
+      DEC R2
+      JNZ loop
+      JMP 0x40         ; start the program that was loaded
+```
+
+The loaded bytes were never part of the loader's program. The CPU runs them only because the loader put them in memory and jumped there. Bytes are bytes until the PC points at them.
+
+</details>
+
+The same idea, scaled up, is how a real system starts: each stage is a small program that loads a bigger one and hands over control.
+
+## A boot chain on one real PC
+
+Here is the chain on one Linux laptop, with evidence that each stage happened (a real run; other machines differ):
+
+1. **Reset**: the CPU starts fetching from its fixed address, where the firmware is.
+2. **Firmware**: this machine uses UEFI (Linux shows the folder `/sys/firmware/efi` only when it was started by UEFI). The firmware sets up the hardware, then loads a bootloader from the SSD.
+3. **Bootloader**: it loads the Linux kernel into memory and passes it settings. The kernel keeps a record of them:
+
+   ```
+   $ cat /proc/cmdline
+   BOOT_IMAGE=/boot/vmlinuz-7.0.0-34-generic root=UUID=7877ed49-...
+   ```
+
+   `BOOT_IMAGE` names the kernel file the bootloader (GRUB, on this machine) loaded; `root=` tells the kernel which storage holds the rest of the system.
+
+4. **Kernel**: the operating system takes over the hardware, then starts the first ordinary program, which always gets process number 1:
+
+   ```
+   $ ps -o pid,comm -p 1
+       PID COMMAND
+         1 systemd
+   ```
+
+5. **Everything else**: process 1 starts the services, the login screen and, eventually, your apps.
+
+## No single recipe
+
+The idea is shared: a fixed start, then each stage loads the next. The details are not.
+
+- Older PCs used BIOS firmware, which loaded the first block of the disk and ran it.
+- Phones start from code built into the processor chip, which loads and checks a chain of signed stages before the OS.
+- A small microcontroller, such as the one in a microwave, often has no bootloader at all: its one program sits in flash at the reset address and runs directly.
+
+So when you read about booting, ask which machine it describes. The tiny CPU is the simplest case of all: the simulator loads the program for you, so it starts as if the boot chain had already happened.

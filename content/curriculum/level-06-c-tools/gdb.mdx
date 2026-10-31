@@ -1,0 +1,174 @@
+---
+title: "gdb: breakpoints, stepping and backtraces"
+level: level-06-c-tools
+slug: gdb
+order: 4
+timeMin: 12
+learningOutcomes:
+- Build a program for debugging with -g -O0, and run it under gdb
+- Find the cause of a crash from a backtrace, moving between frames and printing variables
+- Stop a program where you choose with breakpoints and conditional breakpoints, then step with next and step
+- Find which line changes a variable with a watchpoint
+primer:
+- title: "Calls and returns in assembly"
+  type: doc
+  meta: "Machine & Memory · frames, the stack and return addresses, which a backtrace lists."
+  essential: true
+- title: "What gcc really does: flags and warnings"
+  type: doc
+  meta: Reread · 2 min · what -g adds.
+  essential: false
+knowledgeCheck:
+- question: "The backtrace showed frame #1 as shout (name=0x0) at crash.c:16. What did that tell you, and what was the real bug?"
+  answer: "The crash happened inside strlen, called from shout at line 16 with name equal to NULL (0x0). Going up to frame #2 showed main calling shout(find(names, 3, 'k')): no name starts with k, so find returned NULL, and shout passed it to strlen without checking."
+  jumpToId: a-crash-and-its-backtrace
+  jumpToLabel: A crash and its backtrace
+- question: Why use break 8 if readings[i] > 100 instead of a plain breakpoint on line 8?
+  answer: "A plain breakpoint stops on every pass through the loop; a conditional one stops only when the condition holds, here at the one suspicious reading. In a loop that runs a million times, that's the difference between stepping forever and stopping exactly where the problem is."
+  jumpToId: stop-only-when-it-matters
+  jumpToLabel: Stop only when it matters
+assignment:
+  instruction: "Take a program of yours with a bug you haven't found yet (or put one in: an off-by-one loop or a NULL pointer). Build it with -g -O0, then find the bug in gdb using a backtrace, a conditional breakpoint or a watchpoint. Write down the commands you used and what each showed."
+  resourceName: "Beej's Quick Guide to GDB"
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bggdb/'
+additionalResources:
+- title: "Debugging with GDB (the manual)"
+  type: doc
+  meta: every command, in full
+  url: 'https://sourceware.org/gdb/current/onlinedocs/gdb.html/'
+- title: "GDB Tutorial (Chris Bourke)"
+  type: video
+  meta: breakpoints, stepping and backtraces, live
+  url: 'https://www.youtube.com/watch?v=bWH-nL7v5F4'
+whyThisMatters: "printf debugging works until the bug is a crash with no output, or a value that goes wrong somewhere in a million iterations. gdb lets you stop a program anywhere, look at any variable and ask who changed it, which turns guessing into finding."
+---
+
+gdb runs your program under its control: it can stop it at any line, show any variable, step one line at a time, and tell you exactly where and how it crashed. You met gdb briefly in Machine & Memory, looking at a return address. Now you'll use it the everyday way.
+
+Build for debugging with **`-g -O0`**: `-g` gives gdb the line and variable information, and `-O0` keeps the code close to your source, so variables aren't optimised away and lines run in order.
+
+The sessions below are real, run with gdb in batch mode (`gdb -q -batch -ex 'command' ...`, which runs a list of commands and prints what an interactive session would). A few lines of gdb's start-up chatter are trimmed. gdb turns off address randomisation, so the addresses repeat from run to run, but they'll differ on your machine.
+
+## A crash and its backtrace
+
+This program shouts the name that starts with a given letter. Run it.
+
+<CRun program="c-tools/gdb-crash" caption='A crash' />
+
+It was stopped by a segmentation fault, and it printed nothing, not even "GRACE" from the first call. Its output was going to a pipe, so it was buffered, and the crash discarded it. On a terminal you'd see "GRACE" first. A crash gives you no hint where it happened. gdb does:
+
+```
+$ gcc -std=c17 -Wall -Wextra -O0 -g crash.c -o crash
+$ gdb -q -batch -ex run -ex bt -ex "frame 1" -ex "info locals" -ex "frame 2" -ex "print names" ./crash
+Program received signal SIGSEGV, Segmentation fault.
+__strlen_avx2 () at ../sysdeps/x86_64/multiarch/strlen-avx2.S:76
+#0  __strlen_avx2 () at ../sysdeps/x86_64/multiarch/strlen-avx2.S:76
+#1  0x000055555555522d in shout (name=0x0) at crash.c:16
+#2  0x00005555555552ee in main () at crash.c:26
+#1  0x000055555555522d in shout (name=0x0) at crash.c:16
+16	    size_t len = strlen(name);
+len = 12884901893
+#2  0x00005555555552ee in main () at crash.c:26
+26	    shout(find(names, 3, 'k'));
+$1 = {0x555555556004 "ada", 0x555555556008 "grace", 0x55555555600e "linus"}
+```
+
+- **`run`** starts the program; it runs until the crash.
+- **`bt`** (backtrace) lists the call stack, innermost first: frame #0 is where it crashed, and each frame below it is the caller.
+- **`frame N`** moves to frame N, and **`info locals`** and **`print`** show that frame's variables.
+
+What caused the crash?
+
+<details>
+<summary>Check your answer</summary>
+
+Frame #0 is inside the C library's `strlen`. That's where it crashed, but not where the bug is. Frame #1 is `shout` at line 16, with **`name=0x0`**: `strlen` was given a null pointer. Frame #2 is `main` at line 26, calling `shout(find(names, 3, 'k'))`. `print names` shows ada, grace and linus: none starts with k, so `find` returned `NULL`, as its comment promises, and `main` passed that straight to `shout`.
+
+The fix belongs in the caller: check `find`'s result before using it. Also notice `len = 12884901893`. `len` hadn't been assigned yet when the crash happened, so `info locals` showed whatever was in its memory. A local that looks crazy in gdb may simply not be initialised yet.
+
+</details>
+
+<KeyIdea>Read a backtrace from the crash outwards: frame #0 says where it died, and the frames below say how it got there. The bug is usually in your code a frame or two up, not in the library.</KeyIdea>
+
+## Breakpoints and stepping
+
+This program sums sensor readings, skipping any marked -1. It prints a total that's far too big:
+
+<CRun program="c-tools/gdb-loop" caption='A total that looks wrong' />
+
+Stop at the start of `total` and step through it:
+
+```
+$ gdb -q -batch -ex "break total" -ex run -ex next -ex next -ex next -ex "info locals" -ex "print readings[0]@n" ./loop
+Breakpoint 1 at 0x1178: file loop.c, line 5.
+Breakpoint 1, total (readings=0x7fffffffd7e0, n=6) at loop.c:5
+5	    int sum = 0;
+6	    for (int i = 0; i < n; i++) {
+7	        if (readings[i] != -1) {
+8	            sum += readings[i];
+i = 0
+sum = 0
+$1 = {12, 15, -1, 14, 900, 13}
+```
+
+- **`break total`** sets a breakpoint at the start of a function (`break loop.c:8` sets one at a line).
+- **`next`** runs the current line and stops at the next one, stepping *over* calls. **`step`** would step *into* a function call instead, and **`continue`** runs to the next breakpoint.
+- **`print readings[0]@n`** prints `n` elements starting at `readings[0]`. The `@` syntax works on pointers, where gdb can't know the length.
+
+The array already shows the problem: one reading is 900.
+
+## Stop only when it matters
+
+In a loop of a million readings, you wouldn't step through every one. A **conditional breakpoint** stops only when its condition is true:
+
+```
+$ gdb -q -batch -ex "break 8 if readings[i] > 100" -ex run -ex "print i" -ex "print readings[i]" -ex "print sum" -ex continue ./loop
+Breakpoint 1 at 0x11a3: file loop.c, line 8.
+Breakpoint 1, total (readings=0x7fffffffd7e0, n=6) at loop.c:8
+8	            sum += readings[i];
+$1 = 4
+$2 = 900
+$3 = 41
+total: 954
+```
+
+It stopped once, at reading 4, with the sum so far 41 (12 + 15 + 14), just before 900 is added.
+
+## Who changed it?
+
+Sometimes you know a variable ends up wrong but not where. A **watchpoint** stops whenever a variable's value changes and shows the old and new values:
+
+```
+$ gdb -q -batch -ex "break total" -ex run -ex "watch sum" -ex continue -ex continue -ex continue -ex continue -ex continue ./loop
+...
+Hardware watchpoint 2: sum
+Old value = -10264
+New value = 0
+...
+Old value = 0
+New value = 12
+...
+Old value = 12
+New value = 27
+...
+Old value = 27
+New value = 41
+...
+Old value = 41
+New value = 941
+total (readings=0x7fffffffd7e0, n=6) at loop.c:6
+```
+
+(Trimmed: each stop also prints the location, `loop.c:6`.) What do the first and last changes tell you?
+
+<details>
+<summary>Check your answer</summary>
+
+The first change, from -10264 to 0, is `int sum = 0;` running: before that line, `sum` held leftover stack contents. The last shows the jump from 41 to 941, so the reading 900 was added. The code does what it says. The data has a bad reading that isn't -1, so the real fix is to decide what a valid reading is (say, 0 to 100) and skip or report anything else. A watchpoint uses the CPU's debug registers ("Hardware watchpoint"), so the program runs at full speed between changes.
+
+</details>
+
+## Done when
+
+You can build for gdb, read a backtrace and move between frames, set plain and conditional breakpoints, step with `next` and `step`, print arrays with `@`, and catch a change with `watch`.

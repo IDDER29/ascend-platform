@@ -1,0 +1,125 @@
+---
+title: "Superscalar: more than one at a time"
+level: level-12-advanced-execution
+slug: superscalar
+order: 1
+timeMin: 10
+learningOutcomes:
+- Explain what it means for a CPU to issue several instructions in the same clock cycle
+- Calculate IPC and CPI for a block of instructions issued one, two or four at a time
+- Explain why a chain of dependent instructions gains nothing from a wider machine
+- Reorder independent instructions so an in-order two-wide machine can issue them in pairs
+primer:
+- title: "A five-stage pipeline"
+  type: doc
+  meta: Reread · 3 min · one instruction finishing per cycle, at best.
+  essential: true
+- title: "Data hazards and forwarding"
+  type: doc
+  meta: Reread · 2 min · when an instruction must wait for another's result.
+  essential: true
+knowledgeCheck:
+- question: Eight independent adds take 9 cycles one at a time, 5 two at a time and 3 four at a time. Why isn't the four-wide time a quarter of the one-wide time?
+  answer: "Issuing finishes in 8, 4 and 2 cycles, but every instruction then needs its last cycle to finish and commit. That fixed cycle at the end doesn't shrink with width, so 9, 5 and 3 rather than 9, 4.5 and 2.25."
+  jumpToId: wider-is-faster-when-the-work-is-independent
+  jumpToLabel: Wider is faster when the work is independent
+- question: Why does a chain of four adds, each using the one before, take 5 cycles whether the machine is one, two or four wide?
+  answer: "Each add needs the previous add's result, so only one of them can ever be ready in a given cycle. Width adds issue slots, not readiness: the chain's length, not the width, sets the time."
+  jumpToId: what-width-cant-fix
+  jumpToLabel: What width can't fix
+assignment:
+  instruction: "Look up the issue or dispatch width of a CPU you use (search for its microarchitecture name and 'dispatch width', or browse uops.info). Then write a loop in C whose body has two independent chains of additions, and one whose body is a single chain of the same length. Compile both with gcc -O2 -S and look at the instructions: which one could a wide core run two at a time?"
+  resourceName: 'uops.info: instruction latencies and throughput'
+  resourceType: site
+  resourceUrl: 'https://uops.info/'
+additionalResources:
+- title: "Modern Microprocessors: A 90-Minute Guide"
+  type: doc
+  meta: superscalar, out-of-order and more, in one readable article
+  url: 'https://www.lighterra.com/papers/modernmicroprocessors/'
+- title: "Superscalar processor (Wikipedia)"
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Superscalar_processor'
+whyThisMatters: "Clock rates stopped climbing in the mid-2000s, so most of a modern core's speed comes from doing several things per cycle. Knowing what lets instructions run side by side, and what forces them into a line, is what makes code fast on real hardware."
+---
+
+The five-stage pipeline in Pipelining finishes at most one instruction per cycle: a CPI of 1 at best. To go faster at the same clock rate, a CPU has to start more than one instruction per cycle. A CPU that can is **superscalar**.
+
+## Several per cycle
+
+A superscalar core fetches, decodes and issues several instructions each cycle, and has several execution units (more than one ALU, separate load and store units) to run them side by side. Its **width** is how many it can issue per cycle. Big desktop and phone cores today issue roughly 4 to 8 instructions per cycle.
+
+With more than one instruction per cycle, CPI drops below 1, so it's usually flipped into **IPC**, instructions per cycle:
+
+```
+IPC = instructions / cycles     CPI = cycles / instructions = 1 / IPC
+```
+
+The lab below schedules a block of instructions on an idealised core. Each row is an instruction; **E** marks the cycles it executes, and **C** the cycle it commits (finishes, in program order). Simple ALU instructions take 1 cycle, a load 3, a multiply 3. This first lab issues in order and leaves out fetch, branches and memory, so you can see issue width on its own.
+
+## Wider is faster when the work is independent
+
+Eight additions, none using another's result. Predict how many cycles they take one, two and four at a time, then try each width.
+
+<OooLab caption='Eight independent adds' blockJson='["add r1, r2, r3","add r4, r5, r6","add r7, r8, r9","add r10, r11, r12","add r13, r14, r15","add r16, r17, r18","add r19, r20, r21","add r22, r23, r24"]' optionsJson='{"outOfOrder":false,"width":1,"window":32,"renaming":true}' />
+
+<details>
+<summary>Check your answer</summary>
+
+| Width | Cycles | IPC |
+|---|---|---|
+| 1 | 9 | 0.89 |
+| 2 | 5 | 1.60 |
+| 4 | 3 | 2.67 |
+
+At width 1 the adds issue in cycles 1 to 8, and the last commits in cycle 9. At width 2 they issue in pairs in cycles 1 to 4, and at width 4 in two groups. The time doesn't halve exactly because the last cycle, when the final results commit, is there whatever the width. Over a long run of independent work that one cycle stops mattering, and IPC approaches the width.
+
+</details>
+
+<KeyIdea>A superscalar core issues several instructions per cycle, so IPC can rise above 1, but only when there are several instructions ready to go at once.</KeyIdea>
+
+## What width can't fix
+
+Now four adds where each uses the one before: r1 feeds r4, r4 feeds r5, r5 feeds r6. Predict the time at width 1, 2 and 4.
+
+<OooLab caption='A chain of four adds' blockJson='["add r1, r2, r3","add r4, r1, r1","add r5, r4, r4","add r6, r5, r5"]' optionsJson='{"outOfOrder":false,"width":1,"window":32,"renaming":true}' />
+
+<details>
+<summary>Check your answer</summary>
+
+5 cycles at every width. Each add waits for the result of the one before it, so they issue in cycles 1, 2, 3 and 4 however many slots are free. The lab says why on each row: "waits: r1 from add r1, r2, r3", and so on.
+
+How many instructions *could* run at once, given their dependences, is a program's **instruction-level parallelism** (ILP). The chain has an ILP of 1; the independent block has as much as you like. A wide core only helps code that has ILP to give it. Everything in this course is about finding more of it.
+
+</details>
+
+## Pairing them up in order
+
+An **in-order** superscalar issues instructions in program order: it can pair an instruction with the next one only if both are ready. This block has three little pairs, each an add and then an add that uses it. On this two-wide in-order core it takes 5 cycles. Reorder the instructions, without changing what any of them compute, to get it down to 4.
+
+<OooLab editable fixed caption='Schedule for a two-wide in-order core' blockJson='["add r1, r2, r3","add r4, r1, r1","add r5, r6, r7","add r8, r5, r5","add r9, r10, r11","add r12, r9, r9"]' optionsJson='{"outOfOrder":false,"width":2,"window":32,"renaming":true}' goalJson='{"maxCycles":4}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Put the three independent first adds together, then the three adds that use them:
+
+```
+add r1, r2, r3
+add r5, r6, r7
+add r9, r10, r11
+add r4, r1, r1
+add r8, r5, r5
+add r12, r9, r9
+```
+
+Now cycle 1 issues r1 and r5, cycle 2 issues r9 and r4 (r1 is ready by then), cycle 3 issues r8 and r12, and the last results commit in cycle 4. In the original order each dependent add sat right behind its producer, so most cycles could issue only one.
+
+Moving just one instruction (for example r5's add up one place) still gives 5 cycles: every dependent add must have its producer issued in an earlier cycle. This is the same **instruction scheduling** you did by hand in Pipelining, and compilers do it for in-order cores. The next lesson's out-of-order core does it in hardware, while the program runs.
+
+</details>
+
+## Done when
+
+You can calculate IPC, explain why the chain doesn't speed up, and scheduled the block into 4 cycles.

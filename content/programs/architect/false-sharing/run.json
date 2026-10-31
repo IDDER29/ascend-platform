@@ -1,0 +1,20 @@
+{
+  "id": "architect/false-sharing",
+  "sourceHash": "0b304a5172c570d0",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 -pthread main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "distance between the counters: 8 bytes, then 64 bytes\nsame cache line:       1199.1 ms (a = 20000000, b = 20000000)\nseparate cache lines:   212.8 ms (a = 20000000, b = 20000000)\nthe shared line was 5.6 times slower\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

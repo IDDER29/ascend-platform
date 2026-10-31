@@ -1,0 +1,88 @@
+---
+title: "Multiplexers: choosing between signals"
+level: level-00-bits-logic
+slug: mux-decoder
+order: 31
+timeMin: 8
+learningOutcomes:
+- Explain what a multiplexer does, and the job of its select input
+- Build a 2-to-1 multiplexer from AND, OR and NOT and check it against its truth table
+- Explain how two select bits choose one of four inputs, and how a wide mux handles whole bytes
+- Describe where a CPU uses multiplexers to route data
+primer:
+- title: "Simplifying logic: identities and De Morgan's laws"
+  type: doc
+  meta: Reread · 2 min · you'll read and build expressions here.
+  essential: true
+knowledgeCheck:
+- question: What does a 2-to-1 multiplexer do?
+  answer: It has two data inputs, A and B, and a select input S. When S is 0 the output copies A; when S is 1 it copies B. The select input chooses which data input gets through.
+  jumpToId: a-switch-made-of-gates
+  jumpToLabel: A switch made of gates
+- question: How many select bits does a multiplexer with 8 data inputs need, and why?
+  answer: Three, because 3 bits make 8 patterns, one for each input. In general, n select bits choose between 2 to the power n inputs.
+  jumpToId: more-inputs-more-select-bits
+  jumpToLabel: More inputs, more select bits
+- question: Give one place a CPU uses a multiplexer.
+  answer: "Choosing the ALU's second input (a register or a number from the instruction), choosing what gets written into a register (the ALU's result or a value from memory), or choosing the next program counter (the next address or a jump target)."
+  jumpToId: where-a-cpu-chooses
+  jumpToLabel: Where a CPU chooses
+assignment:
+  instruction: "In nand2tetris Project 1, build Mux (2-to-1) and then Mux4Way16 (four 16-bit inputs, two select bits) in the online simulator. Use your Mux to build the bigger one rather than starting again."
+  resourceName: 'nand2tetris.org: Project 1, Boolean Logic'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project01'
+additionalResources:
+- title: Multiplexer (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Multiplexer'
+- title: 'eater.net: CPU control logic'
+  type: doc
+  meta: the signals that decide what moves where in a real breadboard CPU
+  url: 'https://eater.net/8bit/control'
+whyThisMatters: "A CPU is mostly data moving between places, and every place where two or more values could go somewhere is a multiplexer making a choice. When you later meet an if statement compiled into a select instruction, or see a datapath diagram full of trapezoids, you're looking at this circuit."
+---
+
+So far every circuit has done one fixed thing to its inputs. A computer also needs circuits that choose: take this value or that one, depending on a signal. The circuit that chooses is called a <b>multiplexer</b>, or mux.
+
+By the end you'll be able to build a 2-to-1 multiplexer from gates, scale it up to more inputs and wider data, and say where a CPU needs one.
+
+## A switch made of gates
+
+A 2-to-1 multiplexer has two data inputs, A and B, and one <b>select</b> input, S. It works like a railway switch:
+
+- When S is 0, the output is A.
+- When S is 1, the output is B.
+
+<TruthTable caption='A 2-to-1 multiplexer' rowsJson='[["S", "A", "B", "OUT"], ["0", "0", "0", "0"], ["0", "0", "1", "0"], ["0", "1", "0", "1"], ["0", "1", "1", "1"], ["1", "0", "0", "0"], ["1", "0", "1", "1"], ["1", "1", "0", "0"], ["1", "1", "1", "1"]]' />
+
+Read the top half (S = 0): OUT always equals A, whatever B is. In the bottom half (S = 1) it always equals B.
+
+To build it, describe it in words: "A when S is off, or B when S is on". That translates directly into gates:
+
+OUT = (A AND NOT S) OR (B AND S)
+
+When S is 0, the second AND is 0 and the first passes A. When S is 1, it's the other way round. Only one AND is ever open, and the OR combines them.
+
+<KeyIdea>A multiplexer is an AND gate per input, opened by the select signal, and an OR to join them. The select bits choose; the data just flows through.</KeyIdea>
+
+Build it in the lab. OUT starts as plain A, which is right only when S is 0. Fix it so every row matches.
+
+<GateLab caption='Build a 2-to-1 multiplexer' inputsJson='["A","B","S"]' outputsJson='["OUT"]' targetJson='{"OUT":"(A AND NOT S) OR (B AND S)"}' startJson='["OUT = A"]' />
+
+## More inputs, more select bits
+
+To choose between four inputs you need two select bits, because 2 bits make 4 patterns: 00 picks the first input, 01 the second, 10 the third and 11 the fourth. Eight inputs need three select bits, and in general n select bits choose between 2 to the power n inputs.
+
+You can build a 4-to-1 mux from three 2-to-1 muxes: two of them pick within each pair using the low select bit, and a third picks between the two winners using the high bit. Building big circuits from small tested ones is how all hardware is made.
+
+Data is usually wider than one bit. To choose between two whole bytes, use eight 2-to-1 muxes side by side, one per bit, all wired to the same select signal. That's an 8-bit-wide multiplexer: one select bit, two bytes in, one byte out.
+
+## Where a CPU chooses
+
+Inside a CPU, every place where a value could come from more than one source has a multiplexer:
+
+<TruthTable caption='Multiplexers in a CPU' rowsJson='[["choice", "the options"], ["the ALU second input", "a register, or a number written in the instruction"], ["what gets written into a register", "the ALU result, or a byte read from memory"], ["the next program counter", "the next address, or a jump target"]]' />
+
+The select signals come from the control unit, which you'll meet in Build a CPU. It reads each instruction and sets every mux in the machine so the right values go to the right places.

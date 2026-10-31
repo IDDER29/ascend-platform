@@ -1,0 +1,88 @@
+---
+title: "Labels and addresses"
+level: level-00-bits-logic
+slug: labels
+order: 68
+timeMin: 7
+learningOutcomes:
+- Explain why a jump or call needs the address of its target
+- Use a label to name a place in a program instead of writing its address
+- Show why a hard-coded address breaks when an instruction is added, and why a label doesn't
+- Explain why the assembler, not the programmer, must turn every label into a number
+primer:
+- title: "Loops as repeated jumps"
+  type: doc
+  meta: Reread · 3 min · every loop jumps back to an address.
+  essential: true
+knowledgeCheck:
+- question: What is a label in an assembly program?
+  answer: "A name for a place in the program, written before an instruction like loop: OUT R0. It stands for that instruction's address, so a jump can say JNZ loop instead of a number."
+  jumpToId: a-label-names-an-address
+  jumpToLabel: A label names an address
+- question: Why does JNZ 0x02 break when you add an instruction at the start of the program?
+  answer: "Every instruction after the new one moves up by two bytes, but the number 0x02 doesn't change, so the jump now lands on the wrong instruction. A label is worked out again each time the program is assembled, so it always points at the right place."
+  jumpToId: why-hard-coded-addresses-break
+  jumpToLabel: Why hard-coded addresses break
+assignment:
+  instruction: "Take the countdown program from this lesson and add two instructions at the very start (any two that don't touch R0). Assemble it in your head: what are the new addresses of every instruction and of the label loop? Check your answer in the Assembler Lab in the next lesson."
+  resourceName: 'nand2tetris.org: Project 6, The Assembler'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project06'
+additionalResources:
+- title: Assembly language (Wikipedia)
+  type: doc
+  meta: labels, symbols and assemblers
+  url: 'https://en.wikipedia.org/wiki/Assembly_language'
+- title: Symbol table (Wikipedia)
+  type: doc
+  meta: the table an assembler keeps for its labels
+  url: 'https://en.wikipedia.org/wiki/Symbol_table'
+whyThisMatters: "Every real program jumps and calls, and no programmer keeps track of addresses by hand. Labels are the first thing an assembler does for you, and the same idea, a name the tools turn into an address, is behind every function name, variable and link step you'll meet in C."
+---
+
+Loops and decisions are jumps, and a jump needs to know where to go. On the tiny CPU that's an address: JNZ 0x02 means "if Z is 0, the next instruction comes from address 0x02". Writing those numbers by hand works, until the program changes.
+
+By the end you'll be able to name places in a program with labels, explain why that matters, and say what the assembler has to do with them.
+
+## Jumps need addresses
+
+Each instruction of the tiny CPU version 2 takes two bytes, starting at address 0x00. So the first instruction is at 0x00, the second at 0x02, the third at 0x04, and so on. This countdown jumps back to the OUT at address 0x02:
+
+<TruthTable caption='A countdown with a written address' rowsJson='[["address", "instruction", "what it does"], ["0x00", "LDI R0, 3", "R0 = 3"], ["0x02", "OUT R0", "show R0"], ["0x04", "DEC R0", "R0 = R0 - 1, and set Z"], ["0x06", "JNZ 0x02", "if R0 is not 0, go back to 0x02"], ["0x08", "HALT", "stop"]]' />
+
+It shows 3, 2, 1 and stops. To write JNZ 0x02 you had to count the bytes yourself.
+
+## A label names an address
+
+A <b>label</b> is a name you put in front of an instruction, followed by a colon. The label stands for that instruction's address, and you can use it anywhere an address goes:
+
+<TinyCpu2 caption='The same countdown, with a label' programJson='["LDI R0, 3", "loop: OUT R0", "DEC R0", "JNZ loop", "HALT"]' />
+
+Here `loop` means 0x02, so JNZ loop is exactly the same instruction as JNZ 0x02: the same two bytes in memory. The CPU never sees the word "loop". It only exists in the source code, for people.
+
+<KeyIdea>A label is a name for an address. The assembler swaps every label for its number; the CPU only ever sees the number.</KeyIdea>
+
+## Why hard-coded addresses break
+
+Programs change. Say you need a new first instruction, LDI R1, 9. Every instruction after it moves up by two bytes, but a jump written as JNZ 0x02 still says 0x02. Address 0x02 now holds LDI R0, 3, so every trip round the loop resets R0 to 3.
+
+Run the program below, then fix it with a label so it shows 3, 2, 1 again.
+
+<TinyCpu2 editable caption='Fix the jump with a label' programJson='["LDI R1, 9", "LDI R0, 3", "OUT R0", "DEC R0", "JNZ 0x02", "HALT"]' goalJson='{"out":[3,2,1]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+As written, it shows 3 over and over, until the simulator stops it after 1,000 steps: the jump goes back to LDI R0, 3 every time. The fix is a label on the OUT line, `loop: OUT R0`, and `JNZ loop`. The label now means 0x04, and if you add more instructions later it moves with them.
+
+</details>
+
+## Labels the assembler must resolve
+
+A label can be used before the line that defines it. In this version, `JZ done` jumps forward to a label further down:
+
+<TinyCpu2 caption='A jump forward to a label' programJson='["LDI R0, 3", "loop: OUT R0", "DEC R0", "JZ done", "JMP loop", "done: HALT"]' />
+
+When the assembler reaches JZ done, it hasn't seen `done:` yet, so it can't know the number. The next lesson shows how it solves that: it reads the program twice.
+
+<KeyIdea>Write names, not numbers. Turning names into numbers is the assembler's job, and it never miscounts.</KeyIdea>

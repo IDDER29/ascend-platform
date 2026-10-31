@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/cache-list-vs-array",
+  "sourceHash": "56af9ba0121320e7",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "array:                 sum 14000000 in    1.6 ms\nlist, nodes in order:  sum 14000000 in   10.3 ms\nlist, nodes scattered: sum 14000000 in  671.6 ms\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

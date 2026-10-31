@@ -1,0 +1,128 @@
+---
+title: "Memory consistency models"
+level: level-14-multicore-gpus
+slug: memory-consistency
+order: 2
+timeMin: 12
+learningOutcomes:
+- Explain sequential consistency, and why real hardware relaxes it for speed
+- Describe x86's total store order (TSO), and show from real litmus tests which reordering it allows and which it forbids
+- Explain the store buffer as the hardware cause of store-then-load reordering, and how a full fence removes it
+- Compare TSO with weaker models such as ARM's, and write portable C with release and acquire
+primer:
+- title: "Cache coherence"
+  type: doc
+  meta: Reread · 3 min · coherence is per address; consistency is about order across addresses.
+  essential: true
+- title: "Atomics and memory ordering: a first look"
+  type: doc
+  meta: "Virtual Memory, Threads & Files · the store-buffering result this lesson explains."
+  essential: true
+knowledgeCheck:
+- question: In the store-buffering test, each thread writes its own variable and then reads the other's. How can both read 0 on x86, when caches are coherent?
+  answer: "Each core puts its store into its private store buffer and lets its later load go ahead before the store has reached the cache. Both loads read the old 0s from the caches while both 1s are still sitting in the store buffers. Coherence only covers values that have reached the caches; the store buffer is before that."
+  jumpToId: the-store-buffer
+  jumpToLabel: The store buffer
+- question: Why does the message-passing pattern (write data, then flag; read flag, then data) never fail on x86 but can on ARM without barriers?
+  answer: "x86's TSO keeps stores in order with stores and loads in order with loads, so if the reader sees the flag it also sees the data. ARM's weaker model lets stores to different addresses become visible out of order, and loads to be done out of order, unless the code uses release and acquire (stlr and ldar) or a barrier (dmb)."
+  jumpToId: weaker-than-tso
+  jumpToLabel: Weaker than TSO
+assignment:
+  instruction: "Rewrite the message-passing example with a release store of the flag and an acquire load of it, compile it with gcc -O2 -S for x86-64, and find which instructions they became. If you can, compile it for 64-bit ARM too (Compiler Explorer has an aarch64 gcc) and compare: which instructions carry the ordering there?"
+  resourceName: 'Preshing: Memory Reordering Caught in the Act'
+  resourceType: doc
+  resourceUrl: 'https://preshing.com/20120515/memory-reordering-caught-in-the-act/'
+additionalResources:
+- title: "x86-TSO: A Rigorous and Usable Programmer's Model (Sewell et al.)"
+  type: pdf
+  meta: the formal model of x86 ordering, in CACM
+  url: 'https://www.cl.cam.ac.uk/~pes20/weakmemory/cacm.pdf'
+- title: "A Primer on Memory Consistency and Cache Coherence"
+  type: pdf
+  meta: the standard textbook treatment, free
+  url: 'https://pages.cs.wisc.edu/~markhill/papers/primer2020_2nd_edition.pdf'
+whyThisMatters: "Lock-free code, message queues and every synchronisation primitive depend on the order in which other cores see your writes. The hardware's model decides which orders are possible; without knowing it, code that passes every test on your laptop can fail on a phone or a server."
+---
+
+Coherence answers "which value of `x` is current?". It says nothing about this: if one core writes `x` and then `y`, can another core see the new `y` but the old `x`? That's the **memory consistency model**: the rules for the order in which one core's memory operations to *different* addresses become visible to the others.
+
+## The model you'd expect
+
+**Sequential consistency** (SC), defined by Leslie Lamport in 1979, is the intuitive one: the result is as if all cores' operations were interleaved into one sequence, each core's operations staying in program order. Any interleaving is allowed; reordering within a core is not.
+
+SC is easy to reason about, and no mainstream CPU provides it by default, because keeping every load and store in order costs too much. A core would have to wait for each store to reach the cache before doing anything else. Instead, each architecture defines a weaker model and gives you **fences** to get order back where you need it.
+
+## Three litmus tests on this machine
+
+A **litmus test** is a tiny two-thread program with one outcome that some models allow and others forbid. Run it many times and see if the outcome ever happens. This program runs three tests, 100000 times each, using relaxed atomics so the compiler emits plain loads and stores, with compiler-only barriers so gcc can't reorder them either. What you see is the hardware's ordering.
+
+- **Store buffering:** thread 1 does `x = 1; r1 = y`, thread 2 does `y = 1; r2 = x`. Can both read 0?
+- **The same with a full fence** between each store and load.
+- **Message passing:** thread 1 does `x = 1; y = 1` (data, then flag); thread 2 does `r1 = y; r2 = x`. Can the flag be 1 but the data 0?
+
+Under SC, none of these outcomes is possible. Predict which ones x86 shows.
+
+<CRun program="architect/litmus-x86" caption='Three litmus tests on x86-64' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- **Store buffering, no fence:** both loads read 0 in tens of thousands of trials (the exact count changes every run). x86 lets a later load go ahead of an earlier store to a different address.
+- **With the fence:** never.
+- **Message passing:** never, in 100000 trials. In a separate check, the reader saw the flag set in about 45% of trials, and every time it also saw the data. x86 keeps stores in order with other stores, and loads in order with other loads.
+
+So x86 relaxes exactly one of SC's four orderings: **a store followed by a load** (to a different address) can appear reordered. That model is **TSO**, total store order.
+
+</details>
+
+## The store buffer
+
+Why that one reordering? Each core has a **store buffer**: a small queue of stores that have executed but not yet been written into the L1 cache. A store waiting for its cache line (perhaps another core holds it in M) sits there while the core carries on. Later loads don't wait for it: they read the cache, or take their value from the buffer if it holds a store to the same address.
+
+In the store-buffering test, both cores park their `= 1` in their own buffers and immediately load the other variable from the cache, where it's still 0. Coherence is not broken: it covers values in the caches, and the stores hadn't got there yet. Because the buffer drains in order (first in, first out), stores still become visible in program order, which is why message passing works on x86.
+
+A **full fence** makes the core wait until its store buffer is empty before any later load. In the program, `atomic_thread_fence(memory_order_seq_cst)` is what gcc 15 compiled into the fence. The real `-O2` output contains no `mfence`, but this:
+
+```
+lock orq	$0, (%rsp)
+```
+
+A locked instruction drains the store buffer just as `mfence` does, and is often cheaper, so gcc uses it on a harmless stack address. The `atomic_store` with the default `seq_cst` order from the atomics lesson compiled to `xchg`, which is locked too, for the same reason.
+
+<KeyIdea>Coherence orders writes to one address; the consistency model orders accesses to different addresses. On x86, the store buffer lets a later load overtake an earlier store, and a fence (a locked instruction) drains the buffer to stop it.</KeyIdea>
+
+## Weaker than TSO
+
+ARM, POWER and RISC-V (with its default RVWMO model) are weaker. They allow stores to different addresses to become visible out of order, and loads to complete out of order. On those machines the message-passing test **can** fail without help: the reader can see the flag and still read the old data.
+
+Portable C states the order it needs and lets the compiler pick instructions:
+
+```c
+/* writer */
+data = 42;
+atomic_store_explicit(&ready, 1, memory_order_release);
+
+/* reader */
+while (!atomic_load_explicit(&ready, memory_order_acquire)) {
+}
+use(data); /* guaranteed to see 42 */
+```
+
+A **release** store makes all earlier writes visible before it; an **acquire** load keeps all later reads after it. On ARMv8 these become `stlr` and `ldar`, instructions with ordering built in. On x86 they become ordinary `mov`s, because TSO already gives these orderings for free.
+
+Try it: which of these would you need on x86, and which on ARM, for the message-passing pattern to be correct?
+
+1. A full fence between the writer's two stores.
+2. Release on the flag store and acquire on the flag load.
+3. Nothing at all.
+
+<details>
+<summary>Check your answer</summary>
+
+On x86, 3 happens to work in the hardware, as the litmus test showed. But in C you still need 2, because the *compiler* may reorder plain or relaxed accesses; release and acquire cost nothing extra on x86. On ARM, 2 is needed, and enough: the release keeps `data` before `ready`, and the acquire keeps the read of `data` after it. A full fence (1) on the writer's side alone would also order the stores, but it does nothing for the reader's loads, and it's stronger and slower than needed. Write 2 everywhere, and the code is correct on every architecture.
+
+</details>
+
+## Done when
+
+You can define sequential consistency, say which reordering TSO allows and show it from the litmus results, explain it with the store buffer and the locked fence, and choose release and acquire for portable message passing.

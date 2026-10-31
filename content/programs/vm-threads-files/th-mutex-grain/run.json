@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/th-mutex-grain",
+  "sourceHash": "8fd0c0855cf00b67",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -pthread main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "lock every time: total 4000000 in 431.4 ms\nlock once each:  total 4000000 in 1.0 ms\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

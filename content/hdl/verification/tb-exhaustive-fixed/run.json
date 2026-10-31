@@ -1,0 +1,18 @@
+{
+  "id": "verification/tb-exhaustive-fixed",
+  "sourceHash": "0f3b6d86491a1dc8",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp sat_add.v tb.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "0 of 256 cases failed\ntb.v:19: $finish called at 256 (1s)\n",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

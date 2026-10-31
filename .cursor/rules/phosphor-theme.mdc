@@ -1,0 +1,39 @@
+---
+description: Phosphor theme — tokens, dark mode, landing primitives
+globs: src/app/globals.css,src/components/homepage/**/*,src/components/ui/button.tsx,src/app/**/*.tsx
+alwaysApply: false
+---
+
+# Phosphor theme
+
+Full doctrine: `docs/design/PHOSPHOR-THEME.md`  
+**Issues / thinking / fixes (look here first):** `docs/design/PHOSPHOR-LESSONS-AND-RUNBOOK.md`
+
+## Non-negotiables
+
+- **No purple.** Brand is green → teal → soft gold (`--brand-violet` is a legacy name).
+- Edit visuals in **`:root` / `.dark` tokens** or shared utilities — do not paste new brand hex in components.
+- Dark mode: `@theme inline` must use `var(...)`. Never bake surface colors as literal RGB in `@theme`.
+- Prefer `bg-bg` / `bg-paper` / `bg-elevated` / `text-ink` over `bg-white` / `text-black`.
+
+## Reuse these
+
+| Need | Use |
+|------|-----|
+| Brand fill | `.bg-brand-gradient` |
+| Feature icon | `landingIconTileClass` |
+| Break (special) | `landingIconCrystalClass` + `glassSurfaceClass` |
+| Section type (marketing) | `landingEyebrowClass` + `landingH2Class` + `landingLeadClass` |
+| Type scale (hub / lessons) | `docs/design/PHOSPHOR-THEME.md` §2 — Bricolage / Hanken / IBM Plex Mono + size ladder |
+| Logo mark | `brandMarkClass` / `brandMarkSmClass` |
+| Final CTA | `ctaPanelClass` |
+| Page width | `max-w-[var(--layout-max)]` or `SectionBand` |
+| Hub main stage | `HUB_MAIN_CLASS` (`bg-paper` vs sidebar `bg-bg`) |
+
+## Break signature
+
+Same gradient as sibling steps. Crystal glaze **only** on Break. Do not reintroduce a solid yellow Break icon.
+
+## Before shipping UI
+
+Light + dark both look correct; `min-w-0` on flex children; no one-off glass/glow stacks when a utility already exists.

@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/ub-hunt-warnings",
+  "sourceHash": "13d2427d69dbee98",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘grade’:\nmain.c:16:12: warning: function returns address of local variable [-Wreturn-local-addr]\n   16 |     return label;\n      |            ^~~~~\nmain.c: In function ‘main’:\nmain.c:29:15: warning: ‘total’ may be used uninitialized [-Wmaybe-uninitialized]\n   29 |         total += scores[i];\n      |         ~~~~~~^~~~~~~~~~~~\nmain.c:26:9: note: ‘total’ was declared here\n   26 |     int total;\n      |         ^~~~~\n"
+  },
+  "run": {
+    "stdout": "scores: 5\naverage: 81\nbest: 95 ((null)), bonus -2147483648\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

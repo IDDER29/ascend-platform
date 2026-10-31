@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/bst-shape",
+  "sourceHash": "f3375adb18843fbb",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "20 30 40 50 60 70 80 \nheight 3\nshuffled inserts: height 25, finding 1022 took 5 compares\nsorted inserts:   height 1023, finding 1022 took 1023 compares\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

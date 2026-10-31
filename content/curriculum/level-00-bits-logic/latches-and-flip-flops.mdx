@@ -1,0 +1,84 @@
+---
+title: "Remembering a bit: latches and flip-flops"
+level: level-00-bits-logic
+slug: latches-and-flip-flops
+order: 40
+timeMin: 9
+learningOutcomes:
+- Explain why the gates you've met so far can compute but can't remember
+- Trace how feeding a gate's output back into its own input lets a circuit hold a bit
+- Read the SR latch's table, including its "keep" row and its forbidden row
+- Explain how a D flip-flop stores exactly the bit on its input at the moment the clock ticks
+primer:
+- title: Logic gates, from switches to circuits
+  type: doc
+  meta: Reread · 3 min · this lesson wires those same gates in a loop.
+  essential: true
+- title: 'Crash Course Computer Science #6: Registers and RAM'
+  type: video
+  meta: Watch · 12 min · latches and the memory built from them.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=fpnE6UAfbtU'
+knowledgeCheck:
+- question: Why can't the half-adder, or any circuit made only of gates feeding forward, remember anything?
+  answer: In a circuit where signals only flow forward, every output is decided entirely by the inputs right now. Change the inputs and the old output is simply gone. To remember, a circuit has to feed an output back into its own input, so the value it produced keeps holding itself in place after the input that set it has moved on.
+  jumpToId: gates-compute-but-forget
+  jumpToLabel: Gates compute, but forget
+- question: A D flip-flop has D = 1 for most of a clock cycle, but D drops to 0 just before the clock rises. What does the flip-flop store, and why?
+  answer: It stores 0. A D flip-flop only looks at D at the instant the clock rises (its edge). Whatever D was earlier in the cycle doesn't matter; the value present at the edge is captured and then held until the next edge, no matter how D wanders in between.
+  jumpToId: the-d-flip-flop-copy-on-the-tick
+  jumpToLabel: "The D flip-flop: copy on the tick"
+assignment:
+  instruction: 'On nand2tetris.org, read the introduction to Project 3 (Memory) and build a one-bit register (the "Bit" chip) from a D flip-flop and a multiplexer. It turns this lesson into a circuit you made yourself.'
+  resourceName: 'nand2tetris.org: Project 3, Memory'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project03'
+additionalResources:
+- title: 'Crash Course Computer Science #6: Registers and RAM'
+  type: video
+  meta: 12 min
+  url: 'https://www.youtube.com/watch?v=fpnE6UAfbtU'
+- title: Petzold, Code, Chapter 14 (Feedback and flip-flops)
+  type: doc
+  meta: ~25-page read
+  url: 'https://en.wikipedia.org/wiki/Code:_The_Hidden_Language_of_Computer_Hardware_and_Software'
+whyThisMatters: "A computer that can only compute is a calculator that forgets every answer the moment you let go of the keys. The loop you meet here, an output wired back into its own input, is how every register, every byte of RAM and every program counter holds a value. Without it, the fetch-execute loop would have nowhere to keep the instruction it just fetched."
+---
+
+So far every circuit you've built has computed something: AND, XOR, a half-adder adding two bits. But each of them has a short memory of exactly zero. This lesson shows the trick that lets a handful of gates <b>hold a bit</b>, and then tames it so it changes only when we say so.
+
+By the end you'll be able to explain why ordinary gates forget, trace how a loop of two gates remembers, read the table of an SR latch, and say exactly when a D flip-flop takes in a new value.
+
+## Gates compute, but forget
+
+Look again at the half-adder. Its sum and carry depend only on A and B <i>right now</i>. Flip A and the old sum is gone: nothing in the circuit kept it. Signals in it flow one way, from inputs to outputs, and a one-way circuit can't hold anything.
+
+A computer needs the opposite too. The fetch-execute loop has to keep the address of the next instruction, the instruction it just fetched, and the numbers it's working on, from one step to the next. Something has to stay put after the input that set it has gone.
+
+<KeyIdea>To remember, a circuit's output has to feed back into its own input, so the value keeps itself in place.</KeyIdea>
+
+## A loop that holds itself: the SR latch
+
+Take two NOR gates and cross them: each gate's output becomes one of the other gate's inputs. The two free inputs are called <b>S</b> (set) and <b>R</b> (reset), and one of the outputs is <b>Q</b>, the stored bit.
+
+Pulse S to 1 and Q becomes 1. Now drop S back to 0: Q <i>stays</i> 1, because the loop keeps feeding that 1 back to itself. Pulse R and Q becomes 0, and again it stays there after R goes back to 0. With both inputs at 0, the latch simply keeps whatever it last held.
+
+<Visual type='diagram' caption='An SR latch: two NOR gates feeding each other' description='Two NOR gates drawn one above the other. Input S enters the lower gate and input R enters the upper gate. The output of each gate crosses over and becomes the second input of the other gate. The upper gate&#39;s output is labeled Q, the stored bit.' />
+
+<TruthTable caption='SR latch: S sets, R resets, neither keeps' rowsJson='[["S", "R", "Q after"], ["0", "0", "keeps its value"], ["1", "0", "1"], ["0", "1", "0"], ["1", "1", "not allowed"]]' />
+
+Setting and resetting at once is the one forbidden move: both outputs are forced to 0, and when the inputs drop the latch can land either way. Real designs make sure it never happens.
+
+## The D flip-flop: copy on the tick
+
+An SR latch changes the instant S or R changes. Inside a CPU, with thousands of signals settling at slightly different speeds, that's chaos. We want every stored bit to change at the same agreed moment, and only then.
+
+The <b>D flip-flop</b> does this. It has one data input, <b>D</b>, and a <b>clock</b> input. It ignores D completely, except at the instant the clock rises from 0 to 1 (its <b>rising edge</b>). At that instant it copies D into Q, and holds it until the next rising edge, whatever D does in between. Inside, it's built from latches, arranged so only that edge gets through.
+
+<Visual type='diagram' caption='A D flip-flop only listens at the edge' description='A timeline with three rows. Top: a clock square wave with three rising edges marked by small arrows. Middle: the D input wiggling between 0 and 1 at random times. Bottom: Q, which changes only exactly at each rising edge, taking whatever value D had at that instant, and stays flat in between.' />
+
+<KeyIdea>A D flip-flop is one bit of memory with a rule: copy D at the clock's tick, and hold it until the next one.</KeyIdea>
+
+## Why this is the start of memory
+
+One flip-flop holds one bit. Line up eight of them on the same clock and you have a box that holds a byte, taking in a new value only at the tick. The next lesson builds exactly that: the clock that keeps time, and the <b>registers</b> made from rows of flip-flops.

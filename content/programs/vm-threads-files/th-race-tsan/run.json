@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/th-race-tsan",
+  "sourceHash": "5d25a7aae3f305f4",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O1 -g -fsanitize=thread -pthread main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "expected 2000, got 2000\n",
+    "stderr": "==================\nWARNING: ThreadSanitizer: data race (pid=586524)\n  Read of size 8 at 0x595b3ee07018 by thread T2:\n    #0 work ./main.c:10 (prog+0x126a) (BuildId: ff730e9854c376110170ecf08f4e105809c0b372)\n\n  Previous write of size 8 at 0x595b3ee07018 by thread T1:\n    #0 work ./main.c:10 (prog+0x1297) (BuildId: ff730e9854c376110170ecf08f4e105809c0b372)\n\n  Location is global 'count' of size 8 at 0x595b3ee07018 (prog+0x4018)\n\n  Thread T2 (tid=586527, running) created by main thread at:\n    #0 pthread_create ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:1078 (libtsan.so.2+0x5cb02) (BuildId: 66d37dc704b813df6c813b77217284deb43a0042)\n    #1 main ./main.c:19 (prog+0x130b) (BuildId: ff730e9854c376110170ecf08f4e105809c0b372)\n\n  Thread T1 (tid=586526, finished) created by main thread at:\n    #0 pthread_create ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:1078 (libtsan.so.2+0x5cb02) (BuildId: 66d37dc704b813df6c813b77217284deb43a0042)\n    #1 main ./main.c:18 (prog+0x12f1) (BuildId: ff730e9854c376110170ecf08f4e105809c0b372)\n\nSUMMARY: ThreadSanitizer: data race ./main.c:10 in work\n==================\nThreadSanitizer: reported 1 warnings\n",
+    "exitCode": 66,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

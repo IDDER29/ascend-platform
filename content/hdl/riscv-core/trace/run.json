@@ -1,0 +1,18 @@
+{
+  "id": "riscv-core/trace",
+  "sourceHash": "1863d37c8d97423f",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp core.v tb_trace.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": " 1  pc=00000000  00004137  x2 <= 16384\n 2  pc=00000004  ff010113  x2 <= 16368\n 3  pc=00000008  49c000ef  x1 <= 12\n 4  pc=000004a4  fe010113  x2 <= 16336\n 5  pc=000004a8  000017b7  x15 <= 4096\n 6  pc=000004ac  00812c23  mem[00003fe8] <= 0\n 7  pc=000004b0  00912a23  mem[00003fe4] <= 0\n 8  pc=000004b4  01212823  mem[00003fe0] <= 0\n 9  pc=000004b8  01312623  mem[00003fdc] <= 0\n10  pc=000004bc  01412423  mem[00003fd8] <= 0\n11  pc=000004c0  00112e23  mem[00003fec] <= 12\n12  pc=000004c4  00010437  x8 <= 65536\ntb_trace.v:27: $finish called at 24 (1s)\n",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

@@ -1,0 +1,150 @@
+---
+title: "Protection, failures and trust"
+level: level-00-bits-logic
+slug: protection
+order: 108
+timeMin: 8
+learningOutcomes:
+- Explain why a system can't assume programs are correct or friendly
+- Describe how the hardware and the kernel stop a program that touches memory or devices it shouldn't
+- Explain why the kernel checks every argument a program passes it
+- Describe what a system does to limit and recover from failures
+primer:
+- title: "Privilege, traps and system calls"
+  type: doc
+  meta: Reread · 3 min · user mode, kernel mode, and the trap between them.
+  essential: true
+- title: "Virtual and physical addresses"
+  type: doc
+  meta: Reread · 3 min · each process has its own map.
+  essential: true
+knowledgeCheck:
+- question: A program runs the outb instruction to talk to a device directly. What happens on Linux, and why?
+  answer: "The CPU is in user mode, where outb is not allowed, so it raises a fault and jumps to the kernel. The kernel stops the program with SIGSEGV. Only the kernel (through its drivers) may drive devices, so one program can't take over hardware others depend on."
+  jumpToId: programs-can-be-hostile
+  jumpToLabel: Programs can be hostile
+- question: Why does the kernel check the buffer address a program passes to write, instead of just reading from it?
+  answer: "The program could pass an address outside its own memory, by mistake or on purpose, for example one inside the kernel or another process. If the kernel used it unchecked, it would read memory the program isn't allowed to see. So it refuses with an error."
+  jumpToId: the-kernel-checks-what-its-given
+  jumpToLabel: "The kernel checks what it's given"
+- question: When a program crashes with a segmentation fault, why don't other programs crash too?
+  answer: "Each process has its own address space, and the fault stops only the process that caused it. The kernel reclaims its memory and open files, and everything else keeps running. Isolation turns one program's failure into a contained event."
+  jumpToId: failures-and-recovery
+  jumpToLabel: Failures and recovery
+assignment:
+  instruction: "Write a C program with an array of 4 ints and a loop that writes to element 0 to 9. Compile it once normally and once with -fsanitize=address, run both, and compare. Explain why C does not check the bounds itself, which tool did, and why the operating system did or didn't stop the first version."
+  resourceName: 'Wikipedia: Memory protection'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Memory_protection'
+additionalResources:
+- title: 'Wikipedia: Segmentation fault'
+  type: doc
+  meta: what the message means and what causes it
+  url: 'https://en.wikipedia.org/wiki/Segmentation_fault'
+- title: 'man 2 fsync'
+  type: doc
+  meta: how a program makes sure its data survives a crash
+  url: 'https://man7.org/linux/man-pages/man2/fsync.2.html'
+whyThisMatters: "Every program you write will be run alongside programs that are buggy, and some that are hostile. Knowing where the protection boundaries are, and that anything crossing them gets checked, is the foundation of both writing robust software and understanding security."
+---
+
+Everything so far assumed programs do what they're meant to. They don't. Programs have bugs, follow bad pointers and run off the ends of arrays. Some are written to cause harm. A system shared by many programs has to survive all of them.
+
+## Programs can be wrong
+
+This program follows a pointer to address 0x10, which isn't part of its memory:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    int *p = (int *)0x10;
+    printf("about to write through %p\n", (void *)p);
+    fflush(stdout);
+    *p = 42;
+    printf("never printed\n");
+    return 0;
+}
+```
+
+On Linux (gcc 15.2, x86-64, run from bash followed by `echo "exit status $?"`; messages differ by system):
+
+```
+about to write through 0x10
+bash: line 1: 538167 Segmentation fault         (core dumped) ./crash
+exit status 139
+```
+
+The MMU found no mapping for 0x10 in this process's map, the CPU trapped into the kernel, and the kernel ended the program. Nothing else on the machine noticed.
+
+## Programs can be hostile
+
+This one tries something worse: talking to a hardware I/O port directly, with the x86 `outb` instruction:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    printf("about to talk to I/O port 0x80 directly\n");
+    fflush(stdout);
+    __asm__ volatile ("outb %%al, $0x80" : : "a"(0));
+    printf("never printed\n");
+    return 0;
+}
+```
+
+```
+about to talk to I/O port 0x80 directly
+--- SIGSEGV {si_signo=SIGSEGV, si_code=SI_KERNEL, si_addr=NULL} ---
++++ killed by SIGSEGV (core dumped) +++
+```
+
+`outb` is a **privileged** instruction. In user mode, the CPU refuses it and traps to the kernel (`SI_KERNEL`: the kernel sent this signal), which stops the program. If any program could drive devices, any program could wipe the disk or read the keyboard of another user.
+
+Notice the contrast with the tiny CPU: its `OUT` works for every program, because it has no user mode and no kernel. That's fine for one trusted program at a time, and impossible for a shared machine.
+
+## The kernel checks what it's given
+
+A system call is a doorway into the kernel, which runs with full privilege. So the kernel treats every argument as suspect: is this file descriptor really open in this process? Is this buffer address really inside this process's memory?
+
+This program has two problems. Step through it to see how the kernel treats each one. Then fix it so the screen shows `hi`, the program exits with code 0, and the kernel never has to stop it. In this model, the app's own memory is 0x4000 to 0x7FFF, and the text `hi` is stored at 0x4000.
+
+<SyscallLab editable caption='A program that crosses the line' startJson='["write 1 @0x9000", "out 1 65", "exit 0"]' goalJson='{"screen":"hi","exit":0,"notKilled":true}' />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+write 1 @0x4000
+exit 0
+```
+
+- `write 1 @0x9000` points outside the app's memory. The kernel refuses with "bad address" but lets the program continue: a bad argument is the program's mistake, reported back to it.
+- `out 1 65` is a privileged instruction in user mode. That isn't a request at all, so the kernel stops the program.
+
+To put text on the screen, ask the kernel: `write 1` with a buffer the app owns (or `write 1 "hi"`).
+
+</details>
+
+<KeyIdea>Hardware stops what a program may not do at all (privileged instructions, unmapped addresses); the kernel checks every request a program is allowed to make.</KeyIdea>
+
+## Checking bounds
+
+The kernel can only check what crosses into it. Inside a program, C itself doesn't check array bounds: writing `a[9]` in an array of 4 just writes to whatever is 36 bytes past the start. If that's still the program's own memory, nothing stops it, and it silently corrupts another variable. Many security holes start exactly here.
+
+Defences come in layers: languages that check bounds, compiler tools such as `-fsanitize=address` that catch the mistake while testing, and the OS limits (separate address spaces, no-execute memory, randomised addresses) that make what's left harder to exploit.
+
+## Failures and recovery
+
+Not every failure is a bug. Disks fail, power goes, networks drop. Systems plan for it:
+
+- **Contain it.** A crashed process is cleaned up by the kernel (memory freed, files closed), and others keep running.
+- **Report it.** System calls return errors; programs return exit codes (139 above means "killed by signal 11, SIGSEGV").
+- **Make it recoverable.** Data in RAM is lost on a power cut. Programs that must not lose data call `fsync` to force it to the disk before saying "saved", and file systems keep a journal so they can repair themselves after a crash.
+
+<details>
+<summary>Check your answer: a text editor writes your file and immediately shows "Saved". The power goes off a second later, and the change is gone. What should the editor have done?</summary>
+
+A write only puts the bytes in the kernel's RAM cache; the kernel writes them to the disk later. Closing the file doesn't force it either. The editor should call `fsync` on the file (and wait for it to return) before telling you it's saved.
+
+</details>

@@ -1,0 +1,14 @@
+{
+  "id": "c-language/link-multiple-def",
+  "sourceHash": "fc02e48be148d137",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c blue.c red.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "/usr/bin/x86_64-linux-gnu-ld.bfd: /tmp/cc6L2FKa.o:(.bss+0x0): multiple definition of `count'; /tmp/cciNVK2R.o:(.bss+0x0): first defined here\ncollect2: error: ld returned 1 exit status\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

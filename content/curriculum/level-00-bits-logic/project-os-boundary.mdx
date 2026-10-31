@@ -1,0 +1,109 @@
+---
+title: "Project: Follow a request across the OS boundary"
+level: level-00-bits-logic
+slug: project-os-boundary
+order: 110
+timeMin: 25
+learningOutcomes:
+- Step through a screen-output request and a file-save request, saying for each step whether the app, the kernel or the hardware does it
+- Explain why a saved file sits in RAM until it is closed or synced, and what that means if the power goes off
+- Explain why an app asks the kernel instead of driving a device itself
+- Say which parts of this lab are a model and which the tiny CPU really implements
+primer:
+- title: "Privilege, traps and system calls"
+  type: doc
+  meta: Reread · 3 min · the trap into kernel mode and back.
+  essential: true
+- title: "Files and file systems"
+  type: doc
+  meta: Reread · 3 min · why saving a file isn't changing RAM.
+  essential: true
+knowledgeCheck:
+- question: In the trace for write(1, "hello"), which steps happen in kernel mode?
+  answer: "Everything from the trap to the return: the kernel's checks (descriptor 1 is the screen, the buffer is the app's own) and the display driver's work. The app's own steps, before the trap and after the return, are in user mode."
+  jumpToId: part-1-a-line-on-the-screen
+  jumpToLabel: "Part 1: A line on the screen"
+- question: After write(3, "saved") returns 5, is the text on the disk?
+  answer: "Not yet. The kernel copied it into its RAM cache of the file and returned. It reaches the disk on close, sync or exit, so a power cut before that would lose it."
+  jumpToId: part-2-save-a-file
+  jumpToLabel: "Part 2: Save a file"
+assignment:
+  instruction: "Pick an app you use (a text editor, a game, a browser) and one thing it does that you can see: saving, playing a sound, showing a page. Write it as a short trace like the lab's: what the app does itself, which system call it would make, what the kernel checks, and which device does the work."
+  resourceName: 'OSTEP: Limited Direct Execution'
+  resourceType: doc
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-mechanisms.pdf'
+additionalResources:
+- title: "System call (Wikipedia)"
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/System_call'
+whyThisMatters: "Every program you'll write in C, Python or anything else crosses this boundary all the time, to print, to save, to talk to the network. Knowing what happens on each side, and who checks what, is what lets you reason about slow programs, lost data and security bugs later."
+---
+
+An app can compute on its own, but to show something, save something or touch any device it has to ask the operating system. In this guided lab you follow two requests across that boundary, then see what happens when an app tries to skip it.
+
+The lab is a teaching model of a real OS, not a kernel running on the tiny CPU. Each step is labelled with who does it: the **App**, the **CPU** switching modes, the **Kernel**, or a **Device**.
+
+## Part 1: A line on the screen
+
+Step through this program one step at a time. For each step, say who does it before you read the label.
+
+<SyscallLab caption='Showing hello on the screen' startJson='["compute builds the message", "write 1 \"hello\"", "exit 0"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+- **compute** stays in user mode: the app uses its own registers and memory, no OS needed.
+- **write(1, "hello")**: the app puts the call and its arguments in registers (App). The trap switches to kernel mode (CPU). The kernel checks that descriptor 1 is the screen and the buffer is the app's own (Kernel). The display driver hands the bytes to the display controller (Device). The kernel returns 5, the number of bytes written, and the CPU switches back to user mode (CPU).
+- **exit(0)**: one more trap. The kernel frees the process and records its exit code.
+
+The app never touches the display. It asks, and the kernel does the work with a driver.
+
+</details>
+
+## Part 2: Save a file
+
+This program means to save "saved" in notes.txt. Step it to the end and look at the RAM cache and the disk. Then change the program so the file really is on the disk.
+
+<SyscallLab editable caption='Saving a file' startJson='["open \"notes.txt\"", "write 3 \"saved\""]' goalJson='{"disk":{"notes.txt":"saved"}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+After `write 3 "saved"` the text is only in the kernel's RAM cache: the write returned 5, but the disk hasn't changed. Add `close 3` (or `sync`, or `exit 0`, which closes everything): in this model, the storage controller then writes the file to the disk.
+
+Real systems keep writes in RAM too, because RAM is far quicker than storage, and they are lazier than this model: Linux may keep a closed file's new data in RAM for several seconds and write it back later. Only `sync` or `fsync` makes the kernel write it now. That's why a sudden power cut can lose a file you just "saved", and why programs that must not lose data call `fsync`.
+
+</details>
+
+## Part 3: Skipping the OS
+
+This app wants to put the letter H (72) on the screen, and tries to drive the display port itself with `out`. Run it, then fix it so the screen shows H and the kernel doesn't stop the app.
+
+<SyscallLab editable caption='Talking to a device directly' startJson='["compute decides to show H", "out 1 72", "exit 0"]' goalJson='{"screen":"H","notKilled":true}' />
+
+<details>
+<summary>Check your answer</summary>
+
+`out` is a privileged instruction. In user mode the CPU refuses it and traps to the kernel, which stops the program. Nothing after it runs, not even `exit`. Replace it with a request: `write 1 "H"`.
+
+If any app could drive devices directly, one buggy or hostile program could scribble over the disk or another program's window. Making device access privileged, and checking every request in the kernel, is what keeps programs apart.
+
+</details>
+
+## Part 4: Model or machine?
+
+Which of these does the tiny CPU (version 2) really have, and which exist only in this lab's model: user and kernel mode, the OUT instruction, a kernel, file descriptors, a disk?
+
+<details>
+<summary>Check your answer</summary>
+
+The tiny CPU really has `OUT`, and any program on it may use it: there's no user mode, no kernel, and nothing is privileged. User and kernel mode, the kernel's checks, file descriptors, the RAM cache and the disk are all part of the model, which follows how a real OS such as Linux works, much simplified. The model shows *who does what*, not how a real kernel is built.
+
+</details>
+
+<KeyIdea>An app asks; the kernel checks and acts; devices do the work. The trap into kernel mode is the only door between them.</KeyIdea>
+
+## Done when
+
+You've said who does each step in part 1, got notes.txt onto the disk, fixed the app that skipped the OS, and named which parts are a model.

@@ -1,0 +1,94 @@
+---
+title: "Codes, symbols and meaning"
+level: level-00-bits-logic
+slug: codes-and-meaning
+order: 6
+timeMin: 7
+learningOutcomes:
+- Explain a code as an agreed mapping between bit patterns and meanings
+- Show that the same bit pattern can mean different things under different codes
+- Work out how many different messages a code with a given number of bits can tell apart
+- Explain why sender and receiver must share the same code for a message to survive
+primer:
+- title: "What is a bit?"
+  type: doc
+  meta: Reread · 2 min · this lesson starts from one bit and builds codes from several.
+  essential: true
+- title: 'Representing Numbers and Letters with Binary: Crash Course Computer Science #4'
+  type: video
+  meta: Watch · 11 min · the same idea applied to numbers and letters.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=1GSjbWt0c9M'
+knowledgeCheck:
+- question: What does the bit pattern 01000001 mean?
+  answer: On its own, nothing in particular. Read as an unsigned number it is 65; read with the ASCII text code it is the letter A; in a code you invent it could mean anything. The meaning comes from the code both sides agreed on, not from the bits.
+  jumpToId: one-pattern-many-meanings
+  jumpToLabel: One pattern, many meanings
+- question: How many different messages can a 3-bit code tell apart, and why?
+  answer: "Eight. Each extra bit doubles the number of patterns: 1 bit gives 2, 2 bits give 4, 3 bits give 8 (000 to 111). In general n bits give 2 to the power n patterns."
+  jumpToId: how-many-messages-fit
+  jumpToLabel: How many messages fit
+- question: Why can a message be sent perfectly and still be misunderstood?
+  answer: The receiver may decode it with a different code from the sender. Every bit arrives intact, but the patterns get mapped to the wrong meanings, because the meaning was never stored in the bits.
+  jumpToId: a-code-is-an-agreement
+  jumpToLabel: A code is an agreement
+assignment:
+  instruction: "Invent a 2-bit code for four messages you might send a friend (for example: on my way, running late, call me, all good). Write it as a table. Then write the same four messages using a different assignment of patterns, and explain what goes wrong if your friend decodes with the first table while you encode with the second."
+  resourceName: 'CS50 Week 0: representing information'
+  resourceType: site
+  resourceUrl: 'https://cs50.harvard.edu/x/weeks/0/'
+additionalResources:
+- title: Code (Wikipedia)
+  type: doc
+  meta: reference, codes in communication
+  url: 'https://en.wikipedia.org/wiki/Code'
+- title: ASCII (Wikipedia)
+  type: doc
+  meta: reference, the code that maps bytes to letters
+  url: 'https://en.wikipedia.org/wiki/ASCII'
+- title: Morse code (Wikipedia)
+  type: doc
+  meta: an early code built from two kinds of signal
+  url: 'https://en.wikipedia.org/wiki/Morse_code'
+whyThisMatters: "Every kind of data you'll ever handle is a code layered on bits: numbers, text, colours, instructions, network packets. When a program shows garbled text, a negative number where a big one should be, or a file that won't open, the bits are usually fine; something read them with the wrong code. Knowing that meaning is an agreement, not a property of the bits, is what lets you find those bugs."
+---
+
+You've seen that a bit is the answer to one yes/no question. One bit can't say much. Put a few side by side and you can say a lot more, but only once everyone agrees what each pattern stands for.
+
+By the end you'll be able to explain what a code is, work out how many messages a code can carry, and say why the same bits can mean completely different things.
+
+## A code is an agreement
+
+A <b>code</b> is an agreed list that pairs each pattern of bits with a meaning. Here is one for a tiny doorbell display, using two bits:
+
+<TruthTable caption='A 2-bit doorbell code' rowsJson='[["pattern", "meaning"], ["00", "nobody there"], ["01", "delivery"], ["10", "visitor"], ["11", "emergency"]]' />
+
+Nothing about 10 means "visitor". Someone decided it, wrote it down, and both the doorbell and the display were built to follow that decision. If the display had been built from a different table, the same 10 might light up "delivery".
+
+<KeyIdea>A code is a shared agreement. The sender encodes with it, the receiver decodes with it, and both must use the same one.</KeyIdea>
+
+## How many messages fit
+
+Each bit you add doubles the number of patterns, because every old pattern can now end in a 0 or a 1:
+
+<TruthTable caption='More bits, more patterns' rowsJson='[["bits", "patterns", "examples"], ["1", "2", "0, 1"], ["2", "4", "00, 01, 10, 11"], ["3", "8", "000 up to 111"], ["8", "256", "00000000 up to 11111111"]]' />
+
+So n bits give 2 to the power n different patterns. If you need to tell apart 5 messages, 2 bits (4 patterns) aren't enough and 3 bits (8 patterns) are, with 3 patterns left over.
+
+## One pattern, many meanings
+
+Take the eight bits 01000001. What do they mean?
+
+- Read as a whole number in binary, they are 65.
+- Read with <b>ASCII</b>, the standard code for text, they are the capital letter A.
+- Read with a code of your own, they could be "turn left" or a shade of grey.
+
+The bits are identical every time. Only the code changed. A computer's memory is full of patterns like this, and nothing in memory says which code they were written with. The program reading them has to know.
+
+<KeyIdea>Meaning is not stored in the bits. It comes from the code used to read them.</KeyIdea>
+
+## When codes don't match
+
+A message can arrive with every bit perfect and still be wrong. If you send 10 meaning "visitor" and the display decodes with a table where 10 means "delivery", nothing was lost in transit. The two sides simply didn't share a code.
+
+This is why so much of computing is about agreeing on codes: text standards like ASCII, file formats, network protocols. Each one is a carefully written agreement so that bits written by one machine mean the same thing when another machine reads them.

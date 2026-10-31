@@ -1,0 +1,17 @@
+{
+  "id": "rtl/synth-counter",
+  "sourceHash": "377436f765c91fb6",
+  "tool": "synth",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "yosys -p \"read_verilog -sv counter.v; synth -top counter; stat\""
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "=== counter ===\n\n   Number of wires:                  7\n   Number of wire bits:             16\n   Number of public wires:           3\n   Number of public wire bits:       6\n   Number of ports:                  3\n   Number of port bits:              6\n   Number of memories:               0\n   Number of memory bits:            0\n   Number of processes:              0\n   Number of cells:                 10\n     $_AND_                          2\n     $_NOT_                          1\n     $_SDFF_PP0_                     4\n     $_XOR_                          3",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

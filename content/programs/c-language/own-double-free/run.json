@@ -1,0 +1,20 @@
+{
+  "id": "c-language/own-double-free",
+  "sourceHash": "847b08f7527f4352",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=address main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "=================================================================\n==564653==ERROR: AddressSanitizer: attempting double-free on 0x6f9c255e0010 in thread T0:\n    #0 0x737c2672a3ff in free ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:51\n    #1 0x55d09383c33b in main ./main.c:16\n    #2 0x737c2622a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #3 0x737c2622a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #4 0x55d09383c184 in _start (/tmp/build/prog+0x1184) (BuildId: 06e1a8baed7a0996e491ce5ebd19eb09e3501b3e)\n\n0x6f9c255e0010 is located 0 bytes inside of 16-byte region [0x6f9c255e0010,0x6f9c255e0020)\nfreed by thread T0 here:\n    #0 0x737c2672a3ff in free ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:51\n    #1 0x55d09383c2b7 in finish ./main.c:6\n    #2 0x55d09383c32f in main ./main.c:15\n    #3 0x737c2622a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #4 0x737c2622a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #5 0x55d09383c184 in _start (/tmp/build/prog+0x1184) (BuildId: 06e1a8baed7a0996e491ce5ebd19eb09e3501b3e)\n\npreviously allocated by thread T0 here:\n    #0 0x737c2672b60f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67\n    #1 0x55d09383c2d0 in main ./main.c:10\n    #2 0x737c2622a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #3 0x737c2622a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #4 0x55d09383c184 in _start (/tmp/build/prog+0x1184) (BuildId: 06e1a8baed7a0996e491ce5ebd19eb09e3501b3e)\n\nSUMMARY: AddressSanitizer: double-free ./main.c:16 in main\n==564653==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

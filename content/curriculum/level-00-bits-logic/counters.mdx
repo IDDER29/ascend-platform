@@ -1,0 +1,123 @@
+---
+title: "Counters: registers that count"
+level: level-00-bits-logic
+slug: counters
+order: 42
+timeMin: 7
+learningOutcomes:
+- Explain a counter as a register whose next value is its current value plus 1
+- Build a binary counter bit by bit from XOR and AND, and say when each bit flips
+- Add an enable input that pauses the count and a reset input that sets it back to 0
+- Predict where a counter wraps around, and connect counters to the program counter
+primer:
+- title: "The clock and registers"
+  type: doc
+  meta: Reread · 3 min · a counter is a register with a rule.
+  essential: true
+- title: "Why a computer needs state"
+  type: doc
+  meta: Reread · 2 min · register plus next-state logic.
+  essential: true
+knowledgeCheck:
+- question: In a binary counter, when does bit Q1 flip?
+  answer: "At a tick where Q0 is 1 (and counting is enabled). Q1 := Q1 XOR (Q0 AND EN): it flips exactly when the bit below it is about to carry, just like the tens digit of a decimal counter moving when the ones digit passes 9."
+  jumpToId: counting-bit-by-bit
+  jumpToLabel: Counting bit by bit
+- question: A 3-bit counter shows 111 and ticks once more with counting enabled. What does it show, and why?
+  answer: "000. Three bits hold 0 to 7, so 7 + 1 = 8 needs a fourth bit; the carry out of the top is lost and the counter wraps around to 0."
+  jumpToId: three-bits-and-the-wraparound
+  jumpToLabel: Three bits and the wraparound
+- question: What do the enable and reset inputs do to a counter?
+  answer: "With enable at 0 the counter keeps its value at each tick. With reset at 1 the next tick sets it to 0, whatever it held."
+  jumpToId: pause-and-start-again
+  jumpToLabel: Pause and start again
+assignment:
+  instruction: "Ben Eater's 8-bit computer uses a counter chip as its program counter. Read his page on the program counter, then explain in two or three sentences how a counter with a load input lets a jump instruction work."
+  resourceName: 'eater.net: Build an 8-bit computer'
+  resourceType: site
+  resourceUrl: 'https://eater.net/8bit'
+additionalResources:
+- title: Counter (digital) (Wikipedia)
+  type: doc
+  meta: reference, including ripple and synchronous counters
+  url: 'https://en.wikipedia.org/wiki/Counter_(digital)'
+- title: Program counter (Wikipedia)
+  type: doc
+  meta: the counter at the heart of every CPU
+  url: 'https://en.wikipedia.org/wiki/Program_counter'
+whyThisMatters: "The program counter that steps a CPU through its instructions is a counter like the one you build here, with a load input added for jumps. Counters also time sounds and screens, count events, and walk through memory. It's the simplest useful state machine, and you'll see it everywhere."
+---
+
+You now have registers that hold a number and a clock that says when they change. The simplest useful thing to build from them is a <b>counter</b>: a register that adds 1 to itself at every tick.
+
+By the end you'll be able to build a binary counter from gates, pause it and reset it, and predict exactly where it wraps around.
+
+## A register that adds 1
+
+In the last lessons a register had a rule for its next value. For a counter the rule is: next value = current value + 1. You already have a circuit for "+ 1": the adder. Feed the register's output into an adder with the other input fixed at 1, and feed the sum back into the register. Each tick, the register takes in its own value plus one.
+
+<KeyIdea>A counter is a register whose next-state logic is "add 1".</KeyIdea>
+
+A whole adder is more than a counter needs, though. Adding 1 has a simple pattern you can build directly.
+
+## Counting bit by bit
+
+Look at what each bit does as a 2-bit counter counts 0, 1, 2, 3:
+
+<TruthTable caption='A 2-bit counter, tick by tick' rowsJson='[["count", "Q1", "Q0"], ["0", "0", "0"], ["1", "0", "1"], ["2", "1", "0"], ["3", "1", "1"], ["0 again", "0", "0"]]' />
+
+- Q0, the lowest bit, flips at every tick.
+- Q1 flips only when Q0 is 1, because that's when the bit below carries.
+
+In logic, with an enable input EN that says whether to count at all:
+
+- Q0 := Q0 XOR EN (XOR with 1 flips a bit; XOR with 0 leaves it).
+- Q1 := Q1 XOR (Q0 AND EN).
+
+The lab below starts with a counter that's half wrong: Q0 flips whether or not EN is 1, and Q1 never changes. Fix both lines. The fourth tick has EN = 0, so a correct counter must hold still there.
+
+<ClockLab caption='A 2-bit counter with enable' inputsJson='["EN"]' registersJson='["Q1","Q0"]' startJson='["Q0 := NOT Q0", "Q1 := Q1"]' targetJson='["Q0 := Q0 XOR EN", "Q1 := Q1 XOR (Q0 AND EN)"]' ticksJson='[{"EN":1},{"EN":1},{"EN":0},{"EN":1},{"EN":1}]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`Q0 := Q0 XOR EN` and `Q1 := Q1 XOR (Q0 AND EN)`. The count goes 1, 2, 2 (held, since EN was 0), 3, then 0.
+
+</details>
+
+## Three bits and the wraparound
+
+The pattern keeps going: each bit flips when every bit below it is 1. For a third bit, Q2 := Q2 XOR (Q1 AND Q0 AND EN). That's the same carry you met in the adder, rippling up.
+
+Three bits count 0 to 7. What happens at the next tick after 7? Every bit is 1, so every bit flips: 111 becomes 000. The 8 needs a fourth bit that isn't there, so the count <b>wraps around</b>. It's the same overflow you met in Binary & Data, now happening over time.
+
+Add the missing third bit below, then run all nine ticks and watch it wrap.
+
+<ClockLab caption='A 3-bit counter that wraps' inputsJson='["EN"]' registersJson='["Q2","Q1","Q0"]' startJson='["Q0 := Q0 XOR EN", "Q1 := Q1 XOR (Q0 AND EN)", "Q2 := Q2"]' targetJson='["Q0 := Q0 XOR EN", "Q1 := Q1 XOR (Q0 AND EN)", "Q2 := Q2 XOR (Q1 AND Q0 AND EN)"]' ticksJson='[{"EN":1},{"EN":1},{"EN":1},{"EN":1},{"EN":1},{"EN":1},{"EN":1},{"EN":1},{"EN":1}]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`Q2 := Q2 XOR (Q1 AND Q0 AND EN)`. The count goes 1, 2, 3, 4, 5, 6, 7, then 0 at the eighth tick and 1 at the ninth.
+
+</details>
+
+## Pause and start again
+
+Two controls make a counter useful:
+
+- <b>Enable</b> (EN) pauses it: with EN at 0, every XOR leaves its bit alone, so the register keeps its value. That's the load idea from the registers lesson again.
+- <b>Reset</b> (RST) sets it back to 0 at the next tick, whatever it held. AND each next value with NOT RST: when RST is 1, every bit's next value is 0.
+
+<ClockLab caption='Add a reset' inputsJson='["EN","RST"]' registersJson='["Q1","Q0"]' startJson='["Q0 := Q0 XOR EN", "Q1 := Q1 XOR (Q0 AND EN)"]' targetJson='["Q0 := (Q0 XOR EN) AND NOT RST", "Q1 := (Q1 XOR (Q0 AND EN)) AND NOT RST"]' ticksJson='[{"EN":1,"RST":0},{"EN":1,"RST":1},{"EN":1,"RST":0},{"EN":1,"RST":0},{"EN":1,"RST":0},{"EN":0,"RST":0}]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`Q0 := (Q0 XOR EN) AND NOT RST` and `Q1 := (Q1 XOR (Q0 AND EN)) AND NOT RST`. The count goes 1, then 0 (reset), 1, 2, 3, and holds at 3 when EN is 0.
+
+</details>
+
+<KeyIdea>A counter steps through numbers one tick at a time, can be paused and reset, and wraps around when it runs out of bits.</KeyIdea>
+
+In Build a CPU you'll meet the most important counter in a computer: the <b>program counter</b>. It counts up through the addresses of instructions, one per instruction, and a jump simply loads a new value into it instead of adding 1.

@@ -2,7 +2,7 @@
 title: The stack & the heap
 level: level-01-machine-memory
 slug: the-stack-and-the-heap
-order: 4
+order: 6
 timeMin: 8
 learningOutcomes:
 - Trace what happens to the stack when one function calls another and later returns
@@ -54,7 +54,7 @@ The stack and the heap solve the same basic problem — where to put data while 
 
 Every time one function calls another, the CPU pushes a <b>stack frame</b> onto the stack: the address to return to once the called function finishes, room for that function's local variables, and often a copy of a few registers it plans to reuse. The stack pointer (SP, from Lesson 1) just moves down to carve out that space — pushing is cheap, just a subtraction.
 
-When the function returns, its frame is popped — the stack pointer moves back up, the return address is read to know where execution resumes, and every local variable that lived in that frame simply ceases to exist. Nothing is zeroed out or cleaned up; the bytes are just no longer claimed by anyone, which is exactly why using a variable's address after its function has returned is a serious bug you'll learn to avoid in Level 02.
+When the function returns, its frame is popped — the stack pointer moves back up, the return address is read to know where execution resumes, and every local variable that lived in that frame simply ceases to exist. Nothing is zeroed out or cleaned up; the bytes are just no longer claimed by anyone, which is exactly why using a variable's address after its function has returned is a serious bug you'll learn to avoid in The C Language.
 
 <Visual type='diagram' caption='Three calls deep: main → foo → bar' description='A vertical stack diagram showing three stacked frames from a call chain main() -&gt; foo() -&gt; bar(), growing downward. Bottom frame (oldest): &#39;main() — locals: none shown&#39;. Middle frame: &#39;foo() — return address: back into main; locals: x&#39;. Top frame (most recent): &#39;bar() — return address: back into foo; locals: y, z&#39;. A stack pointer arrow points at the top of the topmost frame, labeled &#39;SP — top of stack, moves as frames push/pop.&#39;' />
 
@@ -70,6 +70,6 @@ Unlike the stack, heap memory doesn't come and go automatically. You (or, later,
 
 The stack wins on speed and simplicity: allocating a local variable is just moving the stack pointer, and cleanup is automatic and instant. Its cost is limited size (typically a few megabytes total) and a strict lifetime — a stack variable is gone the instant its function returns, no exceptions.
 
-The heap wins on flexibility: it can be enormous (limited mainly by RAM), and its contents live exactly as long as you want them to. Its cost is that <i>you</i> become responsible for that lifetime — forget to release a chunk and you've leaked memory; release it too early, or use it after releasing it, and you've triggered undefined behaviour. You'll spend a good chunk of Level 02 learning to manage that trade-off deliberately.
+The heap wins on flexibility: it can be enormous (limited mainly by RAM), and its contents live exactly as long as you want them to. Its cost is that <i>you</i> become responsible for that lifetime — forget to release a chunk and you've leaked memory; release it too early, or use it after releasing it, and you've triggered undefined behaviour. You'll spend a good chunk of The C Language learning to manage that trade-off deliberately.
 
 <Visual type='diagram' caption='Stack vs heap, side by side' description='A two-column comparison table. Column headers: &#39;Stack&#39; and &#39;Heap&#39;. Rows: &#39;Allocation speed&#39; -&gt; &#39;instant (pointer move)&#39; vs &#39;slower (allocator bookkeeping)&#39;; &#39;Size&#39; -&gt; &#39;small, fixed limit&#39; vs &#39;large, flexible&#39;; &#39;Lifetime&#39; -&gt; &#39;ends automatically at function return&#39; vs &#39;lasts until explicitly freed&#39;; &#39;Order&#39; -&gt; &#39;strict last-in-first-out&#39; vs &#39;any order&#39;.' />

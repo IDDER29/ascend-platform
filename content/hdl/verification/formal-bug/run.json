@@ -1,0 +1,17 @@
+{
+  "id": "verification/formal-bug",
+  "sourceHash": "90d4160d31a2a218",
+  "tool": "prove",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "yosys -p \"read_verilog -formal -sv sat_add.sv; prep -top sat_add; chformal -lower; sat -prove-asserts -show-inputs -show-outputs\""
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "Solving problem with 175 variables and 471 clauses..\nSAT proof finished - model found: FAIL!\n\n  Signal Name             Dec       Hex           Bin\n  --------------- ----------- --------- -------------\n  \\a                        6         6          0110\n  \\b                       10         a          1010\n  \\y                        0         0          0000",
+  "exitCode": 0,
+  "waves": null,
+  "generated": "2026-10-31"
+}

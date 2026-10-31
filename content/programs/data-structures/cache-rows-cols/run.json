@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/cache-rows-cols",
+  "sourceHash": "a640dae57598bf6b",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "row order:    sum 14680064 in    2.4 ms\ncolumn order: sum 14680064 in   16.5 ms\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

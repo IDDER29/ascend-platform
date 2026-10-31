@@ -1,0 +1,77 @@
+---
+title: "Input, processing, output and storage"
+level: level-00-bits-logic
+slug: input-processing-output
+order: 2
+timeMin: 7
+learningOutcomes:
+- Follow an everyday task through input, processing, memory, storage and output
+- Name the CPU, memory (RAM), storage and peripherals by the job each one does
+- Explain the difference between memory, which is fast and forgets, and storage, which is slower and keeps
+primer:
+- title: "What is a computer?"
+  type: doc
+  meta: Reread · 2 min · the four jobs this lesson follows one task through.
+  essential: true
+knowledgeCheck:
+- question: When you take a photo on a phone, which part does each job?
+  answer: "The camera is input. The CPU processes the image (adjusting colours, compressing it). Memory (RAM) holds the image while it is being worked on. Storage keeps the saved file after the app closes. The screen is output, showing you the photo."
+  jumpToId: one-photo-from-start-to-finish
+  jumpToLabel: One photo, from start to finish
+- question: Why does a computer need both memory and storage?
+  answer: Memory (RAM) is fast enough for the CPU to work in, but it forgets everything when the power goes off. Storage keeps data with the power off, but it is much slower. So programs and data live in storage and are copied into memory while they are being used.
+  jumpToId: memory-and-storage-are-different
+  jumpToLabel: Memory and storage are different
+assignment:
+  instruction: "Pick one everyday task on a device you own: sending a message, printing a page or playing a song. Write it as a five-row table: input, processing, memory, storage, output. For each row, name the part of the device that does it and what it does."
+  resourceName: 'Wikipedia: Input/output'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Input/output'
+additionalResources:
+- title: Von Neumann architecture (Wikipedia)
+  type: doc
+  meta: reference, the classic layout of CPU, memory and input/output
+  url: 'https://en.wikipedia.org/wiki/Von_Neumann_architecture'
+- title: 'Early Computing: Crash Course Computer Science #1'
+  type: video
+  meta: 12 min
+  url: 'https://www.youtube.com/watch?v=O5nskjZ_GoI'
+whyThisMatters: "These five roles are the map you'll keep coming back to. When a program is slow, the question is usually which of them is the bottleneck. When data disappears after a crash, it's because it was in memory and never reached storage. Knowing the roles by their jobs, not by brand names, means the map still works on any machine."
+---
+
+The last lesson said every computer takes in information, works on it, remembers and follows instructions. Inside a real machine, different parts do those jobs. In this lesson you'll follow one everyday task through all of them.
+
+By the end you'll be able to name the main parts of a computer by what they do, and explain why a computer has two kinds of memory.
+
+## The parts, by their jobs
+
+<TruthTable caption='The main parts of a computer' rowsJson='[["job", "part", "examples"], ["input", "input devices", "keyboard, camera, microphone, touch screen"], ["processing", "the CPU (central processing unit)", "the chip that follows the program"], ["memory", "RAM (main memory)", "holds what the CPU is working on right now"], ["storage", "a drive (SSD or hard disk)", "keeps files and programs with the power off"], ["output", "output devices", "screen, speaker, printer"]]' />
+
+Devices that sit around the CPU and memory, such as keyboards, screens and drives, are called <b>peripherals</b>. The <b>CPU</b> is the part that follows the program's instructions one by one. Everything else feeds it information or takes information away.
+
+## One photo, from start to finish
+
+Take a photo on a phone and every part gets a turn:
+
+1. <b>Input</b>: the camera turns light into numbers.
+2. <b>Memory</b>: those numbers are put in RAM, where the CPU can reach them quickly.
+3. <b>Processing</b>: the CPU follows the camera app's instructions to brighten the image and shrink it into a file.
+4. <b>Storage</b>: the file is written to the phone's storage, so it is still there tomorrow.
+5. <b>Output</b>: the screen shows you the photo.
+
+The order isn't always the same. Opening an old photo starts with storage (the file is copied into memory), then processing, then output.
+
+<KeyIdea>Input brings information in, the CPU works on it in memory, storage keeps it, and output sends it back out.</KeyIdea>
+
+## Memory and storage are different
+
+People often say "memory" for both, but a computer has two very different kinds.
+
+- <b>Memory</b> (RAM) is where the CPU does its work. It is fast, but it is <b>volatile</b>: it forgets everything when the power goes off.
+- <b>Storage</b> (an SSD or hard disk) keeps data with the power off. It is much slower, but it holds far more for the same price.
+
+That is why a program you open is first copied from storage into memory, and why work you haven't saved can vanish in a power cut: it was only in memory.
+
+<KeyIdea>Memory is fast and forgets; storage is slow and keeps. A running program lives in memory, a saved file lives in storage.</KeyIdea>
+
+Later in Foundations you'll build memory from circuits and see exactly why it forgets. For now, the map is enough: five jobs, each done by its own part.

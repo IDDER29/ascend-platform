@@ -1,0 +1,105 @@
+---
+title: "Comparisons and conditional branches"
+level: level-00-bits-logic
+slug: compare-and-branch
+order: 65
+timeMin: 8
+learningOutcomes:
+- Use CMP and CMPI to test whether two values are equal, and read the result in Z
+- Branch with JZ and JNZ, and jump past code with JMP
+- Write an if and an if/else in assembly, with labels for the branch targets
+- Explain what version 2 can and can't compare directly, and test a value for zero
+primer:
+- title: "Arithmetic, logic and flags in assembly"
+  type: doc
+  meta: Reread · 3 min · which instructions set Z.
+  essential: true
+- title: "Jumps and loops: how a CPU decides"
+  type: doc
+  meta: Reread · 3 min · conditional jumps on version 1.
+  essential: false
+knowledgeCheck:
+- question: What does CMP R0, R1 change, and what doesn't it change?
+  answer: "It sets Z to 1 if R0 and R1 are equal, and to 0 if not. It doesn't change R0, R1 or anything else: a compare only answers a question, ready for the next branch."
+  jumpToId: compare-then-branch
+  jumpToLabel: Compare, then branch
+- question: In an if/else in assembly, why does the end of the "else" part need a JMP?
+  answer: "Code runs in order. Without a jump over the \"then\" part, the CPU would run straight on from the else part into the then part, doing both. The JMP skips to the code after the if."
+  jumpToId: an-ifelse-in-assembly
+  jumpToLabel: An if/else in assembly
+- question: How can version 2 tell whether R0 is greater than 10?
+  answer: "Not with one compare. CMP and CMPI only test equality, and there's no carry or sign flag to read. A program has to build the test from other steps, for example counting down until a value reaches 0, which the next lesson's loops make possible."
+  jumpToId: only-equal-or-not
+  jumpToLabel: Only equal or not
+assignment:
+  instruction: "Write a version 2 program that reads a byte from box 0x80 and shows 0 if it's zero, 1 if it's 1, and 2 for anything else. Use CMPI and two branches. Test it with 0, 1 and 7 by changing the data and running it each time."
+  resourceName: 'Wikipedia: Branch (computer science)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Branch_(computer_science)'
+additionalResources:
+- title: 'Instructions & Programs: Crash Course Computer Science #8'
+  type: video
+  meta: 10 min, jumps and conditional jumps
+  url: 'https://www.youtube.com/watch?v=zltgXvg6r3k'
+whyThisMatters: "Every if, else and switch you write in any language becomes a compare and a conditional branch. Being able to read that pattern in assembly is how you follow what a compiler did with your code, and how you see why a missing jump makes both halves of an if run."
+---
+
+A program that only runs straight through can't decide anything. Deciding takes two steps: a **compare**, which sets the Z flag, and a **conditional branch**, which jumps or doesn't depending on Z.
+
+By the end you'll be able to write ifs and if/elses in assembly, and know exactly what version 2 can compare.
+
+## Compare, then branch
+
+<TruthTable caption='Compares and branches in version 2' rowsJson='[["instruction", "does"], ["CMP Rd, Rs", "Z = 1 if Rd equals Rs, else Z = 0"], ["CMPI Rd, n", "Z = 1 if Rd equals n, else Z = 0"], ["JZ label", "jump to label if Z is 1"], ["JNZ label", "jump to label if Z is 0"], ["JMP label", "always jump to label"]]' />
+
+A compare changes nothing but Z. The registers keep their values, so the next instructions can still use them. A label such as `yes:` names an address, and the assembler turns `JZ yes` into a jump to it.
+
+## An if/else in assembly
+
+This program reads box 0x80. If it holds 7 it shows 1, otherwise it shows 0. Box 0x80 holds 7 here; step through it and watch the program counter jump.
+
+<TinyCpu2 caption='If the box holds 7, show 1, else 0' programJson='["LDA R0, [128]","CMPI R0, 7","JZ yes","LDI R1, 0","JMP done","yes: LDI R1, 1","done: OUT R1","HALT"]' dataJson='{"128":7}' />
+
+The shape is always the same:
+
+1. Compare.
+2. Branch to the "then" part if the test passed.
+3. Otherwise fall through into the "else" part, which ends with a JMP over the "then" part.
+4. Both paths meet again at a label after the if.
+
+Forget the JMP at step 3, and the else part runs straight on into the then part: both run.
+
+<KeyIdea>An if is a compare and a branch around code. An if/else adds one JMP, so that only one of the two parts runs.</KeyIdea>
+
+## Your turn: are they equal?
+
+Write a program that shows 1 if boxes 0x80 and 0x81 hold the same value, and 2 if they don't. The same program must pass both checks below. In the first the boxes are equal; in the second they aren't. Each starting program cheats by showing a fixed answer, so it passes neither.
+
+<TinyCpu2 editable caption='Equal boxes: show 1' programJson='["LDI R2, 2","OUT R2","HALT"]' dataJson='{"128":5,"129":5}' goalJson='{"out":[1]}' />
+
+<TinyCpu2 editable caption='Different boxes: show 2' programJson='["LDI R2, 1","OUT R2","HALT"]' dataJson='{"128":5,"129":6}' goalJson='{"out":[2]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+- `LDA R0, [128]`
+- `LDA R1, [129]`
+- `CMP R0, R1`
+- `JZ same`
+- `LDI R2, 2`
+- `JMP done`
+- `same: LDI R2, 1`
+- `done: OUT R2`
+- `HALT`
+
+With equal boxes it shows 1; with 5 and 6 it shows 2. Type the same program into both and both pass.
+
+</details>
+
+## Only equal or not
+
+Version 2's compares test one thing: equality. There's no carry flag and no sign flag, so there's no instruction for "is R0 greater than R1". Real CPUs have those, and branches for every kind of comparison; this one keeps the instruction set small.
+
+Testing for zero is the easiest case. CMPI R0, 0 sets Z when R0 is 0. And since arithmetic instructions set Z too, a DEC or SUB can often be followed by a branch straight away, with no compare at all. The next lesson's loops are built on exactly that.
+
+<KeyIdea>On version 2, a branch can only ask "was the last result zero?" or "were these equal?". Everything else is built from those.</KeyIdea>

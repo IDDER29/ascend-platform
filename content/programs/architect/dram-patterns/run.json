@@ -1,0 +1,20 @@
+{
+  "id": "architect/dram-patterns",
+  "sourceHash": "039f1137235b86b8",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "1048576 lines of 64 bytes (64 MiB), sum 2097152\nin address order:   5.20 ns per line\nshuffled order:    11.81 ns per line\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

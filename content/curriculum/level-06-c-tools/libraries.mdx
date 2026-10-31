@@ -1,0 +1,158 @@
+---
+title: "Static and dynamic libraries"
+level: level-06-c-tools
+slug: libraries
+order: 3
+timeMin: 11
+learningOutcomes:
+- Build a static library with ar and a shared library with -fPIC -shared, and link a program against each with -L and -l
+- Explain the difference between copying code in at link time and loading it at run time, using nm to show it
+- "Fix \"cannot open shared object file\" with LD_LIBRARY_PATH or an rpath, and inspect a program with ldd and readelf -d"
+- Explain why the order of libraries on the gcc command line matters
+primer:
+- title: "Linking, loading and starting a program"
+  type: doc
+  meta: "Foundations · what the linker and the loader each do."
+  essential: true
+- title: "What gcc really does: flags and warnings"
+  type: doc
+  meta: Reread · 2 min · -c, -L and -l.
+  essential: false
+knowledgeCheck:
+- question: In the static build, nm shows sum as T; in the dynamic build, as U. What does that tell you?
+  answer: "T means sum's code is in the program's own text section: the linker copied it out of libstats.a. U means it's undefined in the program: the code stays in libstats.so, and the dynamic loader finds it and connects the call when the program starts."
+  jumpToId: copied-in-or-loaded-later
+  jumpToLabel: Copied in, or loaded later
+- question: The dynamic program linked fine but wouldn't start, saying libstats.so cannot be opened. Why did the link work?
+  answer: "At link time, -Llib told the linker where to find libstats.so, and it only recorded that the program needs libstats.so. At run time the dynamic loader searches its own places (rpath or runpath, LD_LIBRARY_PATH, the system folders), which don't include ./lib, so it couldn't find it."
+  jumpToId: cannot-open-shared-object-file
+  jumpToLabel: Cannot open shared object file
+assignment:
+  instruction: "Turn a module from one of your programs into a library. Build it both as libname.a and libname.so, link one program against each, and check with nm and ldd that the static program contains the code and the dynamic one needs the .so. Then make the dynamic one start without LD_LIBRARY_PATH by adding an rpath."
+  resourceName: 'Program Library HOWTO'
+  resourceType: doc
+  resourceUrl: 'https://tldp.org/HOWTO/Program-Library-HOWTO/'
+additionalResources:
+- title: "Ulrich Drepper: How To Write Shared Libraries"
+  type: pdf
+  meta: the deep reference on ELF shared libraries
+  url: 'https://akkadia.org/drepper/dsohowto.pdf'
+- title: "ld.so(8) manual page"
+  type: doc
+  meta: how the dynamic loader searches for libraries
+  url: 'https://man7.org/linux/man-pages/man8/ld.so.8.html'
+whyThisMatters: "Almost every program you run uses shared libraries, starting with the C library itself. Knowing how they are built, found and loaded is what lets you ship code others can link to, and fix the classic \"works on my machine\" error when a program can't find a library."
+---
+
+A **library** is compiled code packaged for other programs to use. You've used one in every program: `printf` lives in the C library. This lesson builds the same small library, `stats` (a `sum` and a `largest` function), both ways. Every session is real, run with gcc 15.2 on Linux; addresses and sizes will differ on your machine.
+
+## A static library
+
+A static library is just an **archive** of object files, made with `ar`:
+
+```
+$ gcc -std=c17 -Wall -Wextra -O2 -c stats.c -o stats.o
+$ ar rcs lib/libstats.a stats.o
+$ ar t lib/libstats.a
+stats.o
+$ gcc -std=c17 -Wall -Wextra -O2 main.c -Llib -lstats -o stats-static
+$ ./stats-static
+sum 108, largest 42, room for 100
+```
+
+`ar rcs` creates the archive (`r` inserts files, `c` creates it, `s` writes an index). On the link line, `-Llib` adds `lib` to the library search path, and `-lstats` means "find `libstats.a` or `libstats.so`": the `lib` prefix and the extension are added for you.
+
+## A shared library
+
+A shared library is a single file loaded when the program runs. Its code must work at whatever address it's loaded, hence `-fPIC` (position-independent code), and `-shared` makes a `.so` instead of a program:
+
+```
+$ gcc -std=c17 -Wall -Wextra -O2 -fPIC -shared stats.c -o lib/libstats.so
+$ gcc -std=c17 -Wall -Wextra -O2 main.c -Llib -lstats -o stats-dynamic
+$ ./stats-dynamic
+./stats-dynamic: error while loading shared libraries: libstats.so: cannot open shared object file: No such file or directory
+```
+
+When both `libstats.a` and `libstats.so` are in the folder, `-lstats` picks the shared one. The link worked, but the program won't start. Hold that thought.
+
+## Copied in, or loaded later
+
+```
+$ nm stats-static | grep -E " (sum|largest|main)$"
+0000000000001240 T largest
+0000000000001080 T main
+0000000000001200 T sum
+$ nm stats-dynamic | grep -E " (sum|largest|main)$"
+                 U largest
+00000000000010c0 T main
+                 U sum
+```
+
+`T` means the code is in this file's text section; `U` means undefined here, to be found elsewhere. What's the difference between the two programs?
+
+<details>
+<summary>Check your answer</summary>
+
+In the static program, the linker copied `sum` and `largest` out of `libstats.a` into the executable. They're part of it now, and the `.a` isn't needed to run it. In the dynamic program they're `U`: the executable only records that it needs `libstats.so`, and the dynamic loader finds the library and connects the calls each time the program starts.
+
+So a static program is self-contained but carries its own copy of the code, and updating the library means relinking. A dynamic program is smaller in principle, shares one copy of the library in memory with every other program using it, and picks up a fixed library without relinking. The flip side is that the library must be there at run time. (With a library this tiny, the two executables here are about the same size: 16104 and 16072 bytes.)
+
+</details>
+
+## Cannot open shared object file
+
+`ldd` lists the shared libraries a program needs and where the loader would find them:
+
+```
+$ ldd ./stats-dynamic
+	linux-vdso.so.1 (0x00007912c5bb9000)
+	libstats.so => not found
+	libc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x00007912c5800000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007912c5bbb000)
+```
+
+`-L` only tells the *linker* where to look, at build time. At run time the dynamic loader (`ld-linux-x86-64.so.2`) searches its own list: the program's runpath, the `LD_LIBRARY_PATH` environment variable, then the system folders such as `/usr/lib`. `./lib` isn't on it. Two fixes:
+
+```
+$ LD_LIBRARY_PATH=lib ./stats-dynamic
+sum 108, largest 42, room for 100
+$ gcc -std=c17 -Wall -Wextra -O2 main.c -Llib -lstats -Wl,-rpath,'$ORIGIN/lib' -o stats-rpath
+$ ./stats-rpath
+sum 108, largest 42, room for 100
+$ readelf -d stats-rpath | grep -E "NEEDED|RUNPATH"
+ 0x0000000000000001 (NEEDED)             Shared library: [libstats.so]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x000000000000001d (RUNPATH)            Library runpath: [$ORIGIN/lib]
+```
+
+`LD_LIBRARY_PATH` works for one command, and is handy for testing, but it's easy to forget. An **rpath** is stored in the program itself: `-Wl,` passes the option to the linker, and `$ORIGIN` means "the folder this program is in", so the program finds `lib/libstats.so` next to itself wherever it's installed. `readelf -d` shows what the program asks the loader for: the `NEEDED` libraries and its `RUNPATH`. Installed libraries go in a system folder and need neither.
+
+<KeyIdea>-L and -l are for the linker; the loader finds shared libraries at run time through the runpath, LD_LIBRARY_PATH and the system folders. ldd shows what it finds.</KeyIdea>
+
+## Order matters
+
+Here the static library comes **before** `main.c` on the command line (with only `libstats.a` in the folder):
+
+```
+$ gcc -std=c17 -O2 -Lonlya -lstats main.c -o order
+/usr/bin/x86_64-linux-gnu-ld.bfd: /tmp/cc6sbrD3.o: in function `main':
+main.c:(.text.startup+0x3b): undefined reference to `largest'
+/usr/bin/x86_64-linux-gnu-ld.bfd: main.c:(.text.startup+0x4a): undefined reference to `sum'
+collect2: error: ld returned 1 exit status
+$ gcc -std=c17 -O2 main.c -Lonlya -lstats -o order
+$ ./order
+sum 108, largest 42, room for 100
+```
+
+The same files, in a different order. Why does the first one fail?
+
+<details>
+<summary>Check your answer</summary>
+
+The linker reads its inputs left to right. When it reaches a static library, it takes only the object files that define symbols it **already** needs. At `-lstats`, nothing needed `sum` or `largest` yet, because `main.c` hadn't been read, so it took nothing. Then `main.o` asked for them, and the library had already been passed. Put libraries **after** the files that use them, and a library that depends on another before that one: `gcc main.o -lfoo -lbar` when foo uses bar.
+
+</details>
+
+## Done when
+
+You can build and link a static and a shared library, read `T` and `U` in `nm`, explain and fix "cannot open shared object file" with `ldd`, `LD_LIBRARY_PATH` and an rpath, and order libraries on the command line.

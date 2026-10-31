@@ -1,0 +1,153 @@
+---
+title: "Undefined behaviour, in depth"
+level: level-05-c-contract
+slug: undefined-behaviour-in-depth
+order: 2
+timeMin: 11
+learningOutcomes:
+- Explain why the C standard leaves some operations undefined instead of defining an error
+- Show that undefined behaviour is not "whatever the hardware does", using two overflows that behave differently on the same CPU
+- Explain why undefined behaviour affects the whole execution, not just the line where it happens
+- Use UBSan (-fsanitize=undefined) to find undefined behaviour as a program runs, and say what it can't find
+primer:
+- title: "Defined, unspecified and implementation-defined behaviour"
+  type: doc
+  meta: Reread · 3 min · the four kinds; this lesson is the fourth.
+  essential: true
+- title: "Undefined behaviour"
+  type: doc
+  meta: "The C Language · dangling pointers and buffer overruns, the first look."
+  essential: false
+knowledgeCheck:
+- question: On the same x86-64 CPU, INT_MAX + 1 gave INT_MIN but INT_MIN / -1 killed the program. Why doesn't the standard just define each as what the hardware does?
+  answer: "Hardware differs: x86's divide instruction traps on INT_MIN / -1, other CPUs return a value, and some CPUs trap on overflowing adds. Defining one result would force extra checks on every machine where the hardware does something else. Leaving it undefined lets each compiler use the cheapest instruction and assume the case never happens."
+  jumpToId: not-whatever-the-hardware-does
+  jumpToLabel: Not whatever the hardware does
+- question: Why can't UBSan prove a program has no undefined behaviour?
+  answer: "UBSan checks operations as they execute, so it only reports undefined behaviour on the paths and inputs your run actually takes. A bug on a branch your tests never reach, or one only certain inputs trigger, stays silent. It also doesn't cover every kind: data races, strict-aliasing violations and many memory errors need other tools."
+  jumpToId: catching-it-as-it-happens
+  jumpToLabel: Catching it as it happens
+assignment:
+  instruction: "Read John Regehr's 'A Guide to Undefined Behavior in C and C++, Part 1'. Then take one of your own C Basics programs, compile it with -fsanitize=undefined,address -g, and run it on unusual inputs (zero, negative numbers, very large numbers, empty input). Record every report, and fix what it finds."
+  resourceName: 'John Regehr: A Guide to Undefined Behavior in C and C++'
+  resourceType: doc
+  resourceUrl: 'https://blog.regehr.org/archives/213'
+additionalResources:
+- title: "Chris Lattner: What Every C Programmer Should Know About Undefined Behavior"
+  type: doc
+  meta: the compiler writer's view, with optimisation examples
+  url: 'https://blog.llvm.org/2011/05/what-every-c-programmer-should-know.html'
+- title: "CppCon 2016: Chandler Carruth, Garbage In, Garbage Out"
+  type: video
+  meta: why undefined behaviour exists, and how to argue about it
+  url: 'https://www.youtube.com/watch?v=yG1OZ69H_-o'
+- title: "GCC manual: instrumentation options (sanitizers)"
+  type: doc
+  meta: every -fsanitize= check UBSan offers
+  url: 'https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html'
+whyThisMatters: "Most serious C bugs, from crashes to security holes, are undefined behaviour. Understanding why it exists and how the compiler treats it explains bugs that appear only with optimisation, only on one machine, or only after an innocent change, and the sanitizers turn many of them from mysteries into a line number."
+---
+
+The C Language showed undefined behaviour as a list of things not to do: use freed memory, write past an array. This lesson goes underneath: why the standard leaves things undefined at all, what "no requirements" really allows, and how to catch undefined behaviour as a program runs.
+
+## Why leave anything undefined?
+
+C was standardised to run on very different machines, and to be fast on all of them. For each risky operation, the committee had a choice: define one result, and make every compiler produce it on every CPU, or leave it **undefined** and let each compiler do whatever is cheapest, on the condition that correct programs never do it.
+
+Defining a result has a cost. If signed overflow had to wrap, a compiler could no longer assume `i + 1 > i` in a loop, and a number of loop optimisations would be lost. If reading past an array had to report an error, every array access would need a bounds check. C chose speed and put the burden on the programmer: in return, you promise not to do these things.
+
+## Not whatever the hardware does
+
+A common belief is that undefined behaviour just means "whatever the CPU does". Here are two overflows of the same kind, on the same x86-64 CPU, compiled at -O0 so gcc emits the obvious instructions. Predict both lines.
+
+<CRun program="c-contract/ub-two-outcomes" caption='Two signed overflows, one CPU' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`INT_MAX + 1` printed `-2147483648`: the `add` instruction wrapped around. But `INT_MIN / -1` never printed. The true answer, 2147483648, doesn't fit in an `int`, and x86's `idiv` instruction responds by raising a hardware exception, which Linux delivers as `SIGFPE`, killing the program.
+
+Both are signed overflow, and both are undefined (C17 6.5 and 6.5.5). On this CPU one wraps and the other crashes, and on another CPU it could be the other way round. That's exactly why the standard doesn't pick a result. And this is only what gcc did with optimisation off: lesson 4 shows a build where gcc never performs the add at all.
+
+</details>
+
+## No requirements, for the whole run
+
+"No requirements" is literal. The standard's note says the outcome may range "from ignoring the situation completely with unpredictable results, to behaving during translation or program execution in a documented manner characteristic of the environment, ... to terminating a translation or execution" (C17 3.4.3). Three consequences follow:
+
+1. **It isn't confined to one line.** A program that executes undefined behaviour has no meaning at all. The compiler may produce code that misbehaves before the faulty operation is reached, because it reasons about the whole program on the assumption that the faulty operation never happens.
+2. **Compilers use that assumption.** In this code, the dereference on the second line tells gcc that `p` can't be null, so at -O2 it may delete the check on the third (gcc's `-fdelete-null-pointer-checks`, on by default when optimising):
+
+   ```c
+   int read_flag(int *p) {
+       int value = *p;          /* undefined if p is NULL */
+       if (p == NULL) {         /* gcc may assume this is false */
+           return -1;
+       }
+       return value;
+   }
+   ```
+
+   The check meant to protect against a null pointer comes *after* the dereference that assumes it isn't null. The last lesson in this course, *What the optimiser assumes about your code*, is all about this.
+3. **It can change with any change.** A new compiler version, other flags, or an unrelated edit can turn "works" into "fails", because the program was never correct.
+
+<KeyIdea>Undefined behaviour isn't a result; it's the absence of any promise. The compiler assumes it never happens, and reasons about your whole program on that basis.</KeyIdea>
+
+## Catching it as it happens
+
+You can't see undefined behaviour by reading output, but you can **instrument** the program to check. gcc's UndefinedBehaviorSanitizer, `-fsanitize=undefined`, adds a check before each risky operation and prints a report when one goes wrong. This program has three bugs. Predict what UBSan reports, then run it.
+
+<CRun program="c-contract/ub-sanitized" caption='Three bugs, under UBSan' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+UBSan reports each bug with its file, line and column, in the order they happen:
+
+1. `2147483647 + 1 cannot be represented in type 'int'`: signed overflow.
+2. `shift exponent 32 is too large for 32-bit type 'int'`: shifting by the width of the type is undefined (C17 6.5.7).
+3. `index 4 out of bounds for type 'int [4]'`: writing one past the end of `table`.
+
+By default UBSan reports and keeps going, so the program still printed a line. Look at its second number: `1 << 32` gave `1`, because x86's shift instruction only uses the low 5 bits of the count, so it shifted by 0. Not 0, and not an error: just one more thing undefined behaviour might do.
+
+(This build turns off one UBSan check, `object-size`, whose report prints a memory address that changes on every run.)
+
+</details>
+
+UBSan is easy to add to every debug build, and many teams run their whole test suite under it. But it only finds bugs **on the paths you run**: a bug in a branch your tests never take stays silent. It also doesn't cover everything. AddressSanitizer (`-fsanitize=address`) catches most memory errors, and ThreadSanitizer data races; strict-aliasing violations have no good runtime check.
+
+## A short catalogue
+
+Annex J.2 of the standard lists about 200 kinds of undefined behaviour. These cause most real bugs:
+
+| Undefined behaviour | Where in this course |
+|---|---|
+| Signed overflow, and `INT_MIN / -1` | Signed overflow and shifts |
+| Shifting by a negative count or by at least the width; left-shifting into or past the sign bit | Signed overflow and shifts |
+| Modifying a variable twice, or reading it while it's modified, with no sequencing between | Sequencing and order of evaluation |
+| Reading an object through a pointer of an incompatible type | Aliasing and strict aliasing |
+| Using a dangling pointer, or reading an uninitialised variable | Lifetime |
+| Out-of-bounds array access, null dereference | The C Language |
+| Modifying a string literal | The C Language (strings) |
+| Using the value of a function that ended without `return` | C Basics (functions) |
+
+## Try it
+
+For each, say whether it's undefined, and if so, what a safe version looks like:
+
+1. `int avg = (a + b) / 2;` with `a` and `b` both large positive `int`s.
+2. `unsigned avg = (a + b) / 2;` with large `unsigned` values.
+3. `int q = x / y;` where `y` comes from user input.
+
+<details>
+<summary>Check your answer</summary>
+
+1. **Undefined** if `a + b` exceeds `INT_MAX`. A safe version for non-negative values: `a + (b - a) / 2`, which never overflows when `0 <= a <= b`. (The same overflow sat in Java's binary search for about nine years; Java defines it to wrap, so it gave a negative index instead.)
+2. **Defined, but wrong:** unsigned addition wraps, so the sum loses its top bit and the average is garbage. The same `a + (b - a) / 2` fix works for `a <= b`.
+3. **Undefined** if `y` is 0, or if `x` is `INT_MIN` and `y` is -1. Check both before dividing.
+
+</details>
+
+## Done when
+
+You can explain why undefined behaviour exists, show that it isn't simply "what the hardware does", say why it affects the whole program, and use UBSan, knowing its limits.

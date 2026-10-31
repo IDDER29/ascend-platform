@@ -1,0 +1,81 @@
+---
+title: "Circuits that compute and circuits that remember"
+level: level-00-bits-logic
+slug: combinational-vs-state
+order: 27
+timeMin: 6
+learningOutcomes:
+- Define a combinational circuit as one whose outputs depend only on its inputs right now
+- Show from a truth table that a combinational circuit always gives the same output for the same inputs
+- Explain why no arrangement of gates without a loop can remember an earlier input
+- Tell which everyday devices need memory and which only need to compute
+primer:
+- title: "Logic gates, from switches to circuits"
+  type: doc
+  meta: Reread · 3 min · every circuit in this lesson is built from those gates.
+  essential: true
+- title: "State, time and step-by-step execution"
+  type: doc
+  meta: Reread · 2 min · the turnstile there is a machine with state.
+  essential: false
+knowledgeCheck:
+- question: What makes a circuit combinational?
+  answer: Its outputs depend only on the values of its inputs at this moment. Give it the same inputs and it gives the same outputs, every time, whatever happened before.
+  jumpToId: outputs-from-inputs-only
+  jumpToLabel: Outputs from inputs only
+- question: Why can't a combinational circuit count how many times a button was pressed?
+  answer: Counting needs the circuit to know how many presses came before, but a combinational circuit only sees its inputs right now. Once the button is released its inputs are the same as before the first press, so its output must be the same too.
+  jumpToId: what-a-truth-table-cannot-hold
+  jumpToLabel: What a truth table cannot hold
+assignment:
+  instruction: "List six devices or features you use (a calculator's add key, a TV remote's volume, a microwave timer, a light switch, a car's seatbelt warning, a phone's lock screen). For each, decide: could its behaviour be a single truth table from inputs to outputs, or does it need to remember something? Write what it would have to remember."
+  resourceName: 'Wikipedia: Combinational logic'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Combinational_logic'
+additionalResources:
+- title: Sequential logic (Wikipedia)
+  type: doc
+  meta: circuits whose output also depends on the past
+  url: 'https://en.wikipedia.org/wiki/Sequential_logic'
+- title: 'Boolean Logic & Logic Gates: Crash Course Computer Science #3'
+  type: video
+  meta: 10 min
+  url: 'https://www.youtube.com/watch?v=gI-qXk7XojA'
+whyThisMatters: "Every part of a computer is one of two kinds: logic that works out an answer from its inputs, and storage that keeps what happened. The ALU is the first kind, registers and memory are the second, and a CPU is the two wired together. Knowing which kind you're looking at tells you whether a bug is a wrong calculation or a wrong memory."
+---
+
+Every gate you've met so far, and every circuit built from them, has the same property: the output is worked out from the inputs right now, and from nothing else. That's enough to add two numbers. It isn't enough to build a computer, because a computer also has to remember.
+
+By the end you'll be able to say what makes a circuit combinational, show why it can't remember anything, and tell which jobs need memory.
+
+## Outputs from inputs only
+
+A circuit made of gates, with every wire flowing forward from the inputs to the outputs, is called <b>combinational</b>. Its outputs are a fixed function of its inputs: the same inputs always give the same outputs.
+
+The half-adder is one. Put in A = 1 and B = 1 and you get sum 0, carry 1. It doesn't matter what you put in a second ago, or a year ago. Its whole behaviour fits in a truth table, and the table has one row per input combination:
+
+<TruthTable caption='A half-adder: one row per input, always the same answer' rowsJson='[["A", "B", "sum", "carry"], ["0", "0", "0", "0"], ["0", "1", "1", "0"], ["1", "0", "1", "0"], ["1", "1", "0", "1"]]' />
+
+<KeyIdea>A combinational circuit is a truth table made of gates. Same inputs in, same outputs out, every time.</KeyIdea>
+
+## What a truth table cannot hold
+
+Now imagine a doorbell counter: one button, and a display showing how many times the button has been pressed. Try to write its truth table.
+
+The input is just the button: 0 or 1. So the table has two rows. But after one press the display should show 1, and after five presses it should show 5, and in both cases the button is now 0. Same input, different output. No truth table can do that, so no combinational circuit can.
+
+The count is <b>state</b>: something the circuit must remember about the past. You met state with the turnstile, which needed to know whether it was locked. Combinational logic has no place to keep it.
+
+Try it below. The lab builds combinational circuits from expressions. Make OUT show whether the button was pressed earlier. You'll find every expression can only use the button's value right now.
+
+<GateLab caption='Try to make OUT remember a press' inputsJson='["PRESS"]' outputsJson='["OUT"]' startJson='["OUT = PRESS"]' />
+
+## Where memory comes from
+
+Memory needs one new idea: a loop. If a gate's output is wired back into its own input, the circuit can hold a value after the input that set it has gone. That kind of circuit is a <b>latch</b>, and you'll build one in the State & Memory course.
+
+A whole computer is both kinds working together:
+
+<TruthTable caption='The two kinds of circuit in a computer' rowsJson='[["kind", "output depends on", "examples"], ["combinational", "the inputs now", "adders, the ALU, multiplexers, decoders"], ["sequential, with state", "the inputs now and what it remembers", "latches, registers, memory, counters"]]' />
+
+The rest of this course builds more combinational circuits: ones that simplify, choose, decode and calculate. Together they become the ALU. Memory comes after that.

@@ -1,0 +1,14 @@
+{
+  "id": "c-language/link-hidden",
+  "sourceHash": "ac63450d41b7cd66",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c log.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "/usr/bin/x86_64-linux-gnu-ld.bfd: /tmp/ccLLpIZH.o: in function `main':\nmain.c:(.text+0x13): undefined reference to `log_message'\ncollect2: error: ld returned 1 exit status\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

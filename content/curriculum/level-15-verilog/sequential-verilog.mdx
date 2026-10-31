@@ -1,0 +1,141 @@
+---
+title: "Sequential logic and state machines"
+level: level-15-verilog
+slug: sequential-verilog
+order: 3
+timeMin: 12
+learningOutcomes:
+- Describe registers with always @(posedge clk) blocks, including a synchronous reset
+- Explain why clocked blocks use non-blocking assignments, and predict the result when blocking ones are used instead
+- Read a simulated waveform to follow a counter and a state machine edge by edge
+- Write a Moore state machine as a state register plus combinational next-state logic
+primer:
+- title: "Combinational logic in Verilog"
+  type: doc
+  meta: Reread · 3 min · always @* blocks and the latch rule.
+  essential: true
+- title: "Project: Register and counter lab"
+  type: doc
+  meta: "Foundations · clocked registers written as REG := expr in the Clock Lab."
+  essential: false
+knowledgeCheck:
+- question: The blocking swap (a = b; b = a;) left both registers at 9. Why?
+  answer: "Blocking assignments happen one after the other inside the block: a = b sets a to 9 at once, then b = a reads the new a, 9. Non-blocking assignments (<=) all read their right-hand sides first, at the clock edge, and update together, which is how real flip-flops behave, so a and b really swap."
+  jumpToId: blocking-and-non-blocking
+  jumpToLabel: Blocking and non-blocking
+- question: In the 101 detector, why is found driven by assign from the state, not set inside the clocked block?
+  answer: "It's a Moore machine: the output depends only on the current state. Computing it combinationally from state (found = state == DONE) keeps the state register as the only memory, and the output follows the state without an extra cycle of delay or an extra flip-flop."
+  jumpToId: a-state-machine
+  jumpToLabel: A state machine
+assignment:
+  instruction: "Design a Moore state machine for a traffic light with states GREEN, YELLOW and RED that stays 4 cycles in green, 1 in yellow and 3 in red, using a state register, a small counter and a combinational next-state block. Simulate it with a waveform for 20 cycles (iverilog plus vvp, or EDA Playground) and check every transition. Then try the HDLBits finite state machine problems."
+  resourceName: 'HDLBits: Sequential logic'
+  resourceType: site
+  resourceUrl: 'https://hdlbits.01xz.net/wiki/Problem_sets#Circuits'
+additionalResources:
+- title: "Cliff Cummings: Nonblocking Assignments in Verilog Synthesis"
+  type: pdf
+  meta: the classic paper on = vs <=
+  url: 'http://www.sunburst-design.com/papers/CummingsSNUG2000SJ_NBA.pdf'
+- title: "Finite-state machine (Wikipedia)"
+  type: doc
+  meta: Moore and Mealy machines
+  url: 'https://en.wikipedia.org/wiki/Finite-state_machine'
+whyThisMatters: "Everything that remembers, from a program counter to a cache controller, is registers plus logic that decides their next value on each clock edge. Writing that correctly in Verilog, with the right kind of assignment, is what separates designs that simulate like the hardware from designs that don't."
+---
+
+Combinational logic forgets. To remember, hardware uses **flip-flops** that take a new value only on a clock edge, exactly the `REG := expr` registers of Foundations' Clock Lab. In Verilog you describe them with a block that runs on the clock's rising edge.
+
+## A register on the clock
+
+```verilog
+module counter(input clk, input rst, output reg [3:0] count);
+  always @(posedge clk) begin
+    if (rst) count <= 4'd0;
+    else count <= count + 4'd1;
+  end
+endmodule
+```
+
+`always @(posedge clk)` means "at every rising edge of `clk`". Everything assigned inside becomes flip-flops: here four of them, holding `count`. The reset is **synchronous**: it only takes effect at a clock edge. `<=` is a **non-blocking assignment**, explained below.
+
+The testbench makes a clock with `always #5 clk = ~clk;` (a period of 10 time units), holds reset for the first edge, then lets the counter run. Predict the count after six rising edges out of reset.
+
+<HdlRun design="verilog/seq-counter" caption='A 4-bit counter, simulated' predict show="counter.v" />
+
+<details>
+<summary>Check your answer</summary>
+
+**6.** In the waveform, `count` starts as `x` (a flip-flop's value before anything sets it is unknown), becomes 0 at the first rising edge (time 5, reset still high), then rises by one at every edge after reset drops at 12: 1 at 15, 2 at 25, and so on up to 6 at 65.
+
+Notice that `count` only ever changes at a rising edge of `clk`, never in between. That's the defining property of synchronous logic, and why one clock can keep millions of flip-flops in step.
+
+</details>
+
+## Blocking and non-blocking
+
+Verilog has two assignments, and in a clocked block the difference matters. This module is meant to swap `a` and `b` on every clock edge, after loading 3 and 9. It uses **blocking** assignments, `=`. Predict the values after three swaps.
+
+<HdlRun design="verilog/seq-swap-blocking" caption='A swap with blocking assignments' predict show="swap.v" />
+
+<details>
+<summary>Check your answer</summary>
+
+**a = 9, b = 9.** The swap destroys a value.
+
+Blocking assignments run in order, like C: `a = b` sets `a` to 9 at once, then `b = a` reads the *new* `a`, so `b` stays 9. After the first edge both are 9 for good. It's the same bug as swapping two variables in C without a temporary.
+
+</details>
+
+Now the same module with **non-blocking** assignments, `<=`:
+
+<HdlRun design="verilog/seq-swap-nonblocking" caption='The same swap with non-blocking assignments' show="swap.v" />
+
+This time `a` and `b` really swap at every edge: 3 and 9, then 9 and 3, then back again. After three swaps, a = 9 and b = 3. With `<=`, every right-hand side in the block is read first, at the clock edge, and all the registers update together afterwards. That's exactly what real flip-flops do: they all sample their inputs at the same edge.
+
+The rule that follows: **in clocked blocks, use `<=`; in combinational `always @*` blocks, use `=`.** Mixing them is how a simulation and the real hardware end up disagreeing.
+
+<KeyIdea>Clocked always blocks describe flip-flops that all update together at the edge, so they use non-blocking assignments (&lt;=); combinational blocks use blocking ones (=).</KeyIdea>
+
+## A state machine
+
+A **finite state machine** is a state register plus logic that picks the next state from the current state and the inputs. This one watches a stream of bits and raises `found` for one cycle each time it has seen 1, 0, 1 in a row. It has four states:
+
+- **IDLE:** nothing useful seen yet.
+- **GOT1:** the last bit was a 1.
+- **GOT10:** the last two bits were 1, 0.
+- **DONE:** just saw 1, 0, 1.
+
+It's written in the standard two-block style:
+
+- a clocked block that is only the state register;
+- a combinational `case` that computes `next`.
+
+`found` is an `assign` of the state alone, which makes it a **Moore** machine (the output depends only on the state).
+
+The testbench sends the bits `1101010011`, one per clock. Predict on which bits `found` goes to 1.
+
+<HdlRun design="verilog/seq-fsm" caption='A 101 detector' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`found` is 1 after the 4th bit and after the 6th: the stream contains 101 at bits 2 to 4 and again at bits 4 to 6. The two overlap: the 1 that ends the first 101 starts the second. That works because DONE goes to GOT10 on a 0 (its last bit was a 1). The waveform shows the state walking IDLE (0), GOT1 (1), GOT10 (2), DONE (3), back to GOT10, and DONE again. The last bits, 0, 0, 1, 1, never complete another 101.
+
+</details>
+
+## Try it
+
+This is meant to be a register with an enable: hold the value unless `en` is 1. What's wrong, and what does it build?
+
+```verilog
+always @(posedge clk)
+  if (en) q = d;
+```
+
+<details>
+<summary>Check your answer</summary>
+
+It works on its own, because a clocked block that doesn't assign `q` simply keeps the old value: that's what flip-flops do, and it isn't a latch bug here. But it uses `=` in a clocked block. If another clocked block reads `q`, the simulator's result can depend on which block happens to run first at the edge, while the hardware is always "all at once". Write `if (en) q <= d;`.
+
+</details>

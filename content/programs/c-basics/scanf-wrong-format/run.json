@@ -1,0 +1,14 @@
+{
+  "id": "c-basics/scanf-wrong-format",
+  "sourceHash": "823b685122e06672",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -Werror=format -O0 main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": false,
+    "stderr": "main.c: In function ‘main’:\nmain.c:6:23: error: format ‘%d’ expects argument of type ‘int’, but argument 2 has type ‘double’ [-Werror=format=]\n    6 |     printf(\"Average: %d\\n\", average);\n      |                      ~^     ~~~~~~~\n      |                       |     |\n      |                       int   double\n      |                      %f\nmain.c:7:13: error: format ‘%d’ expects argument of type ‘int *’, but argument 2 has type ‘int’ [-Werror=format=]\n    7 |     scanf(\"%d\", age);\n      |            ~^   ~~~\n      |             |   |\n      |             |   int\n      |             int *\nmain.c:7:5: warning: ‘age’ is used uninitialized [-Wuninitialized]\n    7 |     scanf(\"%d\", age);\n      |     ^~~~~~~~~~~~~~~~\nmain.c:5:9: note: ‘age’ was declared here\n    5 |     int age;\n      |         ^~~\ncc1: some warnings being treated as errors\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

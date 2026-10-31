@@ -1,0 +1,86 @@
+---
+title: "Operands: values, registers and addresses"
+level: level-00-bits-logic
+slug: operands
+order: 62
+timeMin: 7
+learningOutcomes:
+- Tell apart the four kinds of operand in the tiny CPU's assembly, version 2
+- Predict what LDI, LDA, MOV and LDR each put in a register, given the same number
+- Explain why [0x80] means "the box at 0x80" and not the number 0x80
+- Use a register that holds an address to reach a box that the instruction itself doesn't name
+primer:
+- title: "Machine code and assembly language"
+  type: doc
+  meta: Reread · 3 min · version 2's registers and memory.
+  essential: true
+- title: "Loads and stores: moving data to and from memory"
+  type: doc
+  meta: Reread · 3 min · an address is not a value, on version 1.
+  essential: true
+knowledgeCheck:
+- question: Box 0x80 holds 50. What does each of these put in R1 - LDI R1, 128 and LDA R1, [128]?
+  answer: "LDI R1, 128 puts the number 128 itself in R1. LDA R1, [128] puts 50 in R1: the value stored in box 128 (0x80). The brackets mean \"the box at this address\"."
+  jumpToId: four-kinds-of-operand
+  jumpToLabel: Four kinds of operand
+- question: What does LDR R2, [R1] do, and why is it useful?
+  answer: "It reads the box whose address is held in R1 and puts that value in R2. Because the address is in a register, the program can change it as it runs, which is how one loop can walk through many boxes."
+  jumpToId: an-address-in-a-register
+  jumpToLabel: An address in a register
+assignment:
+  instruction: "For each line, write what ends up in R0 if box 0x80 holds 9 and R1 holds 0x80: LDI R0, 0x80; LDA R0, [0x80]; MOV R0, R1; LDR R0, [R1]. Then check all four in one program in the simulator."
+  resourceName: 'Wikipedia: Addressing mode'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Addressing_mode'
+additionalResources:
+- title: Addressing mode (Wikipedia)
+  type: doc
+  meta: the many ways real CPUs name an operand
+  url: 'https://en.wikipedia.org/wiki/Addressing_mode'
+whyThisMatters: "The difference between a number, a register, an address and the value at an address is the same one you'll meet in C as the difference between a value, a variable and a pointer. Getting it straight here, where every box is visible, makes pointers much less mysterious later."
+---
+
+An instruction's operands say what it works on. In version 2 there are four kinds, and they look similar on the page. Mixing them up is the most common mistake in assembly, so this lesson takes them one at a time.
+
+By the end you'll be able to look at any operand and say exactly what it means, and use a register that holds an address.
+
+## Four kinds of operand
+
+Suppose box 0x80 (128) holds 50. Here are four instructions, each with a different kind of operand:
+
+<TruthTable caption='Four kinds of operand' rowsJson='[["instruction", "operand", "kind", "R ends up holding"], ["LDI R0, 128", "128", "a number (immediate)", "128"], ["LDA R1, [128]", "[128]", "an address in memory", "50, the value in box 128"], ["MOV R2, R1", "R1", "a register", "50, a copy of R1"], ["LDR R3, [R0]", "[R0]", "an address held in a register", "50, the value in the box R0 points at"]]' />
+
+Two rules cover it:
+- A plain number is that number. A register name is that register's value.
+- **Square brackets mean "the box at this address"**. Inside them is either a number or a register that holds the address.
+
+Run the four lines and watch the registers. The program then shows all four.
+
+<TinyCpu2 caption='Four operands, side by side' programJson='["LDI R0, 128","LDA R1, [128]","MOV R2, R1","LDR R3, [R0]","OUT R0","OUT R1","OUT R2","OUT R3","HALT"]' dataJson='{"128":50}' />
+
+The output is 128, 50, 50, 50. R0 got the number; the other three got the value stored in box 128, by three different routes.
+
+<KeyIdea>Without brackets, an operand is a value. With brackets, it's an address, and the instruction reads or writes the box at that address.</KeyIdea>
+
+## An address in a register
+
+LDA names its box in the instruction itself: LDA R1, [128] always reads box 128. That's fine for one variable, but a program that adds up 20 boxes would need 20 different instructions.
+
+LDR fixes that. It takes the address from a register, so the program can change the address while it runs: point R1 at the first box, read it, add 1 to R1, read the next. That's how one loop walks through a whole list, and it's exactly what a pointer is.
+
+Box 0x81 (129) holds 7. This program puts the **address** 129 into R2, not the value. Change the last line so R2 ends up holding the value in that box.
+
+<TinyCpu2 editable caption='Read the box R1 points at' programJson='["LDI R1, 129","LDI R2, 129","HALT"]' dataJson='{"129":7}' goalJson='{"R2":7}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Replace `LDI R2, 129` with `LDR R2, [R1]`. R1 holds the address 129, the brackets say "the box at that address", and box 129 holds 7. R1 is now acting as a pointer.
+
+</details>
+
+## Reading operands in machine code
+
+The bytes show the difference too. In LDA R1, [128] the second byte is 0x80: the address. In LDI R1, 128 the second byte is also 0x80, but there it's the number. The opcode in the first byte is what tells the CPU how to read the second. For MOV, LDR and the other register-to-register instructions, the second byte holds a register number instead, in its top two bits.
+
+<KeyIdea>The same byte can be a number, an address or a register number. The instruction's opcode decides which.</KeyIdea>

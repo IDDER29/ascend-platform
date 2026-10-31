@@ -1,0 +1,79 @@
+---
+title: "Optional project: Two designs, one instruction set"
+level: level-00-bits-logic
+slug: project-two-designs
+order: 60
+timeMin: 30
+learningOutcomes:
+- Compare two control designs for the same instruction set by the ticks they take
+- Work out the average number of ticks per instruction for a program
+- Explain why the same programs give the same results on both designs
+- Explain the difference between an instruction set and its implementation
+primer:
+- title: "Project: Build the tiny CPU"
+  type: doc
+  meta: Reread · 4 min · this uses your finished control table.
+  essential: true
+knowledgeCheck:
+- question: Why do both designs give exactly the same results?
+  answer: "Both run the same steps for each instruction; the fixed design only adds empty ticks at the end of the shorter ones. The instruction set, what each instruction does, is the same, so every program's result is the same. Only the time differs."
+  jumpToId: part-1-same-results-different-ticks
+  jumpToLabel: "Part 1: Same results, different ticks"
+assignment:
+  instruction: "Ben Eater's computer started with the fixed design and later changed it to end each instruction early. Find where he describes this in his control-logic videos or page, and explain in two sentences what he had to add to the circuit to do it."
+  resourceName: 'eater.net: CPU control logic'
+  resourceType: site
+  resourceUrl: 'https://eater.net/8bit/control'
+additionalResources:
+- title: Cycles per instruction (Wikipedia)
+  type: doc
+  meta: the measure this project computes by hand
+  url: 'https://en.wikipedia.org/wiki/Cycles_per_instruction'
+whyThisMatters: "The same instruction set can be built many ways, and the fastest chips differ from the slowest in how, not what. This project is the first taste of that: identical programs, identical results, different speed, which is what computer architecture is about."
+---
+
+This optional project compares two control units for the same tiny CPU.
+
+- **Design 1, stop early:** each instruction takes exactly as many ticks as its steps need. This is the table you wrote.
+- **Design 2, fixed length:** every instruction takes 5 ticks; shorter ones wait out the rest with empty ticks. It's simpler to build, since the step counter always counts to 5. Ben Eater's computer started this way.
+
+The lab below holds the finished table and runs every program both ways. The tick counts are shown as "ticks" and "fixed".
+
+<ControlLab caption='One table, two designs' compareFixedJson='5' startJson='["FETCH: CO MI | RO II CE", "NOP:", "LDA: IO MI | RO AI", "ADD: IO MI | RO BI | EO AI FI", "SUB: IO MI | RO BI | EO AI SU FI", "STA: IO MI | AO RI", "LDI: IO AI", "JMP: IO J", "JC: IO J if C", "JZ: IO J if Z", "OUT: AO OI", "HLT: HLT"]' programsJson='[{"name":"28 + 14","program":["LDA 14","ADD 15","OUT","HLT"],"data":{"14":28,"15":14}},{"name":"Countdown","program":["LDI 3","OUT","SUB 15","JZ 5","JMP 1","OUT","HLT"],"data":{"15":1}},{"name":"Multiply 6 by 3","program":["LDA 13","ADD 14","STA 13","LDA 15","SUB 12","STA 15","JZ 8","JMP 0","LDA 13","OUT","HLT"],"data":{"12":1,"13":0,"14":6,"15":3}}]' />
+
+## Part 1: Same results, different ticks
+
+Predict first: will the fixed design give different answers? Then compare the tick counts for the three programs.
+
+<details>
+<summary>Check your answer</summary>
+
+Same answers every time: 42; 3, 2, 1, 0; and 18. The ticks differ: 15 against 18, 48 against 68, and 103 against 128. Design 2 only adds empty ticks, so it can never change what a program does, only how long it takes.
+
+</details>
+
+## Part 2: Ticks per instruction
+
+The countdown runs 14 instructions (count them in its trace, or trust the lab). Work out the average ticks per instruction for each design.
+
+<details>
+<summary>Check your answer</summary>
+
+48 ÷ 14 is about 3.4 ticks per instruction for design 1, and 68 ÷ 14 is about 4.9 for design 2. With the same clock speed, design 1 runs this program about 1.4 times as fast. Architects call this number cycles per instruction (CPI), and lowering it is one of their main jobs.
+
+</details>
+
+## Part 3: Instruction set or implementation?
+
+Say which of these belong to the **instruction set** (what a programmer can count on) and which to the **implementation** (how this particular CPU does it): what ADD does to A; how many ticks ADD takes; that SUB sets the carry flag when no borrow was needed; that the fetch takes two ticks.
+
+<details>
+<summary>Check your answer</summary>
+
+What ADD does to A, and SUB's carry rule, are the instruction set: every tiny CPU must do them the same way, or programs would break. ADD's tick count and the two-tick fetch are the implementation: designs 1 and 2 differ in them, and programs still work. Real CPUs keep that line too, which is why one program runs on many different chips.
+
+</details>
+
+## Done when
+
+You can say why both designs agree, compute ticks per instruction from a trace, and sort a property into instruction set or implementation.

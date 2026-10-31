@@ -1,0 +1,148 @@
+---
+title: "Signed overflow and shifts"
+level: level-05-c-contract
+slug: signed-overflow-and-shifts
+order: 4
+timeMin: 11
+learningOutcomes:
+- State exactly which integer operations are undefined, defined or implementation-defined, for signed and unsigned types
+- Explain why gcc can turn an overflow check like x + 1 < x into "false", and what -fwrapv changes
+- Write overflow checks that never overflow, by testing before the operation or with C23's ckd_add
+- Shift safely, using unsigned types and counts below the width
+primer:
+- title: "Undefined behaviour, in depth"
+  type: doc
+  meta: Reread · 3 min · the compiler assumes undefined behaviour never happens.
+  essential: true
+- title: "Integer promotions and conversions"
+  type: doc
+  meta: "The C Language · which type an expression really has."
+  essential: false
+knowledgeCheck:
+- question: Why does will_overflow(INT_MAX) return 0 when it was meant to return 1?
+  answer: "x + 1 < x can only be true if x + 1 overflows, and signed overflow is undefined. gcc assumes undefined behaviour never happens, so it treats x + 1 as always bigger than x and folds the whole check to 0, even without optimisation. With -fwrapv, which defines signed overflow to wrap, the same code returns 1."
+  jumpToId: a-check-that-cant-fire
+  jumpToLabel: "A check that can't fire"
+- question: Which of these are undefined for a 32-bit int x, and which are fine - 1u << 31, 1 << 31, x << 32, -8 >> 1?
+  answer: "1u << 31 is defined (unsigned, count below the width). 1 << 31 is undefined: 2 to the 31 doesn't fit in int. x << 32 is undefined: the count equals the width. -8 >> 1 is implementation-defined, not undefined; gcc gives -4."
+  jumpToId: the-rules-for-shifts
+  jumpToLabel: The rules for shifts
+assignment:
+  instruction: "Write int safe_mul(int a, int b, int *out) that returns 0 and stores a * b when it fits, and returns 1 without storing anything when it would overflow. Write it twice: once with checks before multiplying (careful with negative numbers and INT_MIN), and once with C23's ckd_mul. Test both against each other on edge cases under -fsanitize=undefined."
+  resourceName: 'cppreference: ckd_add, ckd_sub, ckd_mul'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/numeric/ckd_add'
+additionalResources:
+- title: "cppreference: Arithmetic operators"
+  type: doc
+  meta: overflow and shift rules, operator by operator
+  url: 'https://en.cppreference.com/w/c/language/operator_arithmetic'
+- title: "GCC manual: integers, implementation-defined behaviour"
+  type: doc
+  meta: what gcc does for right shifts and conversions
+  url: 'https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html'
+whyThisMatters: "Integer overflow is behind real security holes: a size calculation wraps, a buffer comes out too small, and data is written past its end. Knowing which operations are undefined, why naive checks get deleted, and how to check before you compute is basic hygiene for any C that handles sizes, lengths or input."
+---
+
+You know from C Basics that an `int` holds a limited range. This lesson is about exactly what C promises when an integer operation leaves that range, why the obvious way to check for it can silently fail, and how to do it right.
+
+## The rules, exactly
+
+| Operation | Signed types | Unsigned types |
+|---|---|---|
+| `+`, `-`, `*` past the range | **Undefined** (C17 6.5p5) | Defined: wraps modulo 2 to the width (6.2.5p9) |
+| `/` or `%` by zero | **Undefined** | **Undefined** |
+| `INT_MIN / -1`, `INT_MIN % -1` | **Undefined** (6.5.5p6) | n/a |
+| Converting an out-of-range value to the type | Implementation-defined (6.3.1.3) | Defined: wraps |
+
+C23 now requires signed integers to be stored in two's complement, but it did **not** make signed overflow defined. Knowing the bit pattern doesn't make `INT_MAX + 1` legal.
+
+Remember the integer promotions, too: `unsigned char` and `unsigned short` operands are promoted to `int` before arithmetic, so even "unsigned" arithmetic on small types can overflow a signed `int`.
+
+## A check that can't fire
+
+This function is meant to report whether `x + 1` would overflow. It reads `x` at run time, so gcc can't know its value. Predict what it returns for `INT_MAX`, built with `-O0`.
+
+<CRun program="c-contract/overflow-check-O0" caption='The obvious check, -O0' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It returned 0: "no overflow". The only way `x + 1 < x` can be true is if `x + 1` overflows, and signed overflow is undefined, so gcc may assume it never happens. Then `x + 1 < x` is always false, and gcc folded the whole comparison to 0, even with optimisation off.
+
+</details>
+
+With `-O2` the answer is the same:
+
+<CRun program="c-contract/overflow-check-O2" caption='The same check, -O2' />
+
+And two builds of the same source where the result changes:
+
+<CRun program="c-contract/overflow-check-wrapv" caption='-O2 -fwrapv: signed overflow defined to wrap' />
+
+<CRun program="c-contract/overflow-check-ubsan" caption='-O0 -fsanitize=undefined' />
+
+With `-fwrapv`, gcc treats signed overflow as wrapping (a gcc extension, not standard C), so the check works and returns 1. Under UBSan, gcc computes the addition so it can check it, reports the overflow, and the wrapped result makes the function return 1. These results are only what this gcc did with these flags; the program's behaviour is undefined, and none of them is promised.
+
+<KeyIdea>Never check for overflow by doing the overflowing operation and looking at the result. The compiler assumes signed overflow can't happen, so it may delete the check.</KeyIdea>
+
+## Checking without overflowing
+
+The fix is to test **before** computing, using limits from `<limits.h>`, so no operation ever overflows. C23 also adds `<stdckdint.h>`, whose `ckd_add`, `ckd_sub` and `ckd_mul` do the operation and tell you whether it fitted. gcc and clang have long offered the same as `__builtin_add_overflow`.
+
+<CRun program="c-contract/overflow-safe" caption='Two correct checks (built with -std=c23)' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`add_would_overflow(INT_MAX, 1)` is 1 and `add_would_overflow(100, 1)` is 0. The test `a > INT_MAX - b` (for positive `b`) can't overflow, because `INT_MAX - b` is always in range. The negative case mirrors it with `INT_MIN - b`.
+
+`ckd_add(&sum, INT_MAX, 1)` returns true: it overflowed. `ckd_add(&sum, 40, 2)` returns false and stores 42. The `ckd_` macros are defined for every input, so they're the simplest correct choice where C23 is available.
+
+</details>
+
+## The rules for shifts
+
+For `E1 << E2` and `E1 >> E2` (C17 6.5.7):
+
+- A shift **count** that is negative, or at least the width of the (promoted) left operand, is **undefined**, for signed and unsigned types alike. `x << 32` on a 32-bit type is undefined, not 0.
+- **Left-shifting a signed value** is defined only if the value is non-negative and the result fits. `1 << 31` on a 32-bit `int` and `-1 << 1` are both undefined.
+- **Right-shifting a negative value** is implementation-defined. gcc shifts in sign bits, so `-8 >> 1` is `-4`.
+- **Unsigned shifts** with a valid count are always defined: `1u << 31` is 2147483648.
+
+The safe recipe: shift **unsigned** values (`uint32_t`, `uint64_t`), and keep counts in range. Predict the four lines of this rotate function, which follows both rules.
+
+<CRun program="c-contract/shift-safe" caption='A rotate that is always defined' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `rotl32(0x80000001, 1)` is `00000003`: the top bit wraps around to the bottom.
+- `rotl32(0x12345678, 8)` is `34567812`: the top byte moves to the bottom.
+- `rotl32(0x12345678, 32)` is `12345678`: `n &= 31` turns 32 into 0, and `(32 - n) & 31` keeps the other shift at 0 too, so no shift is ever by 32.
+- `1u << 31` is `2147483648`.
+
+Without the masks, a rotate by 0 or 32 would shift by 32 and be undefined. gcc recognises this pattern and compiles it to a single `rol` instruction.
+
+</details>
+
+## Try it
+
+Each line has a problem with a 32-bit `int`. Name it and fix it.
+
+1. `int bytes = count * size; char *buf = malloc(bytes);`
+2. `int mask = 1 << bit;` where `bit` can be 0 to 31.
+3. `if (len + offset < len) return ERROR;` where both are `int`.
+
+<details>
+<summary>Check your answer</summary>
+
+1. `count * size` can overflow, which is undefined, and a wrapped, too-small size makes a buffer overflow likely. Use `size_t` and check first: `if (size != 0 && count > SIZE_MAX / size) return ERROR;`, or `ckd_mul`.
+2. `1 << 31` is undefined for `int`. Use `uint32_t mask = UINT32_C(1) << bit;`.
+3. This is the deleted check from above: gcc may fold it to false. Test before adding: `if (offset > 0 && len > INT_MAX - offset) return ERROR;`.
+
+</details>
+
+## Done when
+
+You know which integer operations are undefined, can explain why `x + 1 < x` checks get deleted, can write a check that never overflows, and shift only in defined ways.

@@ -1,0 +1,150 @@
+---
+title: "Characters and simple strings"
+level: level-04-c-basics
+slug: characters-and-strings
+order: 11
+timeMin: 9
+learningOutcomes:
+- Treat a char as a small number, and do arithmetic on character codes
+- Explain how a string is stored as a char array ending in a zero byte, and why sizeof and strlen differ
+- Loop over a string until its terminating zero
+- Recognise an array that is too small for its string, from gcc's warning and from AddressSanitizer's report
+primer:
+- title: "Text: ASCII, Unicode and UTF-8"
+  type: doc
+  meta: Reread · 3 min · characters are numbers, by agreement.
+  essential: true
+- title: "Arrays and loops together"
+  type: doc
+  meta: Reread · 2 min · the last lesson; a string is an array too.
+  essential: true
+knowledgeCheck:
+- question: "char word[] = \"hello\"; Why is sizeof word 6 but strlen(word) 5?"
+  answer: "The compiler stores the five letters and then a terminating zero byte ('\\0'), so the array is 6 bytes. strlen counts characters up to, but not including, that zero."
+  jumpToId: a-string-is-an-array-with-an-end-marker
+  jumpToLabel: A string is an array with an end marker
+- question: "What's wrong with char greeting[5] = \"hello\";, and what happens when it's printed with %s?"
+  answer: "The array has room for the five letters but not the terminating zero, so it isn't a valid string. printf keeps reading past the end of the array looking for a zero byte, which is undefined behaviour; AddressSanitizer reports it as a stack-buffer-overflow."
+  jumpToId: no-room-for-the-zero
+  jumpToLabel: No room for the zero
+assignment:
+  instruction: "Write int count_vowels(const char s[]) that loops until the terminating zero and counts a, e, i, o and u in either case. Test it on a few words from main, including an empty string \"\". Then write void to_upper(char s[]) using only arithmetic on character codes (no library calls), and print the result."
+  resourceName: "Beej's Guide to C: Strings"
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/strings.html'
+additionalResources:
+- title: "cppreference: strlen"
+  type: doc
+  meta: exactly what strlen counts
+  url: 'https://en.cppreference.com/w/c/string/byte/strlen'
+- title: "ASCII (Wikipedia)"
+  type: doc
+  meta: the full table of character codes
+  url: 'https://en.wikipedia.org/wiki/ASCII'
+whyThisMatters: "Text is everywhere: file names, commands, messages, input. C has no string type, only arrays of chars with a zero at the end, and a string missing its zero or written past its array is one of the oldest bugs in computing. Understanding the bytes underneath is what lets you handle text in C safely."
+---
+
+In Foundations you saw that text is stored as numbers: each character has a code, and `A` is 65. C takes that literally. A `char` *is* a small number, and a string is just an array of them. This lesson covers both, gently; The C Language goes deeper into strings and pointers.
+
+## A char is a small number
+
+A `char` holds one byte. When you write `'A'` in single quotes, the compiler replaces it with its character code. So you can print a `char` as a character or as a number, and do arithmetic on it:
+
+<CRun program="c-basics/chars-are-numbers" caption='Characters doing arithmetic' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `A is 65`: the same `char`, printed with `%c` and then with `%d`.
+- `B comes next`: `'A' + 1` is 66, which is `B`. Letters have consecutive codes.
+- `'7' - '0' = 7`: the digit characters `'0'` to `'9'` have consecutive codes (48 to 57), so subtracting `'0'` turns a digit character into its value. This is how number parsing works underneath.
+- `g -> G`: `lower - 'a'` is the letter's position in the alphabet (6), and adding `'A'` gives the same position among the capitals.
+
+</details>
+
+Note the two kinds of quotes: `'A'` is one character, a number. `"A"` is a string: an array holding `A` and then a zero byte. Mixing them up is a common compile error.
+
+## A string is an array with an end marker
+
+C has no separate string type. A string is a `char` array whose last character is followed by a **zero byte**, written `'\0'`. That zero is how every string function knows where the text ends:
+
+<CRun program="c-basics/strings-length" caption='The bytes of hello' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`sizeof: 6, strlen: 5`, then one line for each letter with its code (104, 101, 108, 108, 111), then `word[5] = 0, the end marker`.
+
+`char word[] = "hello";` makes an array of 6 bytes: the five letters plus the `'\0'` the compiler adds for you. `sizeof` is the array's size, 6. `strlen` (from `<string.h>`) counts characters *before* the zero, 5. The `while` loop does exactly what `strlen` does: start at index 0, stop at the zero.
+
+</details>
+
+<KeyIdea>A C string is chars followed by a zero byte. Every string function walks until it finds that zero, so the zero must always be there.</KeyIdea>
+
+Loops over strings test for the zero instead of using a length:
+
+```c
+#include <stdio.h>
+
+int count_char(const char s[], char wanted) {
+    int count = 0;
+    for (int i = 0; s[i] != '\0'; i++) {
+        if (s[i] == wanted) {
+            count++;
+        }
+    }
+    return count;
+}
+
+int main(void) {
+    printf("%d\n", count_char("mississippi", 's'));
+    return 0;
+}
+```
+
+This prints `4`. `const` promises the function won't change the string, and gcc will refuse to compile it if the function tries.
+
+## No room for the zero
+
+Here the array is exactly as long as the letters, with no room for the zero. We compiled with `-fsanitize=address`, which checks every memory access while the program runs:
+
+<CRun program="c-basics/strings-missing-nul" caption='Five bytes for a six-byte string' />
+
+Two separate warnings, and both matter:
+
+- **At compile time**, gcc 15 warns that the initialiser "truncates NUL terminator": `"hello"` needs 6 bytes and the array has 5. In C this is legal (it is an error in C++), so it's only a warning, and older compilers may say nothing at all.
+- **At run time**, `printf("%s\n", ...)` (which gcc turned into a call to `puts`) walks the bytes looking for a zero. There isn't one inside `greeting`, so it reads on past the end. AddressSanitizer stops the program and reports a `stack-buffer-overflow`: a READ of 6 bytes where `greeting` only has 5.
+
+Without the sanitizer, this usually prints `hello` followed by whatever bytes happen to come next, until it hits a zero by luck. It can look fine for months.
+
+How would you fix the declaration? Give two ways.
+
+<details>
+<summary>Check your answer</summary>
+
+Either let the compiler count, `char greeting[] = "hello";` (6 bytes), or make room explicitly, `char greeting[6] = "hello";`. The first is safer: it can't get the size wrong. The rule to remember: an array for a string of n characters needs n + 1 bytes.
+
+</details>
+
+## Changing a string, one char at a time
+
+Because a string is an array, you can change its characters. What does this print?
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    char name[] = "ada";
+    name[0] = name[0] - 'a' + 'A';
+    name[2] = '\0';
+    printf("%s, %d\n", name, (int)sizeof name);
+    return 0;
+}
+```
+
+<details>
+<summary>Check your answer</summary>
+
+`Ad, 4`. The first line capitalises `a` to `A`. The second puts a zero at index 2, so the string now *ends* there: `printf` stops at it and prints `Ad`. The array itself hasn't changed size: it's still 4 bytes (`a`, `d`, `a` and the original zero), with an extra zero in the middle. A string's length is wherever the first zero is, not the size of its array.
+
+</details>

@@ -1,0 +1,20 @@
+{
+  "id": "c-language/str-strncpy",
+  "sourceHash": "97a1032fa3af6dfd",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=address main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘main’:\nmain.c:6:5: warning: ‘strncpy’ output truncated copying 4 bytes from a string of length 6 [-Wstringop-truncation]\n    6 |     strncpy(word, \"abcdef\", sizeof word); /* copies a, b, c, d and stops: no zero */\n      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "=================================================================\n==564756==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x722e4a8f0024 at pc 0x762e4ce78b32 bp 0x7ffdf83aa760 sp 0x7ffdf83a9f18\nREAD of size 5 at 0x722e4a8f0024 thread T0\n    #0 0x762e4ce78b31 in puts ../../../../src/libsanitizer/sanitizer_common/sanitizer_common_interceptors.inc:1278\n    #1 0x61e958fa2381 in main ./main.c:7\n    #2 0x762e4ca2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #3 0x762e4ca2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #4 0x61e958fa2184 in _start (/tmp/build/prog+0x1184) (BuildId: b9d78a6d4530161f2e1b5951891330e7d73d301f)\n\nAddress 0x722e4a8f0024 is located in stack of thread T0 at offset 36 in frame\n    #0 0x61e958fa2258 in main ./main.c:4\n\n  This frame has 1 object(s):\n    [32, 36) 'word' (line 5) <== Memory access at offset 36 overflows this variable\nHINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork\n      (longjmp and C++ exceptions *are* supported)\nSUMMARY: AddressSanitizer: stack-buffer-overflow ./main.c:7 in main\nShadow bytes around the buggy address:\n  0x722e4a8efd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x722e4a8efe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x722e4a8efe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x722e4a8eff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x722e4a8eff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x722e4a8f0000: f1 f1 f1 f1[04]f3 f3 f3 00 00 00 00 00 00 00 00\n  0x722e4a8f0080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x722e4a8f0100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x722e4a8f0180: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x722e4a8f0200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x722e4a8f0280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==564756==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

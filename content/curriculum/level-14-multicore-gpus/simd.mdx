@@ -1,0 +1,166 @@
+---
+title: "SIMD and vector instructions"
+level: level-14-multicore-gpus
+slug: simd
+order: 3
+timeMin: 11
+learningOutcomes:
+- Explain how a SIMD instruction applies one operation to several values held side by side in a wide register
+- Read gcc's vectoriser report and find the packed instructions it produced
+- Measure the speed-up of a vectorised loop, and explain why it is less than the number of lanes
+- Recognise what stops vectorisation (a loop-carried dependence, possible aliasing) and how compilers and programmers deal with it
+primer:
+- title: "Superscalar: more than one at a time"
+  type: doc
+  meta: Reread · 3 min · the other way a core does more per cycle.
+  essential: true
+- title: "Reading what the compiler wrote"
+  type: doc
+  meta: "Machine & Memory · reading gcc's assembly."
+  essential: false
+knowledgeCheck:
+- question: "gcc reported \"loop vectorized using 32 byte vectors\" for a float loop. How many floats does each instruction handle, and which instructions show it?"
+  answer: "32 bytes is 256 bits, the width of an AVX ymm register: 8 floats of 4 bytes each. The packed instructions vmulps and vaddps (the ps means packed single precision) on %ymm registers each do 8 operations, and the pointers step by 32 bytes per iteration."
+  jumpToId: what-gcc-did
+  jumpToLabel: What gcc did
+- question: Why can't gcc vectorise y[i] = y[i - 1] + x[i]?
+  answer: "Each element needs the one just computed before it: a loop-carried dependence. Eight lanes can't compute y[1] to y[8] at once when y[2] needs y[1]. (A running sum can be parallelised with a different algorithm, a prefix scan, but that's a rewrite, not something the vectoriser does on its own.)"
+  jumpToId: when-it-doesnt-vectorise
+  jumpToLabel: When it doesn't vectorise
+assignment:
+  instruction: "Write three loops over float arrays: an element-wise add, a sum of all elements, and a running (prefix) sum. Compile with gcc -O3 -march=native -fopt-info-vec-all and record which vectorise. Then time the sum with and without -ffast-math, and explain the difference (hint: floating-point addition isn't associative, so reordering a sum changes its rounding)."
+  resourceName: 'GCC: Auto-vectorization'
+  resourceType: doc
+  resourceUrl: 'https://gcc.gnu.org/projects/tree-ssa/vectorization.html'
+additionalResources:
+- title: "SIMD (Wikipedia)"
+  type: doc
+  meta: the idea and its history
+  url: 'https://en.wikipedia.org/wiki/Single_instruction,_multiple_data'
+whyThisMatters: "SIMD units are where most of a modern CPU's arithmetic throughput lives: a core that does one scalar add per cycle may do eight in each vector instruction. Media, machine learning, compression and databases all depend on it, and knowing when the compiler can use it is often worth a several-times speed-up."
+---
+
+Superscalar cores run several different instructions per cycle. **SIMD** (single instruction, multiple data) takes another route: one instruction works on several values at once, packed side by side in a wide register, each in its own **lane**.
+
+## Lanes
+
+x86 has grown its vector registers several times:
+
+| Extension | Register | Width | floats per register |
+|---|---|---|---|
+| SSE | xmm | 128 bits | 4 |
+| AVX, AVX2 | ymm | 256 bits | 8 |
+| AVX-512 | zmm | 512 bits | 16 |
+
+This laptop's CPU flags, from `lscpu` (trimmed to the vector ones):
+
+```
+$ lscpu | grep -o -w -E "sse2|ssse3|sse4_1|sse4_2|avx|avx2|fma|avx512f|avx_vnni"
+sse2
+ssse3
+fma
+sse4_1
+sse4_2
+avx
+avx2
+avx_vnni
+```
+
+It has AVX2 (256-bit) and FMA (fused multiply-add) but no `avx512f`, so its widest vectors are 256 bits: 8 floats. One `vaddps %ymm1, %ymm0, %ymm0` adds 8 pairs of floats in one instruction.
+
+## The same loop, scalar and vector
+
+`saxpy` computes `y[i] = a * x[i] + y[i]` over 4096 floats, repeated 100000 times. Here it is built twice from the same source: once with vectorisation turned off (`-O2 -fno-tree-vectorize`), once letting gcc use this CPU's widest vectors (`-O3 -march=native`). Predict the speed-up.
+
+<CRun program="architect/simd-scalar" caption='Scalar: one float per instruction' predict />
+
+<CRun program="architect/simd-vector" caption='Vectorised for this CPU' />
+
+<details>
+<summary>Check your answer</summary>
+
+In this run the vector build did about 5.0 multiply-adds per nanosecond against 1.6: roughly 3 times faster, not 8 (timings vary by run and machine). Both computed the same `y`, which the check line confirms.
+
+Why not 8 times?
+- **Bandwidth:** each element needs two loads and a store. 2 × 4096 floats is 32 KiB, which fits in the L1 (48 KiB per performance core here), but the loads and stores per cycle are limited, and 8 lanes need 8 times the data per instruction.
+- **The scalar build isn't one operation per cycle either:** a superscalar core already overlaps several scalar iterations.
+
+The lanes multiply the arithmetic; the memory system has to keep up.
+
+</details>
+
+## What gcc did
+
+gcc tells you what it vectorised if you ask (real output; `-O2` alone is shown too):
+
+```
+$ gcc -O3 -march=native -fopt-info-vec -c main.c
+main.c:13:23: optimized: loop vectorized using 32 byte vectors
+main.c:19:23: optimized: loop vectorized using 32 byte vectors
+$ gcc -O2 -fopt-info-vec -c main.c
+main.c:13:23: optimized: loop vectorized using 16 byte vectors
+main.c:19:23: optimized: loop vectorized using 16 byte vectors
+```
+
+(Line 13 is the saxpy loop, line 19 the initialisation loop. Since gcc 12, plain `-O2` vectorises cheap loops, using SSE's 16 bytes, the safe baseline for every x86-64 CPU.) The core of `saxpy` from `gcc -O3 -march=native -S`, exactly as emitted:
+
+```
+.L2:
+	vmulps	(%rdx), %ymm1, %ymm0
+	addq	$32, %rax
+	addq	$32, %rdx
+	vaddps	-32(%rax), %ymm0, %ymm0
+	vmovaps	%ymm0, -32(%rax)
+	cmpq	%rax, %rcx
+	jne	.L2
+```
+
+Read it: `%ymm1` holds `a` copied into all 8 lanes (an earlier `vbroadcastss`). Each iteration multiplies 8 `x`s by it (`vmulps`), adds 8 `y`s (`vaddps`), stores 8 results (`vmovaps`), and moves both pointers on by 32 bytes. There's no leftover loop for the last few elements here: gcc specialised the function for the constant length 4096, a multiple of 8.
+
+One surprise: the CPU has FMA, yet gcc used a separate multiply and add instead of one fused `vfmadd`. That's because `-std=c17` asks for strict ISO C, which turns off contracting `a * x + y` into one rounding step, since a fused multiply-add rounds once instead of twice and can give a slightly different result. With gcc's default `-std=gnu17`, or `-ffp-contract=fast`, it would fuse them.
+
+<KeyIdea>A vector instruction does the same operation in every lane: 8 floats at once with AVX2. The compiler's vectoriser finds loops whose iterations are independent and rewrites them to step 8 at a time.</KeyIdea>
+
+## When it doesn't vectorise
+
+Two small functions, and gcc's report on them (real output, trimmed to the lines that matter):
+
+```c
+void running_sum(float *y, const float *x, int n) {
+    for (int i = 1; i < n; i++) {
+        y[i] = y[i - 1] + x[i];
+    }
+}
+
+void scale(float *dst, const float *src, int n) {
+    for (int i = 0; i < n; i++) {
+        dst[i] = 2.0f * src[i];
+    }
+}
+```
+
+```
+$ gcc -O3 -march=native -fopt-info-vec-all -c dep.c
+dep.c:2:23: missed: couldn't vectorize loop
+dep.c:3:17: missed: not vectorized: no vectype for stmt: _4 = *_3;
+...
+dep.c:8:23: optimized: loop vectorized using 32 byte vectors
+dep.c:8:23: optimized:  loop versioned for vectorization because of possible aliasing
+dep.c:8:23: optimized: loop vectorized using 16 byte vectors
+```
+
+What stopped the first, and what did gcc have to do to vectorise the second?
+
+<details>
+<summary>Check your answer</summary>
+
+- **`running_sum`:** each `y[i]` needs `y[i - 1]`, computed by the previous iteration: a **loop-carried dependence**. Lanes can't run iterations that depend on each other, so the loop stays scalar.
+- **`scale`:** the iterations are independent, but `dst` and `src` might overlap (if a caller passed overlapping pointers, a vector store could change elements still to be read). gcc **versioned** the loop: a run-time check picks the vector version when the arrays don't overlap and the scalar one when they do. The 16-byte line is the epilogue: when `n` isn't a multiple of 8, leftover elements are handled with narrower vectors and then scalar code.
+
+As the programmer you can help. `restrict` (as in `saxpy`) promises the pointers don't alias, so no check is needed. Arrays sized to a multiple of the width avoid the epilogue. And when you need a dependence like a running sum to go fast, you change the algorithm.
+
+</details>
+
+## Done when
+
+You can say how many lanes a register has, read a vectoriser report and a packed loop, explain why the measured speed-up was about 3 rather than 8, and name what blocks vectorisation and how `restrict` and versioning deal with aliasing.

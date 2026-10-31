@@ -1,0 +1,195 @@
+---
+title: "Final project: Trace a program end to end"
+level: level-00-bits-logic
+slug: project-trace-a-program
+order: 111
+timeMin: 45
+learningOutcomes:
+- Follow one program through every stage of the toy pipeline (source, translation, assembly, loading and execution) and explain its output by cause
+- Change a program and predict its new output before running it
+- Describe the separate real pipeline that turns C into a running process on Linux, from real evidence
+- Correct a walkthrough that mixes up the toy machine and a real system, and name at least three simplifications of the tiny CPU
+primer:
+- title: "The complete journey of a program"
+  type: doc
+  meta: Reread · 4 min · the journey this project makes you take yourself.
+  essential: true
+- title: "Project: A tiny-language translator"
+  type: doc
+  meta: Reread · 3 min · how the translator turns a while loop into jumps.
+  essential: true
+- title: "Reading real compiler output"
+  type: doc
+  meta: Reread · 3 min · the real C evidence in part 4.
+  essential: false
+knowledgeCheck:
+- question: The start program outputs 0. Why, in terms of what the CPU does?
+  answer: "The loop subtracts 1 from n's box (0x80) until the test LDA, CMPI R0, 0, JZ finds 0 and jumps to endwhile1. Only then does OUT run, once, sending the value in n's box, which is 0."
+  jumpToId: part-1-one-program-five-stages
+  jumpToLabel: "Part 1: One program, five stages"
+- question: "What's wrong with saying \"OUT is a Linux system call\"?"
+  answer: "OUT is a tiny CPU instruction that sends a byte straight to the modelled display; the tiny CPU has no OS, no kernel mode and no system calls. On Linux, a C program's printf ends in a write system call: a request to the kernel, which drives the real display through a driver."
+  jumpToId: part-5-fix-the-walkthrough
+  jumpToLabel: "Part 5: Fix the walkthrough"
+assignment:
+  instruction: "Write your own short tiny-language program (a loop or an if), predict its output and step count roughly, then run it in the explorer. Write one paragraph that follows it through all five stages, and one that says what would be different if it were C running on Linux."
+  resourceName: 'OSTEP: the textbook, free online'
+  resourceType: site
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/'
+additionalResources:
+- title: "Compiler Explorer"
+  type: doc
+  meta: compile C in the browser and see the assembly
+  url: 'https://godbolt.org/'
+- title: "strace"
+  type: doc
+  meta: the tool used for the real trace in part 4
+  url: 'https://man7.org/linux/man-pages/man1/strace.1.html'
+whyThisMatters: "This is the whole of Foundations in one place: a program you can read becomes bits, instructions, memory and output, and you can explain every step. Being able to tell the toy machine apart from a real one, and say exactly what was simplified, is what lets you carry this picture into C, operating systems and beyond without being misled by it."
+---
+
+This is the last project of Foundations. You'll take one program through every tool you've used: the tiny language, the translator, the assembler, memory and the tiny CPU. Then, in a separate part, you'll follow real C through a real compiler and a real operating system, and keep the two stories apart.
+
+## Part 1: One program, five stages
+
+Open each stage of the explorer in turn, from Source to Run. Answer as you go:
+
+1. How many instructions does the translator produce?
+2. At what address does the loop start (the label `while1`), and where does `n` live?
+3. In Load, which boxes hold code, and which holds `n`?
+4. In Run, step until the first `JZ`. What's in R0, and why doesn't it jump?
+5. Run to the end. What does the display show, and how many steps did it take?
+
+<EndToEnd caption='The toy pipeline: from source to the display' startJson='["var n = 5;", "while (n != 0) {", "  n = n - 1;", "}", "output(n);"]' goalJson='{"out":[5,4,3,2,1]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+1. 13 instructions.
+2. `while1` is at 0x04 (after `LDI` and `STA`, two bytes each). `n` lives in box 0x80, the first variable's box.
+3. Code fills 0x00 to 0x19 (13 instructions, two bytes each). Box 0x80 holds `n`, which is 0 until the program's `STA` writes 5 into it.
+4. R0 is 5, loaded from 0x80. `CMPI R0, 0` finds they differ, so Z is 0 and `JZ endwhile1` doesn't jump.
+5. It shows 0, after 48 steps. The loop runs five times, taking `n` from 5 down to 0, and only then does `output(n)` run.
+
+</details>
+
+## Part 2: Change it, predict, run
+
+The goal above is a countdown on the display: 5, 4, 3, 2, 1. Before you touch anything, decide which one change to the source does it. Write down what you expect, then make the change and run it.
+
+<details>
+<summary>Check your answer</summary>
+
+Move `output(n);` inside the loop, before `n = n - 1;`:
+
+```
+var n = 5;
+while (n != 0) {
+  output(n);
+  n = n - 1;
+}
+```
+
+Each pass shows `n`, then lowers it, so the display gets 5, 4, 3, 2, 1, and the loop stops when `n` reaches 0 without showing it. It's still 13 instructions, and now 56 steps: an `OUT` runs five times instead of once. If you put `output(n);` after the subtraction instead, you'd get 4, 3, 2, 1, 0.
+
+</details>
+
+## Part 3: A program you haven't seen
+
+Predict the output of this program before you run it. Paste it into the explorer's source to check.
+
+```
+var a = 7;
+var b = 3;
+if (a == 7) {
+  b = b + a;
+} else {
+  b = 0;
+}
+output(b);
+output(a - b);
+```
+
+<details>
+<summary>Check your answer</summary>
+
+10, then 253. `a == 7` is true, so `b` becomes 3 + 7 = 10. Then `a - b` is 7 - 10, which in one byte wraps around: 256 - 3 = 253. The CPU doesn't know about negative numbers here; it works modulo 256, exactly as in Bits & Data. The translator puts `a` at 0x80 and `b` at 0x81, and the if becomes a compare, a `JNZ` to `else1`, and a `JMP` over the else part.
+
+</details>
+
+## Part 4: The real pipeline, kept separate
+
+Everything above ran on our tiny CPU. None of it is how your laptop runs a program. Here is real C, compiled by a real compiler. It's the same idea as the toy pipeline, but the parts are different, and so are the rules.
+
+<CompilerOutput evidence="sum-to-n" fn="sum_to" />
+
+When this program ran on Linux (gcc 15.2, Linux 7.0, x86-64), `strace` showed the system calls it made. These are the first, the one that printed, and the last:
+
+```
+execve("./sum", ["./sum"], 0x7ffde0354d20 /* 73 vars */) = 0
+write(1, "55\n", 3)                     = 3
+exit_group(0)                           = ?
++++ exited with 0 +++
+```
+
+The whole run made 34 system calls; most of them were the loader setting up memory and the C library before `main`. Your machine's numbers will differ.
+
+Write the real pipeline as a list of stages, and say which part of the toy pipeline each one corresponds to, if any.
+
+<details>
+<summary>Check your answer</summary>
+
+1. **Preprocess and compile:** gcc turns `source.c` into x86-64 assembly (what you see above). Our translator is the toy version.
+2. **Assemble:** turns assembly into machine code in an object file, with symbols still unresolved. Our assembler does this, without object files.
+3. **Link:** joins the object file with the C library (`printf` lives there) into an executable file. The toy pipeline has nothing like it.
+4. **Load:** `execve` asks the kernel to start a process. The kernel and loader map the file into a fresh virtual address space and set up the stack. The toy "Load" just copies bytes to address 0x00.
+5. **Run:** the CPU runs `main` in user mode, inside the process. `printf` builds "55\n" and calls `write(1, ...)`: a system call, trapping into the kernel, which sends the bytes to the terminal. The toy CPU's `OUT` writes straight to its display.
+6. **Exit:** `exit_group(0)` ends the process; the kernel frees its memory. The toy CPU just halts.
+
+</details>
+
+## Part 5: Fix the walkthrough
+
+A classmate wrote this explanation of the tiny CPU. It has two category errors: it mixes up the toy machine with a real system. Find both, and rewrite the explanation correctly.
+
+> "When the tiny CPU runs `OUT R0`, it makes a Linux system call to print the number. The PC holds a virtual address, which the MMU translates to the physical address of the next instruction."
+
+<details>
+<summary>Check your answer</summary>
+
+1. **`OUT` isn't a system call.** It's an ordinary tiny CPU instruction that sends a byte straight to the modelled display. The tiny CPU has no Linux, no kernel and no user or kernel mode. A system call is a request from a program to an OS, and there's no OS here.
+2. **The PC isn't virtual, and there's no MMU.** The tiny CPU's addresses are the real box numbers, 0x00 to 0xFF. Virtual addresses, and the MMU that translates them, belong to real processors running an OS that gives each process its own address space.
+
+A correct version: "When the tiny CPU runs `OUT R0`, it sends the byte in R0 to its display directly; there's no OS involved. The PC holds the real address of the next instruction in its 256 bytes of memory. On Linux, by contrast, a program prints with a `write` system call, and its addresses are virtual, translated by the MMU."
+
+</details>
+
+## Part 6: Three honest simplifications
+
+Name at least three ways the tiny CPU is simpler than a real computer, and for each, what a real machine does instead.
+
+<details>
+<summary>Check your answer</summary>
+
+Any three of these, or others you can defend:
+
+- **256 bytes of memory** with one-byte values; real machines have gigabytes and 64-bit registers.
+- **No OS, no privilege, no system calls:** any program can use any instruction; real CPUs have user and kernel mode, and programs ask the kernel for services.
+- **Physical addresses only:** no virtual memory, no protection between programs, and only one program at a time.
+- **No caches or hierarchy:** every memory access takes the same time; real machines have registers, several caches, RAM and storage, with very different speeds.
+- **One instruction at a time, fully finished:** real CPUs pipeline, reorder and run several instructions at once.
+- **Our translator is tiny:** one data type, + and - only, and no optimisation; real compilers handle full languages and optimise heavily, as the -O2 listing shows.
+- **The display is a list of bytes:** real output goes through drivers and device controllers.
+
+</details>
+
+<KeyIdea>A program's output has a cause you can follow, stage by stage. The toy pipeline shows every stage; the real one has the same shape with far more inside each stage, so keep the two apart and know which one you're talking about.</KeyIdea>
+
+## Done when
+
+- The explorer shows the 5, 4, 3, 2, 1 countdown, and you predicted it first.
+- You predicted the unseen program's output, 253 included.
+- You've listed the real pipeline from the evidence and fixed the walkthrough.
+- You've named three simplifications.
+
+That's Foundations. Choose a path forward from Paths.

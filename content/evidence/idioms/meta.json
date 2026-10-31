@@ -1,0 +1,13 @@
+{
+  "id": "idioms",
+  "title": "Four small functions and the idioms gcc uses for them",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux (System V ABI)",
+  "flags": {
+    "O0": "gcc -O0 -fno-asynchronous-unwind-tables -fno-pie -no-pie -S source.c",
+    "O2": "gcc -O2 -fno-asynchronous-unwind-tables -fno-pie -no-pie -S source.c"
+  },
+  "output": "23 12 0 1",
+  "generated": "2026-10-31",
+  "note": "Real compiler output, generated on the Ascend build machine and committed unchanged. -fno-asynchronous-unwind-tables only removes .cfi lines; -fno-pie/-no-pie keep addresses simple. Other gcc versions or targets can choose different instructions for the same C."
+}

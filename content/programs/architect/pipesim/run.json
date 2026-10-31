@@ -1,0 +1,20 @@
+{
+  "id": "architect/pipesim",
+  "sourceHash": "ed375eac881f1261",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "addi x1, x0, 2       IF  1  ID  2  EX  3  MEM  4  WB  5\naddi x2, x0, 0       IF  2  ID  3  EX  4  MEM  5  WB  6\nlw x3, 0(x0)         IF  3  ID  4  EX  5  MEM  6  WB  7\nadd x2, x2, x3       IF  4  ID  5  EX  7  MEM  8  WB  9\naddi x1, x1, -1      IF  5  ID  7  EX  8  MEM  9  WB 10\nbne x1, x0, loop     IF  7  ID  8  EX  9  MEM 10  WB 11\nlw x3, 0(x0)         IF 10  ID 11  EX 12  MEM 13  WB 14\nadd x2, x2, x3       IF 11  ID 12  EX 14  MEM 15  WB 16\naddi x1, x1, -1      IF 12  ID 14  EX 15  MEM 16  WB 17\nbne x1, x0, loop     IF 14  ID 15  EX 16  MEM 17  WB 18\n10 instructions, 18 cycles, 2 stall cycles, 2 flushed, CPI 1.80\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

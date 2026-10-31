@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/jr-save",
+  "sourceHash": "40ec13f02d3b757d",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "before:                              \"volume=7\"\nunsafe save, crash mid-way:          \"\"\nsafe save, crash before rename:      \"volume=7\"\nsafe save, finished:                 \"volume=9\"\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

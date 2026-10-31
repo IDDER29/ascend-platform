@@ -1,0 +1,20 @@
+{
+  "id": "c-language/own-leak",
+  "sourceHash": "97ab8f99460839c6",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=address main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "\n=================================================================\n==564671==ERROR: LeakSanitizer: detected memory leaks\n\nDirect leak of 15 byte(s) in 3 object(s) allocated from:\n    #0 0x75ba1a12b60f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67\n    #1 0x5ea31fa3d250 in copy_word ./main.c:6\n    #2 0x5ea31fa3d291 in main ./main.c:13\n    #3 0x75ba19c2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #4 0x75ba19c2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #5 0x5ea31fa3d164 in _start (/tmp/build/prog+0x1164) (BuildId: bcdf2ebe4a53c8ce80c39ae0a0e3c1b3d7eedb44)\n\nSUMMARY: AddressSanitizer: 15 byte(s) leaked in 3 allocation(s).\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

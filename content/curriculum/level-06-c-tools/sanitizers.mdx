@@ -1,0 +1,177 @@
+---
+title: "Sanitizers: ASan and UBSan"
+level: level-06-c-tools
+slug: sanitizers
+order: 7
+timeMin: 12
+learningOutcomes:
+- Build a program with AddressSanitizer, UndefinedBehaviorSanitizer or ThreadSanitizer, and say what each one checks
+- Read a sanitizer report, finding the kind of error, the faulting line, and where the memory was allocated or freed
+- Choose between reporting every undefined-behaviour error and stopping at the first, with -fno-sanitize-recover
+- Explain what sanitizers cost, why they only see the code paths you run, and why they belong in test builds, not release builds
+primer:
+- title: "Undefined behaviour, in depth"
+  type: doc
+  meta: "The C Contract · what UBSan is checking for."
+  essential: true
+- title: "Lifetime: dangling pointers and uninitialised reads"
+  type: doc
+  meta: "The C Contract · use after free and its friends."
+  essential: false
+knowledgeCheck:
+- question: An ASan report says "0 bytes after 20-byte region" for a WRITE of size 4. What happened?
+  answer: "The program wrote 4 bytes starting exactly at the end of a 20-byte block, so the first byte past it: an off-by-one write past the end of a malloc'd array of five ints. The 'allocated by' stack in the report shows which malloc made the block."
+  jumpToId: addresssanitizer
+  jumpToLabel: AddressSanitizer
+- question: Why might a program that passes under ASan still have a memory bug?
+  answer: "Sanitizers check only what actually runs. A bug on a path the tests never took, such as an error branch or an unusual input, isn't reported. Sanitizers are only as good as the inputs you run them with."
+  jumpToId: what-sanitizers-cost-and-miss
+  jumpToLabel: What sanitizers cost and miss
+assignment:
+  instruction: "Take a C program you wrote in an earlier course and add a sanitizer build to it: compile with -O1 -g -fsanitize=address,undefined, run it on normal, empty and oversized input, and fix everything it reports. Then compare its run time with a normal -O2 build."
+  resourceName: 'GCC: Instrumentation options'
+  resourceType: doc
+  resourceUrl: 'https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html'
+additionalResources:
+- title: "AddressSanitizer (Google sanitizers wiki)"
+  type: doc
+  meta: what ASan finds, and its flags
+  url: 'https://github.com/google/sanitizers/wiki/AddressSanitizer'
+- title: "UndefinedBehaviorSanitizer (Clang docs)"
+  type: doc
+  meta: every check UBSan offers; gcc supports most of them
+  url: 'https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html'
+whyThisMatters: "Memory errors and undefined behaviour don't crash where they happen: they corrupt something and crash later, or never. Sanitizers turn them into a report at the exact line, with the history of the memory involved. Building and testing with them is standard practice in serious C projects, and it finds bugs that weeks of debugging wouldn't."
+---
+
+In The C Contract you saw ASan and UBSan as evidence. Here they're the subject. Each **sanitizer** is a compiler option that adds checks to your program, plus a run-time library that reports a violation the moment it happens:
+
+| Sanitizer | Flag | Finds |
+|---|---|---|
+| AddressSanitizer (ASan) | `-fsanitize=address` | out-of-bounds access, use after free, double free, leaks |
+| UndefinedBehaviorSanitizer (UBSan) | `-fsanitize=undefined` | signed overflow, bad shifts, misaligned access, null dereference and more |
+| ThreadSanitizer (TSan) | `-fsanitize=thread` | data races between threads |
+
+Build with `-g` too, so reports name files and lines, and with `-O0` or `-O1`, so the code still looks like your source. ASan and UBSan can be combined. TSan can't be combined with ASan.
+
+Every run below is real gcc 15.2 output. Addresses, process numbers and build ids in the reports change from run to run.
+
+## AddressSanitizer
+
+A loop that goes one step too far:
+
+<CRun program="c-tools/san-heap-overflow" caption='An off-by-one write, with ASan' predict />
+
+The report is long, but it reads in four parts. Find each one: what kind of error, which line, how big the block was, and where it was allocated.
+
+<details>
+<summary>Check your answer</summary>
+
+1. **The error:** `heap-buffer-overflow`, a `WRITE of size 4`: storing one `int` outside a block from `malloc`.
+2. **Where:** the first frame in the stack, `main ./main.c:11`. That's `squares[i] = i * i;` when `i` is 5.
+3. **The block:** "0 bytes after 20-byte region": five 4-byte ints, and the write landed on the first byte past the end.
+4. **Its origin:** "allocated by thread T0 here", `main.c:6`, the `malloc`.
+
+The shadow bytes at the bottom show ASan's bookkeeping. Every 8 bytes of memory have one shadow byte: `00` means all 8 are usable, `04` means only the first 4 are, and `fa` marks a guard zone around a heap block. The faulting address points into the guard zone. You rarely need to read that part.
+
+ASan stops the program at the first error, so nothing after it runs, not even the `printf`.
+
+</details>
+
+Use after free, the other classic. gcc 15 warns at compile time here, and ASan confirms it at run time:
+
+<CRun program="c-tools/san-use-after-free" caption='Reading freed memory' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`heap-use-after-free`, a `READ of size 1` at `main.c:12`. The report has three stacks: the bad read, where the block was **freed** (`main.c:11`), and where it was **allocated** (`main.c:6`). Those last two are what make ASan so useful: in a big program, the free is often far from the use.
+
+ASan doesn't hand freed memory out again straight away. It keeps it in **quarantine**, so a later read of it is caught rather than silently reading someone else's data.
+
+</details>
+
+## Leaks
+
+ASan includes **LeakSanitizer**, which checks for leaked memory when the program exits:
+
+<CRun program="c-tools/san-leak" caption='Three copies, never freed' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+"Direct leak of 45 byte(s) in 3 object(s)": three copies of the 15-byte string, allocated by `copy` at `main.c:7`, called from `main.c:16`. A **direct** leak is a block nothing points to any more. An **indirect** leak is a block reachable only from a leaked block, such as the nodes of a leaked list. The program exits with status 1, so a test run fails.
+
+The three lines the program printed are missing here. The run's output went to a pipe, which `stdout` buffers fully, and LeakSanitizer ends the process right after its report, before the buffer is written. In a terminal you'd see them, because there `stdout` is flushed at every newline. The fix is to free each `line` after printing it.
+
+</details>
+
+## UndefinedBehaviorSanitizer, and choosing when to stop
+
+UBSan's checks are cheap. By default it **reports and carries on**, so one run can show several problems:
+
+<CRun program="c-tools/san-ub-recover" caption='-fsanitize=undefined' predict />
+
+<CRun program="c-tools/san-ub-norecover" caption='-fsanitize=undefined -fno-sanitize-recover=undefined' />
+
+<details>
+<summary>Check your answer</summary>
+
+The first build reports both errors (`INT_MAX + 1` overflowing, and a shift by 40 on a 32-bit `int`), prints whatever values the operations produced this time, finishes, and exits with status 0. The second build stops at the first error with status 1, and nothing after it runs.
+
+Reporting and carrying on is handy while you explore. In tests and CI, use `-fno-sanitize-recover=undefined` so any UB fails the run. A report scrolling past in a log that still exits 0 is easy to miss.
+
+</details>
+
+## ThreadSanitizer, briefly
+
+Two threads increment one global without a lock:
+
+<CRun program="c-tools/san-race" caption='-fsanitize=thread' />
+
+TSan reports a **data race** at `main.c:8`: a read by one thread and a previous write by another, of the global `hits`, with neither holding a lock. This run printed the right total, 200000. TSan reports the race anyway, because the program can lose updates even when a particular run doesn't. Its exit status is 66. The threads course goes further with TSan.
+
+gcc has no **MemorySanitizer** (uninitialised reads). That one is Clang only. In gcc, rely on `-Wall -Wextra` at `-O2`, which warns about many uninitialised reads, or use valgrind.
+
+## Options at run time
+
+Sanitizers read options from an environment variable when the program starts: `ASAN_OPTIONS`, `UBSAN_OPTIONS` or `TSAN_OPTIONS`. A real session with the leaky program, built with ASan:
+
+```
+$ ./leak > /dev/null 2>&1; echo "default: exit $?"
+default: exit 1
+$ ASAN_OPTIONS=detect_leaks=0 ./leak; echo "detect_leaks=0: exit $?"
+0: a line of text
+1: a line of text
+2: a line of text
+detect_leaks=0: exit 0
+$ ASAN_OPTIONS=exitcode=7 ./leak 2>/dev/null >/dev/null; echo "exitcode=7: exit $?"
+exitcode=7: exit 7
+```
+
+`detect_leaks=0` turns leak checking off, and `exitcode=` changes the status a report exits with. Separate several options with colons. Use them sparingly: switching checks off in a test build is how bugs slip through.
+
+## What sanitizers cost and miss
+
+The same loop over 16 MiB, built at `-O1` without and with ASan:
+
+<CRun program="c-tools/san-cost-plain" caption='-O1' />
+
+<CRun program="c-tools/san-cost-asan" caption='-O1 -fsanitize=address' />
+
+Here the ASan build took about twice as long. Your times will differ, and depend heavily on the program. Typical figures are about 2× time for ASan, 5 to 15× for TSan, and much more memory for both. UBSan is cheaper. That's why sanitizer builds are for tests and debugging, not releases. They're also not hardening: they're not designed to resist an attacker.
+
+They also only see what runs. An overflow in an error branch that no test reaches is never reported, so pair sanitizers with tests that cover the edges: empty input, the largest input, bad input.
+
+<KeyIdea>Build tests with -g -fsanitize=address,undefined -fno-sanitize-recover=undefined (or TSan for threaded code), and run them on edge-case inputs. A report names the error, the line, and the memory's history.</KeyIdea>
+
+## Try it
+
+A sanitizer report starts with `ERROR: AddressSanitizer: stack-buffer-overflow` and `WRITE of size 1`, at a line `buf[len] = '\0';`, with `buf` declared as `char buf[8]`. What's the likely bug?
+
+<details>
+<summary>Check your answer</summary>
+
+`len` reached 8, so the terminator was written one past the end of the 8-byte stack array. The code filled `buf` with up to 8 characters and forgot to leave room for the `'\0'`. Limit the copy to `sizeof buf - 1` characters, or make the buffer one byte bigger. "stack-buffer-overflow" means the array was a local variable; "heap-buffer-overflow" would mean it came from `malloc`.
+
+</details>

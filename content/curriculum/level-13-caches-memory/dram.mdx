@@ -1,0 +1,147 @@
+---
+title: "DRAM and the memory controller"
+level: level-13-caches-memory
+slug: dram
+order: 4
+timeMin: 12
+learningOutcomes:
+- Explain how a DRAM cell stores a bit in a capacitor, why reading it is destructive, and why every row must be refreshed
+- Work out the latency of a row hit, a closed row and a row conflict from a DRAM's timing parameters
+- Explain how banks and the row buffer let a memory controller reorder requests, and compute the gain of first-ready scheduling
+- Explain why independent cache misses overlap while dependent ones pay the full latency, from a real measurement
+primer:
+- title: "Cache hierarchies: L1, L2 and L3"
+  type: doc
+  meta: Reread · 3 min · the 160 ns that DRAM costs at the bottom.
+  essential: true
+- title: "Memory versus storage"
+  type: doc
+  meta: "Foundations · why DRAM forgets when the power goes."
+  essential: false
+knowledgeCheck:
+- question: "A DDR4-3200 part has CL = tRCD = tRP = 22 clocks at 1600 MHz. How long do a row hit, a closed row and a row conflict take?"
+  answer: "One clock is 1 / 1600 MHz = 0.625 ns, so each parameter is 22 × 0.625 = 13.75 ns. Row hit: CL = 13.75 ns. Closed row: tRCD + CL = 27.5 ns. Row conflict: tRP + tRCD + CL = 41.25 ns."
+  jumpToId: rows-banks-and-the-row-buffer
+  jumpToLabel: Rows, banks and the row buffer
+- question: Reading 64 MiB in shuffled order took about 12 ns per line, but chasing pointers through 64 MiB took about 170 ns per load. Both miss in every cache. Why so different?
+  answer: "The shuffled reads are independent: the core sends many misses to memory at once, and they proceed in parallel across banks, so their latencies overlap. In the pointer chase, each load needs the previous one's result, so only one miss is ever in flight and each pays the full latency."
+  jumpToId: latency-against-parallelism
+  jumpToLabel: Latency against parallelism
+assignment:
+  instruction: "A memory controller has, for one bank with row 5 open, the queue row 9, row 5, row 9, row 5, row 5 (oldest first). Using the DDR4-3200 timings from this lesson, compute the total time in first-come first-served order and in first-ready order (row hits first, then oldest). Then explain what a controller must add so that the requests for row 9 can't starve."
+  resourceName: 'Wikipedia: Memory controller'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Memory_controller'
+additionalResources:
+- title: "Wikipedia: Dynamic random-access memory"
+  type: doc
+  meta: cells, sense amplifiers, banks and refresh
+  url: 'https://en.wikipedia.org/wiki/Dynamic_random-access_memory'
+- title: "Wikipedia: CAS latency"
+  type: doc
+  meta: CL, tRCD and tRP, and converting clocks to nanoseconds
+  url: 'https://en.wikipedia.org/wiki/CAS_latency'
+- title: "Ulrich Drepper: What Every Programmer Should Know About Memory"
+  type: pdf
+  meta: section 2, how RAM works, in depth
+  url: 'https://people.freebsd.org/~lstewart/articles/cpumemory.pdf'
+whyThisMatters: "Everything that misses the last cache ends up here, and DRAM's behaviour, with rows, banks and refresh, is why memory bandwidth and latency are two different things. Understanding it explains why streaming code flies, why random access crawls, and why memory, not the core, limits so much real software."
+---
+
+Below the L3 is main memory: gigabytes of **DRAM** on separate chips, reached through the **memory controller** built into the CPU. It's far denser than the SRAM in caches, and far slower, for physical reasons this lesson walks through.
+
+## A bit in a capacitor
+
+A DRAM cell is one transistor and one tiny capacitor. A charged capacitor is a 1, an empty one a 0. That's why DRAM is dense: an SRAM cache cell needs six transistors.
+
+The capacitor is so small that two things follow:
+
+- **Reading is destructive.** Connecting the cell to its bit line shares its charge, and a **sense amplifier** must detect the tiny voltage change and then write the value back.
+- **Charge leaks away.** Every cell must be read and rewritten before it forgets: that's **refresh**. DDR4 refreshes every row at least once every 64 ms. The controller issues a refresh command about every 7.8 µs, and each one makes a rank busy for a time called tRFC (350 ns on a common 8 Gb chip).
+
+How much of the time is a DDR4 rank unavailable because of refresh, with those numbers?
+
+<details>
+<summary>Check your answer</summary>
+
+350 ns busy out of every 7800 ns: 350 / 7800 ≈ **4.5%**. That share grows with chip capacity, because more rows must be refreshed in the same 64 ms. It's one reason high-capacity DRAM gets slower, and why controllers try to schedule refreshes when a bank is idle.
+
+</details>
+
+## Rows, banks and the row buffer
+
+Cells are arranged in a grid. Reading means **activating** a whole row (thousands of bytes): its contents move into the row of sense amplifiers, called the **row buffer**. A column (the bytes you want) is then read from the row buffer. Before a different row of the same bank can be activated, the open one must be written back and closed: **precharge**.
+
+Three timing parameters describe this, in memory clocks:
+
+- **tRCD:** activate a row until its columns can be read
+- **CL** (CAS latency): read command until the data comes out
+- **tRP:** precharge, closing the open row
+
+So a request's latency depends on the state of its bank:
+
+- **Row hit** (its row is already open): CL
+- **Closed row** (nothing open): tRCD + CL
+- **Row conflict** (another row is open): tRP + tRCD + CL
+
+A chip has several **banks** (DDR4 has 16), each with its own row buffer, so different banks can work on different requests at the same time. Take DDR4-3200 with CL = tRCD = tRP = 22, at a 1600 MHz memory clock. Work out the three latencies in nanoseconds.
+
+<details>
+<summary>Check your answer</summary>
+
+One clock at 1600 MHz is 0.625 ns, so 22 clocks is 13.75 ns:
+
+- **Row hit:** 13.75 ns
+- **Closed row:** 13.75 + 13.75 = 27.5 ns
+- **Row conflict:** 13.75 × 3 = 41.25 ns
+
+(DDR transfers data on both clock edges, which is why a 1600 MHz clock is sold as "3200".) These are only the DRAM's own times. A load that misses every cache also pays for the TLB, the trip through the cache hierarchy and the controller's queues, which is how the measurement in the last lesson reached about 160 ns.
+
+</details>
+
+## The controller's choice
+
+The controller holds a queue of requests and may serve them in any order, as long as each one gets the right data. A common policy is **first-ready, first-come first-served (FR-FCFS)**: serve requests that hit the open row first, and otherwise the oldest.
+
+One bank has row 5 open. Its queue, oldest first, is: row 5, row 7, row 5, row 5. Using the DDR4-3200 latencies above, compute the total time in plain arrival order (FCFS) and with FR-FCFS.
+
+<details>
+<summary>Check your answer</summary>
+
+- **FCFS:**
+  - row 5, a hit: 13.75 ns
+  - row 7, a conflict: 41.25 ns
+  - row 5, a conflict, because row 7 is open now: 41.25 ns
+  - row 5, a hit: 13.75 ns
+
+  Total **110 ns**.
+- **FR-FCFS:** the three row-5 requests first, all hits (3 × 13.75 = 41.25 ns), then row 7, a conflict (41.25 ns). Total **82.5 ns**, 25% less.
+
+The catch is fairness: a stream of row-5 hits could postpone the row-7 request forever. Real controllers cap how long a request may wait, and they also choose which bank and channel each address maps to, so that consecutive lines spread across banks.
+
+</details>
+
+<KeyIdea>DRAM latency depends on the row buffer: a hit costs CL, a conflict costs tRP + tRCD + CL. Controllers reorder requests to turn conflicts into hits, and spread addresses over banks so many requests proceed at once.</KeyIdea>
+
+## Latency against parallelism
+
+This program reads one byte from every 64-byte line of a 64 MiB buffer: first in address order, then in a shuffled order. Every line misses every cache either way. Predict the time per line for each, and compare them with the pointer chase from the last lesson, about 170 ns per load at 64 MiB.
+
+<CRun program="architect/dram-patterns" caption='The same 64 MiB, two orders' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+In this run (it varies), about 5 ns per line in address order and about 12 ns shuffled. Both are far below 170 ns, and for different reasons:
+
+- **In address order,** the hardware prefetcher sees the pattern and fetches lines before they're asked for, and consecutive lines hit open rows. That's 64 bytes every 5.2 ns, about 12 GB/s: the program is limited by **bandwidth**, not latency.
+- **Shuffled,** prefetching can't help, but each read is **independent** of the others. The core keeps many misses in flight at once (16 or more per core on modern CPUs), and the controller spreads them over banks and channels. Each read still takes about 100 ns or more, but many overlap, so on average a new one finishes every 12 ns. That's **memory-level parallelism**.
+- **The pointer chase** made every load depend on the previous one, so only one miss was ever in flight, and each paid the full latency.
+
+So DRAM has two different speeds: latency for dependent accesses, and bandwidth for independent ones. Data structures built from pointers (lists, trees) live on the first; arrays walked in order live on the second.
+
+</details>
+
+## Done when
+
+You can explain refresh and the row buffer, compute row hit, closed-row and conflict latencies, schedule a bank's queue with FR-FCFS, and explain why the same 64 MiB costs 5, 12 or 170 ns per line depending on the access pattern.

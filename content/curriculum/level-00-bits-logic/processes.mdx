@@ -1,0 +1,154 @@
+---
+title: "Programs, processes and address spaces"
+level: level-00-bits-logic
+slug: processes
+order: 103
+timeMin: 8
+learningOutcomes:
+- Distinguish a program (a file) from a process (that program running)
+- List what the kernel keeps for each process, its state, memory and open files
+- Explain an address space as a process's own private view of memory
+- Explain a real run where two processes use the same address and see different values
+primer:
+- title: "Privilege, traps and system calls"
+  type: doc
+  meta: Reread · 2 min · processes reach the kernel through system calls.
+  essential: true
+- title: "Linking, loading and starting a program"
+  type: doc
+  meta: Reread · 2 min · the loader turns an executable file into a running program.
+  essential: false
+knowledgeCheck:
+- question: You open the same editor twice. How many programs, and how many processes?
+  answer: "One program: one executable file on storage. Two processes: two separate runs of it, each with its own memory, registers and open files."
+  jumpToId: a-program-is-a-file-a-process-is-a-run
+  jumpToLabel: A program is a file; a process is a run
+- question: What does the kernel keep for each process?
+  answer: "Its process ID, its saved registers (including where it was in the program) when it isn't running, its memory, its table of open files, and whether it is running, waiting or finished."
+  jumpToId: what-the-kernel-keeps
+  jumpToLabel: What the kernel keeps
+- question: Two processes print the address of the same variable and get the same address, 0x404034, but different values. How can that be?
+  answer: "Each process has its own address space. The same address in two processes is translated to different places in real memory, so each sees its own copy of the variable."
+  jumpToId: two-processes-one-address
+  jumpToLabel: Two processes, one address
+assignment:
+  instruction: "Compile and run the two-processes program from this lesson (on Linux, with gcc -no-pie). Run it three times and note the process IDs and addresses each time. Then change the child to set counter to your favourite number and explain the output."
+  resourceName: 'OSTEP: The Abstraction: The Process (PDF)'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-intro.pdf'
+additionalResources:
+- title: 'Wikipedia: Process (computing)'
+  type: doc
+  meta: processes, their state and their memory
+  url: 'https://en.wikipedia.org/wiki/Process_%28computing%29'
+- title: 'Linux man page: fork(2)'
+  type: doc
+  meta: the system call that makes a copy of a process
+  url: 'https://man7.org/linux/man-pages/man2/fork.2.html'
+whyThisMatters: "Every running program is a process: crashes, task managers, kill commands and memory use are all described in terms of processes. Knowing that each has its own address space explains why one program crashing doesn't take down the others."
+---
+
+An executable file sitting on an SSD doesn't do anything. Run it, and the OS makes something new: a running copy with its own memory, its own registers and its own open files. That running copy is a **process**.
+
+By the end you'll be able to tell a program from a process, say what the kernel keeps for each one, and explain why two processes can't see each other's memory.
+
+## A program is a file; a process is a run
+
+A **program** is a file: instructions and data, laid out the way the linker wrote them. Here's the hello program from the last lesson, on disk:
+
+```
+$ ls -l hello
+-rwxrwxr-x 1 learner learner 15952 Oct 31 06:50 hello
+$ file hello
+hello: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, ...
+```
+
+15,952 bytes in ELF format, the executable format Linux uses. Nothing happens until you run it. Then the kernel creates a **process**: it gives the run a number (a process ID), sets up memory for it, loads the program's code and data into that memory, and starts the CPU at its first instruction.
+
+Run the same program twice and you get one file and two processes, each with its own progress through the code.
+
+<KeyIdea>A program is a file of instructions; a process is one run of it, with its own memory, registers and open files.</KeyIdea>
+
+## What the kernel keeps
+
+For every process, the kernel keeps a record:
+
+<TruthTable caption='What the kernel keeps for each process' rowsJson='[["part", "what it is"], ["process ID", "the number that names it, like 537994"], ["state", "running, ready for a turn, waiting for something, or finished"], ["saved registers", "PC, the stack pointer and the rest, while it is not on the CPU"], ["address space", "its own memory: code, data, heap and stack"], ["open files", "a table of file descriptors: 0, 1 and 2, then 3, 4 and on"], ["owner", "which user it runs as, which decides what it may open"]]' />
+
+File descriptors belong to the process. The number 3 in one process and 3 in another can be different files. In this model, a program opens a log and tries to add to it, but it uses the wrong descriptor, and it never ends properly. Fix both.
+
+<SyscallLab editable caption='Add to the log, then finish' startJson='["open \"log.txt\"", "write 4 \"b\""]' diskJson='{"log.txt":"a"}' goalJson='{"disk":{"log.txt":"ab"},"exit":0}' />
+
+<details>
+<summary>Check your answer</summary>
+
+`open` returned 3: the first free number in this process's table (0, 1 and 2 are taken by standard input, output and errors). Descriptor 4 isn't open here, so the kernel refused the write.
+
+```
+open "log.txt"
+write 3 "b"
+exit 0
+```
+
+On `exit`, the kernel closes everything the process left open and records its exit code. In this model that also writes the file to the disk; on real Linux the data reaches the disk a little later, unless the program calls `fsync`.
+
+</details>
+
+## Every process gets its own memory
+
+Each process has an **address space**: its own private view of memory, from address 0 up to a very large number. Its code, its global variables, its heap and its stack all have addresses in that space. Another process's memory simply isn't in it, so a buggy process can't read or wreck another one. If it uses an address that isn't in its own space, the kernel stops it, which is one source of the "segmentation fault".
+
+Linux shows a process's address space in `/proc/<pid>/maps`, and `/proc/self` always means "the process reading it". Here `cat` prints its own map, filtered to two lines:
+
+```
+$ cat /proc/self/maps | grep -E "heap|stack"
+618707948000-61870798a000 rw-p 00000000 00:00 0                          [heap]
+7fffcc3b9000-7fffcc3db000 rw-p 00000000 00:00 0                          [stack]
+```
+
+Those are the heap and stack ranges of that one process. Every run gets its own ranges, and the numbers change from run to run.
+
+## Two processes, one address
+
+This program uses the system call `fork`, which makes a copy of the running process. After it, there are two processes running the same code: the original (the parent) and the copy (the child). The child sets `counter` to 100; the parent waits a second and doesn't touch it. Both print their process ID, the value, and the address of `counter`.
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+
+int counter = 0;
+
+int main(void) {
+    pid_t child = fork();
+    if (child == 0) {
+        counter = 100;
+        printf("child  pid %d: counter = %d at %p\n", getpid(), counter, (void *)&counter);
+        return 0;
+    }
+    sleep(1);
+    printf("parent pid %d: counter = %d at %p\n", getpid(), counter, (void *)&counter);
+    return 0;
+}
+```
+
+Predict the output before you look.
+
+<details>
+<summary>Check your answer</summary>
+
+A real run (gcc 15.2, `-no-pie` so the address is the same each time, x86-64 Linux; process IDs differ every run):
+
+```
+child  pid 537994: counter = 100 at 0x404034
+parent pid 537993: counter = 0 at 0x404034
+```
+
+Same address, different values. Each process has its own address space, so address 0x404034 in the child and 0x404034 in the parent are two different places in real memory. The child changed its own copy; the parent's stayed 0.
+
+</details>
+
+How the hardware turns one process's address into a place in real memory is the next lesson, *Virtual and physical addresses*.
+
+## The toy and the real thing
+
+The tiny CPU runs one program, and that program's addresses are the real box numbers: 0x80 is box 0x80, and nothing else exists. There's no process, no process ID, no file table and no second address space. A real OS gives every process the illusion of a machine like that, all to itself, while keeping dozens of them apart on the same hardware.

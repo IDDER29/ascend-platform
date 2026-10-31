@@ -1,0 +1,75 @@
+---
+title: "Optional project: Compare two targets"
+level: level-00-bits-logic
+slug: project-compiler-variation
+order: 95
+timeMin: 30
+learningOutcomes:
+- Compare the same C function compiled for 64-bit and 32-bit x86, and spot what changed
+- Explain how a calling convention decides where an argument arrives
+- Separate what C guarantees from what each target chooses
+primer:
+- title: "Project: Inspect real compiled C"
+  type: doc
+  meta: Reread · 3 min · the 64-bit listing you know.
+  essential: true
+knowledgeCheck:
+- question: Where does n arrive on 32-bit x86, and why is it different from 64-bit?
+  answer: "On the stack, read with movl 8(%esp), %ecx: after pushl %ebx, 0(%esp) holds the saved %ebx, 4(%esp) the return address and 8(%esp) the argument. The i386 System V convention passes arguments on the stack; the x86-64 one passes the first ones in registers. Same C, different rules for the target."
+  jumpToId: part-1-where-does-n-come-from
+  jumpToLabel: "Part 1: Where does n come from?"
+assignment:
+  instruction: "Use Compiler Explorer (godbolt.org) to compile sum_to for a third target, such as ARM64 (armv8-a gcc) at -O2. Where does n arrive, and does the loop still handle two numbers per trip? Write three sentences."
+  resourceName: 'Compiler Explorer'
+  resourceType: site
+  resourceUrl: 'https://godbolt.org/'
+additionalResources:
+- title: x86 calling conventions (Wikipedia)
+  type: doc
+  meta: cdecl (32-bit) and System V x86-64, side by side
+  url: 'https://en.wikipedia.org/wiki/X86_calling_conventions'
+whyThisMatters: "Code you write once runs on many targets, and each has its own rules for registers and arguments. Seeing the same function on two targets makes the line between the C language and the machine underneath it concrete."
+---
+
+This optional project compares the same `sum_to`, compiled by the same gcc at -O2, for two targets: 64-bit x86 (as before) and 32-bit x86 (`-m32`).
+
+<CompilerOutput evidence="sum-to-n" fn="sum_to" compare="targets" caption="sum_to for two targets, both at -O2" />
+
+## Part 1: Where does n come from?
+
+In each listing, find where the function first reads n.
+
+<details>
+<summary>Check your answer</summary>
+
+On 64-bit, n is already in `%edi` when the function starts (`testl %edi, %edi`). On 32-bit, the function loads it from the stack: `movl 8(%esp), %ecx`. By then the function has pushed `%ebx`, so `0(%esp)` holds the saved `%ebx`, `4(%esp)` the return address, and `8(%esp)` the argument. The i386 convention passes arguments on the stack; x86-64's passes the first ones in registers.
+
+</details>
+
+## Part 2: What else changed?
+
+Find two more differences between the listings.
+
+<details>
+<summary>Check your answer</summary>
+
+- The 32-bit version saves and restores `%ebx` (`pushl %ebx` … `popl %ebx`): it needs one more register, and the convention says the caller expects `%ebx` unchanged. 64-bit has spare registers it may use freely.
+- The 32-bit version has no `endbr64` line, which belongs to a 64-bit control-flow protection feature.
+- The loop itself is the same idea on both: two numbers per trip with `leal 1(%edx,%eax,2)`.
+
+</details>
+
+## Part 3: What did C promise?
+
+Which of these does C itself guarantee: the result for n = 10; that n arrives in a register; that `%ebx` is saved?
+
+<details>
+<summary>Check your answer</summary>
+
+Only the result (55). Where arguments arrive and which registers must be saved are the target's calling convention: rules that compilers for that target agree on, so code from different compilers can call each other.
+
+</details>
+
+## Done when
+
+You can point to where n arrives in each listing and explain why they differ.

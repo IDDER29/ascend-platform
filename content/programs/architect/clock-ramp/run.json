@@ -1,0 +1,20 @@
+{
+  "id": "architect/clock-ramp",
+  "sourceHash": "0b27842704c70c41",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "slice  time for the same work\n    1    4.13 ms\n    2    4.02 ms\n    3    4.17 ms\n    4    3.93 ms\n    5    3.83 ms\n    6    3.71 ms\n    7    3.67 ms\n    8    3.66 ms\n    9    3.63 ms\n   10    3.49 ms\n   11    3.46 ms\n   12    3.35 ms\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

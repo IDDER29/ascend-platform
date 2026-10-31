@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/hashmap-wordcount",
+  "sourceHash": "d40006821de580b5",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O1 -g -fsanitize=address,undefined main.c hashmap.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "26 different words\n  7  a\n  5  map\n  2  and\n  2  each\n  2  grows\n  2  is\n  2  keeps\n  2  table\n  2  the\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

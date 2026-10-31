@@ -1,0 +1,85 @@
+---
+title: "Project: Half-adder"
+level: level-00-bits-logic
+slug: project-half-adder
+order: 29
+timeMin: 25
+learningOutcomes:
+- Build a half-adder from XOR (sum) and AND (carry) and explain what each output means
+- Trace every input pair (00, 01, 10, 11) through the circuit and verify sum and carry by hand
+- Explain why a half-adder cannot handle a carry-in, and what that implies for multi-bit addition
+- Connect the circuit back to the gate lesson — addition as boolean logic, not arithmetic magic
+primer:
+- title: Logic gates, from switches to circuits
+  type: doc
+  meta: Reread · 5 min · the half-adder diagram at the end is the starting point for this project.
+  essential: true
+- title: nand2tetris — Project 1 (Boolean Logic)
+  type: doc
+  meta: Skim · optional · if you want to build gates from NAND first.
+  essential: false
+  url: 'https://www.nand2tetris.org/project01'
+knowledgeCheck:
+- question: In your own words, what does the Sum output of a half-adder represent, and why is XOR the right gate for it?
+  answer: Sum is the least-significant bit of adding two bits — 1 when exactly one of the inputs is 1, and 0 when both are 0 or both are 1. XOR is true precisely when its inputs differ, which is the same rule, so Sum is XOR(A, B).
+  jumpToId: what-you-are-building
+  jumpToLabel: What you are building
+- question: Why can't a half-adder alone add multi-bit numbers correctly?
+  answer: A half-adder has no carry-in input. When you add bit columns beyond the ones place, each column needs the carry out of the previous column. Without that input, carries from lower bits are lost — you need a full-adder (or a chain of them) for multi-bit addition.
+  jumpToId: why-half-not-full
+  jumpToLabel: Why “half,” not full
+assignment:
+  instruction: 'On paper or in any gate simulator, draw A and B into XOR → Sum and AND → Carry. Fill a 4-row truth table for every input pair. Then answer: which input pairs produce Carry = 1, and what does that mean in decimal?'
+  resourceName: 'CircuitVerse — free online logic simulator (optional)'
+  resourceType: site
+  resourceUrl: 'https://circuitverse.org/'
+additionalResources:
+- title: Ben Eater — Making a half adder
+  type: video
+  meta: ~10 min
+  url: 'https://www.youtube.com/watch?v=z8yEIN2pMPA'
+- title: nand2tetris — Project 1
+  type: doc
+  meta: Build gates from NAND
+  url: 'https://www.nand2tetris.org/project01'
+whyThisMatters: "Until now you've read about gates. This project makes addition a circuit you can point at — Sum and Carry as two boolean functions — which is the first honest step from logic toward the ALU that will show up when the machine starts running instructions."
+---
+
+You've learned bits, boolean logic, and gates. This **project** is where those pieces do something useful: **add two bits** and produce a sum and a carry — the same idea every ALU uses, just one bit wide.
+
+By the end you should be able to draw the circuit from memory, fill its truth table without peeking, and explain why this “half” adder is only the first step toward real multi-bit addition.
+
+## What you are building
+
+A <b>half-adder</b> takes two bits, `A` and `B`, and produces:
+
+- <b>Sum</b> — the ones-place result of `A + B` in binary
+- <b>Carry</b> — whether that addition overflowed into the next place
+
+| A | B | Sum | Carry |
+|---|---|-----|-------|
+| 0 | 0 | 0   | 0     |
+| 0 | 1 | 1   | 0     |
+| 1 | 0 | 1   | 0     |
+| 1 | 1 | 0   | 1     |
+
+When both inputs are 1, the ones place rolls over (Sum = 0) and Carry becomes 1 — exactly like writing “10” in binary for decimal 2.
+
+## Wire it from gates you know
+
+You already have the right operators:
+
+- <b>Sum = XOR(A, B)</b> — true when the inputs differ
+- <b>Carry = AND(A, B)</b> — true only when both are 1
+
+<Visual type='diagram' caption='Half-adder from XOR and AND' description='Two input wires A and B. Each splits to feed both an XOR gate labeled Sum and an AND gate labeled Carry. Outputs leave the two gates separately. For A=1, B=1 a small annotation shows Sum=0, Carry=1.' />
+
+Draw that on paper (or in a simulator). Then walk every row of the table and confirm the outputs match — no shortcuts.
+
+## Why “half,” not full
+
+A half-adder has **no carry-in**. That is fine for the least-significant bit of a bigger add, but every higher bit column needs the carry coming in from the right. A <b>full-adder</b> adds that third input. You do not build a full-adder in this project — you just need to know why the half version is incomplete for multi-bit numbers.
+
+## Done when
+
+You can (1) redraw the circuit, (2) reproduce the truth table cold, and (3) say in one sentence why Carry exists. That is the bridge from “gates as boolean operators” to “gates as arithmetic hardware.”

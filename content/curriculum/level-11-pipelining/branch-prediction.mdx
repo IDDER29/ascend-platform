@@ -1,0 +1,123 @@
+---
+title: "Branch prediction"
+level: level-11-pipelining
+slug: branch-prediction
+order: 4
+timeMin: 12
+learningOutcomes:
+- Compare static guesses with dynamic predictors that remember each branch's past
+- Explain why a 2-bit saturating counter mispredicts a loop branch once per loop, where a 1-bit one mispredicts twice
+- Explain how global history lets a predictor learn patterns that a counter alone can't
+- Estimate the cost of mispredictions with CPI = 1 + branch share × miss rate × penalty
+primer:
+- title: "Control hazards and stalls"
+  type: doc
+  meta: Reread · 3 min · what a wrong guess costs, and flushing.
+  essential: true
+knowledgeCheck:
+- question: Why does a 1-bit predictor mispredict a loop branch twice each time the loop runs, and a 2-bit counter only once?
+  answer: "The 1-bit predictor remembers only the last outcome. The loop's exit (not taken) flips it to not taken, so it's wrong at the exit and again at the first test of the next run. A 2-bit counter at strongly taken drops only to weakly taken after one exit, still predicting taken, so only the exit is wrong."
+  jumpToId: remember-what-happened
+  jumpToLabel: Remember what happened
+- question: "20% of instructions are branches, 5% of them are mispredicted, and a misprediction costs 15 cycles. What is the CPI, if it's 1 otherwise?"
+  answer: "1 + 0.2 × 0.05 × 15 = 1.15. Even a 95%-accurate predictor costs 15% more time here, which is why real CPUs spend so much hardware on prediction."
+  jumpToId: what-a-wrong-guess-costs
+  jumpToLabel: What a wrong guess costs
+assignment:
+  instruction: "Write a short C loop with an if inside it whose condition depends on random data, and one where it depends on sorted data. Explain, using what a 2-bit counter or gshare would see, which branch is easy to predict and which is not. Then read Dan Luu's article and find the predictor that would handle each best."
+  resourceName: 'Dan Luu: Branch prediction'
+  resourceType: doc
+  resourceUrl: 'https://danluu.com/branch-prediction/'
+additionalResources:
+- title: "Branch predictor (Wikipedia)"
+  type: doc
+  meta: static, bimodal, two-level, gshare and beyond
+  url: 'https://en.wikipedia.org/wiki/Branch_predictor'
+whyThisMatters: "Modern CPUs have pipelines of 15 or more stages and keep hundreds of instructions in flight, so a wrong guess throws away a lot of work. Branch prediction is why typical code runs fast anyway, and why code with unpredictable branches, like sorting random data, can run several times slower than it looks."
+---
+
+Guessing "not taken" was free when a branch fell through, but a loop branch is taken almost every time. A **branch predictor** does better by remembering what each branch did before, and guessing that it will do it again.
+
+## A static guess
+
+A loop of 10 iterations, run 10 times, has a branch that goes: taken 9 times, then not taken once to exit, over and over. The lab below shows each prediction, what really happened, and whether the guess was right. Try "always not taken" and "always taken".
+
+<PredictorLab caption='A loop branch' kindJson='"not-taken"' kindsJson='["not-taken","taken","1-bit","2-bit"]' patternJson='{"pc":64,"pattern":"TTTTTTTTTN","repeat":10}' />
+
+<details>
+<summary>Check your answer</summary>
+
+"Always not taken" is right 10 times out of 100: only the exits. "Always taken" is right 90 times. For loops, "taken" is the better static guess, which is why some processors predict backward branches (to an earlier address, like a loop's) as taken and forward ones as not taken.
+
+</details>
+
+## Remember what happened
+
+Static guesses treat every branch the same. A **dynamic** predictor keeps a small table, indexed by bits of the branch's address, and learns per branch:
+
+- **1-bit:** each entry remembers the last outcome, and predicts it again.
+- **2-bit saturating counter:** each entry counts from 0 to 3. 0 and 1 predict not taken, 2 and 3 predict taken. A taken branch adds 1 and a not-taken one subtracts 1, stopping at 0 and 3. One surprise moves the counter one step, but not across the middle if it was at 0 or 3.
+
+Switch the lab above to "1-bit", then to "2-bit", and look at where the wrong guesses are.
+
+<details>
+<summary>Check your answer</summary>
+
+- **1-bit: 80 of 100.** It's wrong twice per loop run: at the exit (it remembered "taken") and at the next run's first test (it remembered the exit's "not taken").
+- **2-bit: 89 of 100.** After the first run it sits at "strongly taken". The exit drops it only to "weakly taken", which still predicts taken, so the next run's first test is right. It's wrong only at the 10 exits, plus once at the very start, while it warms up from weakly not taken.
+
+That one extra bit of memory makes a predictor tolerate a single surprise.
+
+</details>
+
+## An inner loop
+
+Inner loops are short, which makes the exit a bigger share. This branch is an inner loop of 4 run 10 times by an outer loop: taken, taken, taken, not taken, repeated. Get the predictor to 70% or better.
+
+<PredictorLab caption='An inner loop of 4' kindJson='"1-bit"' kindsJson='["1-bit","2-bit"]' patternJson='{"pc":64,"pattern":"TTTN","repeat":10}' goalJson='{"minAccuracy":0.7}' />
+
+<details>
+<summary>Check your answer</summary>
+
+The 1-bit predictor gets only 20 of 40 (50%): two misses in every four branches. The 2-bit counter gets 29 of 40 (72.5%): one warm-up miss, then only the 10 exits. A predictor that knew the pattern "three taken, then not" could even get the exits right. That needs history.
+
+</details>
+
+## Learning patterns with history
+
+This branch alternates: taken, not taken, taken, not taken. A counter can't learn that, because the last outcome is always the wrong guess for the next. **gshare** keeps a **global history register**: the outcomes of the last few branches, as bits. It combines that history with the branch's address (with XOR) to pick a counter, so "after a taken" and "after a not taken" use different counters. Reach 90%.
+
+<PredictorLab caption='An alternating branch' kindJson='"2-bit"' kindsJson='["2-bit","gshare"]' patternJson='{"pc":128,"pattern":"TN","repeat":50}' goalJson='{"minAccuracy":0.9}' />
+
+<details>
+<summary>Check your answer</summary>
+
+The 2-bit counter gets **0 of 100**. It starts at weakly not taken and sees a taken branch, so it moves to weakly taken just in time to see a not taken, and moves back. It's wrong every single time.
+
+gshare with 4 bits of history gets **97 of 100**. Once the history is filled in, "last outcome was taken" and "last outcome was not taken" select different counters, and each learns its own answer. The 3 misses are while it warms up. Global history also lets one branch's outcome predict another's, as in `if (x > 0) ...; if (x > 5) ...`, where the first branch tells you a lot about the second.
+
+</details>
+
+<KeyIdea>A predictor bets that a branch will behave as it did before: a 2-bit counter tolerates one surprise, and history lets it learn patterns and links between branches.</KeyIdea>
+
+## What a wrong guess costs
+
+In this course's five-stage pipeline, a wrong guess flushes 2 instructions. Real CPUs resolve branches much deeper, after a dozen or more stages, so a misprediction typically costs around 15 to 20 cycles. The average cost is:
+
+CPI = 1 + (branches per instruction) × (miss rate) × (penalty)
+
+If 20% of instructions are branches and 5% of those are mispredicted, what's the CPI with a 2-cycle penalty, and with a 15-cycle one?
+
+<details>
+<summary>Check your answer</summary>
+
+- 2-cycle penalty: 1 + 0.2 × 0.05 × 2 = **1.02**.
+- 15-cycle penalty: 1 + 0.2 × 0.05 × 15 = **1.15**.
+
+The deeper the pipeline, the more each miss costs, so deep pipelines need very accurate predictors. Modern ones combine many tables and long histories and are often right well over 95% of the time on typical code. Predicting the direction isn't enough, either: a taken branch also needs its target address before decode, which comes from a **branch target buffer**, a cache of recent branches' targets.
+
+</details>
+
+## Done when
+
+You can compare static, 1-bit, 2-bit and gshare predictors on loops and patterns, explain why each wins or loses, and estimate the CPI cost of mispredictions.

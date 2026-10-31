@@ -1,0 +1,10 @@
+alu 1 0 0 - addi x1, x0, 2
+alu 2 0 0 - addi x2, x0, 0
+load 3 0 0 - lw x3, 0(x0)
+alu 2 2 3 - add x2, x2, x3
+alu 1 1 0 - addi x1, x1, -1
+branch 0 1 0 T bne x1, x0, loop
+load 3 0 0 - lw x3, 0(x0)
+alu 2 2 3 - add x2, x2, x3
+alu 1 1 0 - addi x1, x1, -1
+branch 0 1 0 N bne x1, x0, loop

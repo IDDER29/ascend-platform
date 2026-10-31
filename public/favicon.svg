@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Ascend">
+  <style>
+    .tile { fill: #16181d; }
+    .mark { stroke: #d7f26b; }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #d7f26b; }
+      .mark { stroke: #16181d; }
+    }
+  </style>
+  <rect class="tile" width="32" height="32" rx="10"/>
+  <g class="mark" transform="translate(7.2 7.2) scale(0.733)" fill="none" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m6 15 6-6 6 6"/>
+    <path d="m6 9 6-6 6 6" opacity=".55"/>
+  </g>
+</svg>

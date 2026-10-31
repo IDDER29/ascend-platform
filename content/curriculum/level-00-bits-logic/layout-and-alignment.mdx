@@ -1,0 +1,116 @@
+---
+title: "Bytes, alignment and data layout"
+level: level-00-bits-logic
+slug: layout-and-alignment
+order: 85
+timeMin: 8
+learningOutcomes:
+- Explain how a value bigger than a byte is stored in several neighbouring bytes
+- Read the bytes of a number stored little-endian, low byte first
+- Explain alignment, and why a compiler adds padding inside a struct
+- Predict the size of a simple C struct on a 64-bit machine, and check it with sizeof
+primer:
+- title: "Types and widths"
+  type: doc
+  meta: Reread · 3 min · an int is 4 bytes.
+  essential: true
+- title: "Project: The Byte Lab"
+  type: doc
+  meta: Reread · 3 min · part 4 met byte order.
+  essential: false
+knowledgeCheck:
+- question: How is the 4-byte number 0x12345678 laid out in memory on an x86-64 machine?
+  answer: "Little-endian, low byte first: the bytes are 78, 56, 34, 12 at increasing addresses."
+  jumpToId: four-bytes-low-byte-first
+  jumpToLabel: Four bytes, low byte first
+- question: Why is struct { char c; int i; } 8 bytes and not 5?
+  answer: "An int is aligned to a multiple of 4, so the compiler puts 3 bytes of padding after c and starts i at offset 4. 1 + 3 + 4 = 8."
+  jumpToId: alignment-and-padding
+  jumpToLabel: Alignment and padding
+assignment:
+  instruction: "Write three C structs that hold the same fields (a char, an int, a char and a short) in different orders. Predict each sizeof, then print them. Which order is smallest, and what rule would you follow to choose it?"
+  resourceName: 'Wikipedia: Data structure alignment'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Data_structure_alignment'
+additionalResources:
+- title: Endianness (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Endianness'
+- title: 'CS:APP, the book behind this material'
+  type: doc
+  meta: Bryant and O'Hallaron, chapter 3 covers data layout
+  url: 'https://csapp.cs.cmu.edu/'
+whyThisMatters: "Files, network packets and other programs see a value as its raw bytes. Knowing the order those bytes are in, and that a compiler may leave gaps between fields, is what you need to read a hex dump, write a file format, or understand why two structs with the same fields have different sizes."
+---
+
+Every value on the tiny CPU is a single byte. Real programs use values of 2, 4 or 8 bytes, and those have to be laid out across several neighbouring boxes. How they're laid out is called <b>data layout</b>.
+
+By the end you'll be able to read a multi-byte number from its bytes and predict the size of a simple struct.
+
+## Four bytes, low byte first
+
+An x86-64 machine stores a multi-byte number with its lowest byte at the lowest address. This is called <b>little-endian</b>. This program prints the 4 bytes of an int, in address order:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    unsigned int n = 0x12345678;
+    unsigned char *b = (unsigned char *)&n;
+    for (int i = 0; i < 4; i++) {
+        printf("%02x ", b[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+```
+78 56 34 12
+```
+
+The "end" in the name is the end that comes first: here the little end, 0x78. Some machines and most network protocols use big-endian, the other way round, which is why the same 4 bytes can mean different numbers to different readers.
+
+## Alignment and padding
+
+CPUs read memory fastest when a value starts at an address that is a multiple of its size: an int at a multiple of 4, a long at a multiple of 8. This is called <b>alignment</b>. To keep fields aligned, a C compiler may leave unused bytes, called <b>padding</b>, inside a struct:
+
+```c
+#include <stddef.h>
+#include <stdio.h>
+
+struct a { char c; int i; };
+struct b { char c1; char c2; int i; };
+struct c { char c1; int i; char c2; };
+
+int main(void) {
+    printf("%zu %zu\n", sizeof(struct a), offsetof(struct a, i));
+    printf("%zu\n", sizeof(struct b));
+    printf("%zu\n", sizeof(struct c));
+    return 0;
+}
+```
+
+```
+8 4
+8
+12
+```
+
+<TruthTable caption='struct c, byte by byte' rowsJson='[["offset", "what is there"], ["0", "c1 (1 byte)"], ["1 to 3", "padding, so i starts at a multiple of 4"], ["4 to 7", "i (4 bytes)"], ["8", "c2 (1 byte)"], ["9 to 11", "padding, so the whole struct is a multiple of 4"]]' />
+
+Struct a puts 3 bytes of padding after c, so i starts at offset 4. Struct b fits both chars into the bytes before i, so it's still 8. Struct c, with the same fields as b in a different order, needs 12, because the padding at the end keeps the next struct in an array aligned too.
+
+<KeyIdea>A multi-byte value is several neighbouring bytes in an agreed order, and a struct's fields may have gaps between them. The size of a struct depends on the order of its fields.</KeyIdea>
+
+## Predict it
+
+Without running it: how big is `struct { char a; char b; char c; int i; }`? And `struct { int i; char a; }`?
+
+<details>
+<summary>Check your answer</summary>
+
+8 for the first: three chars at offsets 0 to 2, one byte of padding, i at 4 to 7. 8 for the second too: i at 0 to 3, a at 4, then 3 bytes of padding so that in an array the next struct's i starts at a multiple of 4. These are the sizes on x86-64 Linux; C leaves the exact padding to each platform.
+
+</details>

@@ -1,0 +1,131 @@
+---
+title: "Binary search trees"
+level: level-07-data-structures
+slug: binary-search-trees
+order: 5
+timeMin: 11
+learningOutcomes:
+- Build a binary search tree in C, inserting through a pointer to the link so the root needs no special case
+- Explain why search takes about log2 n steps in a balanced tree, and n steps in a degenerate one
+- Read keys back in sorted order with an in-order traversal
+- Free a whole tree in post-order, and recognise the leak when only the root is freed
+primer:
+- title: "Linked lists"
+  type: doc
+  meta: Reread · 2 min · a tree node is a list node with two links.
+  essential: true
+- title: "Hash tables"
+  type: doc
+  meta: Reread · 2 min · the other fast lookup, without order.
+  essential: false
+knowledgeCheck:
+- question: Inserting 0 to 1022 in sorted order gave a tree of height 1023. Why, and what did it cost?
+  answer: "Each new key is larger than every key before it, so it always goes right: every node has only a right child, and the tree is a linked list. Finding 1022 then compared 1023 nodes, against 5 in the shuffled tree of height 25."
+  jumpToId: the-shape-decides-the-speed
+  jumpToLabel: The shape decides the speed
+- question: Why must tree_free free a node's children before the node itself?
+  answer: "The pointers to the children are stored inside the node. Free the node first and they're gone (or reading them is a use-after-free), so the subtrees leak. Freeing in post-order, left subtree, right subtree, then the node, reaches every node exactly once."
+  jumpToId: freeing-a-tree
+  jumpToLabel: Freeing a tree
+assignment:
+  instruction: "Add bst_min, bst_max and a delete function to the lesson's tree. Handle all three delete cases: a leaf, a node with one child, and a node with two children (replace its key with its in-order successor's, then delete that successor). Test each case under -fsanitize=address and check the in-order output after every delete."
+  resourceName: 'Open Data Structures: binary search trees'
+  resourceType: site
+  resourceUrl: 'https://opendatastructures.org/'
+additionalResources:
+- title: "Binary search tree (Wikipedia)"
+  type: doc
+  meta: operations and their costs
+  url: 'https://en.wikipedia.org/wiki/Binary_search_tree'
+- title: "Self-balancing binary search tree (Wikipedia)"
+  type: doc
+  meta: AVL and red-black trees, which keep the height near log n
+  url: 'https://en.wikipedia.org/wiki/Self-balancing_binary_search_tree'
+whyThisMatters: "Trees keep data in order and still find it fast. File systems, databases, the Linux scheduler and memory maps all use balanced trees. A plain binary search tree is the simplest version, and the best way to see why balance matters."
+---
+
+A hash table finds a key fast, but forgets order: it can't give you the keys sorted, or the next key after 40. A **binary search tree** (BST) keeps both: fast search and order.
+
+## Left is smaller, right is larger
+
+Each node holds a key and two links. The rule: every key in a node's **left** subtree is smaller than the node's key, and every key in its **right** subtree is larger.
+
+```c
+typedef struct Node {
+    int key;
+    struct Node *left, *right;
+} Node;
+```
+
+Searching follows the rule from the root: go left if the key is smaller, right if larger, and stop when it matches or a link is `NULL`. Inserting searches for the key, then hangs a new node on the `NULL` link where the search ended. Walking with a pointer to the link, as in the linked-lists lesson, means an empty tree needs no special case:
+
+```c
+static int insert(Node **link, int key) {
+    while (*link != NULL) {
+        if (key == (*link)->key) {
+            return 0;                       /* already there */
+        }
+        link = key < (*link)->key ? &(*link)->left : &(*link)->right;
+    }
+    Node *n = malloc(sizeof *n);
+    if (n == NULL) {
+        return -1;
+    }
+    n->key = key;
+    n->left = n->right = NULL;
+    *link = n;
+    return 0;
+}
+```
+
+An **in-order traversal**, left subtree, then the node, then the right subtree, visits the keys in sorted order.
+
+## The shape decides the speed
+
+This program inserts 50, 30, 70, 20, 40, 60 and 80 and prints them in order with the tree's **height**, the number of nodes on its longest path. Then it builds two trees of the keys 0 to 1022: one inserted in a shuffled order, one in sorted order. For each it prints the height and how many nodes a search for 1022 compares. Predict the heights.
+
+<CRun program="data-structures/bst-shape" caption='Same keys, different shapes' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The small tree prints `20 30 40 50 60 70 80`, sorted, with height 3: 50 at the root, 30 and 70 below it, and the rest below those. It's perfectly balanced.
+
+The shuffled tree of 1,023 keys has height 25, and finding 1022 took 5 comparisons. A perfectly balanced tree of 1,023 keys would have height 10 (2 to the 10 is 1,024); random insertion orders give trees a few times taller than that, still around log n. The sorted tree has height **1023**. Every key was larger than all before it and went right, so the "tree" is a linked list, and finding 1022 compared all 1,023 nodes.
+
+Search, insert and delete cost O(height). That's **O(log n)** when the tree is balanced and **O(n)** when it degenerates, and sorted input, the most common input of all, is the worst case. **Self-balancing trees** (AVL, red-black) rotate nodes on insert to keep the height near log2 n always; Linux uses red-black trees in its scheduler and for each process's memory map.
+
+</details>
+
+<KeyIdea>A binary search tree costs O(height) per operation. Balanced, that's O(log n); fed sorted keys, it becomes a linked list and O(n).</KeyIdea>
+
+## Freeing a tree
+
+The tree owns its nodes, so the program must free them all. This `tree_free` frees only the node it's given. It's built with AddressSanitizer, whose leak checker reports memory still allocated at exit. Predict what it reports for the five keys 50, 30, 70, 20 and 40.
+
+<CRun program="data-structures/bst-leak" caption='A tree_free that frees one node' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+LeakSanitizer reports 96 bytes leaked in 4 allocations: every node except the root, at 24 bytes each (an `int`, padding to 8 bytes, and two pointers). Two are **direct** leaks, 30 and 70, whose only pointers were inside the freed root. Two are **indirect**, 20 and 40, reachable only through those lost nodes.
+
+The fix frees the children first, in **post-order**:
+
+```c
+static void tree_free(Node *t) {
+    if (t != NULL) {
+        tree_free(t->left);
+        tree_free(t->right);
+        free(t);               /* last, once nothing needs its links */
+    }
+}
+```
+
+The recursion depth is the tree's height. For a degenerate tree of a million nodes that's a million stack frames, which can overflow the stack: one more reason to keep trees balanced.
+
+</details>
+
+## Done when
+
+You can insert and search in a BST, list its keys in order, explain the heights 25 and 1023, and free a tree in post-order without leaking.

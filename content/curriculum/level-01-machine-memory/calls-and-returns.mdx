@@ -1,0 +1,156 @@
+---
+title: "Calls and returns in assembly"
+level: level-01-machine-memory
+slug: calls-and-returns
+order: 3
+timeMin: 10
+learningOutcomes:
+- Explain what call and ret do to the stack pointer, the stack and the instruction pointer
+- Find a function's arguments and result in the x86-64 registers the System V calling convention assigns
+- Read a function's prologue and epilogue, and say why it saves a callee-saved register
+- Explain why an optimising compiler can make a call disappear entirely
+primer:
+- title: "Assembly, a first look"
+  type: doc
+  meta: Reread · 3 min · mov, cmp and jumps, one line at a time.
+  essential: true
+- title: "Functions and the call stack"
+  type: doc
+  meta: "Foundations · the tiny CPU's CALL and RET, the same idea in 256 bytes."
+  essential: false
+knowledgeCheck:
+- question: At the first instruction of square, gdb showed rsp pointing at a box holding 0x401166. What is that value, and who put it there?
+  answer: "It's the return address: the address of the instruction right after call square in sum_squares. The call instruction pushed it (rsp went down by 8) just before jumping, so ret can pop it into rip and carry on from there."
+  jumpToId: watching-a-call-in-gdb
+  jumpToLabel: Watching a call in gdb
+- question: Why does sum_squares push rbx at the start and restore it at the end?
+  answer: "It keeps square(a) in ebx while it calls square(b). rbx is callee-saved in the System V convention: a function may use it only if it puts the caller's value back, so sum_squares saves the old value first and restores it before returning."
+  jumpToId: the-frame-and-saved-registers
+  jumpToLabel: The frame and saved registers
+assignment:
+  instruction: "Write a C function that calls another with three arguments (int f(int a, int b, int c)), compile it with gcc -O0 -S, and find where each argument is put before the call and where the result is read after it. Then compile with -O2 and say what changed."
+  resourceName: 'Compiler Explorer'
+  resourceType: site
+  resourceUrl: 'https://godbolt.org/'
+additionalResources:
+- title: "x86 calling conventions (Wikipedia)"
+  type: doc
+  meta: the System V AMD64 ABI and others
+  url: 'https://en.wikipedia.org/wiki/X86_calling_conventions'
+- title: "CS:APP chapter 3: procedures"
+  type: doc
+  meta: the textbook treatment of the run-time stack
+  url: 'https://csapp.cs.cmu.edu/'
+whyThisMatters: "Every function call in every compiled program works this way. Once you can read a call, a return and a stack frame, a debugger's backtrace, a crash in a stack-smashing bug and the cost of a function call all stop being mysterious."
+---
+
+In Foundations, the tiny CPU's `CALL` pushed a return address and `RET` popped it. A real x86-64 processor does exactly the same, with 8-byte addresses and a few conventions on top. In this lesson you'll watch a real call happen, find the arguments and the result, and then see an optimising compiler make the call vanish.
+
+One thing first: gcc prints **AT&T syntax**, not the Intel syntax of the last lesson. The same instruction looks like this in each:
+
+| Intel | AT&T (what gcc prints) | Meaning |
+|---|---|---|
+| `mov eax, edi` | `movl %edi, %eax` | copy edi into eax |
+| `add eax, 3` | `addl $3, %eax` | eax = eax + 3 |
+| `mov eax, [rbp-4]` | `movl -4(%rbp), %eax` | load 4 bytes from rbp - 4 |
+
+In AT&T the **destination comes last**, registers start with `%`, numbers with `$`, and a suffix gives the size: `l` for 4 bytes, `q` for 8.
+
+## The program
+
+`sum_squares` calls `square` twice:
+
+```c
+int square(int x) {
+    return x * x;
+}
+
+int sum_squares(int a, int b) {
+    return square(a) + square(b);
+}
+```
+
+Here is what gcc made of `sum_squares`, with optimisation off and on. For now, read only the -O0 column.
+
+<CompilerOutput evidence="call-chain" fn="sum_squares" />
+
+## What call and ret do
+
+`call square` does two things, as one instruction:
+
+1. **Push the return address:** subtract 8 from `rsp` and store the address of the *next* instruction there.
+2. **Jump** to `square`.
+
+`ret` is the reverse: it loads the 8 bytes at `rsp` into `rip` (the instruction pointer), adds 8 to `rsp`, and execution carries on right after the call. That's all a function return is.
+
+<KeyIdea>call pushes where to come back to, then jumps; ret pops that address into the instruction pointer. The stack remembers the way home.</KeyIdea>
+
+## Watching a call in gdb
+
+This is a real gdb session on the -O0 program, stopped at the very first instruction of `square` (`break *square`), during the first call:
+
+```
+Breakpoint 1, square (x=0) at source.c:3
+(gdb) info registers rip rsp rdi
+rip            0x401136            0x401136 <square>
+rsp            0x7fffffffd7e8      0x7fffffffd7e8
+rdi            0x3                 3
+(gdb) x/gx $rsp
+0x7fffffffd7e8:	0x0000000000401166
+(gdb) x/2i 0x401161
+   0x401161 <sum_squares+24>:	call   0x401136 <square>
+   0x401166 <sum_squares+29>:	mov    %eax,%ebx
+```
+
+(gdb says `x=0` because the prologue that stores `x` hasn't run yet; the real argument, 3, is already in `rdi`. Your addresses will differ.)
+
+What do the box at `rsp` and the two instructions at 0x401161 tell you?
+
+<details>
+<summary>Check your answer</summary>
+
+The box at the top of the stack holds 0x401166, and 0x401166 is the instruction right after `call square`. So `call` pushed the return address of the instruction it should come back to, and when `square` executes `ret`, it pops 0x401166 into `rip` and `sum_squares` continues with `mov %eax,%ebx`: saving the result. The first argument, 3, arrived in `rdi`.
+
+</details>
+
+## Arguments and results live in registers
+
+On Linux and macOS, x86-64 follows the **System V calling convention**:
+
+- The first six integer or pointer arguments go in `rdi`, `rsi`, `rdx`, `rcx`, `r8` and `r9`, in that order (`edi` and `esi` are their 4-byte halves, for `int`s). More go on the stack.
+- The result comes back in `rax` (`eax` for an `int`).
+
+Find both in the -O0 listing: before each `call square`, the argument is copied into `%edi`; after it, the result is read from `%eax`.
+
+## The frame and saved registers
+
+The lines at the start and end of a function are its **prologue** and **epilogue**:
+
+- `pushq %rbp` then `movq %rsp, %rbp`: save the caller's frame pointer and start a new frame, so locals can be found at fixed offsets like `-12(%rbp)`.
+- `leave`: undo that (`rsp = rbp`, then pop `rbp`), just before `ret`.
+
+`sum_squares` also does `pushq %rbx`. It keeps `square(a)` in `ebx` while it calls `square(b)`, because `eax` will be overwritten by the second result. Why must it save `rbx` first?
+
+<details>
+<summary>Check your answer</summary>
+
+The calling convention splits registers into two kinds. **Caller-saved** registers (`rax`, `rdi`, `rsi`, `rdx`, `rcx`, `r8` to `r11`) may be changed freely by any function you call, so you can't keep anything in them across a call. **Callee-saved** registers (`rbx`, `rbp`, `r12` to `r15`) survive calls: a function that wants to use one must save the caller's value and restore it before returning. `sum_squares` uses `rbx` to survive the call, so it saves it first (`pushq %rbx`) and restores it at the end (`movq -8(%rbp), %rbx`).
+
+</details>
+
+## Where did the calls go?
+
+Now read the -O2 column. There is no `call` at all.
+
+<details>
+<summary>Check your answer</summary>
+
+gcc **inlined** `square`: it copied its body (`x * x`) into `sum_squares`, so `imull %edi, %edi` squares `a` in place, `imull %esi, %esi` squares `b`, and `leal (%rdi,%rsi), %eax` adds them into the result register. No call, no return, no frame. A call costs a push, a jump, a return and a frame; for a tiny function that's more work than the function itself.
+
+It went further in `main`: with both arguments known (3 and 4), gcc worked out `sum_squares(3, 4)` = 25 at compile time and just passes the number 25 to `printf`. The C says "call this function"; the compiler only has to produce the same output.
+
+</details>
+
+## Done when
+
+You can say what `call` and `ret` do to `rsp` and `rip`, find arguments and results in a listing, explain a callee-saved register, and say why the -O2 version has no calls.

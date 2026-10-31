@@ -1,0 +1,140 @@
+---
+title: "Benchmarks and what they hide"
+level: level-10-performance
+slug: benchmarks
+order: 3
+timeMin: 11
+learningOutcomes:
+- Explain why the first runs of a benchmark are often slower, and how warm-up and repetition deal with it
+- Summarise repeated measurements with the median and minimum as well as the mean, and say what each tells you
+- Use the geometric mean to combine ratios, and show why the arithmetic mean of ratios can make either machine win
+- Recognise ways a benchmark result can be gamed, and what a suite like SPEC CPU does about it
+primer:
+- title: "Measuring performance: time, CPI and clock rate"
+  type: doc
+  meta: Reread · 2 min · the time you're now measuring carefully.
+  essential: true
+- title: "Page faults and demand paging"
+  type: doc
+  meta: "Virtual Memory, Threads & Files · why the first run pays extra."
+  essential: false
+knowledgeCheck:
+- question: In the measured runs, the first took 20.9 ms and the rest about 6 ms. Why, and which summary should you report?
+  answer: "The first run paid one-time costs: page faults while the 32 MiB array's pages were first written, and a clock still speeding up. Report the steady state: discard warm-up runs, then give the median (or minimum) with the spread, not a mean dragged up by the cold run."
+  jumpToId: warm-up-and-repetition
+  jumpToLabel: Warm-up and repetition
+- question: Why do benchmark suites combine per-program ratios with the geometric mean?
+  answer: "The geometric mean of ratios gives the same answer whichever machine you normalise to, so it can't flip the winner. The arithmetic mean of ratios can: in the example, normalising to A makes B 5 times slower, and normalising to B makes A 5 times slower."
+  jumpToId: combining-results
+  jumpToLabel: Combining results
+assignment:
+  instruction: "Benchmark one function of your own properly: discard warm-up runs, repeat at least 20 times, and report the median, minimum and spread. Run it again with another program busy on the machine, and say how the numbers changed and which summary was most stable."
+  resourceName: 'Brendan Gregg: Active Benchmarking'
+  resourceType: doc
+  resourceUrl: 'https://www.brendangregg.com/activebenchmarking.html'
+additionalResources:
+- title: "SPEC CPU 2017"
+  type: doc
+  meta: the industry's standard processor benchmark suite and its rules
+  url: 'https://www.spec.org/cpu2017/'
+- title: "Geometric mean (Wikipedia)"
+  type: doc
+  meta: why it's the right mean for ratios
+  url: 'https://en.wikipedia.org/wiki/Geometric_mean'
+whyThisMatters: "Most performance claims you'll read, from chip launches to library READMEs, are benchmark results. Knowing how warm-up, noise, averaging and the choice of workload change the numbers lets you trust the honest ones, see through the rest, and measure your own code without fooling yourself."
+---
+
+A benchmark is a program run to measure performance. Running one is easy. Getting a number that means something, and reading other people's numbers critically, takes care. This lesson is about that care.
+
+## Warm-up and repetition
+
+This program runs the same work 15 times: it fills a 32 MiB array, then sums it, timing each run. The array comes from `malloc`, so its pages aren't really there until first written. Predict whether all 15 runs take about the same time.
+
+<CRun program="architect/bench-runs" caption='The same work, 15 times' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+No. In this run the first took 20.9 ms and the other 14 about 6 ms each. The first run paid one-time costs:
+
+- **Page faults:** writing each of the 8192 fresh 4 KiB pages for the first time made the kernel find and map a page.
+- **A clock still speeding up:** the processor raises its clock speed when work starts, over a few milliseconds.
+
+Caches and branch predictors also need a moment to fill. So benchmarks **warm up** first, running the work a few times without timing it, then measure the **steady state**. The opposite also matters: if your real program runs its work only once, the cold number is the honest one. Decide which you're measuring.
+
+</details>
+
+## Mean, median, minimum
+
+The same 15 runs gave a mean of 7.2 ms, a median of 6.2 ms, a minimum of 5.9 ms and a standard deviation of 3.8 ms. Without the first run, the mean was 6.2 ms. Which number would you report, and why?
+
+<details>
+<summary>Check your answer</summary>
+
+- **The mean** (7.2) is pulled up by the single slow run. One outlier moved it by more than 15%.
+- **The median** (6.2), the middle value when sorted, ignores the outlier. It's the usual choice for "typical time".
+- **The minimum** (5.9) is the best the machine can do with the least interference. It's useful for comparing code changes, since noise only ever adds time.
+- **The spread** (here 3.8 ms, mostly the first run) says how much to trust the difference between two results. A 2% improvement means nothing if runs vary by 10%.
+
+Report the median, or the minimum, with the spread and the number of runs, after discarding warm-up. A single number with no spread is a claim, not a measurement.
+
+</details>
+
+## Combining results
+
+Benchmark suites run many programs and combine them into one score, usually as ratios against a reference machine. How you average those ratios matters. Two machines, two programs:
+
+| | Machine A | Machine B |
+|---|---|---|
+| program 1 | 1 s | 10 s |
+| program 2 | 1000 s | 100 s |
+
+Compare the machines three ways:
+
+1. the arithmetic mean of the ratios, with times normalised to A;
+2. the same, normalised to B;
+3. the geometric mean.
+
+<details>
+<summary>Check your answer</summary>
+
+1. **Normalised to A:** B takes 10 and 0.1 times as long. Their arithmetic mean is (10 + 0.1) ÷ 2 = 5.05, so "B is 5 times slower".
+2. **Normalised to B:** A takes 0.1 and 10 times as long. The mean is again 5.05, so "A is 5 times slower".
+3. **Geometric mean:** √(10 × 0.1) = 1 either way: the machines tie.
+
+The arithmetic mean of ratios lets you pick the winner by picking the reference. The geometric mean of ratios gives the same verdict whichever machine you normalise to, which is why suites such as **SPEC CPU** report the geometric mean of each program's ratio against a reference machine.
+
+A machine beats a reference by 1.5, 3 and 6 times on three programs. What's its geometric-mean speedup, and its arithmetic mean?
+
+**Geometric:** ∛(1.5 × 3 × 6) = ∛27 = **3**. **Arithmetic:** (1.5 + 3 + 6) ÷ 3 = **3.5**. The arithmetic mean is dominated by the one big win.
+
+</details>
+
+<KeyIdea>Warm up, repeat, and report the median or minimum with the spread. Combine ratios with the geometric mean. And always ask which workloads were chosen, and by whom.</KeyIdea>
+
+## What a single number hides
+
+Even a careful benchmark measures *one* workload on *one* setup. Results get shaped, honestly or not, by:
+
+- **The workload:** a chip with huge caches shines on benchmarks that fit in them and loses that edge on ones that don't. Picking flattering programs is the easiest way to win.
+- **Tuning for the test:** compilers and drivers have been tuned for specific benchmark programs in the past. SPEC's rules forbid benchmark-specific optimisations and require full disclosure of flags and settings.
+- **Settings:** clock speeds, power limits, cooling, compiler flags, even the room's temperature.
+- **Reporting:** a "peak" result with hand-picked flags next to a rival's "base" result; a chart whose axis starts at 95%; the best of many runs passed off as typical.
+
+Name three things you'd want to know before trusting "Chip X is 40% faster than chip Y".
+
+<details>
+<summary>Check your answer</summary>
+
+Any three of these, for example:
+
+- **The comparison:** which programs, and whether they look like your work; whether both chips had the same power limit and cooling.
+- **The software:** the same compiler and flags on both.
+- **The statistics:** how many runs, with what spread, and whether 40% is a median or the best run.
+- **The source:** whether the full setup is disclosed, as SPEC requires, and who ran the test.
+
+</details>
+
+## Done when
+
+You can explain warm-up, choose and justify a summary statistic, combine ratios with the geometric mean, and list the questions to ask of any benchmark claim.

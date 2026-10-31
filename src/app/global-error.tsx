@@ -29,7 +29,7 @@ export default function GlobalError({
       >
         <h1 style={{ fontSize: 24, fontWeight: 800 }}>Ascend hit a server error.</h1>
         <p style={{ maxWidth: 420, color: "#5C5773" }}>
-          The whole app failed to load — not just this page. Your account and progress are
+          The whole app failed to load, not just this page. Your account and progress are
           untouched. Try again in a moment.
         </p>
         <button
@@ -38,7 +38,7 @@ export default function GlobalError({
             padding: "12px 24px",
             borderRadius: 12,
             border: "none",
-            background: "linear-gradient(135deg,#7B4DFF,#C13AE0 58%,#FF6B4A)",
+            background: "linear-gradient(135deg,#0d9f6e,#1a9b8e 58%,#d4a017)",
             color: "#fff",
             fontWeight: 800,
             cursor: "pointer",

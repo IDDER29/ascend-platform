@@ -1,0 +1,83 @@
+---
+title: "Optional project: A subroutine library"
+level: level-00-bits-logic
+slug: project-subroutine-library
+order: 77
+timeMin: 30
+learningOutcomes:
+- Write a multiply subroutine for a CPU that can only add, and call it with arguments in registers
+- Write a subroutine that calls another one, and explain how the stack keeps both return addresses
+- Save and restore a register a subroutine uses, so the caller's value survives
+primer:
+- title: "Calls, return addresses and subroutines"
+  type: doc
+  meta: Reread · 3 min · CALL, RET and the stack.
+  essential: true
+knowledgeCheck:
+- question: When main calls square and square calls mul, how does each RET know where to go back to?
+  answer: "Each CALL pushes its own return address. While mul runs, the stack holds square's return address on top of main's. mul's RET pops square's; square's RET then pops main's."
+  jumpToId: part-2-a-subroutine-that-calls-another
+  jumpToLabel: "Part 2: A subroutine that calls another"
+assignment:
+  instruction: "Add a third routine to the library, such as power (R0 to the power R1, using mul) or sum (add the bytes from the address in R1, R2 of them). Write a one-line comment above it saying which registers it takes, returns and changes."
+  resourceName: 'Wikipedia: Subroutine'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Subroutine'
+additionalResources:
+- title: Call stack (Wikipedia)
+  type: doc
+  meta: how real CPUs and languages use the stack for calls
+  url: 'https://en.wikipedia.org/wiki/Call_stack'
+whyThisMatters: "Every function you'll ever write in C becomes exactly this: arguments in registers, a CALL, a RET, and the stack keeping track of who to return to. Writing a small library by hand makes the C calling convention in the next course feel familiar rather than arbitrary."
+---
+
+This optional project builds a tiny library of subroutines. The main program is given; the routines are stubs that return straight away. Fill them in until the output is 42 and then 25.
+
+The library's rules (its "calling convention"): arguments come in R0 and R1, the result goes back in R0, and a routine that uses R2 saves and restores it.
+
+<TinyCpu2 editable caption='A subroutine library' programJson='["LDI R0, 6", "LDI R1, 7", "CALL mul", "OUT R0", "LDI R0, 5", "CALL square", "OUT R0", "HALT", "mul: RET", "square: RET"]' goalJson='{"out":[42,25]}' />
+
+## Part 1: Multiply by adding
+
+Write `mul`: R0 = R0 × R1, for R1 of at least 1. The CPU can only add, so add R0 to a running total R1 times. Use R2 for the total, and save R2 first with PUSH, restoring it with POP before RET.
+
+<details>
+<summary>Check your answer</summary>
+
+```
+mul: PUSH R2
+LDI R2, 0
+mloop: ADD R2, R0
+DEC R1
+JNZ mloop
+MOV R0, R2
+POP R2
+RET
+```
+
+With R1 = 0 it would count down from 0, wrap to 255 and add 256 times, which is why the rule says "at least 1". A library has to say what it expects.
+
+</details>
+
+## Part 2: A subroutine that calls another
+
+Write `square`: R0 = R0 × R0, using `mul`.
+
+<details>
+<summary>Check your answer</summary>
+
+```
+square: MOV R1, R0
+CALL mul
+RET
+```
+
+Step through it and watch SP: main's CALL pushes one return address (SP goes from 0xF0 to 0xEF), square's CALL pushes a second (0xEE), mul's PUSH R2 a third (0xED). Then each POP and RET takes them back off in the opposite order, and SP ends at 0xF0 again.
+
+</details>
+
+<KeyIdea>The stack lets calls nest: each CALL leaves its own way back, and each RET takes the most recent one.</KeyIdea>
+
+## Done when
+
+The output is 42 and then 25, SP is back at 0xF0 when it halts, and you can say what each routine takes, returns and changes.

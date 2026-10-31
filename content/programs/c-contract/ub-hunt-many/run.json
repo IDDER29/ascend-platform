@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/ub-hunt-many",
+  "sourceHash": "92e29cce36a2479d",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -O0 -g -fsanitize=address,undefined main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘grade’:\nmain.c:16:12: warning: function returns address of local variable [-Wreturn-local-addr]\n   16 |     return label;\n      |            ^~~~~\n"
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "=================================================================\n==565710==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x737971ff0040 at pc 0x7779750b05dc bp 0x7ffd2536e530 sp 0x7ffd2536dcb8\nWRITE of size 4 at 0x737971ff0040 thread T0\n    #0 0x7779750b05db in scanf_common ../../../../src/libsanitizer/sanitizer_common/sanitizer_common_interceptors_format.inc:346\n    #1 0x7779750f0c0e in __isoc99_vscanf ../../../../src/libsanitizer/sanitizer_common/sanitizer_common_interceptors.inc:1576\n    #2 0x7779750f1374 in __isoc99_scanf ../../../../src/libsanitizer/sanitizer_common/sanitizer_common_interceptors.inc:1607\n    #3 0x5f0c783b65f9 in main ./main.c:22\n    #4 0x77797442a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #5 0x77797442a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #6 0x5f0c783b6284 in _start (/tmp/build/prog+0x2284) (BuildId: 98bddb97c22e4fe29db4d1820e1d2e350da98d56)\n\nAddress 0x737971ff0040 is located in stack of thread T0 at offset 64 in frame\n    #0 0x5f0c783b64a4 in main ./main.c:19\n\n  This frame has 1 object(s):\n    [32, 64) 'scores' (line 20) <== Memory access at offset 64 overflows this variable\nHINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork\n      (longjmp and C++ exceptions *are* supported)\nSUMMARY: AddressSanitizer: stack-buffer-overflow ./main.c:22 in main\nShadow bytes around the buggy address:\n  0x737971fefd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x737971fefe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x737971fefe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x737971feff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x737971feff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x737971ff0000: f1 f1 f1 f1 00 00 00 00[f3]f3 f3 f3 f3 f3 f3 f3\n  0x737971ff0080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x737971ff0100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x737971ff0180: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x737971ff0200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x737971ff0280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==565710==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

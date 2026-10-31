@@ -1,0 +1,86 @@
+---
+title: "What is a computer?"
+level: level-00-bits-logic
+slug: what-is-a-computer
+order: 1
+timeMin: 6
+learningOutcomes:
+- Describe the four things every computer does - take in information, work on it, remember, and follow instructions
+- Explain why a calculator with fixed buttons is different from a general-purpose computer
+- Recognise computers hidden inside everyday devices such as a washing machine or a car key
+primer:
+- title: 'Early Computing: Crash Course Computer Science #1'
+  type: video
+  meta: Watch · 12 min · from the abacus to machines that follow instructions.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=O5nskjZ_GoI'
+knowledgeCheck:
+- question: What four things does a device need to do to count as a computer in this course?
+  answer: It takes in information (input), works on it (processing), keeps information for later (memory and storage), and follows a sequence of instructions that can be changed. The last one is what makes it programmable.
+  jumpToId: four-things-every-computer-does
+  jumpToLabel: Four things every computer does
+- question: A simple calculator and a laptop can both add numbers. Why is only the laptop a general-purpose computer?
+  answer: The calculator's job is fixed by its wiring and buttons; it only ever does the operations it was built for. The laptop follows whatever program it is given, so the same hardware can add numbers, play music or edit photos.
+  jumpToId: a-calculator-is-not-quite-a-computer
+  jumpToLabel: A calculator is not quite a computer
+assignment:
+  instruction: "Walk around your home and list five devices. For each one, decide whether it contains a computer, and say which of the four jobs (input, processing, memory, following instructions) you can see it doing. CS50's first week opens with the same question, so watch its opening if you want a second view."
+  resourceName: 'CS50x Week 0: Scratch'
+  resourceType: site
+  resourceUrl: 'https://cs50.harvard.edu/x/weeks/0/'
+additionalResources:
+- title: Computer (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Computer'
+- title: General-purpose computer (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/General-purpose_computer'
+- title: 'Electronic Computing: Crash Course Computer Science #2'
+  type: video
+  meta: 10 min · relays, vacuum tubes and the first electronic computers
+  url: 'https://www.youtube.com/watch?v=LN0ucKNX0hc'
+whyThisMatters: "Everything in this path is one of these four jobs seen up close: bits are how information is held, circuits are how it is processed, memory is how it is kept, and the CPU is how instructions are followed. Having the whole picture first means every later lesson has a place to fit, instead of being a loose fact."
+---
+
+You use dozens of computers every day, and most of them don't look like one. Your phone is a computer. So is the chip in your bank card, the controller in a washing machine and the box that runs a traffic light. Before we look inside one, it helps to agree on what the word means.
+
+By the end you'll be able to say what makes a device a computer, why a basic calculator isn't quite one, and where computers hide in ordinary things.
+
+## Four things every computer does
+
+Strip away the screen and the keyboard, and every computer does four things:
+
+- It takes in <b>information</b>: a key press, a photo, a temperature reading.
+- It <b>works on</b> that information: adds, compares, sorts, changes it.
+- It <b>remembers</b>: it keeps information so it can use it later.
+- It <b>follows instructions</b>: a list of steps, called a <b>program</b>, says what to do and in what order.
+
+<KeyIdea>A computer is a machine that takes in information, works on it, remembers it, and follows a list of instructions that can be changed.</KeyIdea>
+
+The last part matters most. The list of instructions isn't built into the machine's shape. You can give it a different list, and it does a different job.
+
+## A calculator is not quite a computer
+
+A cheap pocket calculator takes in numbers, adds them and shows a result. It does three of the four jobs. But its job is fixed: the buttons and circuits decide exactly what it can do, and nothing you type will turn it into a music player.
+
+A laptop can add numbers too. The difference is that the laptop's behaviour comes from the program it is running. Load a different program and the same hardware edits photos, plays a game or sends a message. That is what <b>general-purpose</b> means.
+
+<TruthTable caption='Fixed-function device or general-purpose computer?' rowsJson='[["device", "what decides its job", "general-purpose?"], ["pocket calculator", "its wiring and buttons", "no"], ["laptop", "the program it runs", "yes"], ["phone", "the apps it runs", "yes"], ["mechanical clock", "its gears", "no"]]' />
+
+The line between the two can blur. Many small devices contain a real general-purpose computer, but it only ever runs one program, chosen by the maker.
+
+## Computers you don't notice
+
+Most computers in the world are hidden. These are called <b>embedded</b> computers: a small computer built into a device to control it.
+
+- A washing machine reads its dial and sensors (input), decides how long to spin (processing), remembers which step it is on (memory), and follows the program for the cycle you chose (instructions).
+- A car has dozens of them, for the engine, the brakes and the windows.
+- A contactless bank card has a tiny one that answers the reader.
+
+They don't have screens or keyboards, but they do all four jobs.
+
+<KeyIdea>Looking like a computer doesn't matter. Doing the four jobs, with instructions that can be changed, is what makes something a computer.</KeyIdea>
+
+The rest of Foundations opens up these jobs one at a time: how information becomes bits, how circuits work on them, how a circuit remembers, and how a machine follows instructions.

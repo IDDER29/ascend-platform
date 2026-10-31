@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/tlb-stride",
+  "sourceHash": "82dd025baba4bfb9",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "4 KiB pages:\n      16 pages:  1.38 ns per read\n      64 pages:  1.32 ns per read\n     512 pages:  1.49 ns per read\n    2048 pages:  1.61 ns per read\n    8192 pages:  3.62 ns per read\n   32768 pages:  4.21 ns per read\n2 MiB huge pages, where the kernel can give them:\n      16 pages:  1.47 ns per read\n      64 pages:  1.39 ns per read\n     512 pages:  1.48 ns per read\n    2048 pages:  1.39 ns per read\n    8192 pages:  1.49 ns per read\n   32768 pages:  2.73 ns per read\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

@@ -1,0 +1,84 @@
+---
+title: The clock and registers
+level: level-00-bits-logic
+slug: clocks-and-registers
+order: 41
+timeMin: 8
+learningOutcomes:
+- Describe the clock signal and what one tick (a rising edge) means to the circuits listening to it
+- Explain why a CPU's speed in gigahertz is a count of clock ticks per second
+- Build a register in your head from a row of D flip-flops that share one clock
+- Explain what a register's load (write-enable) input is for
+primer:
+- title: "Remembering a bit: latches and flip-flops"
+  type: doc
+  meta: Reread · 3 min · a register is a row of the flip-flops from that lesson.
+  essential: true
+- title: Ben Eater, the 8-bit computer's clock module
+  type: video
+  meta: Watch · a real clock circuit you can single-step by hand.
+  essential: false
+  url: 'https://eater.net/8bit/clock'
+knowledgeCheck:
+- question: What does a 3 GHz processor's "3 GHz" actually count?
+  answer: Clock ticks. The clock's square wave rises 3 billion times every second, and each rising edge is a moment when the flip-flops throughout the chip may take in new values. Between ticks the gates settle; at each tick, the results are captured.
+  jumpToId: the-clock-a-heartbeat-for-the-chip
+  jumpToLabel: "The clock: a heartbeat for the chip"
+- question: Why does a register need a load input, instead of copying its input on every clock tick?
+  answer: Without it, every register would be overwritten on every tick by whatever happened to be on its input wires, so nothing could be kept for longer than one tick. The load input lets the control logic choose which register takes in a new value at this tick; the rest simply keep what they hold.
+  jumpToId: when-to-write-the-load-input
+  jumpToLabel: "When to write: the load input"
+assignment:
+  instruction: Watch Ben Eater build and single-step the clock of his breadboard computer, then the register chapter after it. Seeing a value move into a register only when the clock is pressed by hand makes the tick concrete.
+  resourceName: Ben Eater, Build an 8-bit computer from scratch
+  resourceType: video
+  resourceUrl: 'https://eater.net/8bit'
+additionalResources:
+- title: 'Crash Course Computer Science #6: Registers and RAM'
+  type: video
+  meta: 12 min
+  url: 'https://www.youtube.com/watch?v=fpnE6UAfbtU'
+- title: Petzold, Code, Chapter 14 (Feedback and flip-flops)
+  type: doc
+  meta: ~25-page read
+  url: 'https://en.wikipedia.org/wiki/Code:_The_Hidden_Language_of_Computer_Hardware_and_Software'
+whyThisMatters: "Every step a processor takes happens on a clock tick, and every value it is working on sits in a register between ticks. When you later read that the program counter moves on, that an add result lands in a register, or that a CPU runs at 3 GHz, it's this lesson's clock and these rows of flip-flops you're reading about."
+---
+
+The last lesson ended with a D flip-flop: one bit that changes only when the clock ticks. This lesson is about the two halves of that sentence. First the <b>clock</b>, the signal that says "now". Then the <b>register</b>, a row of flip-flops that stores a whole number at once.
+
+By the end you'll be able to say what a clock tick is, what a gigahertz counts, how a register is built, and why it needs a switch that says when to take in a new value.
+
+## The clock: a heartbeat for the chip
+
+A <b>clock</b> is a wire whose voltage flips between low and high, over and over, at a steady rate: a square wave. Every flip-flop in the chip is connected to it. The moment the wave rises from 0 to 1, the <b>rising edge</b>, is a tick.
+
+Between ticks, gates work things out: an adder's output ripples into place, signals settle. At each tick, flip-flops capture the settled results. Then the next round of working-out begins. The clock is what keeps thousands of parts in step.
+
+<Visual type='diagram' caption='A clock signal: work between ticks, capture at each tick' description='A square wave alternating low and high at even spacing. Each rising edge is marked with a small upward arrow labeled tick. The flat stretches between ticks are shaded and labeled "gates settle", and each tick is labeled "flip-flops capture".' />
+
+How fast can it tick? Only as fast as the slowest path of gates can settle. A clock rate of 3 GHz means 3 billion ticks every second, roughly one third of a billionth of a second per tick.
+
+<KeyIdea>The clock doesn't compute anything. It decides when results are captured, so every part of the chip moves forward together.</KeyIdea>
+
+## A register: flip-flops in a row
+
+Put eight D flip-flops side by side and wire all their clock inputs to the same clock. Give each one its own data wire, D0 to D7. At a tick, all eight copy their inputs at once: you've stored a byte. That row is a <b>register</b>.
+
+Widen it to 32 or 64 flip-flops and you have the registers of a real processor. The program counter and the instruction register from the fetch-execute loop are exactly this: rows of flip-flops on the clock.
+
+<Visual type='diagram' caption='An 8-bit register' description='Eight D flip-flop boxes in a row. Each has its own input arrow on top, labeled D7 down to D0, and its own output arrow below, labeled Q7 to Q0. One shared line labeled CLK runs along the bottom and connects to every box.' />
+
+## When to write: the load input
+
+There's a catch. If every register copied its inputs on every tick, nothing could be kept longer than one tick; the next tick would overwrite it with whatever was on the wires.
+
+So a register gets one more input: <b>load</b> (also called write-enable). When load is 1, the tick copies the new value in. When load is 0, the tick passes and the register keeps what it has. Inside, each bit has a small chooser in front of its flip-flop: on a tick it either takes the new bit or feeds its own old bit back in.
+
+<TruthTable caption='A register at each tick' rowsJson='[["load", "at the tick"], ["0", "keeps its value"], ["1", "takes the new value"]]' />
+
+<KeyIdea>The clock says when anything may change; the load input says which register actually does.</KeyIdea>
+
+## From one register to many
+
+A processor has a handful of registers. A computer also needs room for millions of values, and it can't wire each one up by hand. The next lesson stacks registers into rows with numbers, <b>addresses</b>, so any one of them can be picked out: that's memory.

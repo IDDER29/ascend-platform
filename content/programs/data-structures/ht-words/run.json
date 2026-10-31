@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/ht-words",
+  "sourceHash": "aecfd806eee65977",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "FNV-1a       68 distinct words in 43 of 64 buckets, longest chain 5, 110 key comparisons\nfirst letter 68 distinct words in 20 of 64 buckets, longest chain 10, 266 key comparisons\n\"the\" is in bucket 28 and appears 15 times\n\"memory\" is in bucket 46 and appears 6 times\n\"pointer\" is in bucket 42 and appears 4 times\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

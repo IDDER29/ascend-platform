@@ -1,0 +1,182 @@
+[
+  {
+    "n": 1,
+    "title": "Practice \u2014 Coach",
+    "path": "docs/design/coach-practice-screens/01-home/01-coach-desktop.html",
+    "folder": "01-home",
+    "bytes": 606196,
+    "source_id": "d3d7a1d5-5ae7-4470-973b-fa0d32f7b5e9",
+    "status": "shipped:/practicev2"
+  },
+  {
+    "n": 2,
+    "title": "Practice \u2014 Coach (mobile)",
+    "path": "docs/design/coach-practice-screens/01-home/02-coach-mobile.html",
+    "folder": "01-home",
+    "bytes": 584230,
+    "source_id": "ac413bb7-f141-4d3d-ab72-048414563521",
+    "status": "covered-by-desktop-or-responsive"
+  },
+  {
+    "n": 3,
+    "title": "Practice \u2014 all caught up",
+    "path": "docs/design/coach-practice-screens/02-all-caught-up/03-all-caught-up.html",
+    "folder": "02-all-caught-up",
+    "bytes": 570775,
+    "source_id": "33500e33-7022-4f57-abd8-8447b8c08ce7",
+    "status": "covered-by-desktop-or-responsive"
+  },
+  {
+    "n": 4,
+    "title": "Practice \u2014 all caught up (desktop)",
+    "path": "docs/design/coach-practice-screens/02-all-caught-up/04-all-caught-up-desktop.html",
+    "folder": "02-all-caught-up",
+    "bytes": 573611,
+    "source_id": "b7256cde-7403-482b-b1c9-c4ddc98cb7ab",
+    "status": "shipped:/practicev2/caught-up"
+  },
+  {
+    "n": 5,
+    "title": "Practice \u2014 Foundations path (desktop)",
+    "path": "docs/design/coach-practice-screens/03-foundations-path/05-foundations-path-desktop.html",
+    "folder": "03-foundations-path",
+    "bytes": 582018,
+    "source_id": "75765d8f-ddad-4037-b9ce-8ada0438ab80",
+    "status": "shipped:/practicev2/foundations"
+  },
+  {
+    "n": 6,
+    "title": "Practice \u2014 Foundations path (mobile)",
+    "path": "docs/design/coach-practice-screens/03-foundations-path/06-foundations-path-mobile.html",
+    "folder": "03-foundations-path",
+    "bytes": 579384,
+    "source_id": "39b086c6-145c-4ba3-9834-e6e3a93cf3dd",
+    "status": "covered-by-desktop-or-responsive"
+  },
+  {
+    "n": 7,
+    "title": "Practice \u2014 card bank (desktop)",
+    "path": "docs/design/coach-practice-screens/04-card-bank/07-card-bank-desktop.html",
+    "folder": "04-card-bank",
+    "bytes": 586920,
+    "source_id": "e6fd97a9-8be3-42cf-b1a4-1ab86b664fda",
+    "status": "shipped:/practicev2/bank"
+  },
+  {
+    "n": 8,
+    "title": "Practice \u2014 card bank (mobile)",
+    "path": "docs/design/coach-practice-screens/04-card-bank/08-card-bank-mobile.html",
+    "folder": "04-card-bank",
+    "bytes": 579146,
+    "source_id": "100a5ca1-45e3-41f3-914e-147e239ecc3e",
+    "status": "covered-by-desktop-or-responsive"
+  },
+  {
+    "n": 9,
+    "title": "Practice \u2014 build a custom deck (desktop)",
+    "path": "docs/design/coach-practice-screens/05-custom-deck/09-custom-deck-desktop.html",
+    "folder": "05-custom-deck",
+    "bytes": 579394,
+    "source_id": "4dfda748-34e3-4b73-9723-f088a3a22a79",
+    "status": "shipped:/practicev2/custom"
+  },
+  {
+    "n": 10,
+    "title": "Practice \u2014 build a custom deck (mobile)",
+    "path": "docs/design/coach-practice-screens/05-custom-deck/10-custom-deck-mobile.html",
+    "folder": "05-custom-deck",
+    "bytes": 572766,
+    "source_id": "58978846-16f0-4943-906e-85ac5942cb39",
+    "status": "covered-by-desktop-or-responsive"
+  },
+  {
+    "n": 11,
+    "title": "Review session \u2014 desktop",
+    "path": "docs/design/coach-practice-screens/06-review-session/11-session-desktop.html",
+    "folder": "06-review-session",
+    "bytes": 569460,
+    "source_id": "a9c4e06e-7107-44fb-9b30-4d0d55a4e9fb",
+    "status": "shipped:/practicev2/session"
+  },
+  {
+    "n": 12,
+    "title": "Review session \u2014 multiple choice",
+    "path": "docs/design/coach-practice-screens/06-review-session/12-session-multiple-choice.html",
+    "folder": "06-review-session",
+    "bytes": 567646,
+    "source_id": "67da866b-3a53-43b5-ad06-f0c58dcef9f9",
+    "status": "shipped:/practicev2/session/choices"
+  },
+  {
+    "n": 13,
+    "title": "Review session \u2014 flashcard",
+    "path": "docs/design/coach-practice-screens/06-review-session/13-session-flashcard.html",
+    "folder": "06-review-session",
+    "bytes": 567165,
+    "source_id": "fe9b22bf-6124-42df-9665-3f4938202cdd",
+    "status": "covered-by-desktop-or-responsive"
+  },
+  {
+    "n": 14,
+    "title": "Review session \u2014 flashcard (desktop)",
+    "path": "docs/design/coach-practice-screens/06-review-session/14-session-flashcard-desktop.html",
+    "folder": "06-review-session",
+    "bytes": 567986,
+    "source_id": "c1f6e74f-a64c-4227-bf60-e159a1f8c36d",
+    "status": "shipped:/practicev2/session/flashcard"
+  },
+  {
+    "n": 15,
+    "title": "Review session \u2014 answer feedback",
+    "path": "docs/design/coach-practice-screens/06-review-session/15-session-answer-feedback.html",
+    "folder": "06-review-session",
+    "bytes": 566593,
+    "source_id": "e9b52b1a-9b9c-4878-a6ed-c2e42008c1d8",
+    "status": "shipped:/practicev2/session/feedback"
+  },
+  {
+    "n": 16,
+    "title": "Review session \u2014 correct (desktop)",
+    "path": "docs/design/coach-practice-screens/06-review-session/16-session-correct-desktop.html",
+    "folder": "06-review-session",
+    "bytes": 567979,
+    "source_id": "eb62afd8-487c-4342-94cf-b9806f7d7829",
+    "status": "shipped:/practicev2/session/correct"
+  },
+  {
+    "n": 17,
+    "title": "Review session \u2014 wrong answer",
+    "path": "docs/design/coach-practice-screens/06-review-session/17-session-wrong-answer.html",
+    "folder": "06-review-session",
+    "bytes": 567328,
+    "source_id": "534abc23-32f0-4e2a-9027-fd5fc00ca1b4",
+    "status": "covered-by-desktop-or-responsive"
+  },
+  {
+    "n": 18,
+    "title": "Review session \u2014 wrong answer (desktop)",
+    "path": "docs/design/coach-practice-screens/06-review-session/18-session-wrong-answer-desktop.html",
+    "folder": "06-review-session",
+    "bytes": 569634,
+    "source_id": "ab8f7912-46c7-4d6d-ad1c-d85394c9a0f5",
+    "status": "shipped:/practicev2/session/wrong"
+  },
+  {
+    "n": 19,
+    "title": "Review complete",
+    "path": "docs/design/coach-practice-screens/07-review-complete/19-review-complete.html",
+    "folder": "07-review-complete",
+    "bytes": 568633,
+    "source_id": "34ef0432-b032-49ac-8cbf-1d5e79762a05",
+    "status": "covered-by-desktop-or-responsive"
+  },
+  {
+    "n": 20,
+    "title": "Review complete (desktop)",
+    "path": "docs/design/coach-practice-screens/07-review-complete/20-review-complete-desktop.html",
+    "folder": "07-review-complete",
+    "bytes": 571767,
+    "source_id": "663415f1-8699-4f37-893b-363dc3817064",
+    "status": "shipped:/practicev2/complete"
+  }
+]

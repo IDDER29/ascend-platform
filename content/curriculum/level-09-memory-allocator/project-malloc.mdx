@@ -1,0 +1,148 @@
+---
+title: "Project: Build your own malloc"
+level: level-09-memory-allocator
+slug: project-malloc
+order: 1
+timeMin: 60
+learningOutcomes:
+- Explain how an allocator turns one big region of memory from the OS into many blocks, using headers, footers and a first-fit search
+- Trace splitting a free block on malloc and coalescing free neighbours on free, from a dump of the heap
+- Explain how double frees and buffer overflows corrupt an allocator's own data, and how a heap checker detects it
+- Explain external fragmentation, and why plenty of free memory can still fail a request
+primer:
+- title: "Dynamic memory"
+  type: doc
+  meta: "The C Language · malloc, free and realloc from the outside."
+  essential: true
+- title: "mmap: mapping files into memory"
+  type: doc
+  meta: "Virtual Memory, Threads & Files · where the allocator's memory comes from."
+  essential: true
+- title: "Ownership: who frees what"
+  type: doc
+  meta: "The C Language · the contract this allocator enforces."
+  essential: false
+knowledgeCheck:
+- question: Why does every block have a footer as well as a header?
+  answer: "The header lets you walk forward from one block to the next. The footer, at the very end of a block, lets free() look just before its own header to find the previous block's size and whether it's free, so it can merge with a free block on either side without searching the whole heap."
+  jumpToId: part-1-the-design
+  jumpToLabel: "Part 1: The design"
+- question: The fragmentation run had about 512 KiB free, yet my_malloc(100) returned NULL. Why?
+  answer: "Every other 80-byte block was freed, so the free memory is thousands of separate 80-byte holes, each between two blocks still in use. No single hole is big enough for a 100-byte request (which needs a 128-byte block), and the allocator can't move used blocks to join the holes."
+  jumpToId: part-5-free-but-unusable
+  jumpToLabel: "Part 5: Free but unusable"
+assignment:
+  instruction: "Extend the allocator on your own machine. Add an explicit free list: a doubly linked list threaded through the payloads of free blocks, so malloc searches only free blocks. Measure how many blocks a search visits before and after on the fragmentation workload. Then make my_realloc grow in place when the next block is free and big enough. Keep my_heap_check passing after every operation in your tests."
+  resourceName: 'CS:APP: Dynamic Memory Allocation (lecture slides)'
+  resourceType: pdf
+  resourceUrl: 'https://www.cs.cmu.edu/afs/cs/academic/class/15213-f15/www/lectures/19-malloc-basic.pdf'
+additionalResources:
+- title: "OSTEP: Free-Space Management"
+  type: pdf
+  meta: splitting, coalescing and free lists
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/vm-freespace.pdf'
+- title: "glibc malloc internals"
+  type: doc
+  meta: how a production allocator builds on the same ideas
+  url: 'https://sourceware.org/glibc/wiki/MallocInternals'
+whyThisMatters: "Every malloc and free you've written ends up here. Building the allocator yourself shows why heap bugs corrupt programs in such strange ways, why fragmentation exists, and what tools like ASan check, and it ties together pointers, memory layout, alignment, the OS and debugging into one program you understand completely."
+---
+
+This is the capstone of Systems Programmer's memory story. You'll study a complete allocator, about 150 lines of C: `my_malloc`, `my_free` and `my_realloc` over one 1 MiB region from `mmap`. Then you'll watch it work, break it twice, and meet the problem every allocator fights: fragmentation.
+
+## Part 1: The design
+
+The allocator asks the OS for one region with `mmap` the first time it's called, then carves it up:
+
+- **Every block** is an 8-byte **header**, the payload the caller uses, and an 8-byte **footer**. Header and footer both hold the block's total size, a multiple of 16, with the lowest bit set when the block is in use. Because sizes are multiples of 16, their low 4 bits are always 0, so a bit is free for the flag.
+- **Alignment:** every header sits 8 bytes before a 16-byte boundary, so every payload is 16-byte aligned, as `malloc` must guarantee.
+- **The end** of the region holds a header of size 0 marked in use, so a walk through the blocks knows where to stop.
+
+Read `mymalloc.c` in the run below. Find where `my_malloc` **splits** a block, and where `my_free` **coalesces**.
+
+<details>
+<summary>Check your answer</summary>
+
+- **Splitting:** `my_malloc` walks the blocks from the start and takes the first free one that's big enough (**first fit**). If what's left over would still make a block of at least 32 bytes (header, 16 bytes of payload, footer), it splits: the front part is marked used, and the rest becomes a new free block. Otherwise it hands over the whole block, and the few extra bytes are wasted inside it: **internal fragmentation**.
+- **Coalescing:** `my_free` marks the block free, then checks the block after it (through `next`) and the block before it (through the footer just before its own header). Any free neighbour is merged, so two free blocks are never adjacent.
+
+The footer is the trick that makes merging with the *previous* block cheap: without it, `free` would have to walk the heap from the start to find what comes before.
+
+</details>
+
+## Part 2: Watch it work
+
+The test program allocates three blocks, frees the middle one, reuses part of the hole, then frees everything. It dumps the heap after each step and checks it with `my_heap_check`. Predict each dump before you run it. `malloc(10)` needs 10 + 16 bytes, rounded up to a multiple of 16; `malloc(100)` needs 100 + 16.
+
+<CRun program="memory-allocator/malloc-tests" caption='The allocator and its tests' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- **Three blocks:**
+  - `malloc(10)`: 10 + 16 = 26 bytes, rounded up to **32**, at offset 8.
+  - `malloc(100)`: 116, rounded up to **128**, at offset 40.
+  - The second `malloc(10)`: another 32, at 168.
+  - The rest of the region is one free block from offset 200.
+- **After `free(b)` then `malloc(50)`:** the 128-byte hole is the first fit for a 50-byte request, which needs 66, rounded up to **80**. It splits, leaving a **48**-byte free block at 120. `d` gets exactly `b`'s old address, which the test checks.
+- **After freeing everything:**
+  - `free(a)` has a used block on its right, so it can't merge yet.
+  - `free(d)` merges with the free 48 after it, then with `a` before it.
+  - `free(c)` joins that with the big free block after it.
+
+  The heap is one free block of 1048560 bytes: the whole 1 MiB minus the 8 bytes before the first header and the 8-byte end marker.
+
+The tests also show `realloc` keeping the contents, and an impossible request returning `NULL` instead of crashing.
+
+</details>
+
+## Part 3: A double free
+
+A program frees the same pointer twice. With glibc's `malloc`, that can corrupt the heap silently and crash much later. This allocator checks the in-use bit first. Predict what happens.
+
+<CRun program="memory-allocator/malloc-double-free" caption='Freeing twice' show="main.c" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The second `my_free` finds the in-use bit already clear. A block that's already free can't be freed again, so it reports the double free and calls `abort()`. "name: Ada" appears because the program flushed `stdout` before the second free. The output it had buffered would otherwise have been lost when `abort` ended the process.
+
+This check is cheap, but it isn't complete. If another `malloc` had reused the block between the two frees, the bit would be set again, and the second free would silently free someone else's memory. That's why tools like ASan keep freed memory in quarantine and don't hand it out again straight away.
+
+</details>
+
+## Part 4: Writing past the end
+
+A 37-byte string is copied into a 16-byte block. Nothing stops the copy, because C doesn't check bounds. Where do the extra bytes go?
+
+<CRun program="memory-allocator/malloc-overflow" caption='Overflowing a block' show="main.c" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Past the 16-byte payload come `a`'s footer and then `b`'s header: the allocator's own bookkeeping. The string's bytes overwrote them, so `b`'s "size" is now some letters of text. `my_heap_check` sees a header that can't be right (too small, or running past the end of the region) and reports the heap corrupted. The dump stops at offset 40, where `b`'s header used to be.
+
+An earlier version of this checker trusted that size and walked straight off the end of the region into unmapped memory, crashing with a segmentation fault. A real allocator with corrupted metadata does the same kind of thing, often much later and somewhere unrelated. That's why heap overflows are among the hardest bugs to debug, and among the most exploited.
+
+</details>
+
+## Part 5: Free but unusable
+
+This program fills the heap with 64-byte blocks, frees every other one, then asks for 100 bytes. About half the heap is free. Predict whether `my_malloc(100)` works.
+
+<CRun program="memory-allocator/malloc-fragmentation" caption='Fragmentation' show="main.c" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It returns `NULL`. 13107 blocks of 80 bytes (64 + 16, already a multiple of 16) fill the 1 MiB region. Freeing every other one leaves 6554 holes of 80 bytes, about 512 KiB in all, but each hole sits between two blocks still in use, so no two holes can merge. A 100-byte request needs a 128-byte block, and no hole is that big.
+
+This is **external fragmentation**: enough free memory in total, but not in one piece. A C allocator can't fix it by moving blocks, because the program holds pointers to them. Real allocators fight it with better placement (best fit, segregated lists by size), by keeping blocks of one size together, and by returning whole pages to the OS. Languages with moving garbage collectors can compact the heap; C can't.
+
+</details>
+
+<KeyIdea>An allocator is a data structure living inside the memory it manages: headers, footers and flags describe every block. malloc searches and splits, free merges, and any write outside a payload corrupts the allocator itself.</KeyIdea>
+
+## Done when
+
+You've predicted all four dumps, explained splitting and coalescing, the double-free check and its limit, how the overflow corrupted `b`'s header, and why half a free heap can't satisfy 100 bytes. Then do the assignment: add an explicit free list and measure it.

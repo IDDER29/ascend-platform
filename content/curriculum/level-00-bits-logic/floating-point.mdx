@@ -1,0 +1,95 @@
+---
+title: "Fractions: floating point and why 0.1 + 0.2 isn't 0.3"
+level: level-00-bits-logic
+slug: floating-point
+order: 21
+timeMin: 9
+learningOutcomes:
+- Read binary fractions using the places one half, one quarter, one eighth and so on
+- Explain why 0.1 has no exact binary form, just as one third has no exact decimal form
+- Describe floating point as scientific notation in binary, with a sign, an exponent and a fraction
+- Explain why 0.1 + 0.2 gives 0.30000000000000004, and what to do about it in programs
+primer:
+- title: "Binary & number bases"
+  type: doc
+  meta: Reread · 3 min · place value, now going to the right of the point.
+  essential: true
+- title: 'Floating Point Numbers (Computerphile)'
+  type: video
+  meta: Watch · 10 min · the same idea, with base 10 first.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=PZRI1IfStY0'
+knowledgeCheck:
+- question: What is the binary fraction 0.011 in decimal?
+  answer: "0.375. The places after the point are worth one half, one quarter and one eighth, so 0.011 is 0 + 0.25 + 0.125."
+  jumpToId: places-after-the-point
+  jumpToLabel: Places after the point
+- question: Why can't a computer store 0.1 exactly?
+  answer: In binary, 0.1 is 0.000110011001100... with the 0011 repeating forever, just as one third is 0.333... in decimal. A float has a fixed number of bits, so it stores the nearest value it can, which is very slightly more than 0.1.
+  jumpToId: why-01-never-fits
+  jumpToLabel: Why 0.1 never fits
+- question: Why does 0.1 + 0.2 print 0.30000000000000004, and how should a program compare such results?
+  answer: Both inputs were already rounded to the nearest binary value, and their sum rounds to a value just above 0.3, which is not the same double as the nearest one to 0.3. Compare floats by checking that they're within a small tolerance of each other, and store money as whole cents instead.
+  jumpToId: 01--02
+  jumpToLabel: 0.1 + 0.2
+assignment:
+  instruction: "Open the site 0.30000000000000004.com and look at how many different languages give the same answer. Then, in your browser's developer console (or any Python), try 0.1 + 0.2, 0.5 + 0.25 and 1 / 3 * 3, and explain which results are exact and why."
+  resourceName: '0.30000000000000004.com: the same sum in many languages'
+  resourceType: site
+  resourceUrl: 'https://0.30000000000000004.com/'
+additionalResources:
+- title: 'Python tutorial: Floating-point arithmetic, issues and limitations'
+  type: doc
+  meta: a clear explanation with examples
+  url: 'https://docs.python.org/3/tutorial/floatingpoint.html'
+- title: Floating-point arithmetic (Wikipedia)
+  type: doc
+  meta: reference, including the IEEE 754 format
+  url: 'https://en.wikipedia.org/wiki/Floating-point_arithmetic'
+whyThisMatters: "Every language you'll use, C included, stores fractions this way, and the surprises are always the same: a loop that never hits exactly 1.0, a total that's off by a hair, a test that fails because two numbers aren't quite equal. Knowing that floats are rounded binary fractions turns those from mysteries into things you expect and handle."
+---
+
+So far every number in this course has been a whole number. Prices, measurements and percentages need fractions too. Computers store them in a format called <b>floating point</b>, and it has one famous surprise: in almost every programming language, 0.1 + 0.2 is not 0.3.
+
+By the end you'll be able to read binary fractions, explain why some fractions can't be stored exactly, and know what to do about it.
+
+## Places after the point
+
+In decimal, the places after the point are worth tenths, hundredths, thousandths. In binary they work the same way, but each place is worth half the one before:
+
+<TruthTable caption='Binary places after the point' rowsJson='[["place", "worth", "as a decimal"], ["first", "one half", "0.5"], ["second", "one quarter", "0.25"], ["third", "one eighth", "0.125"], ["fourth", "one sixteenth", "0.0625"]]' />
+
+So the binary fraction 0.1 is one half, 0.11 is 0.5 + 0.25 = 0.75, and 0.011 is 0.25 + 0.125 = 0.375. Any fraction built from halves, quarters, eighths and so on fits exactly.
+
+## Why 0.1 never fits
+
+Now try to write one tenth in binary. It isn't a sum of a few halves and quarters. Worked out, it is:
+
+0.0001100110011001100... with the 0011 repeating forever.
+
+You've met this before in decimal: one third is 0.3333..., and no number of 3s makes it exact. One tenth has the same problem in binary. A computer has a fixed number of bits, so it stops and rounds. The value it actually stores for 0.1 is 0.1000000000000000055511151..., very close but not equal.
+
+<KeyIdea>Some fractions that are short in decimal never end in binary. A computer stores the nearest value it can, so they are slightly off from the start.</KeyIdea>
+
+## Scientific notation, in binary
+
+Fixed places would waste bits: the same format must hold the mass of an electron and the distance to a star. So floats use scientific notation, the way 6.02 × 10 to the power 23 is written in science. A float has three parts:
+
+- a <b>sign</b>: plus or minus;
+- an <b>exponent</b>: how far to move the point, as a power of two;
+- a <b>fraction</b> (the significant digits): a fixed number of bits.
+
+The usual double-precision float, the one most languages use, takes 64 bits: 1 for the sign, 11 for the exponent and 52 for the fraction. That gives about 15 to 17 significant decimal digits, wherever the point is. The exact layout (the IEEE 754 standard) comes later in the path; the idea to keep is that the number of significant bits is fixed.
+
+## 0.1 + 0.2
+
+Now the surprise makes sense. 0.1 is stored as slightly more than 0.1, and 0.2 as slightly more than 0.2. Their sum is rounded again, and the nearest float to it is not the same float as the nearest one to 0.3. Printed in full, the result is 0.30000000000000004.
+
+<TruthTable caption='Exact or not?' rowsJson='[["sum", "result", "exact?"], ["0.5 + 0.25", "0.75", "yes, halves and quarters fit"], ["0.5 + 0.25 + 0.125", "0.875", "yes"], ["0.1 + 0.2", "0.30000000000000004", "no, both inputs were rounded"]]' />
+
+This is not a bug in any one language; C, Python and JavaScript all give the same answer, because they all use the same format. Two habits follow:
+
+- Don't compare floats with ==. Check whether they are within a small tolerance of each other.
+- Don't store money in floats. Store whole cents as integers, and only format them as dollars and cents for display.
+
+<KeyIdea>A float is a rounded binary fraction. Expect tiny errors, compare with a tolerance, and use integers when every cent counts.</KeyIdea>

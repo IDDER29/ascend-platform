@@ -1,0 +1,106 @@
+---
+title: "Why a computer needs state"
+level: level-00-bits-logic
+slug: why-state
+order: 39
+timeMin: 6
+learningOutcomes:
+- Describe a machine as its current state plus a next-state function
+- Explain why the next state is worked out by combinational logic but held by a register
+- Trace a stateful circuit one clock tick at a time and say what each tick changed
+- Explain why a clocked register updates only at the tick, not whenever its input changes
+primer:
+- title: "Circuits that compute and circuits that remember"
+  type: doc
+  meta: Reread · 3 min · why no truth table can count button presses.
+  essential: true
+- title: "State, time and step-by-step execution"
+  type: doc
+  meta: Reread · 3 min · the turnstile traced one step at a time.
+  essential: true
+- title: 'Registers and RAM: Crash Course Computer Science #6'
+  type: video
+  meta: Watch · 12 min · from a latch to registers and memory.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=fpnE6UAfbtU'
+knowledgeCheck:
+- question: What two parts does every stateful circuit have, and what does each do?
+  answer: "A register holds the current state. Combinational logic works out the next state from the current state and the inputs. At each clock tick the register takes in that next state."
+  jumpToId: state-plus-a-rule
+  jumpToLabel: State plus a rule
+- question: Why doesn't the register change the moment its input changes?
+  answer: "It only takes in its input at the clock tick. Between ticks the logic in front of it can change and settle as much as it likes; the stored state stays put until the next tick."
+  jumpToId: the-tick-decides-when
+  jumpToLabel: The tick decides when
+- question: "In the button lab, why does PRESSED := P forget the press, while PRESSED := PRESSED OR P keeps it?"
+  answer: "PRESSED := P only looks at the button now, so the next tick after a release stores 0. PRESSED OR P feeds the old state back in, so once it is 1 it stays 1 whatever the button does."
+  jumpToId: a-circuit-that-remembers-a-press
+  jumpToLabel: A circuit that remembers a press
+assignment:
+  instruction: "Pick a device with a single button that does different things depending on what happened before (a phone's power button, a kettle, a lift call button). Write its state, its inputs, and a next-state table with one row per state and input. Then say which part of your table would be the register and which the logic."
+  resourceName: 'Wikipedia: Sequential logic'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Sequential_logic'
+additionalResources:
+- title: Sequential logic (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Sequential_logic'
+- title: 'nand2tetris.org: Project 3, Memory'
+  type: doc
+  meta: build registers and counters from flip-flops
+  url: 'https://www.nand2tetris.org/project03'
+whyThisMatters: "Every piece of a computer that changes over time, from the program counter to a whole running program, follows the pattern in this lesson: a register holding the state, and logic working out what comes next. Once you can see that pattern, a CPU stops looking like a blur of activity and becomes one rule applied at every tick."
+---
+
+You've seen two things that don't fit together yet. Gates compute: their outputs depend only on their inputs right now. Machines like the turnstile remember: what they do depends on what happened before. This lesson joins them into one pattern, and it's the pattern every part of a computer that changes over time is built on.
+
+By the end you'll be able to describe any stateful machine as a state and a rule, point at the part of a circuit that holds the state, and trace it tick by tick.
+
+## State plus a rule
+
+Describe a machine with state in two parts:
+
+- its <b>state</b>: what it remembers right now;
+- its <b>next-state function</b>: a rule that takes the current state and the inputs, and gives the state it should have next.
+
+The turnstile's rule was its table: locked plus a coin gives unlocked, unlocked plus a push gives locked. That rule is a truth table, so it can be built from gates. The state can't be built from gates alone; it needs somewhere to be kept: a <b>register</b>, a row of memory cells called flip-flops. The next two lessons build both; here we only need what a register does.
+
+So a stateful circuit has exactly two pieces, connected in a loop:
+
+<TruthTable caption='The two pieces of every stateful circuit' rowsJson='[["piece", "what it is", "what it does"], ["register", "flip-flops", "holds the current state"], ["next-state logic", "combinational gates", "works out the next state from the state and the inputs"]]' />
+
+The register's output feeds the logic. The logic's output feeds back into the register. Around and around.
+
+<KeyIdea>Every stateful circuit is a register holding the state, and gates working out what it should become next.</KeyIdea>
+
+## The tick decides when
+
+A loop from the logic back into the register sounds as if it would spin out of control. It doesn't, because of the <b>clock</b>, a signal that ticks at a steady rate (you'll meet it properly two lessons from now). The register only takes in its input at a <b>tick</b>. Between ticks, the logic in front of it can work things out and settle, and the stored state stays exactly where it was.
+
+That answers a common worry: a clocked register does not change whenever its input changes. Its input can flicker for most of the cycle; only the value present at the tick is captured. Feedback through a register is controlled feedback: one step per tick.
+
+So a machine runs like this, over and over:
+
+1. The register shows the current state.
+2. The logic works out the next state from it and from the inputs.
+3. The clock ticks, and the register takes in the next state.
+
+## A circuit that remembers a press
+
+Here is the doorbell problem again, made smaller: one button, P, and one bit of state, PRESSED, which should become 1 the first time the button is pressed and stay 1 for good.
+
+In the lab below, each line with `:=` gives a register's value after the next tick. The starting line just copies the button, so it forgets the press as soon as the button is released. Fix it so it remembers. Hint: the next state can use the current state.
+
+<ClockLab caption='Remember that the button was ever pressed' inputsJson='["P"]' registersJson='["PRESSED"]' startJson='["PRESSED := P"]' targetJson='["PRESSED := PRESSED OR P"]' ticksJson='[{"P":0},{"P":1},{"P":0},{"P":0},{"P":1},{"P":0}]' />
+
+<details>
+<summary>Check your answer</summary>
+
+`PRESSED := PRESSED OR P`. Once PRESSED is 1, PRESSED OR P is 1 whatever the button does, so the register keeps it. The old state flowing back into the logic is what turns forgetting into remembering.
+
+</details>
+
+<KeyIdea>State feeding back into its own next-state logic is how a circuit remembers. The clock makes it happen one step at a time.</KeyIdea>
+
+The rest of this course builds on that loop: counters, which add 1 to their state at each tick; state machines, which follow steps; and memory, which is many registers with addresses.

@@ -1,0 +1,97 @@
+---
+title: "The ALU: one circuit, many operations"
+level: level-00-bits-logic
+slug: the-alu
+order: 34
+timeMin: 9
+learningOutcomes:
+- Explain how an ALU works out several results at once and uses a multiplexer to pick one by an operation code
+- Build a 1-bit ALU slice that chooses between AND and OR
+- Describe how eight slices chained by their carries make an 8-bit ALU, and how one control wire turns adding into subtracting
+- Name the flags an ALU produces alongside its result, and where the tiny CPU's ALU fits
+primer:
+- title: "Multiplexers: choosing between signals"
+  type: doc
+  meta: Reread · 3 min · the ALU picks its answer with one.
+  essential: true
+- title: "Subtracting, comparing and status flags"
+  type: doc
+  meta: Reread · 3 min · the ALU's flags come from there.
+  essential: true
+- title: 'How Computers Calculate - the ALU: Crash Course Computer Science #5'
+  type: video
+  meta: Watch · 11 min · builds an ALU from adders and logic gates.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=1I5ZMmrOfnA'
+knowledgeCheck:
+- question: How does an ALU do different operations with one circuit?
+  answer: "It works out every result at the same time (the sum, the difference, the AND, the OR) and a multiplexer, steered by the operation code, lets only one of them through to the output."
+  jumpToId: many-answers-at-once-one-chosen
+  jumpToLabel: Many answers at once, one chosen
+- question: What does one slice of an 8-bit ALU take in and give out?
+  answer: "It takes one bit of A, one bit of B, a carry in from the slice to its right and the operation code. It gives out one bit of the result and a carry out to the slice on its left."
+  jumpToId: one-bit-at-a-time
+  jumpToLabel: One bit at a time
+- question: With A = 0110 and B = 0011, what does a 4-bit ALU give for AND, OR, ADD and SUB?
+  answer: "AND gives 0010 (2), OR gives 0111 (7), ADD gives 1001 (9) and SUB gives 0011 (3)."
+  jumpToId: many-answers-at-once-one-chosen
+  jumpToLabel: Many answers at once, one chosen
+assignment:
+  instruction: "Watch how Ben Eater builds the ALU of his breadboard computer, the one the tiny CPU in this path copies. Then list what it can do (it only adds and subtracts) and which signal chooses between the two."
+  resourceName: 'eater.net: Arithmetic logic unit (ALU)'
+  resourceType: site
+  resourceUrl: 'https://eater.net/8bit/alu'
+additionalResources:
+- title: Arithmetic logic unit (Wikipedia)
+  type: doc
+  meta: reference, with the usual inputs and outputs drawn
+  url: 'https://en.wikipedia.org/wiki/Arithmetic_logic_unit'
+- title: 'nand2tetris.org: Project 2, Boolean Arithmetic'
+  type: doc
+  meta: build a complete ALU from gates
+  url: 'https://www.nand2tetris.org/project02'
+whyThisMatters: "The ALU is where a CPU actually computes. Every add, subtract, compare and bit mask a program does passes through it. Knowing it is just adders, gates and a multiplexer chosen by a few bits makes the next step, the instruction that picks the operation, feel natural instead of magical."
+---
+
+You now have all the parts of a calculator built from gates: adders, a way to subtract, comparisons and flags, and multiplexers to choose between signals. The <b>ALU</b>, the arithmetic logic unit, puts them together into one circuit that can do several operations and is told which one to do.
+
+By the end you'll be able to explain how an ALU picks an operation, build one slice of it, and describe how slices combine into an 8-bit ALU.
+
+## Many answers at once, one chosen
+
+The trick is simple, and it may feel wasteful at first: the ALU works out every answer at the same time. The adder, the AND gates and the OR gates all get A and B and all produce their results. Then a multiplexer lets just one of them through. The multiplexer's select wires are the <b>operation code</b>, a few bits that say which answer you want.
+
+Here is one possible design for a 4-bit ALU with four operations, chosen by a 2-bit code, with A = 0110 (6) and B = 0011 (3):
+
+<TruthTable caption='Four operations on A = 0110 and B = 0011' rowsJson='[["code", "operation", "result", "as a number"], ["00", "A AND B", "0010", "2"], ["01", "A OR B", "0111", "7"], ["10", "A + B", "1001", "9"], ["11", "A - B", "0011", "3"]]' />
+
+All four results exist inside the circuit at once. Changing the code doesn't make the ALU work harder; it just changes which wire reaches the output.
+
+<KeyIdea>An ALU computes every result in parallel and uses the operation code to choose which one comes out.</KeyIdea>
+
+## One bit at a time
+
+An ALU is built from identical <b>slices</b>, one per bit. Each slice takes one bit of A, one bit of B, the carry from the slice to its right, and the operation code. It gives out one bit of the result and a carry for the slice to its left. Inside a slice is a full adder, a few logic gates, and a small multiplexer.
+
+Build the logic part of a slice: with select S = 0 the output R should be A AND B, and with S = 1 it should be A OR B. The starting line always gives A AND B, so the S = 1 rows are wrong. Use the multiplexer pattern: (NOT S AND first choice) OR (S AND second choice).
+
+<GateLab caption='A 1-bit ALU slice: AND or OR' inputsJson='["S","A","B"]' outputsJson='["R"]' targetJson='{"R":"(NOT S AND A AND B) OR (S AND (A OR B))"}' startJson='["R = A AND B"]' />
+
+Adding more operations means adding more inputs to the multiplexer and more select bits, not changing the idea.
+
+## Eight slices make an 8-bit ALU
+
+Put eight slices side by side and connect each slice's carry out to the next slice's carry in, exactly like the ripple-carry adder. Now A and B are bytes, and so is the result.
+
+Subtraction needs one more control wire. When it is on, every slice's B input goes through an XOR with that wire (which flips B exactly when the wire is 1), and the carry into the first slice is set to 1. That is "NOT B, plus 1", so the same eight adders now compute A - B.
+
+## Flags come out too
+
+Alongside its result, the ALU produces the flags from the last lesson:
+
+- the <b>zero flag</b>, from a NOR of all eight result bits;
+- the <b>carry flag</b>, the carry out of the leftmost slice.
+
+The tiny CPU you'll build later in this path has the smallest useful ALU: it only adds and subtracts, as Ben Eater's breadboard computer does, and every ADD or SUB sets its zero and carry flags. Real CPUs add AND, OR, XOR, shifts and more, but each is just another result the multiplexer can choose.
+
+<KeyIdea>An ALU is slices of adder and logic, chained by carries, with a multiplexer picking the operation and flags describing the result.</KeyIdea>

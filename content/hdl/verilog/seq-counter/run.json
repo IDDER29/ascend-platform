@@ -1,0 +1,141 @@
+{
+  "id": "verilog/seq-counter",
+  "sourceHash": "75988c8ab9f672c3",
+  "tool": "sim",
+  "versions": "Icarus Verilog version 12.0; Yosys 0.52",
+  "commands": [
+    "iverilog -g2012 -Wall -o sim.vvp counter.v tb.v",
+    "vvp sim.vvp"
+  ],
+  "compile": {
+    "ok": true,
+    "messages": ""
+  },
+  "output": "VCD info: dumpfile waves.vcd opened for output.\ncount after 6 rising edges out of reset: 6\ntb.v:11: $finish called at 72 (1s)\n",
+  "exitCode": 0,
+  "waves": {
+    "timescale": "1s",
+    "end": 72,
+    "waves": [
+      {
+        "name": "tb.clk",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "0"
+          ],
+          [
+            5,
+            "1"
+          ],
+          [
+            10,
+            "0"
+          ],
+          [
+            15,
+            "1"
+          ],
+          [
+            20,
+            "0"
+          ],
+          [
+            25,
+            "1"
+          ],
+          [
+            30,
+            "0"
+          ],
+          [
+            35,
+            "1"
+          ],
+          [
+            40,
+            "0"
+          ],
+          [
+            45,
+            "1"
+          ],
+          [
+            50,
+            "0"
+          ],
+          [
+            55,
+            "1"
+          ],
+          [
+            60,
+            "0"
+          ],
+          [
+            65,
+            "1"
+          ],
+          [
+            70,
+            "0"
+          ]
+        ]
+      },
+      {
+        "name": "tb.rst",
+        "width": 1,
+        "changes": [
+          [
+            0,
+            "1"
+          ],
+          [
+            12,
+            "0"
+          ]
+        ]
+      },
+      {
+        "name": "tb.count",
+        "width": 4,
+        "changes": [
+          [
+            0,
+            "x"
+          ],
+          [
+            5,
+            "0"
+          ],
+          [
+            15,
+            "1"
+          ],
+          [
+            25,
+            "10"
+          ],
+          [
+            35,
+            "11"
+          ],
+          [
+            45,
+            "100"
+          ],
+          [
+            55,
+            "101"
+          ],
+          [
+            65,
+            "110"
+          ]
+        ]
+      }
+    ]
+  },
+  "generated": "2026-10-31"
+}

@@ -8,11 +8,11 @@ learningOutcomes:
 - Describe a running C program's memory as a set of byte-addressed regions — code, globals, stack, and heap
 - Predict how many bytes a variable occupies from its type, and confirm it with sizeof
 - Explain why consecutively declared variables tend to sit near each other in memory but aren't guaranteed to
-- Connect the byte-addressable grid from Level 01 to real C variable declarations
+- Connect the byte-addressable grid from Machine & Memory to real C variable declarations
 primer:
   - title: "The address space"
     type: "doc"
-    meta: "Level 01 · every byte in memory has a numeric address"
+    meta: "Machine & Memory · every byte in memory has a numeric address"
     essential: true
   - title: "sizeof, revisited"
     type: "doc"
@@ -44,13 +44,13 @@ additionalResources:
   url: 'https://en.cppreference.com/c/language/sizeof'
 ---
 
-In Level 01 you learned that memory is really just an enormous strip of numbered boxes — bytes, each with its own address, sitting quietly whether anyone's using them or not. Now it's time to make that idea do real work: every variable you write in C claims some of those boxes, and the type you give it decides exactly how many.
+In Machine & Memory you learned that memory is really just an enormous strip of numbered boxes — bytes, each with its own address, sitting quietly whether anyone's using them or not. Now it's time to make that idea do real work: every variable you write in C claims some of those boxes, and the type you give it decides exactly how many.
 
 This lesson is the bridge. By the end you'll look at a line like `int n = 42;` and see past the syntax — four specific bytes at a specific address, holding a specific pattern of bits. That's the ground floor everything else in this level is built on, including the pointer you'll meet two lessons from now.
 
 ## Bits become bytes become variables
 
-Every value in a C program is bits underneath, and Level 01 already showed you those bits are grouped into 8-bit bytes, each with its own address. C's job is to let you name a chunk of that grid instead of poking at raw addresses by hand. Write `int n = 42;` and the compiler picks a free address, reserves enough bytes for an `int`, and stores the bit pattern for 42 there.
+Every value in a C program is bits underneath, and Machine & Memory already showed you those bits are grouped into 8-bit bytes, each with its own address. C's job is to let you name a chunk of that grid instead of poking at raw addresses by hand. Write `int n = 42;` and the compiler picks a free address, reserves enough bytes for an `int`, and stores the bit pattern for 42 there.
 
 How many bytes it reserves depends entirely on the type. A `char` needs exactly 1 byte because that's how big a byte is defined to be. An `int` is usually 4 bytes and a `double` is usually 8 — <b>usually</b>, because C guarantees minimums, not exact sizes, which is exactly why you ask the compiler with `sizeof` instead of assuming.
 

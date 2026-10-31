@@ -1,0 +1,26 @@
+---
+description: Learner AppShell chrome — no topbar, theme in sidebar, placeholder avatars
+globs: src/components/ui/app-shell.tsx,src/components/ui/sidebar.tsx,src/components/ui/placeholder-avatar.tsx,src/app/(learner)/**/*
+alwaysApply: false
+---
+
+# Learner app chrome
+
+Full cases: `docs/design/PHOSPHOR-LESSONS-AND-RUNBOOK.md` **L25–L29**.  
+Specs: `docs/superpowers/specs/2026-09-23-app-shell-footer-design.md`, `…-lesson-contribute-chrome-design.md`, `…-app-topbar-design.md` (superseded — topbar removed).
+
+## Non-negotiables
+
+- **No AppTopbar.** `AppShell` = sidebar + main + `SiteFooter`. Do not resurrect a learner top bar for Cosmetics.
+- **No fake search** in the shell. Don’t put dead ⌘K / “Search lessons…” chrome back.
+- **Don’t duplicate sidebar links** in another header (Curriculum / Paths / Community). Ascend has a sidebar; Odin doesn’t — don’t copy Odin’s top nav blindly.
+- **ThemeToggle** lives in the **sidebar** (collapsed + expanded). Reuse `@/components/site/theme-toggle`.
+- **Identity:** use `PlaceholderAvatar` (elevated + border; initial or `UserRound`). Never `bg-brand-gradient` + `?` for profile faces.
+- Sidebar and phone tab bar use Coach tokens (`practice-coach-v2`, `--coach-*`); the active item is the inverted ink pill. Both read their items from `src/lib/nav/app-nav.ts` — add a page there, not in the components.
+- Phones get a bottom tab bar (Today, Paths, Practice, Progress, More), hidden on focus routes like the practice session. Anything pinned to the bottom uses `var(--app-tabbar-h)`.
+- If shell height changes, grep sticky `72px` / `100vh-72px` and fix dependents.
+
+## Footer / contribute
+
+- Shared Odin-style `SiteFooter` (honest links only; social URLs empty ⇒ hide icons).
+- Lessons: Edit on GitHub + Report issue + quiet Support us (`repo.ts` + contribute/support components). No fake changelog/donate widgets.

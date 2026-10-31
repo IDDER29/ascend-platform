@@ -1,0 +1,156 @@
+---
+title: "Power and energy"
+level: level-10-performance
+slug: power-and-energy
+order: 4
+timeMin: 12
+learningOutcomes:
+- Use dynamic power ≈ C × V² × f to predict how voltage and clock rate change a chip's power
+- Tell power (watts) from energy (joules), and compute the energy a task uses
+- Work out whether running fast then sleeping ("race to idle") or running slowly saves more energy
+- Explain why the end of Dennard scaling stopped clock rates rising, and what "dark silicon" means
+primer:
+- title: "Measuring performance: time, CPI and clock rate"
+  type: doc
+  meta: Reread · 2 min · clock rate is one of the three factors.
+  essential: true
+- title: "Amdahl's law"
+  type: doc
+  meta: Reread · 2 min · busy cores ran slower in its measurement.
+  essential: false
+knowledgeCheck:
+- question: A chip lowers its supply voltage and its clock rate both by 15%. By how much does its dynamic power fall?
+  answer: "Dynamic power goes with V² × f, so it becomes 0.85² × 0.85 = 0.85³ ≈ 0.614 of what it was: about 39% less. The voltage counts twice, which is why lowering it is so effective."
+  jumpToId: where-the-power-goes
+  jumpToLabel: Where the power goes
+- question: Why did clock rates stop climbing in the mid-2000s, when transistors kept shrinking?
+  answer: "Under Dennard scaling, each shrink also lowered the voltage, so power per area stayed constant even as clocks rose. Once voltage couldn't keep falling (leakage current grows as voltage nears the transistor's threshold), faster clocks meant more heat per area than a chip could get rid of, so designers spent transistors on more cores instead."
+  jumpToId: the-end-of-dennard-scaling
+  jumpToLabel: The end of Dennard scaling
+assignment:
+  instruction: "On a Linux machine, read your CPU's minimum, base and maximum frequencies from /sys/devices/system/cpu/cpu0/cpufreq/, and watch scaling_cur_freq (or the MHz lines in /proc/cpuinfo) while the machine is idle and while it runs a busy loop. Explain what you see in terms of power."
+  resourceName: 'Linux intel_pstate driver'
+  resourceType: doc
+  resourceUrl: 'https://www.kernel.org/doc/html/latest/admin-guide/pm/intel_pstate.html'
+additionalResources:
+- title: "Dennard scaling (Wikipedia)"
+  type: doc
+  meta: the scaling rule, and why it ended
+  url: 'https://en.wikipedia.org/wiki/Dennard_scaling'
+- title: "Dark silicon (Wikipedia)"
+  type: doc
+  meta: why not every transistor can be on at once
+  url: 'https://en.wikipedia.org/wiki/Dark_silicon'
+whyThisMatters: "Power, not transistor count, is the limit modern chips are designed against, from phones that must not burn your hand to data centres paying for every watt twice (once to use it, once to cool it). It explains multicore processors, efficiency cores, turbo boost and specialised accelerators, the shape of every chip you'll study next."
+---
+
+A chip turns electrical energy into computation, and into heat. How much it can do is limited less by how many transistors fit than by how much power it can draw and how much heat it can shed. This lesson puts numbers on that.
+
+## Power and energy
+
+- **Power** is a rate, measured in **watts**: joules per second. It decides heat, the battery's drain rate, and how big the cooler must be.
+- **Energy** is a total, measured in **joules**: power × time. It decides how much battery a task uses, and the electricity bill.
+
+A processor drawing 10 W for 3 seconds uses 30 J. Another drawing 6 W for 4 seconds uses 24 J: it uses less energy despite running longer. Low power and low energy are different goals.
+
+## Where the power goes
+
+Most of a chip's power is **dynamic**: every time a transistor switches, it charges or drains a tiny capacitance. Summed over the chip:
+
+**dynamic power ≈ α × C × V² × f**
+
+where:
+- **α** is how much of the chip switches each cycle;
+- **C** is the capacitance being switched;
+- **V** is the supply voltage;
+- **f** is the clock rate.
+
+On top of that there's **static** (leakage) power: transistors leak current even when they're not switching, as long as they're powered.
+
+The voltage is squared. A faster clock usually needs a higher voltage too, so pushing f up costs power faster than linearly. A chip lowers its voltage and its clock rate both by 15%. What fraction of its dynamic power is left? And for a task with a fixed amount of work, what fraction of the dynamic **energy**?
+
+<details>
+<summary>Check your answer</summary>
+
+- **Power:** 0.85² × 0.85 = 0.85³ ≈ **0.614**, so about 39% less power for 15% less speed.
+- **Energy:** the task now takes 1 ÷ 0.85 ≈ 1.18 times as long, so energy = 0.614 × 1.18 ≈ 0.85² ≈ **0.72**, about 28% less. With the clock divided out, dynamic energy per operation goes with V².
+
+That's why chips run slower and at lower voltage when they can, and why efficiency cores exist: a core designed for lower voltage and frequency does the same work for less energy.
+
+</details>
+
+## This laptop, adjusting itself
+
+The processor in these lessons publishes its limits through Linux:
+
+```
+$ cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq
+4600000
+$ cat /sys/devices/system/cpu/cpu0/cpufreq/base_frequency
+1300000
+$ cat /sys/devices/system/cpu/cpu4/cpufreq/cpuinfo_max_freq
+3400000
+$ cat /sys/devices/system/cpu/cpu4/cpufreq/base_frequency
+900000
+$ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+powersave
+$ cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference
+balance_power
+$ grep MHz /proc/cpuinfo | head -4
+cpu MHz		: 574.080
+cpu MHz		: 1453.943
+cpu MHz		: 571.287
+cpu MHz		: 1520.064
+```
+
+Frequencies are in kHz. The performance cores (like cpu0) are guaranteed 1.3 GHz and can boost to 4.6 GHz; the efficiency cores (like cpu4) run 0.9 to 3.4 GHz. Idle, the cores sit far below their maximum, here between about 0.57 and 1.5 GHz. The chip also has an energy counter (`/sys/class/powercap/intel-rapl:0/energy_uj`), but reading it gives "Permission denied": since 2020, Linux keeps it to root, because fine-grained energy readings were shown to leak secrets through a side channel.
+
+The clock moves under load too. This program does exactly the same work in 12 slices and times each one. Predict how the times change.
+
+<CRun program="architect/clock-ramp" caption='The same work, slice after slice' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The slices get faster: in this run from 4.13 ms to 3.35 ms, about 19% less time for identical work. Nothing in the program changed; the processor raised its clock as the load continued, within its power and temperature limits. Run it on your machine and you'll see a different curve. It might even slow down later if the chip gets hot. This is the same effect as the warm-up in the benchmarks lesson, now explained: the clock rate in the CPU time equation isn't a constant.
+
+</details>
+
+## Race to idle, or slow and steady?
+
+A task must finish within 2 seconds. The chip draws **3 W of static power** whenever it's awake, plus **9 W dynamic** at full speed, where the task takes 1 second. Asleep, it draws 0.2 W. Compare the energy of three strategies over the 2 seconds:
+
+1. **Race to idle:** full speed for 1 s, then sleep for 1 s.
+2. **Half the clock, same voltage:** 2 s awake.
+3. **Half the clock, 80% of the voltage:** 2 s awake.
+
+<details>
+<summary>Check your answer</summary>
+
+1. **Race to idle:** (3 + 9) × 1 + 0.2 × 1 = **12.2 J**.
+2. **Half the clock, same voltage:** dynamic power halves to 4.5 W, but the chip is awake twice as long: (3 + 4.5) × 2 = **15 J**. Worse: the static power was paid for twice as long, and the dynamic energy didn't change at all.
+3. **Half the clock, 80% voltage:** dynamic is 9 × 0.5 × 0.8² = 2.88 W, so (3 + 2.88) × 2 = **11.76 J**. Slightly better than racing.
+
+There's no single answer. Slowing the clock alone wastes energy, because static power keeps running; racing to idle wins when sleep is cheap and leakage is high. Slowing down wins only if voltage can come down with the clock. Modern chips and operating systems make this choice constantly.
+
+</details>
+
+<KeyIdea>Dynamic power goes with V² × f; energy is power × time. Lowering voltage is the big lever, static power punishes running longer, and the best strategy depends on both.</KeyIdea>
+
+## The end of Dennard scaling
+
+For decades, each new manufacturing process shrank transistors. Under **Dennard scaling** (1974), shrinking a transistor also lowered its voltage and capacitance in proportion, so **power per area stayed constant** while clocks rose and transistor counts doubled. Each generation was faster at the same heat.
+
+Around 2005 it broke. Voltage couldn't keep falling: near a transistor's threshold voltage, leakage grows sharply and switching becomes unreliable. With voltage stuck, a faster clock meant more power per area than a chip could get rid of as heat. Clock rates stopped near 3 to 5 GHz, where they still are.
+
+Transistor counts kept growing, so designers spent them differently:
+
+- **more cores** instead of faster ones (Amdahl's law now matters to everyone);
+- **specialised units** that do one job efficiently;
+- turning parts of the chip **off** when idle.
+
+Today a chip has more transistors than it can power at full speed at once, so at any moment much of it must stay off or slowed. That unused fraction is called **dark silicon**, and it's why modern chips mix big cores, efficiency cores, GPUs and accelerators, each switched on only when its kind of work arrives.
+
+## Done when
+
+You can predict power from voltage and clock changes, compute energy for a task, compare race-to-idle with slowing down, and explain how the end of Dennard scaling led to multicore and specialised chips.

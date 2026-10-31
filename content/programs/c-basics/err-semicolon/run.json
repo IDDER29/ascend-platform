@@ -1,0 +1,14 @@
+{
+  "id": "c-basics/err-semicolon",
+  "sourceHash": "0f34984452476069",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "main.c: In function ‘main’:\nmain.c:5:5: error: expected ‘,’ or ‘;’ before ‘printf’\n    5 |     printf(\"count = %d\\n\", count);\n      |     ^~~~~~\nmain.c:4:9: warning: unused variable ‘count’ [-Wunused-variable]\n    4 |     int count = 3\n      |         ^~~~~\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

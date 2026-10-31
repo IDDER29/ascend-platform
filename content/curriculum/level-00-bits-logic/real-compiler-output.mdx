@@ -1,0 +1,133 @@
+---
+title: "Reading real compiler output"
+level: level-00-bits-logic
+slug: real-compiler-output
+order: 92
+timeMin: 10
+learningOutcomes:
+- Read the assembly gcc writes for a small C function, line by line, and match it to the source
+- Explain why the same function compiled at -O0 and -O2 gives different instructions but the same result
+- Show that a named local variable can live only in a register, with no memory address at all
+- Say which parts of a listing depend on the compiler, the target CPU and its calling convention, and two ways it differs from the tiny CPU
+primer:
+- title: "Compiling and assembling"
+  type: doc
+  meta: Reread · 3 min · how to get a listing from gcc.
+  essential: true
+- title: "Loops as repeated jumps"
+  type: doc
+  meta: Reread · 3 min · the same loop shape, on the tiny CPU.
+  essential: true
+knowledgeCheck:
+- question: Where does the variable total live at -O0, and where at -O2?
+  answer: "At -O0 it has a stack slot in memory, -8(%rbp), and every change goes through memory. At -O2 it lives only in the register %edx and never gets a memory address. Both give 55: C promises the result, not where the variables live."
+  jumpToId: optimisation-on-variables-move-into-registers
+  jumpToLabel: "Optimisation on: variables move into registers"
+- question: Why does sum_to read its argument n from %edi?
+  answer: "That's the calling convention for this target, the System V ABI used by x86-64 Linux: the first integer argument arrives in %edi (or %rdi) and the result goes back in %eax. Another target, such as 32-bit x86, passes arguments differently, so the same C gives different assembly."
+  jumpToId: what-depends-on-what
+  jumpToLabel: What depends on what
+- question: In the -O2 listing of main, why is there no call to sum_to?
+  answer: "gcc worked out sum_to(10) while compiling and put the answer, 55, straight into the call to print it (movl $55, %edx). The function still exists for other callers, but this one never runs it."
+  jumpToId: the-same-answer-a-different-program
+  jumpToLabel: The same answer, a different program
+assignment:
+  instruction: "Open Compiler Explorer, paste in sum_to, and pick an x86-64 gcc. Look at the output with no flags, then with -O2: does it match this lesson's listings? Then change the compiler to a recent clang, and to an ARM64 gcc. Write down two things that change and one that stays the same."
+  resourceName: 'Compiler Explorer (godbolt.org)'
+  resourceType: site
+  resourceUrl: 'https://godbolt.org/'
+additionalResources:
+- title: x86 calling conventions (Wikipedia)
+  type: doc
+  meta: the System V AMD64 rules for which registers carry arguments
+  url: 'https://en.wikipedia.org/wiki/X86_calling_conventions'
+- title: 'Computer Systems: A Programmer''s Perspective (CS:APP)'
+  type: doc
+  meta: chapter 3, machine-level representation of programs
+  url: 'https://csapp.cs.cmu.edu/'
+whyThisMatters: "A toy CPU teaches the ideas; real compiler output is where you'll use them. Debuggers, crash reports and performance work all show you assembly like this, and the most common wrong beliefs about C (every variable lives in memory, every line becomes one instruction) are corrected the first time you read a real listing carefully."
+---
+
+All through Foundations you've traced programs on the tiny CPU. This lesson reads the real thing: assembly that gcc wrote for a real C function, for a real CPU. Nothing below is made up or tidied by hand: it's exactly what gcc printed, kept with a record of how it was made.
+
+By the end you'll be able to follow a real listing line by line, explain why optimisation changes it so much, and say which parts would change on another compiler or CPU.
+
+## The evidence
+
+Here is one small function, `sum_to`, which adds 1 + 2 + ... + n, compiled by gcc 15.2 for x86-64 Linux twice: with optimisation off (-O0) and on (-O2).
+
+<CompilerOutput evidence="sum-to-n" fn="sum_to" />
+
+Both programs print 55. They don't look alike at all.
+
+## Optimisation off: everything goes through memory
+
+At -O0 gcc translates each line of C plainly, and gives every variable a home in memory, a <b>stack slot</b> at a fixed distance below `%rbp`:
+
+<TruthTable caption='Where each variable lives at -O0' rowsJson='[["variable", "home", "set up by"], ["n", "-20(%rbp)", "movl %edi, -20(%rbp)"], ["total", "-8(%rbp)", "movl $0, -8(%rbp)"], ["i", "-4(%rbp)", "movl $1, -4(%rbp)"]]' />
+
+Then the loop. The test is at the bottom: `.L2` compares i with n, and `jnb .L3` ("jump if not below") goes back to the body while n is not below i. The body, `.L3`, loads i into `%eax`, adds it to total in memory (`addl %eax, -8(%rbp)`), and adds 1 to i in memory. At the end, `movl -8(%rbp), %eax` puts total where the caller expects the result.
+
+It's the same shape as the loops you wrote for the tiny CPU: a compare, a conditional jump back, and a variable kept in memory and loaded when needed.
+
+## Optimisation on: variables move into registers
+
+At -O2, look for `-8(%rbp)` or `-4(%rbp)`: they're gone. total lives in `%edx` and i in `%eax` for the whole function. Those named variables never get a memory address at all.
+
+The loop changed too. Its body is now:
+
+```
+.L3:
+	leal	1(%rdx,%rax,2), %edx
+	addl	$2, %eax
+	cmpl	%eax, %edi
+	jnb	.L3
+```
+
+`leal 1(%rdx,%rax,2), %edx` computes total + 2 × i + 1, which is total + i + (i + 1): two numbers added in one instruction. Then i goes up by 2. The loop runs half as many times. The instructions before `.L3` handle the edge cases this trick needs: n of 0 (jump to `.L4`, return 0) and an odd count of numbers.
+
+<KeyIdea>C promises what a program computes, not how. A named variable may live in memory, only in a register, or nowhere at all.</KeyIdea>
+
+## The same answer, a different program
+
+The -O2 version of `main`, in the same evidence file (content/evidence/sum-to-n/O2.s), goes further:
+
+```
+main:
+	endbr64
+	subq	$8, %rsp
+	movl	$55, %edx
+	movl	$.LC0, %esi
+	xorl	%eax, %eax
+	movl	$2, %edi
+	call	__printf_chk
+	xorl	%eax, %eax
+	addq	$8, %rsp
+	ret
+```
+
+There's no call to sum_to. gcc worked out `sum_to(10)` while compiling and put 55 in directly (`movl $55, %edx`). It also replaced printf with `__printf_chk`, a checked version this system's gcc uses by default. The output is still 55, which is all C promises.
+
+## What depends on what
+
+Almost everything in these listings is a choice made by someone, not a law:
+
+- **The compiler and its flags** decide the instructions: gcc 15.2 at -O2 unrolled the loop; another gcc version, or clang, may not.
+- **The target CPU** decides the instruction set: these are x86-64 instructions (`leal`, `jnb`); an ARM CPU would get completely different ones from the same C.
+- **The calling convention (ABI)** decides where arguments and results go: on x86-64 Linux (the System V ABI), the first argument arrives in `%edi` and the result leaves in `%eax`. 32-bit x86 Linux passes arguments on the stack instead: the same function compiled with `-m32 -O2` (kept in the same evidence folder as O2-m32.s) starts by reading n with `movl 8(%esp), %ecx`.
+
+Only the C result, 55, is guaranteed everywhere.
+
+<details>
+<summary>Check your answer: name two ways this differs from the tiny CPU.</summary>
+
+Any two of these:
+
+- x86-64 has many registers (16 general-purpose, 64 bits wide); the tiny CPU version 2 has four 8-bit ones.
+- x86-64 instructions vary in length (1 to 15 bytes); the tiny CPU's are always 2 bytes.
+- x86-64 compares numbers by size (`jnb`: not below) using its carry flag; the tiny CPU can only test for equality.
+- Here a compiler chose the instructions and could reorder or remove work; on the tiny CPU you wrote every instruction yourself.
+
+</details>
+
+To try other compilers and CPUs without installing anything, Compiler Explorer (godbolt.org) shows the assembly for any C you paste in. Its output will differ from this lesson's whenever the compiler, version, flags or target differ, which is exactly the point.

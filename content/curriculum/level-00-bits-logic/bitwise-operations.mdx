@@ -1,0 +1,81 @@
+---
+title: "Bitwise operations: AND, OR, XOR, shifts and masks"
+level: level-00-bits-logic
+slug: bitwise-operations
+order: 18
+timeMin: 9
+learningOutcomes:
+- Apply AND, OR, XOR and NOT to whole bytes, bit by bit
+- Use a mask to read, set, clear or flip chosen bits and leave the rest alone
+- Explain what shifting left and right does to a number
+- Recognise the C operators for these, and why & is not the same as &&
+primer:
+- title: Binary & number bases
+  type: doc
+  meta: Reread · 3 min · hex is how masks are usually written.
+  essential: true
+- title: Bitwise operation (Wikipedia)
+  type: doc
+  meta: Read · 10 min · every operator, with worked examples.
+  essential: false
+  url: 'https://en.wikipedia.org/wiki/Bitwise_operation'
+knowledgeCheck:
+- question: How do you check whether bit 3 of x is set, and what does the check give back?
+  answer: "AND x with a mask that has only bit 3 set: x & 0b1000 (or x & (1 << 3)). Every other bit becomes 0, so the result is 0 when bit 3 is clear and 8 when it's set. Any non-zero result means set."
+  jumpToId: masks-picking-out-bits
+  jumpToLabel: "Masks: picking out bits"
+- question: What does shifting an unsigned number one place left do, and why?
+  answer: It doubles it, as long as no 1 falls off the top. Every bit moves to the next place, and every place is worth twice the one to its right, just as appending a 0 to a decimal number multiplies it by ten.
+  jumpToId: shifts-moving-bits
+  jumpToLabel: "Shifts: moving bits"
+assignment:
+  instruction: "Open the Python shell on python.org and try it: bin(0b1100 & 0b1010), bin(0b1100 | 0b1010), bin(0b1100 ^ 0b1010), 5 << 1, 40 >> 3. Predict each answer first, then check."
+  resourceName: Python shell (python.org)
+  resourceType: site
+  resourceUrl: 'https://www.python.org/shell/'
+additionalResources:
+- title: Bitwise operation (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Bitwise_operation'
+- title: Mask (computing) (Wikipedia)
+  type: doc
+  meta: reference, with the set, clear and flip idioms
+  url: 'https://en.wikipedia.org/wiki/Mask_(computing)'
+whyThisMatters: "Bitwise operations are how software talks to hardware and packs information tightly: file permissions, network packet headers, colour values, CPU flags and device registers are all bits set and read with masks. C uses them constantly, and once AND-with-a-mask is second nature, a line like flags & O_CREAT reads as plainly as English."
+---
+
+You've used AND, OR, XOR and NOT on single bits. A computer can do them to every bit of a byte at once, in one step. This lesson turns those gates into tools: <b>masks</b> to read and change chosen bits, and <b>shifts</b> to move bits around.
+
+By the end you'll be able to work out a bitwise AND, OR or XOR of two bytes, use a mask to read, set, clear or flip any bit, and say what a shift does to a number.
+
+## Gates, on a whole byte at once
+
+A bitwise operation lines two numbers up and applies one gate to each column separately. There are no carries; each column is on its own.
+
+<TruthTable caption='1100 and 1010, column by column' rowsJson='[["operation", "result"], ["1100 AND 1010", "1000"], ["1100 OR 1010", "1110"], ["1100 XOR 1010", "0110"], ["NOT 1100", "0011"]]' />
+
+In C these are written `&` (AND), `|` (OR), `^` (XOR) and `~` (NOT). Watch out: `&&` and `||` are different operators. They treat each whole value as true or false, while `&` and `|` work bit by bit.
+
+## Masks: picking out bits
+
+A <b>mask</b> is a number chosen for its pattern of 1s. Combined with a value, it lets you touch only the bits you care about.
+
+- <b>Read</b> with AND: `x & 0x0F` keeps the low four bits and clears the rest, because anything AND 0 is 0 and anything AND 1 stays itself.
+- <b>Set</b> with OR: `x | 0b0100` turns bit 2 on and leaves every other bit as it was.
+- <b>Clear</b> with AND and NOT: `x & ~0b0100` turns bit 2 off.
+- <b>Flip</b> with XOR: `x ^ 0b0100` flips bit 2.
+
+<KeyIdea>AND keeps, OR sets, XOR flips. The mask says which bits; the rest are left alone.</KeyIdea>
+
+## Shifts: moving bits
+
+A shift slides every bit left or right. `x << 1` moves every bit one place left and puts a 0 in at the right; `x >> 1` moves them right. Since each place is worth twice the one to its right, shifting left by one doubles an unsigned number, and shifting right by one halves it (dropping any remainder). So 5 is 0101, and `5 << 1` is 1010, which is 10.
+
+Shifts also build masks: `1 << n` is a number with only bit n set. That's why the set, clear and flip idioms are usually written `x | (1 << n)`, `x & ~(1 << n)` and `x ^ (1 << n)`.
+
+<Visual type='diagram' caption='Shifting 0101 one place left' description='Two rows of four bit boxes. Top: 0 1 0 1, labeled 5. Arrows show each bit moving one box to the left; the leftmost bit falls off, and a new 0 enters on the right. Bottom: 1 0 1 0, labeled 10.' />
+
+## Where you'll meet them
+
+Colours are often stored as one number, 0xRRGGBB. To get the green part, shift it down and mask it: `(colour >> 8) & 0xFF`. Unix file permissions, network headers and the CPU's own flags are all packed the same way. Whenever several yes-or-no facts share one number, masks are how you read them.

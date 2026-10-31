@@ -1,0 +1,161 @@
+---
+title: "Aliasing and strict aliasing"
+level: level-05-c-contract
+slug: strict-aliasing
+order: 5
+timeMin: 10
+learningOutcomes:
+- Explain what it means for two pointers to alias, and why a compiler cares
+- State the strict aliasing rule (C17 6.5p7) in your own words, including the character-type exception
+- Show how a type-punning bug can give different results at -O0 and -O2
+- Reinterpret an object's bytes legally with memcpy or unsigned char access
+primer:
+- title: "Casts and what they really do"
+  type: doc
+  meta: "The C Language · a pointer cast changes how bytes are read, not the bytes."
+  essential: true
+- title: "Undefined behaviour, in depth"
+  type: doc
+  meta: Reread · 3 min · the compiler may assume undefined behaviour never happens.
+  essential: true
+knowledgeCheck:
+- question: "store_both(&x, (float *) &x) returned 1 at -O2 but 1073741824 at -O0. Why may the -O2 build return 1?"
+  answer: "Under the strict aliasing rule, an int and a float can't be the same object, so gcc assumes *fp = 2.0f can't change *ip. It returns the 1 it just stored without reading memory again. Accessing x through a float lvalue breaks 6.5p7, so the behaviour is undefined and both answers are allowed."
+  jumpToId: the-same-bytes-two-answers
+  jumpToLabel: "The same bytes, two answers"
+- question: What are the legal ways to look at a float's bits as an unsigned int?
+  answer: "Copy the bytes with memcpy into an unsigned int, which gcc turns into a plain register move, or read them one at a time through an unsigned char pointer. A character type may access any object. (C also allows reading another member of a union, but memcpy is the clearest.)"
+  jumpToId: the-legal-ways
+  jumpToLabel: The legal ways
+assignment:
+  instruction: "Write a function that returns the sign bit of a float (1 for negative, 0 otherwise) without using the < operator. Do it once with memcpy and once through unsigned char, compile both with gcc -std=c17 -Wall -Wextra -O2, and check them on 1.0f, -1.0f, 0.0f and -0.0f."
+  resourceName: 'cppreference: Objects and alignment (strict aliasing)'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/language/object'
+additionalResources:
+- title: "C17 draft standard (N2176), section 6.5"
+  type: pdf
+  meta: paragraphs 6 and 7, effective type and the aliasing rule
+  url: 'https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2176.pdf'
+- title: "GCC: Optimize Options, -fstrict-aliasing"
+  type: doc
+  meta: what gcc assumes, and which -O levels turn it on
+  url: 'https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html'
+whyThisMatters: "Code that reinterprets bytes through a pointer cast is everywhere in older C: network packets, file formats, fast maths tricks. It often works at -O0 and breaks at -O2, which makes it one of the hardest bugs to find. Knowing the rule and the two legal escapes lets you write that code so it stays correct under every -O setting."
+---
+
+Two pointers **alias** when they point at the same object. Whether they might matters a great deal to an optimiser: if it knows a store through one pointer can't change what another points to, it can keep values in registers instead of reloading them from memory. C gives the compiler that knowledge through a rule about *types*, and code that breaks the rule can change its answer when you turn optimisation on.
+
+## The rule
+
+C17 6.5p6 gives every object an **effective type**: for a declared variable, its declared type. 6.5p7 then says an object's stored value may be accessed only through an lvalue of:
+
+- a type compatible with its effective type (possibly `const` or `volatile` qualified),
+- the signed or unsigned version of that type,
+- an aggregate or union type that contains one of those as a member, or
+- a **character type** (`char`, `signed char`, `unsigned char`).
+
+Anything else is undefined behaviour. In short: an `int` object is read and written as an `int` (or `unsigned int`), and any object may be looked at byte by byte as characters. Reading an `int` through a `float *` is not allowed, whatever the cast says.
+
+<KeyIdea>The strict aliasing rule lets the compiler assume that pointers to different, unrelated types never point at the same object.</KeyIdea>
+
+## The same bytes, two answers
+
+`store_both` stores 1 through an `int *`, then 2.0f through a `float *`, then reads the `int` back. `main` passes the same address as both. Predict what it returns without optimisation.
+
+<CRun program="c-contract/alias-store-O0" caption='Compiled with -O0' predict />
+
+Now the identical source with `-O2`. Predict again.
+
+<CRun program="c-contract/alias-store-O2" caption='Compiled with -O2' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+At -O0, every access goes to memory: `*fp = 2.0f` overwrites the four bytes of `x` with the bits of 2.0f (0x40000000), and reading `*ip` gives 1073741824.
+
+At -O2, gcc turns on `-fstrict-aliasing`. By the rule, an `int` and a `float` can't be the same object, so the store through `fp` can't change `*ip`, and `return *ip` can just return the 1 it stored a moment ago. That's why the function returns 1 while `x`, read afterwards in `main`, holds 1073741824. The program broke 6.5p7 (it accessed an `int` object through a `float` lvalue), so the behaviour is undefined, and both runs are what this gcc happened to do. Neither is a promise.
+
+No warning appeared for this one: gcc's `-Wstrict-aliasing` only catches the obvious patterns.
+
+</details>
+
+## Turning the assumption off
+
+gcc can be told not to assume it, with `-fno-strict-aliasing`:
+
+<CRun program="c-contract/alias-store-no-strict" caption='-O2 -fno-strict-aliasing' />
+
+Now -O2 agrees with -O0. Some large projects, the Linux kernel among them, build with this flag rather than audit every cast. It costs a little speed, because the compiler must assume more pointers may alias, and the program is still not portable C: another compiler may assume what gcc no longer does. Fixing the code is better than switching the rule off.
+
+## A warning you'll see
+
+The classic way to peek at a float's bits is `*(unsigned *) &f`. Here gcc does notice:
+
+<CRun program="c-contract/alias-pun-warning" caption='Reading a float through an unsigned pointer' />
+
+Look closely at the second warning. Why would gcc call `f` "used uninitialized", when it was set to 1.0f the line before?
+
+<details>
+<summary>Check your answer</summary>
+
+Because under strict aliasing, an `unsigned` read can't see a `float` store. As far as the optimiser is concerned, the `unsigned` object being read was never written, so it reports a read of an uninitialised value. The output happened to be right this time, but the warning says exactly why it might not be.
+
+</details>
+
+## The legal ways
+
+There are two clean ways to reinterpret bytes. The first is `memcpy`, which copies the object representation into a variable of the type you want:
+
+<CRun program="c-contract/alias-memcpy" caption='The same bits, with memcpy' />
+
+No warning, and no cost: for a 4-byte copy, gcc doesn't call `memcpy` at all. At -O2 it compiled this whole `main` down to loading the constant 0x3F800000 (1065353216) for `printf`.
+
+The second is character access, the exception in 6.5p7. Any object may be read byte by byte through `unsigned char *`:
+
+<CRun program="c-contract/alias-bytes" caption='A float, byte by byte' />
+
+The bits of 1.0f are 0x3F800000. Why does this print `00 00 80 3F` rather than `3F 80 00 00`?
+
+<details>
+<summary>Check your answer</summary>
+
+x86-64 is little-endian: the lowest-addressed byte holds the least significant part of the value, so the bytes of 0x3F800000 appear in memory in reverse order. Character access shows you memory as it really is, which is why tools that dump bytes always use it.
+
+A third way, reading a different member of a `union` than the one last stored, is also allowed in C (a footnote to 6.5.2.3 calls it "type punning"), though not in C++. `memcpy` works in both, which is why it's the usual choice.
+
+</details>
+
+## Try it
+
+This function is meant to return the number of 1 bits in a float's representation. Which line breaks the aliasing rule, and how would you fix it?
+
+```c
+int float_popcount(float f) {
+    unsigned bits = *(unsigned *) &f;
+    int count = 0;
+    while (bits != 0) {
+        count += bits & 1u;
+        bits >>= 1;
+    }
+    return count;
+}
+```
+
+<details>
+<summary>Check your answer</summary>
+
+The second line reads a `float` object through an `unsigned` lvalue, which 6.5p7 doesn't allow. Replace it with:
+
+```c
+unsigned bits;
+memcpy(&bits, &f, sizeof bits);
+```
+
+(and `#include <string.h>`). The rest is fine: everything after that line works on an ordinary `unsigned` variable.
+
+</details>
+
+## Done when
+
+You can state the aliasing rule and its character exception, explain why `store_both` gave two answers, and reinterpret bytes with `memcpy` or `unsigned char`.

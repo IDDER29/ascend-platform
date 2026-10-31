@@ -1,0 +1,137 @@
+---
+title: "Defined, unspecified and implementation-defined behaviour"
+level: level-05-c-contract
+slug: kinds-of-behaviour
+order: 1
+timeMin: 10
+learningOutcomes:
+- Name the four kinds of behaviour the C standard defines, and say what each one promises
+- Tell implementation-defined behaviour (documented, one fixed choice) from unspecified behaviour (any allowed choice, no documentation needed)
+- Predict results the standard does fix, such as integer division with negative numbers and unsigned wrap-around
+- Explain why portable code may rely on defined behaviour, can rely on implementation-defined behaviour only for a known target, and must never depend on an unspecified choice
+primer:
+- title: "Undefined behaviour"
+  type: doc
+  meta: "The C Language · the first look at C's most dangerous rule."
+  essential: true
+- title: "Integer promotions and conversions"
+  type: doc
+  meta: "The C Language · the conversions some examples here rely on."
+  essential: false
+knowledgeCheck:
+- question: What is the difference between implementation-defined and unspecified behaviour?
+  answer: "Both let the compiler choose among allowed results. For implementation-defined behaviour the compiler must document its choice and stick to it, so the size of int or the result of -8 >> 1 is fixed for a given compiler and target. For unspecified behaviour it needn't document anything and may choose differently each time, like the order function arguments are evaluated in."
+  jumpToId: implementation-defined-documented-choices
+  jumpToLabel: "Implementation-defined: documented choices"
+- question: Why is -7 / 2 equal to -3 in every conforming C compiler?
+  answer: "Since C99 the standard defines integer division as truncation toward zero (C17 6.5.5), so -3.5 becomes -3, and -7 % 2 is -1 so that (a/b)*b + a%b == a still holds. It used to be implementation-defined in C89."
+  jumpToId: defined-the-same-everywhere
+  jumpToLabel: "Defined: the same everywhere"
+assignment:
+  instruction: "Open the C17 draft standard (N2176) at Annex J. Pick two items from J.1 (unspecified), two from J.3 (implementation-defined) and two from J.2 (undefined). For each, write one line of C that triggers it and say what gcc on x86-64 Linux does, checking the implementation-defined ones against gcc's manual section on integers."
+  resourceName: 'C17 draft standard, N2176 (PDF)'
+  resourceType: pdf
+  resourceUrl: 'https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2176.pdf'
+additionalResources:
+- title: "cppreference: Undefined behavior (all four kinds)"
+  type: doc
+  meta: short definitions with examples
+  url: 'https://en.cppreference.com/w/c/language/behavior'
+- title: "GCC manual: integers, implementation-defined behaviour"
+  type: doc
+  meta: what gcc documents for each implementation-defined integer rule
+  url: 'https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html'
+whyThisMatters: "The C standard is a contract between you and every compiler that will ever build your code. Knowing which parts of your program the contract fixes, which it leaves to the compiler's documented choice, and which it leaves open is how you write C that keeps working when the compiler, the flags or the machine change."
+---
+
+In The C Language you met **undefined behaviour**: code the standard places no requirements on at all. It's the most famous of C's rules, but it's one of four. The C standard sorts everything a program can do into four kinds, and this course, The C Contract, is about reading that contract exactly.
+
+The terms below are the standard's own (C17, section 3.4). The free draft N2176 is close to the final text; Annex J lists every case of each kind.
+
+| Kind | What the standard promises | Example |
+|---|---|---|
+| Defined | One result, the same everywhere | `-7 / 2` is `-3` |
+| Implementation-defined | One result, chosen and **documented** by each compiler | `sizeof(int)` |
+| Unspecified | One of several allowed results, chosen freely, **not** documented | argument evaluation order |
+| Undefined | **No requirements at all** | `INT_MAX + 1` |
+
+(There's a fifth, minor kind, **locale-specific behaviour**, for things like which characters count as letters; the locale chosen at run time decides it.)
+
+## Defined: the same everywhere
+
+Most of C is defined. Some definitions surprise people, though, because they look like they might depend on the machine. Predict all four lines before running this.
+
+<CRun program="c-contract/kinds-defined" caption='Defined results, including negative division' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `UINT_MAX + 1` is `0`. Unsigned arithmetic is defined to work modulo 2 to the power of the width: "a computation involving unsigned operands can never overflow" (C17 6.2.5). It wraps, on every compiler.
+- `-7 / 2` is `-3`. Since C99, integer division truncates toward zero (C17 6.5.5). In C89 the direction was implementation-defined.
+- `-7 % 2` is `-1`, because the standard requires `(a / b) * b + a % b == a`: -3 × 2 + (-1) = -7. The remainder takes the sign of the dividend.
+- `7 / -2` is `-3`, again truncating toward zero.
+
+These are promises, so portable code can rely on them. Note the contrast with *signed* overflow, which is undefined: the same wrap-around you just saw is only guaranteed for unsigned types.
+
+</details>
+
+## Implementation-defined: documented choices
+
+For some things the standard lets each implementation (a compiler for a target) choose, as long as it **documents** the choice and sticks to it. These four lines are all implementation-defined:
+
+<CRun program="c-contract/kinds-impl" caption='Four documented choices, on gcc for x86-64 Linux' />
+
+- **Sizes:** the standard only sets minimums (an `int` holds at least -32767 to 32767). On x86-64 Linux, `int` is 4 bytes and `long` is 8; on 64-bit Windows, `long` is 4.
+- **Plain `char`** is signed here, but unsigned on ARM Linux. That's why `char c = 200;` can hold 200 on one machine and -56 on another.
+- **Right-shifting a negative number** (C17 6.5.7): gcc documents that it shifts in copies of the sign bit (an arithmetic shift), so `-8 >> 1` is `-4`.
+- **Converting an out-of-range value to a signed type** (C17 6.3.1.3): gcc documents that it reduces it modulo 2 to the power of the width, so 200 becomes 200 - 256 = -56. The standard also allows an implementation to raise a signal instead.
+
+Implementation-defined code is fine **for a known target**. Code that must be portable either avoids it or checks the choice, for example with `CHAR_MIN` from `<limits.h>`, `_Static_assert(sizeof(int) == 4, "...")`, or exact-width types like `int32_t`.
+
+## Unspecified: any allowed choice
+
+Unspecified behaviour also gives the compiler a choice among allowed results, but it needn't document it, and it may choose differently in different places, at different optimisation levels, or on different compilers. The classic case is the order in which a function's arguments are evaluated.
+
+Predict which of `a` and `b` runs first, and what `sum` is.
+
+<CRun program="c-contract/kinds-unspecified" caption='Which argument goes first?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+On this gcc, `b` ran first, then `a`: the arguments were evaluated right to left. Another compiler, or gcc for another target, may go left to right. The standard allows either (C17 6.5.2.2 and 6.5), so the order of the two `printf` lines is unspecified.
+
+The *sum* is 3 either way. That's the point of unspecified, as opposed to undefined: each allowed choice gives a valid program, and only the parts that depend on the choice differ. Your program is correct only if its result doesn't depend on which choice was made. Here, the order of the messages does.
+
+</details>
+
+<KeyIdea>Defined: rely on it. Implementation-defined: rely on it only for a known target, and check it. Unspecified: never let your result depend on the choice. Undefined: never let it happen.</KeyIdea>
+
+## Undefined: no requirements
+
+Undefined behaviour is "behavior, upon use of a nonportable or erroneous program construct or of erroneous data, for which this International Standard imposes no requirements" (C17 3.4.3). Not "some result", not "an error": no requirements on the whole program, from that point (and, as the next lesson shows, sometimes before it).
+
+## Try it
+
+Classify each line as defined, implementation-defined, unspecified or undefined, assuming `int` is 32 bits:
+
+1. `unsigned u = 0; u = u - 1;`
+2. `int x = -1 >> 1;`
+3. `printf("%d %d", f(), g());` where both print something
+4. `int y = 1 << 31;`
+5. `long n = sizeof(long);`
+
+<details>
+<summary>Check your answer</summary>
+
+1. **Defined:** unsigned arithmetic wraps, so `u` is `UINT_MAX`.
+2. **Implementation-defined:** right-shifting a negative value. On gcc it's `-1`.
+3. **Unspecified:** which of `f` and `g` runs first, so the order of their output.
+4. **Undefined:** 2 to the 31 doesn't fit in a 32-bit `int`, and a signed left shift whose result can't be represented is undefined (C17 6.5.7). Use `1u << 31`.
+5. **Implementation-defined:** the size of `long` (8 on x86-64 Linux, 4 on 64-bit Windows).
+
+</details>
+
+## Done when
+
+You can name the four kinds, say what each promises, and classify a line of C into one of them, with the standard's section when it matters.

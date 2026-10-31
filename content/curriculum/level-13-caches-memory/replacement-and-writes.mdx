@@ -1,0 +1,114 @@
+---
+title: "Replacement and write policies"
+level: level-13-caches-memory
+slug: replacement-and-writes
+order: 2
+timeMin: 11
+learningOutcomes:
+- Trace LRU and FIFO replacement through a set by hand and predict which line each evicts
+- Explain why LRU fails badly on a loop slightly bigger than the cache, and why random replacement can do better
+- Compare write-back and write-through by the memory traffic they cause, and explain the dirty bit
+- Explain write-allocate and no-write-allocate, and when each makes sense
+primer:
+- title: "Cache organisation: sets, ways and lines"
+  type: doc
+  meta: Reread · 3 min · sets, ways and the 3 Cs.
+  essential: true
+knowledgeCheck:
+- question: "A 2-way set gets lines A, B, A, C, A. Which accesses hit under LRU, and which under FIFO?"
+  answer: "LRU: the third (A) and the fifth (A). C evicts B, the least recently used, so A survives. FIFO: only the third. C evicts A, which arrived first even though it was just used, so the last A misses."
+  jumpToId: lru-and-fifo
+  jumpToLabel: LRU and FIFO
+- question: Four writes go to one line, then the line is evicted. How many writes reach memory under write-through, and under write-back?
+  answer: "Write-through: 4, one per store. Write-back: 1. The stores only mark the cached line dirty, and the whole line is written back once, when it's evicted."
+  jumpToId: when-a-write-reaches-memory
+  jumpToLabel: When a write reaches memory
+assignment:
+  instruction: "Write a trace for a 2-way set where FIFO beats LRU, and check it in the lab (the cache from the first lab below with the editable trace). Then explain in two sentences why no practical replacement policy wins on every trace."
+  resourceName: 'Wikipedia: Cache replacement policies'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Cache_replacement_policies'
+additionalResources:
+- title: "Ulrich Drepper: What Every Programmer Should Know About Memory"
+  type: pdf
+  meta: section 3.3, cache implementation details, including writes
+  url: 'https://people.freebsd.org/~lstewart/articles/cpumemory.pdf'
+whyThisMatters: "A cache is only as good as its guesses about the future. Replacement decides what to keep, and the write policy decides how much traffic reaches memory: together they decide whether a cache saves bandwidth or wastes it, on CPUs, on disks and in every software cache you'll write."
+---
+
+A set is full and a new line needs a place. Something must go. And when the program writes, the cache must decide when memory hears about it. These two policies are the cache's strategy.
+
+## LRU and FIFO
+
+The two classic replacement policies:
+
+- **LRU (least recently used):** evict the line whose last use is oldest. It bets that the recent past predicts the near future.
+- **FIFO (first in, first out):** evict the line that arrived first, however recently it was used. Simpler: no need to update anything on a hit.
+
+Real L1 caches use cheap approximations of LRU (tree pseudo-LRU), because exact LRU for 12 ways needs a lot of bookkeeping per set.
+
+This cache is one set of 2 ways (32 bytes, 16-byte lines). The trace touches lines 0, 16, 0, 32, 0. It starts with FIFO. Predict both policies, then switch so the trace has at most 3 misses.
+
+<CacheLab caption='One set, two ways' configJson='{"sizeBytes":32,"lineBytes":16,"ways":2,"policy":"FIFO","write":"write-back"}' traceJson='["R 0","R 16","R 0","R 32","R 0"]' goalJson='{"maxMisses":3}' editable />
+
+<details>
+<summary>Check your answer</summary>
+
+- **FIFO:** miss, miss, hit, miss, miss: 4 misses. When line 32 arrives, FIFO evicts line 0 because it came in first, even though it was used one access ago. So the last access to 0 misses again.
+- **LRU:** miss, miss, hit, miss, hit: 3 misses. Line 16 is the least recently used, so 32 replaces it, and 0 is still there.
+
+Switch the policy to "least recently used" to meet the goal. The lab calls the last FIFO miss a *conflict* miss: an LRU cache of the same size would have kept the line.
+
+</details>
+
+## LRU's blind spot
+
+LRU isn't always best. A cache that holds 16 lines (1 KiB, 64-byte lines, 4 ways) runs a loop over 24 lines, three times. Predict the hit rate.
+
+<CacheLab caption='A loop slightly too big for the cache' configJson='{"sizeBytes":1024,"lineBytes":64,"ways":4,"policy":"LRU","write":"write-back"}' patternJson='{"start":0,"stride":64,"count":24,"repeat":3}' />
+
+<details>
+<summary>Check your answer</summary>
+
+**0 hits in 72 accesses.** After the first pass, each set holds the 4 most recent of its 6 lines. The line needed next is always the one used longest ago, which is exactly the one LRU just evicted. Every access misses: 24 compulsory, then 48 capacity misses. FIFO does the same here.
+
+Two fixes:
+
+- **A bigger cache:** set the size to 2 KiB, and the loop's 24 lines fit, giving 48 hits.
+- **Random replacement:** evicting a random way would keep *some* of the loop in the cache and hit part of the time.
+
+Some modern CPUs use adaptive policies that spot this pattern and protect part of the working set.
+
+</details>
+
+<KeyIdea>Replacement is a bet about the future. LRU bets that recently used data is used again; a loop just bigger than the cache breaks that bet completely.</KeyIdea>
+
+## When a write reaches memory
+
+Two policies for stores that hit in the cache:
+
+- **Write-through:** every store also goes to memory (in practice, to a write buffer that drains to memory). Memory is always up to date, at the cost of traffic for every store.
+- **Write-back:** the store only updates the cached line and sets its **dirty bit**. The whole line is written to memory once, when it's evicted, and only if it's dirty.
+
+And for stores that miss:
+
+- **Write-allocate:** bring the line into the cache, then write it. That's good when nearby data will be written or read soon.
+- **No-write-allocate:** send the store to memory and leave the cache alone. That's good for data written once and never read back.
+
+Most CPU caches are write-back with write-allocate; the lab models both write policies, always with write-allocate. This trace writes 4 ints in line 0, reads 0x100 (which evicts line 0 in this 256-byte direct-mapped cache), then writes line 0 again. Predict the memory writes under each policy, then switch the policy and compare.
+
+<CacheLab caption='Four stores to one line' configJson='{"sizeBytes":256,"lineBytes":16,"ways":1,"policy":"LRU","write":"write-back"}' traceJson='["W 0x0","W 0x4","W 0x8","W 0xC","R 0x100","W 0x0"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+- **Write-back:** 1 write-back. The four stores mark line 0 dirty (the sets view shows "D"). Reading 0x100 evicts it, and the whole line is written to memory once. The last store brings line 0 back and leaves it dirty again, with no memory write yet.
+- **Write-through:** 5 memory writes, one per store. Nothing is ever dirty, so the eviction costs nothing extra.
+
+The hits and misses are the same either way (3 misses, 3 hits). The policies differ in traffic, and traffic is what limits a multicore chip sharing one memory system. That's a big reason most caches are write-back.
+
+</details>
+
+## Done when
+
+You can trace LRU and FIFO by hand, explain the loop that defeats LRU, and count the memory writes under write-back and write-through.

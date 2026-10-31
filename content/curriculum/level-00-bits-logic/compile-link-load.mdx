@@ -1,0 +1,143 @@
+---
+title: "Linking, loading and starting a program"
+level: level-00-bits-logic
+slug: compile-link-load
+order: 91
+timeMin: 9
+learningOutcomes:
+- "Explain what the linker does: join object files, match every undefined symbol to a definition, and fill in addresses"
+- Read an "undefined reference" error and say what was missing
+- Tell linking (building the file) apart from loading (putting it in memory to run)
+- Explain why a program starts at _start, not main, and tell static from dynamic linking
+primer:
+- title: "Object files, sections and symbols"
+  type: doc
+  meta: Reread · 3 min · the symbols and relocations the linker works on.
+  essential: true
+knowledgeCheck:
+- question: What does "undefined reference to `square'" mean, and how do you fix it?
+  answer: "The linker found a use of square (a U in main.o) but no object file that defines it. The fix is to give the linker the file that does, for example gcc -o prog main.o square.o. Compiling succeeded; only linking failed."
+  jumpToId: when-a-name-is-missing
+  jumpToLabel: When a name is missing
+- question: What is the difference between linking and loading?
+  answer: "Linking happens once, when the program is built: it joins object files into an executable file on disk. Loading happens every time it runs: the operating system's loader maps that file into memory and starts it."
+  jumpToId: loading-from-file-to-running-program
+  jumpToLabel: "Loading: from file to running program"
+- question: Why doesn't execution begin at main?
+  answer: "The executable's entry point is _start, code the C library adds. It prepares what main expects (its arguments, the C library) before calling main, and passes main's return value back to the operating system when main returns."
+  jumpToId: _start-runs-before-main
+  jumpToLabel: _start runs before main
+assignment:
+  instruction: "Build this section's program in two steps: gcc -c main.c square.c, then gcc -o prog main.o square.o. Now link main.o alone and read the error. Finally run ldd prog and nm prog | grep ' T ' and match what you see to this lesson. Your addresses will differ."
+  resourceName: 'Wikipedia: Linker (computing)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Linker_(computing)'
+additionalResources:
+- title: Loader (computing) (Wikipedia)
+  type: doc
+  meta: what happens when a program starts
+  url: 'https://en.wikipedia.org/wiki/Loader_(computing)'
+- title: Executable and Linkable Format (Wikipedia)
+  type: doc
+  meta: the file format of the finished executable
+  url: 'https://en.wikipedia.org/wiki/Executable_and_Linkable_Format'
+- title: 'Computer Systems: A Programmer''s Perspective (CS:APP)'
+  type: doc
+  meta: chapter 7 on linking, including dynamic linking
+  url: 'https://csapp.cs.cmu.edu/'
+whyThisMatters: "Link errors are among the first a new C programmer meets, and they look nothing like compile errors. Knowing that the linker only matches names to definitions, and that the loader does a separate job every time a program runs, turns both into problems you can reason about rather than guess at."
+---
+
+You have two object files: main.o, which uses square, and square.o, which defines it. Neither can run. Two more steps stand between them and a running program: the <b>linker</b> joins them into one file, and the <b>loader</b> puts that file into memory and starts it.
+
+By the end you'll be able to say what each does, read the error you get when linking fails, and explain why a C program doesn't really start at main. The outputs below come from gcc 15.2 and GNU ld on x86-64 Linux; other systems print them differently.
+
+## The linker joins the pieces
+
+The linker (ld, run for you by gcc) takes every object file and does three things:
+
+1. **Joins the sections**: all the .text sections become one .text, all the .data one .data, and so on.
+2. **Resolves symbols**: every U (undefined) name must match exactly one definition in some file, its own or a library's.
+3. **Fills the gaps**: now that everything has an address, it patches every relocation with the real address.
+
+With both files, it works:
+
+```
+$ gcc -o prog main.o square.o
+$ ./prog
+squares:
+1
+4
+9
+```
+
+`nm prog` now shows every symbol with a real address, square included:
+
+```
+0000000000004010 D count
+0000000000002008 R greeting
+0000000000001169 T main
+                 U puts@GLIBC_2.2.5
+0000000000004020 B results
+00000000000011fd T square
+0000000000001080 T _start
+```
+
+`puts` is still U: it lives in the C library, which is joined in a different way (see below).
+
+<KeyIdea>The linker matches every name a file uses to the one file that defines it, then writes the real addresses into the gaps.</KeyIdea>
+
+## When a name is missing
+
+Link main.o on its own, and the linker can't find square:
+
+```
+$ gcc -o prog main.o
+/usr/bin/x86_64-linux-gnu-ld.bfd: main.o: in function `main':
+main.c:(.text+0x31): undefined reference to `square'
+collect2: error: ld returned 1 exit status
+```
+
+Read it from the end: ld (the linker) failed. The reason: in main, at byte 0x31 of main's .text, there's a reference to square that nothing defines. 0x31 is exactly where the last lesson found the relocation for the call. Compiling main.c was fine; the promise in square.h was believed. The linker is where a broken promise is caught.
+
+The opposite mistake, two files both defining square, is a "multiple definition" error. One name, one definition.
+
+## Loading: from file to running program
+
+`prog` is a file on disk. Running it is a separate job, done by the operating system every time: the <b>loader</b> reads the file, maps its sections into memory (code where it may run but not be written, read-only data where it can't be written, room for .bss, all zeros), sets up a stack, and jumps to the program's entry point.
+
+So linking happens once, when you build; loading happens on every run. On this system the addresses nm showed are not the final ones: `file prog` says it's a "pie executable", position-independent, so the loader picks where it goes each run.
+
+## _start runs before main
+
+The entry point isn't main:
+
+```
+$ readelf -h prog | grep Entry
+  Entry point address:               0x1080
+$ nm prog | grep ' _start$'
+0000000000001080 T _start
+```
+
+`_start` is code the C library adds to every program. It sets up what main expects, its arguments and the library itself, then calls main. When main returns, it hands main's return value to the operating system as the exit status. main is where your code starts, not where the program starts.
+
+## Static and dynamic linking
+
+Two ways to bring in the C library:
+
+- **Dynamic** (the default): the library stays a separate file, and the loader joins it when the program starts. `ldd prog` lists what will be loaded:
+
+```
+	linux-vdso.so.1 (0x000079571058d000)
+	libc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x0000795710200000)
+	/lib64/ld-linux-x86-64.so.2 (0x000079571058f000)
+```
+
+- **Static**: `gcc -static` copies the library code into the executable. On this system, prog is 16,160 bytes; the static version is 817,168 bytes, and `ldd` says "not a dynamic executable". Bigger, but it runs without the library installed.
+
+<details>
+<summary>Check your answer: you fix a bug inside square.c. Which steps must run again before the program uses the fix?</summary>
+
+Compile square.c again (to a new square.o), then link again. main.c doesn't need recompiling: its object file only refers to square by name. That's why big projects compile each file separately: changing one file means recompiling one file, then relinking.
+
+</details>

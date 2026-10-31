@@ -1,0 +1,14 @@
+{
+  "id": "c-basics/err-no-include",
+  "sourceHash": "06943d48fc6aace2",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "main.c: In function ‘main’:\nmain.c:2:5: error: implicit declaration of function ‘printf’ [-Wimplicit-function-declaration]\n    2 |     printf(\"Hello\\n\");\n      |     ^~~~~~\nmain.c:1:1: note: include ‘<stdio.h>’ or provide a declaration of ‘printf’\n  +++ |+#include <stdio.h>\n    1 | int main(void) {\nmain.c:2:5: warning: incompatible implicit declaration of built-in function ‘printf’ [-Wbuiltin-declaration-mismatch]\n    2 |     printf(\"Hello\\n\");\n      |     ^~~~~~\nmain.c:2:5: note: include ‘<stdio.h>’ or provide a declaration of ‘printf’\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

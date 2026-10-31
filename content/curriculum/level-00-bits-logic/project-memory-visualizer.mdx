@@ -1,0 +1,104 @@
+---
+title: "Project: Watch variables and arrays in memory"
+level: level-00-bits-logic
+slug: project-memory-visualizer
+order: 87
+timeMin: 20
+learningOutcomes:
+- "Predict where a program's variables live and what each holds at the end, before running it"
+- Explain why x = y; y = x; doesn't swap two variables, and fix it
+- Walk through an array in memory with an address in a register, changing every element in place
+primer:
+- title: "Variables in memory: x = x + 1, step by step"
+  type: doc
+  meta: Reread · 3 min · a variable is a box with a name.
+  essential: true
+- title: "Arrays: values side by side"
+  type: doc
+  meta: Reread · 3 min · part 3 changes an array in place.
+  essential: true
+knowledgeCheck:
+- question: Why does x = y; y = x; leave both variables holding y's value?
+  answer: "Each assignment reads, then writes. The first copies y into x, so x's old value is gone before the second line reads x. Saving x first (var t = x;) keeps it."
+  jumpToId: part-2-the-swap-that-doesnt
+  jumpToLabel: "Part 2: The swap that doesn't"
+assignment:
+  instruction: "Write a tiny-language program with three variables that ends with them rotated (a gets b, b gets c, c gets a). Predict every variable's value after every line in a table before you run it, then check in a Translator Lab."
+  resourceName: 'Wikipedia: Swap (computer programming)'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Swap_(computer_programming)'
+additionalResources:
+- title: Array (data structure) (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Array_(data_structure)'
+whyThisMatters: "Most bugs in real programs are a wrong picture of what is in memory at some moment. Predicting it line by line, and then checking, is the habit that finds them, in this tiny language and in C alike."
+---
+
+In every part, predict first: write down what you expect each variable or box to hold. Then run it and compare. The Translator Lab shows each variable's address and final value; the tiny CPU shows memory itself.
+
+## Part 1: Where everything lives
+
+Predict: where does each variable live, and what do a and b hold at the end? What's the output?
+
+<TranslatorLab caption='Three lines, two variables' startJson='["var a = 5;", "var b = 3;", "a = a + b;", "b = a - b;", "a = a - b;", "output(a);", "output(b);"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+a lives at 0x80 and b at 0x81: variables get boxes in the order they're declared. After `a = a + b`, a is 8. After `b = a - b`, b is 8 - 3 = 5. After `a = a - b`, a is 8 - 5 = 3. The output is 3, then 5: the values swapped, using only arithmetic. Each line reads the boxes, computes, and writes one box back.
+
+</details>
+
+## Part 2: The swap that doesn't
+
+This program is meant to swap x and y, so it should output 2 and then 1. Run it, then fix it.
+
+<TranslatorLab caption='Fix the swap' startJson='["var x = 1;", "var y = 2;", "x = y;", "y = x;", "output(x);", "output(y);"]' goalJson='{"out":[2,1]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+It outputs 2, 2. `x = y` overwrites x, so by the time `y = x` runs, x's old value (1) is gone. Keep a copy first:
+
+```
+var x = 1;
+var y = 2;
+var t = x;
+x = y;
+y = t;
+output(x);
+output(y);
+```
+
+t gets a box of its own, 0x82. The extra variable is the whole fix.
+
+</details>
+
+## Part 3: An array, in place
+
+Boxes 0x80 to 0x83 hold 1, 2, 3, 4. Predict what they hold after this program runs.
+
+<TinyCpu2 caption='Double every element' programJson='["LDI R1, 0x80", "LDI R3, 4", "loop: LDR R0, [R1]", "ADD R0, R0", "STR R0, [R1]", "INC R1", "DEC R3", "JNZ loop", "HALT"]' dataJson='{"128":1,"129":2,"130":3,"131":4}' />
+
+<details>
+<summary>Check your answer</summary>
+
+2, 4, 6, 8. R1 holds the address of the current element; LDR reads it, ADD doubles it, STR writes it back to the same box, and INC moves R1 to the next one. The array never moves; its values change where they are.
+
+</details>
+
+Now change the program so it adds 10 to every element instead.
+
+<TinyCpu2 editable caption='Add 10 to every element' programJson='["LDI R1, 0x80", "LDI R3, 4", "loop: LDR R0, [R1]", "ADD R0, R0", "STR R0, [R1]", "INC R1", "DEC R3", "JNZ loop", "HALT"]' dataJson='{"128":1,"129":2,"130":3,"131":4}' goalJson='{"mem":{"128":11,"129":12,"130":13,"131":14}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Keep 10 in a spare register and add it: put `LDI R2, 10` before the loop, and change `ADD R0, R0` to `ADD R0, R2`. The boxes end as 11, 12, 13, 14.
+
+</details>
+
+## Done when
+
+You predicted every part before running it, the swap and the array labs say the goal is met, and you can explain the broken swap in one sentence.

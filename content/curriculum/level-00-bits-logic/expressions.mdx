@@ -1,0 +1,93 @@
+---
+title: "Expressions and evaluation order"
+level: level-00-bits-logic
+slug: expressions
+order: 79
+timeMin: 7
+learningOutcomes:
+- Work out an expression step by step, the way the CPU does, one operation at a time
+- Explain why a language must say what is worked out first, and how left-to-right and precedence rules do that
+- Trace how the translator turns an expression into a chain of loads and adds in one register
+- Use brackets, or reorder, to make an expression mean what you intend
+primer:
+- title: "Arithmetic, logic and flags in assembly"
+  type: doc
+  meta: Reread · 3 min · the CPU adds two registers at a time.
+  essential: true
+knowledgeCheck:
+- question: In the tiny language, what is 10 - 3 + 1, and why?
+  answer: "8. It's worked out left to right: 10 - 3 is 7, then 7 + 1 is 8. Doing the + first would give 6, so the order is part of the meaning."
+  jumpToId: one-step-at-a-time
+  jumpToLabel: One step at a time
+- question: Why does C print 14 for 2 + 3 * 4?
+  answer: "C has precedence rules: * is done before +, so it's 2 + 12. Brackets override them: (2 + 3) * 4 is 20."
+  jumpToId: precedence-in-real-languages
+  jumpToLabel: Precedence in real languages
+assignment:
+  instruction: "Write three C expressions whose value changes if you add brackets, like 2 + 3 * 4. Predict each value with and without brackets, then compile and run them (any online C compiler works) and compare."
+  resourceName: 'Wikipedia: Order of operations'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Order_of_operations'
+additionalResources:
+- title: 'CS50 Week 1: C'
+  type: video
+  meta: expressions and operators in a first C program
+  url: 'https://cs50.harvard.edu/x/weeks/1/'
+whyThisMatters: "Many real bugs are an expression that means something slightly different from what its author thought. Knowing that every expression is a sequence of single steps, in an order the language defines, is how you read one the way the computer will."
+---
+
+An <b>expression</b> is anything that works out to a value: `a + 1`, `total - n`, `10 - 3 + 1`. The CPU can only do one operation at a time, on two values, so every expression becomes a sequence of single steps. The language has to say what order they go in.
+
+By the end you'll be able to work out an expression step by step and know why the order matters.
+
+## One step at a time
+
+The tiny language works out `+` and `-` strictly from left to right:
+
+<TruthTable caption='10 - 3 + 1, step by step' rowsJson='[["step", "what happens", "running value"], ["1", "start with 10", "10"], ["2", "take away 3", "7"], ["3", "add 1", "8"]]' />
+
+So `10 - 3 + 1` is 8. If you did the `+` first, `10 - (3 + 1)` would be 6. Same symbols, different order, different answer.
+
+The translator does exactly these steps in one register: load the first value into R0, then for each `+` or `-`, load the next value into R1 and add or subtract it. In the lab, the line `output(a - 5 + 5);` becomes LDA, LDI, SUB, LDI, ADD, OUT.
+
+## Change the meaning
+
+This program should output 10 by taking 5 away from 20 twice. It outputs 20. Fix the expression.
+
+<TranslatorLab caption='Take 5 away, twice' startJson='["var a = 20;","output(a - 5 + 5);"]' goalJson='{"out":[10]}' />
+
+<details>
+<summary>Check your answer</summary>
+
+`output(a - 5 - 5);`. Left to right: 20 - 5 is 15, 15 - 5 is 10. With `+ 5` the second step undid the first.
+
+</details>
+
+<KeyIdea>An expression is a recipe of single steps. The language decides their order; the CPU just follows it.</KeyIdea>
+
+## Precedence in real languages
+
+Real languages have more operators, so they need more rules. In C, `*` and `/` are done before `+` and `-`; this is called <b>precedence</b>. Brackets override it:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    printf("%d\n", 2 + 3 * 4);
+    printf("%d\n", (2 + 3) * 4);
+    printf("%d\n", 10 - 3 - 2);
+    return 0;
+}
+```
+
+This prints:
+
+```
+14
+20
+5
+```
+
+The last line shows the left-to-right rule again: `10 - 3 - 2` is `(10 - 3) - 2`, which is 5, not `10 - (3 - 2)`, which would be 9.
+
+One more thing C does that the tiny language doesn't: when both sides of a `+` are function calls, C doesn't promise which call happens first. If the order matters to your program, put the calls on separate lines. You'll meet this again in The C Contract.

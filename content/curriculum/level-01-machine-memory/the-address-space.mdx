@@ -2,7 +2,7 @@
 title: 'The address space: how memory is laid out'
 level: level-01-machine-memory
 slug: the-address-space
-order: 3
+order: 5
 timeMin: 7
 learningOutcomes:
 - Define what a memory address is and how it relates to a byte-addressable address space
@@ -69,6 +69,6 @@ Two of those regions are special because they change size while the program runs
 
 Putting the stack and heap at opposite ends with a gap between them is a deliberate trick: nobody knows in advance exactly how large either one will need to be, so giving each of them room to grow into that shared gap lets both expand as needed, without anyone having to guess a fixed size for either one up front.
 
-It also bakes in a natural failure mode: if a program recurses too deeply or allocates too much dynamic memory, the two growing regions can meet in the middle. That collision is exactly what's behind the phrase <b>stack overflow</b> — a term you'll meet for real once you're writing recursive C functions in Level 02.
+It also bakes in a natural failure mode: if a program recurses too deeply or allocates too much dynamic memory, the two growing regions can meet in the middle. That collision is exactly what's behind the phrase <b>stack overflow</b> — a term you'll meet for real once you're writing recursive C functions in The C Language.
 
 <Visual type='diagram' caption='What happens if both regions keep growing' description='A simplified three-block vertical strip: &#39;Stack (growing down)&#39; at top with a downward arrow, a shrinking block labeled &#39;free space&#39; in the middle, and &#39;Heap (growing up)&#39; at bottom with an upward arrow. A second frame beside it shows the gap shrunk to zero and the two arrows meeting, labeled &#39;Collision — a real stack overflow.&#39;' />

@@ -1,0 +1,96 @@
+---
+title: "mmap: mapping files into memory"
+level: level-08-vm-threads-files
+slug: mmap
+order: 4
+timeMin: 10
+learningOutcomes:
+- Map a file into memory with mmap and read or change it with ordinary loads and stores
+- Explain the difference between MAP_SHARED and MAP_PRIVATE, and predict what reaches the file
+- Use anonymous mappings for fresh memory, and explain why malloc uses them for big blocks
+- Explain why memory is protected and mapped in whole pages, and what a guard page is for
+primer:
+- title: "Page faults and demand paging"
+  type: doc
+  meta: Reread · 3 min · a mapped file is read in by page faults.
+  essential: true
+- title: File descriptors & redirection
+  type: doc
+  meta: "Systems & Software · the file descriptor mmap starts from."
+  essential: false
+knowledgeCheck:
+- question: A program maps a file with MAP_PRIVATE and changes its first byte through the pointer. What does the file contain afterwards?
+  answer: "The old contents. MAP_PRIVATE mappings are copy-on-write: the first store copies that page into private memory, and only the copy changes. With MAP_SHARED the store goes into the page cache's page itself, so the file changes."
+  jumpToId: shared-or-private
+  jumpToLabel: Shared or private
+- question: A program maps 100 bytes and writes to byte 4095. Why does that work, while writing to byte 4096 of a two-page mapping whose second page is PROT_NONE crashes?
+  answer: "Mappings and protections are per page. The 100-byte request gets a whole 4 KiB page, so bytes 100 to 4095 are mapped too. The second page has no access at all, so the first store to it faults and the kernel sends SIGSEGV."
+  jumpToId: whole-pages
+  jumpToLabel: Whole pages
+assignment:
+  instruction: "Write a program that counts the lines in a large text file twice: once with read() into a buffer, once by mapping the file and scanning the memory. Check both give the same count, then time each on a big file (run each twice, since the second run reads from the page cache)."
+  resourceName: 'Linux man page: mmap(2)'
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man2/mmap.2.html'
+additionalResources:
+- title: "OSTEP: Paging: Introduction"
+  type: pdf
+  meta: background on pages and frames
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/vm-paging.pdf'
+whyThisMatters: "mmap is how the kernel loads every program and shared library, how databases and editors work with huge files, and how malloc gets big blocks. Knowing what a mapping is (and what shared, private and per-page protection mean) makes those systems understandable, and explains a whole family of crashes."
+---
+
+So far, files were read with `read()`: a system call copies bytes from the kernel's page cache into your buffer. `mmap` takes another route. It makes part of your address space **be** the file: loading from that memory reads the file, and (if you ask) storing to it changes the file.
+
+## Mapping a file
+
+```c
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
+```
+
+You give a file descriptor, a length and an offset, and the protection you want (`PROT_READ`, `PROT_WRITE`). Usually `addr` is `NULL`, so the kernel chooses where. The kernel only records a new region; nothing is read yet. When you touch a page, the page fault finds the file's page in the page cache (reading it from disk if needed) and maps that very frame into your page table. There's no copy into a buffer: you're looking at the page cache directly.
+
+## Shared or private
+
+The `flags` say what stores do:
+
+- **`MAP_SHARED`:** your stores change the page-cache page, so they reach the file, and every other process mapping or reading that file sees them.
+- **`MAP_PRIVATE`:** copy-on-write. Reads come from the file; the first store to a page makes a private copy, and the file never changes.
+
+This program writes `hello, file` to a file, then changes the first byte through a private mapping and through a shared one, reading the file back with `read()` after each. Predict what the file says at each step.
+
+<CRun program="vm-threads-files/mmap-file" caption='MAP_PRIVATE and MAP_SHARED' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Through the private mapping, the memory says `Jello, file`, but the file still says `hello, file`: the store went to a private copy. Through the shared mapping, the memory says `Yello, file` and so does the file, read with an ordinary `read()`: the store went into the page cache, which is what `read()` returns too.
+
+Two details in the program: it closes the descriptor straight after `mmap`, and the mapping keeps working, because the mapping holds its own reference to the file. And a shared store is in the page cache, not yet on the disk: the kernel writes it back later, or when you call `msync`.
+
+</details>
+
+<KeyIdea>mmap makes a file part of your address space: page faults bring it in, MAP_SHARED stores change it, and MAP_PRIVATE stores change only your copy.</KeyIdea>
+
+## Anonymous memory
+
+With `MAP_ANONYMOUS` (and no file), mmap gives fresh zero-filled memory, the way earlier lessons got their 1000 pages. glibc's `malloc` does exactly this for large blocks (128 KiB and up by default), and `free` hands them straight back with `munmap`. Small blocks come from the heap, which malloc carves up itself.
+
+## Whole pages
+
+Mappings and protections work on whole pages, because that's what a page-table entry describes. This program maps two pages and makes the second one a **guard page** with no access at all (`mprotect(..., PROT_NONE)`). Then it writes to byte 99, byte 4095 and byte 4096. Predict what happens to each.
+
+<CRun program="vm-threads-files/mmap-page-edge" caption='Writing up to, and past, a guard page' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Bytes 99 and 4095 are fine: both are in the first page, which is readable and writable. Byte 4096 is the first byte of the guard page. The page fault finds a region that allows no access, so the kernel sends **SIGSEGV**, and the last line is never printed.
+
+Two lessons hide here. First, an overrun that stays inside the same page is **not caught**: if this program had asked for 100 bytes, writing byte 4095 would still have "worked", silently. Second, guard pages are how overruns get caught on purpose: thread stacks have one below them, and tools like Electric Fence put one after every allocation.
+
+</details>
+
+## Done when
+
+You can map a file, say what reaches the file with each flag, explain where malloc gets big blocks, and explain why the guard page caught the overrun at byte 4096 but nothing would catch one at byte 4095.

@@ -1,0 +1,109 @@
+---
+title: "Project: A tiny-language translator"
+level: level-00-bits-logic
+slug: project-translator
+order: 93
+timeMin: 45
+learningOutcomes:
+- Translate a small program from the tiny language into tiny CPU assembly by hand, and check it gives the same output
+- Read a translator's output and explain the pattern it uses for while loops
+- Explain why a simple translator's code is longer and slower than a careful hand translation
+- Diagnose a translator bug (two variables given the same box) from a program's wrong output
+primer:
+- title: "Conditions, loops and functions"
+  type: doc
+  meta: Reread · 3 min · the loop pattern you'll translate.
+  essential: true
+- title: "Loops as repeated jumps"
+  type: doc
+  meta: Reread · 3 min · the assembly side.
+  essential: true
+knowledgeCheck:
+- question: How does the translator turn while (n != 0) { ... } into assembly?
+  answer: "A label at the top, then a test that jumps past the loop when the condition is false (LDA, CMPI R0, 0, JZ endwhile), then the body, then JMP back to the top label, and an end label after it."
+  jumpToId: part-2-read-the-translator
+  jumpToLabel: "Part 2: Read the translator"
+- question: A buggy translator gave n and t the same box. Why did the program output 0?
+  answer: "Writing t = 0 into the shared box also set n to 0, so the loop test (n != 0) was false at once. The loop never ran, and t, still 0, was output."
+  jumpToId: part-3-two-variables-one-box
+  jumpToLabel: "Part 3: Two variables, one box"
+assignment:
+  instruction: "The translator reloads every variable from memory each time it's used. Pick the loop in part 1 and write down which of its instructions a smarter translator could drop by keeping n and t in registers for the whole loop. Then compare with what gcc does at -O2 in the next project."
+  resourceName: 'MIT 6.004: Compilers'
+  resourceType: site
+  resourceUrl: 'https://computation-structures.github.io/course/lectures/L11_Compilers.html'
+additionalResources:
+- title: Compiler (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Compiler'
+whyThisMatters: "A translator is a small compiler, and this one is small enough to read whole. Translating the same program by hand and comparing shows what any compiler does and why optimisation matters, which is exactly what you'll see in real gcc output next."
+---
+
+The translator turns the tiny language into tiny CPU assembly. In this project you do the same job by hand, compare your work with the translator's, then find a bug in a broken translator.
+
+## Part 1: Translate it yourself
+
+This program adds 4 + 3 + 2 + 1. Write your own assembly for it in the lower box (keep the total in a register if you like), and make it output 10. The upper half shows the translator's version for comparison; try not to copy it.
+
+<TranslatorLab handwritten caption='Your translation and the translator&#39;s' startJson='["var n = 4;", "var t = 0;", "while (n != 0) {", "  t = t + n;", "  n = n - 1;", "}", "output(t);"]' handJson='["; your translation goes here", "HALT"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+A short hand translation keeps both values in registers:
+
+```
+LDI R0, 4        ; n
+LDI R1, 0        ; t
+loop: ADD R1, R0 ; t = t + n
+DEC R0           ; n = n - 1, and sets Z
+JNZ loop         ; while n != 0
+OUT R1
+HALT
+```
+
+7 instructions, 16 steps. The translator's version is 19 instructions and runs 58 steps for the same answer. It's correct, just not careful: it does the same few moves for every line.
+
+</details>
+
+## Part 2: Read the translator
+
+Look at the translator's output above. Find the label at the top of the loop, the test, and the jump back. Why does it load n from memory again in the test, when it stored n just before?
+
+<details>
+<summary>Check your answer</summary>
+
+`while1:` marks the top. `LDA R0, [0x80]`, `CMPI R0, 0`, `JZ endwhile1` is the test: jump out when n is 0. Then comes the body, `JMP while1`, and `endwhile1:` after it.
+
+It reloads n because it translates each line on its own, never remembering what a register already holds. That keeps the translator short and always correct; remembering values across lines is what an optimising compiler adds, and gcc at -O2 does exactly that.
+
+</details>
+
+## Part 3: Two variables, one box
+
+A classmate's translator has a bug: it gave both n and t the box 0x80. With their translator, the program from part 1 outputs 0, not 10. Explain why from the program, without running anything.
+
+<details>
+<summary>Check your answer</summary>
+
+`var n = 4` stores 4 in 0x80; then `var t = 0` stores 0 in 0x80 too, which also makes n 0. The loop's first test reads 0x80, finds 0, and jumps past the loop. Nothing is added, and t (the same box, still 0) is output. One wrong address in the allocator breaks every program with two variables. The fix is to give each new variable the next free box: 0x80, 0x81, and so on.
+
+</details>
+
+## Part 4: Where the language stops
+
+Change `t = t + n;` to `t = t * n;` in the upper box. What does the translator say, and how would you multiply in this language instead?
+
+<details>
+<summary>Check your answer</summary>
+
+It refuses with "this language only has + and - (multiply with a loop)". A real compiler also stops with an error rather than guessing. To multiply, add one number to a total, the other number of times, in a while loop: the same idea as the multiply you wrote in assembly.
+
+</details>
+
+<KeyIdea>A compiler is a careful, mechanical translator. A simple one is correct but wasteful; optimisation is what makes its output as good as a careful hand translation.</KeyIdea>
+
+## Done when
+
+Your translation outputs 10, you've explained the loop pattern and the two-variable bug, and you've seen the translator refuse something it can't do.

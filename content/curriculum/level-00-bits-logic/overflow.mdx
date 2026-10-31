@@ -1,0 +1,92 @@
+---
+title: "Overflow: when numbers run out of bits"
+level: level-00-bits-logic
+slug: overflow
+order: 17
+timeMin: 7
+learningOutcomes:
+- Explain that fixed-width arithmetic keeps only the low bits, so the result wraps round instead of growing
+- Tell an unsigned carry-out apart from a signed overflow, and spot each from the bits
+- Read the same 8-bit sum two ways and decide, for each reading, whether the answer is right
+- Describe a real failure caused by a counter that ran out of bits
+primer:
+- title: "Negative numbers: two's complement"
+  type: doc
+  meta: Reread · 3 min · you need the signed reading of a byte for this lesson.
+  essential: true
+- title: "Adding in binary: carries and fixed width"
+  type: doc
+  meta: Reread · 2 min · the carry-out comes from there.
+  essential: true
+knowledgeCheck:
+- question: When is an 8-bit unsigned sum wrong, and when is a signed one wrong?
+  answer: "Unsigned: when there is a carry out of the top bit, because the true sum was 256 or more. Signed: when two numbers with the same sign give a result with the other sign, because the true sum was above 127 or below -128."
+  jumpToId: two-ways-to-be-wrong
+  jumpToLabel: Two ways to be wrong
+- question: 100 + 50 in a byte gives 1001 0110. Is that right?
+  answer: "As unsigned numbers, yes: 150, with no carry-out. As signed numbers, no: two positives gave a byte whose top bit is 1, which reads as -106. The true sum, 150, doesn't fit in -128 to 127."
+  jumpToId: same-bits-two-verdicts
+  jumpToLabel: Same bits, two verdicts
+- question: Does wrapping round depend on the hardware making a mistake?
+  answer: No. The adder works perfectly; it keeps the low 8 bits as designed. The answer is wrong only because the true result needs more bits than the register has. The fix is a wider type or a check, not better hardware.
+  jumpToId: it-wraps-it-doesnt-stop
+  jumpToLabel: It wraps, it doesn't stop
+assignment:
+  instruction: "For each 8-bit sum, write the byte kept, then decide separately whether it is right as unsigned and right as signed: 127 + 1, 255 + 1, 200 + 50, 64 + 64, 240 + 32. Then read about integer overflow and find one real example besides the ones in this lesson."
+  resourceName: 'Wikipedia: Integer overflow'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Integer_overflow'
+additionalResources:
+- title: Overflow flag (Wikipedia)
+  type: doc
+  meta: reference, how a CPU flags signed overflow
+  url: 'https://en.wikipedia.org/wiki/Overflow_flag'
+- title: Carry flag (Wikipedia)
+  type: doc
+  meta: reference, the unsigned counterpart
+  url: 'https://en.wikipedia.org/wiki/Carry_flag'
+whyThisMatters: "Overflow is one of the most common bugs in real software, and one of the hardest to see, because nothing crashes: a number quietly becomes another number. In C, unsigned overflow is defined to wrap and signed overflow is undefined behaviour, so knowing which one you have is the difference between a predictable result and a broken program."
+---
+
+You've seen a sum lose its ninth bit, and you've seen negative numbers stored in two's complement. This lesson puts the two together. The same 8 bits can be right as one kind of number and wrong as the other, and the hardware doesn't tell you which you meant.
+
+By the end you'll be able to predict when a fixed-width sum is wrong, for unsigned and for signed numbers, and say why.
+
+## It wraps, it doesn't stop
+
+A common belief is that a computer works out the true answer and then stores it. It doesn't. A register is a fixed number of flip-flops, so the adder keeps the low bits and the rest are gone. Counting up in a byte goes 254, 255, 0, 1: like a car's odometer rolling from 999999 back to 000000.
+
+<TruthTable caption='Counting past the top of a byte' rowsJson='[["value", "bits"], ["254", "1111 1110"], ["255", "1111 1111"], ["255 + 1", "0000 0000, with a carry-out"], ["0 + 1", "0000 0001"]]' />
+
+Nothing goes wrong in the hardware. The adder does exactly what it was built to do. The answer is wrong only because the true result needs more bits than there are. That is <b>overflow</b>.
+
+<KeyIdea>Fixed-width arithmetic wraps round. The result is right only if the true answer fits.</KeyIdea>
+
+## Two ways to be wrong
+
+What "fits" means depends on how you read the byte:
+
+- As <b>unsigned</b>, a byte holds 0 to 255. A sum is wrong when there is a <b>carry-out</b> of the top bit: the true sum was 256 or more.
+- As <b>signed</b> (two's complement), a byte holds -128 to 127. A sum is wrong when there is a <b>signed overflow</b>: two numbers with the same sign give a result with the other sign. Two positives can't make a negative, and two negatives can't make a positive.
+
+Adding a positive to a negative can never overflow as signed: the result always lands between the two.
+
+## Same bits, two verdicts
+
+The adder is the same for both readings, so the bits it gives are the same too. Only the verdict changes:
+
+<TruthTable caption='Five sums in one byte' rowsJson='[["sum", "byte kept", "unsigned reading", "right as unsigned?", "signed reading", "right as signed?"], ["100 + 50", "1001 0110", "150", "yes", "100 + 50 = -106", "no, overflow"], ["200 + 100", "0010 1100", "44", "no, carry-out", "-56 + 100 = 44", "yes"], ["127 + 1", "1000 0000", "128", "yes", "127 + 1 = -128", "no, overflow"], ["255 + 1", "0000 0000", "0", "no, carry-out", "-1 + 1 = 0", "yes"], ["200 + 50", "1111 1010", "250", "yes", "-56 + 50 = -6", "yes"]]' />
+
+Look at 200 + 100. As unsigned numbers the answer is wrong: 300 didn't fit, and the carry-out says so. Read the same bits as signed and they are -56 + 100 = 44, which is exactly right. The carry-out means nothing for signed numbers, and a signed overflow means nothing for unsigned ones.
+
+<ByteLab bytesJson='[100, 50, 150]' caption='100, 50 and their sum, each read as unsigned and as signed' />
+
+<KeyIdea>The bits don't know whether they're signed. Carry-out is the unsigned warning; a sign that comes out wrong is the signed one.</KeyIdea>
+
+CPUs keep both warnings: a <b>carry flag</b> for unsigned overflow and an <b>overflow flag</b> for signed. The program, which knows what the bits mean, decides which one to check.
+
+## When counters run out
+
+Overflow isn't only a classroom puzzle. In 2014 YouTube's view counter for one music video, "Gangnam Style", approached the largest number a signed 32-bit integer can hold, 2,147,483,647. One more view would have wrapped it negative, so YouTube switched the counter to 64 bits. In 1996 the first Ariane 5 rocket was lost when a value from its guidance software was converted into a 16-bit integer it didn't fit in.
+
+The defence is the same in both cases: know the range of every number you store, and pick a width that the largest real value fits in, with room to spare.

@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/th-atomic-counter",
+  "sourceHash": "b88b4212f04a54c8",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 -pthread main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "expected 2000000\natomic (seq_cst): 2000000\natomic (relaxed): 2000000\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

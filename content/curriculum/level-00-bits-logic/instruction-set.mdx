@@ -1,0 +1,98 @@
+---
+title: "An instruction set: the CPU's vocabulary"
+level: level-00-bits-logic
+slug: instruction-set
+order: 50
+timeMin: 9
+learningOutcomes:
+- Explain what an instruction set architecture (ISA) is, and how it differs from the circuits that carry it out
+- Split an instruction byte into its opcode and its operand, and say what it does
+- Read a short program written for a tiny CPU, address by address
+- "Explain the stored-program idea: instructions and data sit side by side in the same memory"
+primer:
+- title: Memory as numbered boxes
+  type: doc
+  meta: Reread · 3 min · the tiny CPU in this lesson has 16 of those boxes.
+  essential: true
+- title: 'Instructions & Programs: Crash Course Computer Science #8'
+  type: video
+  meta: Watch · 10 min · a tiny instruction set, the same idea as this lesson.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=zltgXvg6r3k'
+knowledgeCheck:
+- question: In our tiny instruction set, what does the byte 0010 1111 do?
+  answer: "Split it in two. The opcode 0010 is ADD and the operand 1111 is 15, so it's ADD 15: fetch the byte at address 15 and add it to register A."
+  jumpToId: an-instruction-is-a-byte
+  jumpToLabel: An instruction is a byte
+- question: What does it mean that a computer is a stored-program machine?
+  answer: Its program is not wired into the circuits. Instructions are bit patterns stored in the same memory as data, so a new program is just new bytes in memory, and the same box could hold an instruction or a number depending only on how it's used.
+  jumpToId: code-and-data-share-memory
+  jumpToLabel: Code and data share memory
+assignment:
+  instruction: "nand2tetris Project 4 (Machine Language): write two short programs in the Hack computer's machine language, Mult and Fill, and run them in the CPU emulator. It's this lesson with a slightly bigger instruction set."
+  resourceName: 'nand2tetris.org: Project 4, Machine Language'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project04'
+additionalResources:
+- title: 'Instructions & Programs: Crash Course Computer Science #8'
+  type: video
+  meta: 10 min
+  url: 'https://www.youtube.com/watch?v=zltgXvg6r3k'
+- title: Instruction set architecture (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Instruction_set_architecture'
+- title: Von Neumann architecture (Wikipedia)
+  type: doc
+  meta: reference, with the Harvard design for contrast
+  url: 'https://en.wikipedia.org/wiki/Von_Neumann_architecture'
+whyThisMatters: "Every program you'll ever run, from a C program to a Python interpreter, ends up as instructions from one instruction set: x86-64 on most laptops and servers, ARM on phones and newer Macs. Knowing that an instruction is just an opcode and an operand, stored in memory like any other data, is what makes assembly, compilers and even security bugs like code injection make sense later."
+---
+
+The fetch-execute loop fetches instructions and does them. But which instructions? A CPU only understands a fixed list, each with its own bit pattern. That list is its <b>instruction set</b>, and it's the vocabulary every program for that CPU is written in.
+
+By the end you'll be able to read an instruction byte, follow a short program for a tiny CPU address by address, and explain why programs live in memory alongside their data.
+
+## What a CPU can be told to do
+
+An <b>instruction set architecture</b> (ISA) is the contract between hardware and software: the list of instructions, what each one does, and how each is encoded in bits. Programmers and compilers write to the contract; chip designers build circuits that honour it.
+
+That split matters. Intel and AMD build very different circuits, yet both run the same x86-64 instructions, so the same programs run on both. The ISA says <i>what</i> each instruction does; the circuits underneath decide <i>how</i>.
+
+## Our tiny instruction set
+
+To keep it small, we'll use the instruction set of a real 8-bit computer you can build on a breadboard (Ben Eater's). It has one main register, <b>A</b>, 16 bytes of memory with addresses 0 to 15, and these instructions:
+
+<TruthTable caption='A tiny instruction set (opcode, name, what it does)' rowsJson='[["opcode", "name", "does"], ["0001", "LDA n", "load the byte at address n into A"], ["0010", "ADD n", "add the byte at address n to A"], ["0011", "SUB n", "subtract the byte at address n from A"], ["0100", "STA n", "store A into address n"], ["0101", "LDI n", "load the number n itself into A"], ["0110", "JMP n", "continue from address n"], ["1110", "OUT", "show A on the display"], ["1111", "HLT", "stop"]]' />
+
+Real instruction sets have hundreds of instructions, but they're the same kinds: move data, do arithmetic, compare, jump.
+
+## An instruction is a byte
+
+Each instruction fits in one byte. The top four bits are the <b>opcode</b>, which says which instruction it is. The bottom four are the <b>operand</b>, which says what to do it to: usually an address.
+
+So 0001 1110 splits into 0001 (LDA) and 1110 (14): load the byte at address 14 into A. And 0010 1111 is ADD 15. The CPU's decode step is exactly this split, done by gates.
+
+<Visual type='diagram' caption='One instruction byte, split in two' description='An 8-bit box reading 0001 1110. A bracket over the left four bits is labeled opcode: LDA. A bracket over the right four bits is labeled operand: address 14. Below, the whole byte reads LDA 14.' />
+
+<KeyIdea>An instruction is a bit pattern: an opcode (which operation) and an operand (on what).</KeyIdea>
+
+## A program, address by address
+
+Here's a whole program that adds 28 and 14 and shows the answer. The instructions start at address 0; the two numbers sit at addresses 14 and 15.
+
+<TruthTable caption='A program and its data, in the same 16 boxes' rowsJson='[["address", "bits", "means"], ["0", "0001 1110", "LDA 14"], ["1", "0010 1111", "ADD 15"], ["2", "1110 0000", "OUT"], ["3", "1111 0000", "HLT"], ["14", "0001 1100", "the number 28"], ["15", "0000 1110", "the number 14"]]' />
+
+The program counter starts at 0. LDA 14 puts 28 in A, ADD 15 makes it 42, OUT shows 42, and HLT stops. Four instructions, four trips round the fetch-execute loop.
+
+Now run it yourself. Before each Step, say out loud what you expect to change: which box is read, what A becomes, what appears on the display.
+
+<TinyCpu caption='Run it: 28 + 14 on the tiny CPU' programJson='["LDA 14", "ADD 15", "OUT", "HLT"]' dataJson='{"14": 28, "15": 14}' />
+
+## Code and data share memory
+
+Look at address 14 again: 0001 1100. Read as data it's the number 28. Read as an instruction it would be LDA 12. The box doesn't know; only the program counter decides. If the CPU ever fetched from address 14, it would run the number as an instruction.
+
+This is the <b>stored-program</b> idea, usually credited to John von Neumann: programs are bits in the same memory as data, so changing the program means changing memory, not rewiring the machine. (Some designs, called Harvard architectures, keep the two in separate memories.) It's what makes a general-purpose computer, and it's also why a bug that lets data be run as code is so dangerous.
+
+<KeyIdea>A program is just bytes in memory. Whether a byte is an instruction or a number depends only on how the CPU reaches it.</KeyIdea>

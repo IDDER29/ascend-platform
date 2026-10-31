@@ -1,0 +1,126 @@
+---
+title: "Project: A number-guessing game"
+level: level-04-c-basics
+slug: project-guessing-game
+order: 12
+timeMin: 45
+learningOutcomes:
+- Write a whole C program that loops, reads input, makes decisions and reports a result
+- Explain why a program that ignores scanf's return value can loop forever on bad input
+- Read input safely a line at a time with fgets and sscanf, and reject anything that isn't a valid number
+- Make a program testable by letting a command-line argument fix its random choices
+primer:
+- title: "printf and scanf"
+  type: doc
+  meta: Reread · 3 min · scanf's return value is the heart of part 2.
+  essential: true
+- title: "Loops: while, for and do"
+  type: doc
+  meta: Reread · 2 min · the game is one loop.
+  essential: true
+knowledgeCheck:
+- question: The first version loops forever when someone types "seventy". Why exactly?
+  answer: "scanf(\"%d\") can't read a number from \"seventy\", so it returns 0, stores nothing and leaves \"seventy\" unread. guess keeps its old value (50), the loop prints Too low and calls scanf again, which fails on the same unread text, forever."
+  jumpToId: part-2-break-it
+  jumpToLabel: "Part 2: Break it"
+- question: Why does the final version read a whole line with fgets, then use sscanf on it?
+  answer: "fgets always consumes the line, good or bad, so a bad line can't get stuck in the input. sscanf then checks that the line holds exactly one number (the %c catches anything after it), and the program can reject it with a clear message."
+  jumpToId: part-3-make-it-robust
+  jumpToLabel: "Part 3: Make it robust"
+assignment:
+  instruction: "Build the final game on your own machine and play it. Then add one feature of your own: a choice of difficulty (1 to 10, 1 to 100 or 1 to 1000, with a matching number of tries), a play-again question, or a best score kept for the session. Test it with a seed and an input file, the way this project does."
+  resourceName: 'cppreference: fgets'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/io/fgets'
+additionalResources:
+- title: "cppreference: scanf, fscanf, sscanf"
+  type: doc
+  meta: the return value, and every conversion
+  url: 'https://en.cppreference.com/w/c/io/fscanf'
+- title: "Binary search (Wikipedia)"
+  type: doc
+  meta: why 7 tries are always enough for 1 to 100
+  url: 'https://en.wikipedia.org/wiki/Binary_search'
+whyThisMatters: "Every useful program talks to the outside world, and the outside world types the wrong thing. Writing one small, complete program that survives bad input, and that you can test the same way every time, is the habit that separates code that works in a demo from code that works."
+---
+
+Time to put C Basics together in one complete program: a game that picks a secret number, reads guesses and gives hints. You'll build it, break it with bad input, then make it robust and testable.
+
+The programs below were compiled and run by real gcc, with their input coming from a file. That's why you don't see the guesses themselves in the output: when input comes from a file, nothing echoes it to the screen.
+
+## Part 1: The first version
+
+Here is a first version. A secret from 1 to 100 comes from `rand()`; the loop reads a guess, says too low or too high, and stops when it's right. Read it, predict what it prints for the guesses 50, 75, 88, 81 and 78, then run it.
+
+<CRun program="c-basics/guess-v1" caption='The first version' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The secret is 78. 50 and 75 are too low, 88 and 81 too high, and 78 is right on the fifth try. Each guess halves the range that's left: that's **binary search**, and it's why 7 tries always find a number from 1 to 100 (2 to the power 7 is 128).
+
+Why is the secret always 78? `rand()` isn't truly random: it's a formula that produces the same sequence from the same starting **seed**. This program takes the seed from its command line (`./prog 7`), so every run with seed 7 picks 78. That makes the game testable. To play for real, seed it from the clock instead: `srand(time(NULL))`.
+
+</details>
+
+## Part 2: Break it
+
+Now a player types a word by mistake. Same program, input `50`, then `seventy`, then `75`. Predict what happens before you run it.
+
+<CRun program="c-basics/guess-bad-input" caption='The first version, given a word' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It never finishes: "Too low." scrolls past forever, and the run had to be stopped. Here's why, step by step:
+
+1. `scanf("%d", &guess)` reads 50. Too low.
+2. The next `scanf("%d", &guess)` sees `seventy`. It can't make a number of it, so it **returns 0**, stores nothing, and leaves `seventy` in the input, unread.
+3. `guess` is still 50, so: Too low. Loop again.
+4. `scanf` meets the same `seventy` and fails again. Forever.
+
+The program never checked scanf's return value, which says how many values it read. That one unchecked call turns a typo into a hang. Running out of input at the end of the file causes the same loop.
+
+</details>
+
+## Part 3: Make it robust
+
+The final version fixes it in three ways:
+
+- `read_guess` reads a **whole line** with `fgets`, so a bad line is always used up and can't block the input.
+- It checks the line with `sscanf(line, "%d %c", ...)`. That must return exactly 1: one number and nothing after it. `"seventy"` gives 0, and `"50abc"` gives 2. Both are rejected, and so is any number outside 1 to 100.
+- It gives the player 7 tries, says when the input has run out, and doesn't charge a try for a typo.
+
+<CRun program="c-basics/guess-final" caption='The final version' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+"seventy" now gets a clear message, guess 2 is asked again, and the game finishes in 5 counted tries. If the input runs out, `fgets` returns `NULL` and the game stops with a message and exit status 1, instead of looping.
+
+Two habits here are worth keeping for every C program you write: **check what every input function returns**, and **read a line, then parse it**.
+
+</details>
+
+## Part 4: Test it like a professional
+
+The seed argument and the input file make the game a function of its inputs: the same seed and the same file give the same output, every time. Write down three test cases you'd want before calling the game finished, each as a seed, an input file and the output you expect.
+
+<details>
+<summary>Check your answer</summary>
+
+Three useful tests, for example:
+
+1. **A win:** seed 7, guesses `50 75 88 81 78`. Expect "Yes! It was 78. You took 5 tries."
+2. **A loss:** seed 7, seven wrong guesses such as `1` repeated. Expect seven "Too low." lines, then "Out of tries. The number was 78."
+3. **Bad and missing input:** seed 7, input `abc` then end of file. Expect the "Please type a whole number" message, then "No more input", and exit status 1.
+
+Edge cases like 0, 101, `50abc` and an empty line are good extras. Tests like these, run after every change, are how you catch a fix that breaks something else.
+
+</details>
+
+<KeyIdea>A complete program is more than its happy path: check every input, read lines then parse them, and make it repeatable so you can test it.</KeyIdea>
+
+## Done when
+
+You've predicted all three runs, explained the endless loop, and written three test cases with their expected output. Then do the assignment: build and extend the game yourself.

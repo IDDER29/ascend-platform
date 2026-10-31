@@ -1,0 +1,114 @@
+---
+title: "Project: Run a program on a tiny CPU"
+level: level-00-bits-logic
+slug: project-tiny-cpu
+order: 58
+timeMin: 25
+learningOutcomes:
+- Predict a program's output on the tiny CPU before running it, then check the prediction step by step
+- Trace a loop that multiplies by repeated addition, keeping track of A, the flags and the memory boxes it changes
+- Use the carry flag to stop a loop when a sum no longer fits in 8 bits
+- Find and fix a jump that sends a program to the wrong address
+primer:
+- title: "Jumps and loops: how a CPU decides"
+  type: doc
+  meta: Reread · 3 min · every program here is a loop.
+  essential: true
+- title: "An instruction set: the CPU's vocabulary"
+  type: doc
+  meta: Keep open · the table of instructions you'll need.
+  essential: true
+knowledgeCheck:
+- question: How does the multiply program know when to stop?
+  answer: It keeps a counter in address 15. Each pass subtracts 1 from it and stores it back; when the subtraction gives 0 the zero flag is set, so JZ 8 jumps out of the loop to show the product and halt.
+  jumpToId: part-1-multiply-with-a-loop
+  jumpToLabel: "Part 1: Multiply with a loop"
+- question: Why does the count-up program show 0, 64, 128 and 192 but not 256?
+  answer: A register holds 8 bits, so the largest value is 255. Adding 64 to 192 gives 256, which doesn't fit; A wraps to 0 and the carry flag is set, so JC 4 jumps to HLT before anything else is shown.
+  jumpToId: part-2-stop-on-overflow
+  jumpToLabel: "Part 2: Stop on overflow"
+- question: What was wrong with the countdown program, and what's the fix?
+  answer: JZ 0 jumps back to address 0 when the count reaches zero, so LDI 5 starts the countdown again and the program never halts. Changing it to JZ 5 sends it to HLT instead.
+  jumpToId: part-3-fix-the-bug
+  jumpToLabel: "Part 3: Fix the bug"
+assignment:
+  instruction: "Write your own tiny CPU program that shows the first five multiples of 7 (7, 14, 21, 28, 35) and then halts. Write it as an address table like the ones on this page, with your data in the high addresses, and trace it by hand: A, the flags and every memory box after each instruction. Check your opcodes against Ben Eater's instruction set, which the tiny CPU copies."
+  resourceName: 'eater.net: Build an 8-bit computer'
+  resourceType: site
+  resourceUrl: 'https://eater.net/8bit'
+additionalResources:
+- title: 'nand2tetris.org: Project 4, Machine Language'
+  type: doc
+  meta: the same kind of programs, on a bigger CPU
+  url: 'https://www.nand2tetris.org/project04'
+whyThisMatters: "Reading about a CPU and predicting one are different skills, and the second one is what you'll use for the rest of your career: tracing code in your head, then checking it in a debugger. This project is that habit in its simplest form, on a machine small enough that you can see every bit change."
+---
+
+This is where everything in Build a CPU comes together. There are three programs, all for the tiny CPU you've been using. For each one, do it in this order:
+
+1. <b>Predict.</b> Read the program and write down what the display will show.
+2. <b>Step.</b> Press Step one instruction at a time and watch A, the flags and memory.
+3. <b>Compare.</b> If the result isn't what you predicted, find the exact step where your picture and the machine's differed.
+
+Don't press Run first. The point is to be right before you look.
+
+## Part 1: Multiply with a loop
+
+The tiny CPU can add but not multiply. So this program multiplies 6 by 3 the way you'd do it by hand: add 6 three times.
+
+<TruthTable caption='Multiply 6 by 3' rowsJson='[["address", "instruction", "what it does"], ["0", "LDA 13", "A = the product so far"], ["1", "ADD 14", "add 6"], ["2", "STA 13", "store the new product"], ["3", "LDA 15", "A = the counter"], ["4", "SUB 12", "take 1 off it"], ["5", "STA 15", "store the new counter"], ["6", "JZ 8", "if the counter is 0, we are done"], ["7", "JMP 0", "otherwise add again"], ["8", "LDA 13", "A = the product"], ["9", "OUT", "show it"], ["10", "HLT", "stop"], ["12", "1", "the number 1"], ["13", "0", "the product, starting at 0"], ["14", "6", "the number to add"], ["15", "3", "the counter: how many times"]]' />
+
+Before you run it, predict:
+
+- What will the display show?
+- What will addresses 13 and 15 hold when it halts?
+- How many instructions will run in total? (Hint: count one pass of the loop, then the end.)
+
+<TinyCpu caption='Part 1: 6 times 3' programJson='["LDA 13", "ADD 14", "STA 13", "LDA 15", "SUB 12", "STA 15", "JZ 8", "JMP 0", "LDA 13", "OUT", "HLT"]' dataJson='{"12": 1, "13": 0, "14": 6, "15": 3}' />
+
+<details>
+<summary>Check your prediction</summary>
+
+It shows 18. Address 13 ends at 18 and address 15 at 0. One pass of the loop is 8 instructions (addresses 0 to 7), but the last pass leaves from JZ, so that's 8 + 8 + 7, then 3 more for LDA, OUT and HLT: 26 steps. Watch the STA rows light up as memory changes. The program keeps its working values in memory because the CPU has only one register to work in.
+
+</details>
+
+## Part 2: Stop on overflow
+
+This program counts up in 64s until the next number no longer fits in a byte.
+
+<TruthTable caption='Count up in 64s' rowsJson='[["address", "instruction", "what it does"], ["0", "OUT", "show A"], ["1", "ADD 15", "add 64, and set the flags"], ["2", "JC 4", "if it carried out of 8 bits, jump to 4"], ["3", "JMP 0", "otherwise show it"], ["4", "HLT", "stop"], ["15", "64", "the step"]]' />
+
+Predict: which numbers appear on the display, and what is in A at the end?
+
+<TinyCpu caption='Part 2: count until it overflows' programJson='["OUT", "ADD 15", "JC 4", "JMP 0", "HLT"]' dataJson='{"15": 64}' />
+
+<details>
+<summary>Check your prediction</summary>
+
+The display shows 0, 64, 128, 192. The next ADD gives 256, which needs 9 bits. A wraps to 0 and the carry flag is set, so JC jumps to HLT. A ends at 0, not 256. That is overflow, now steering the program.
+
+</details>
+
+## Part 3: Fix the bug
+
+This program is meant to show 5, 4, 3, 2, 1 and stop. Run it and see what it does instead.
+
+<TinyCpu caption='Part 3: a countdown that never ends' programJson='["LDI 5", "OUT", "SUB 15", "JZ 0", "JMP 1", "HLT"]' dataJson='{"15": 1}' />
+
+It shows 5, 4, 3, 2, 1, then starts again at 5 and never halts; the simulator stops it after 256 steps. Find the one instruction that is wrong before reading on.
+
+<details>
+<summary>Check your prediction</summary>
+
+The bug is JZ 0 at address 3. When the count reaches 0, it jumps back to address 0, where LDI 5 restarts everything. HLT is at address 5, so the jump should be JZ 5:
+
+<TinyCpu caption='Part 3, fixed' programJson='["LDI 5", "OUT", "SUB 15", "JZ 5", "JMP 1", "HLT"]' dataJson='{"15": 1}' />
+
+</details>
+
+A jump to the wrong address is one of the most common bugs in any language. In C it looks like a loop condition that never becomes false.
+
+## Done when
+
+You've predicted all three programs before running them, and for any prediction that was wrong you can name the exact step where it went wrong. Then do the assignment: write a program of your own.

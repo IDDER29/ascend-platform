@@ -1,0 +1,100 @@
+---
+title: "Running arithmetic instructions"
+level: level-00-bits-logic
+slug: alu-instructions
+order: 53
+timeMin: 7
+learningOutcomes:
+- Name the control signals that run ADD n, and say what moves on the bus in each step
+- Say, for each step, which registers change and which stay exactly as they were
+- Explain how SUB reuses the same steps with one extra signal, and what the carry flag means after it
+- Predict A and both flags after an ADD or SUB that overflows, borrows or gives zero
+primer:
+- title: "From gates to a tiny CPU: datapath and control"
+  type: doc
+  meta: Reread · 3 min · the bus and the step tables.
+  essential: true
+- title: "The fetch-execute loop"
+  type: doc
+  meta: Reread · 2 min · the loop these steps live in.
+  essential: false
+knowledgeCheck:
+- question: What are the three steps of ADD 15 after the fetch, as control signals?
+  answer: "IO MI: the operand 15 goes into the memory address register. RO BI: the byte in box 15 goes into B. EO AI FI: the ALU's sum goes into A, and the flags are set from it."
+  jumpToId: add-step-by-step
+  jumpToLabel: ADD, step by step
+- question: "After SUB 15, the carry flag is 0. What does that tell you?"
+  answer: "A borrow was needed: the number in box 15 was bigger than A, so the result wrapped below zero. For subtraction, carry 1 means no borrow and carry 0 means the result went negative."
+  jumpToId: sub-is-add-with-one-more-signal
+  jumpToLabel: SUB is ADD with one more signal
+assignment:
+  instruction: "Using Ben Eater's control logic page as a reference, write out every step (fetch included) of the program LDA 14, SUB 15, OUT, HLT as control signals, one row per tick. Then predict A, the carry flag and the zero flag after SUB for box 14 = 9 and box 15 = 9."
+  resourceName: 'eater.net: CPU control logic'
+  resourceType: site
+  resourceUrl: 'https://eater.net/8bit/control'
+additionalResources:
+- title: Status register (Wikipedia)
+  type: doc
+  meta: the flags a real CPU keeps
+  url: 'https://en.wikipedia.org/wiki/Status_register'
+- title: 'The Central Processing Unit (CPU): Crash Course Computer Science #7'
+  type: video
+  meta: 11 min · an instruction traced through a CPU
+  url: 'https://www.youtube.com/watch?v=FZGugFqdr60'
+whyThisMatters: "Every add and subtract a program does, at any scale, is this sequence: get the operand, put two values into the ALU, take the result and the flags. Seeing exactly which registers change, and which don't, is what lets you trust a trace and spot the step where a bug really happens."
+---
+
+You've seen that each instruction is a few steps on the bus, and that every step is one value moving from the part whose "out" signal is on to every part whose "in" signal is on. This lesson follows the arithmetic instructions, ADD and SUB, one signal at a time, and asks a question that's easy to skip: what stays the same?
+
+By the end you'll be able to run ADD and SUB by their control signals, say what each step changes, and predict both flags afterwards.
+
+## The control signals
+
+Each part of the tiny CPU has short names for its signals. These are the ones arithmetic needs:
+
+<TruthTable caption='Control signals for arithmetic' rowsJson='[["signal", "means"], ["CO", "program counter out, onto the bus"], ["MI", "memory address register in, from the bus"], ["RO", "RAM out: the box the memory address register points at"], ["II", "instruction register in"], ["CE", "program counter + 1"], ["IO", "instruction register out: its low 4 bits, the operand"], ["BI", "register B in"], ["EO", "ALU out: A + B, or A - B with SU"], ["AI", "register A in"], ["SU", "make the ALU subtract"], ["FI", "flags in: set zero and carry from the ALU result"]]' />
+
+Every instruction starts with the same fetch: **CO MI**, then **RO II CE**. After it, the instruction register holds the instruction and the program counter points at the next one.
+
+## ADD, step by step
+
+ADD 15 adds the byte in box 15 to A. After the fetch it takes three more steps:
+
+<TruthTable caption='ADD 15 after the fetch' rowsJson='[["step", "signals", "what moves", "what changes"], ["2", "IO MI", "15, from the instruction", "the memory address register becomes 15"], ["3", "RO BI", "the byte in box 15", "B becomes that byte"], ["4", "EO AI FI", "A + B, from the ALU", "A becomes the sum; zero and carry are set"]]' />
+
+Just as important is what doesn't change. Box 15 is only read, so it keeps its value. The program counter isn't touched after the fetch, so the next instruction is still the one after ADD. And A doesn't change until step 4: during steps 2 and 3 the ALU is already showing A + B on its output, but nothing loads it until AI is on.
+
+<KeyIdea>A register only changes on a step where its "in" signal is on. Everything else holds its value, even while new values flow past it on the bus.</KeyIdea>
+
+Try it by hand. The program first loads 28 from box 14 into A, then adds box 15, which holds 14. Switch on the signals for each step, starting with the first fetch, then Tick. Get A to 42.
+
+<DatapathLab caption='Run ADD 15 by hand' programJson='["LDA 14","ADD 15","HLT"]' dataJson='{"14":28,"15":14}' goalJson='{"A":42}' />
+
+## The flags come from the result
+
+FI copies two facts about the ALU's result into the flags:
+
+- <b>zero</b> is 1 when the result is exactly 0;
+- <b>carry</b> is 1 when the true sum needed a ninth bit.
+
+So ADD with 200 and 100 gives A = 44 with carry 1, because 300 doesn't fit in 8 bits. ADD with 28 and 14 gives 42 with both flags 0. The flags only change on a step with FI, which is why a later LDA leaves them as they were: a conditional jump can still look at the result of the last ADD or SUB.
+
+## SUB is ADD with one more signal
+
+SUB 15 runs exactly the same steps, with SU switched on in the last one:
+
+<TruthTable caption='SUB 15 after the fetch' rowsJson='[["step", "signals"], ["2", "IO MI"], ["3", "RO BI"], ["4", "EO AI SU FI"]]' />
+
+SU makes the ALU invert B and add 1 as it adds: A + NOT B + 1, which is A - B in two's complement. No new circuit, no new steps.
+
+The carry flag means something new after a subtraction. Carry 1 means no borrow was needed, and carry 0 means the result went below zero and wrapped:
+
+<TruthTable caption='Three subtractions' rowsJson='[["A", "box 15", "A after SUB 15", "zero", "carry"], ["9", "5", "4", "0", "1, no borrow"], ["7", "7", "0", "1", "1, no borrow"], ["3", "5", "254 (the byte for -2)", "0", "0, a borrow"]]' />
+
+<KeyIdea>ADD and SUB are the same three steps. SU makes the ALU subtract, and FI saves zero and carry for the next jump to read.</KeyIdea>
+
+Run the borrow case and watch the flags. Predict A, zero and carry before the SUB step.
+
+<TinyCpu caption='3 - 5 on the tiny CPU' programJson='["LDA 14", "SUB 15", "OUT", "HLT"]' dataJson='{"14": 3, "15": 5}' />
+
+It shows 254, with zero and carry both 0. That carry of 0 is what a program would test with JC to notice the borrow.

@@ -1,0 +1,132 @@
+---
+title: "How a GPU runs thousands of threads"
+level: level-14-multicore-gpus
+slug: gpus
+order: 4
+timeMin: 12
+learningOutcomes:
+- "Explain SIMT: threads grouped into warps that share one instruction stream"
+- Work out the cost of branch divergence inside a warp
+- Explain how a GPU hides memory latency by switching between many resident warps, and compute occupancy from register use
+- Say which kinds of work suit a GPU and which don't, and why
+primer:
+- title: "SIMD and vector instructions"
+  type: doc
+  meta: "Reread · 3 min · one instruction, many lanes: the GPU's starting point."
+  essential: true
+- title: "Out-of-order execution"
+  type: doc
+  meta: Reread · 2 min · how a CPU hides latency instead.
+  essential: false
+knowledgeCheck:
+- question: In a warp of 32 threads, odd threads run a 10-instruction then-branch and even threads a 10-instruction else-branch. How long does the if take, and what fraction of the lanes does useful work?
+  answer: "The warp has one instruction stream, so it runs both branches one after the other: 20 instruction slots, with half the lanes switched off in each. Useful work is 32 × 10 lane-instructions out of 32 × 20: 50%."
+  jumpToId: divergence
+  jumpToLabel: Divergence
+- question: How does a GPU keep its arithmetic busy while a warp waits hundreds of cycles for memory, without big caches or out-of-order execution?
+  answer: "It keeps many warps resident on each multiprocessor, with all their registers already in place, and switches to another ready warp each cycle at no cost. With enough warps in flight, there's always one ready to run while others wait for memory."
+  jumpToId: hiding-latency-with-warps
+  jumpToLabel: Hiding latency with warps
+assignment:
+  instruction: "Pick a task you know (summing an array, sorting, a web server, image blurring, compiling a program) and decide whether it suits a GPU. For each, write two sentences on its parallelism, its branching and its memory access pattern, and say where the data starts and ends (copying to and from the GPU costs time too)."
+  resourceName: 'NVIDIA CUDA C++ Programming Guide'
+  resourceType: doc
+  resourceUrl: 'https://docs.nvidia.com/cuda/cuda-c-programming-guide/'
+additionalResources:
+- title: "Graphics processing unit (Wikipedia)"
+  type: doc
+  meta: history and architecture
+  url: 'https://en.wikipedia.org/wiki/Graphics_processing_unit'
+- title: "NVIDIA H100 Tensor Core GPU"
+  type: doc
+  meta: the memory bandwidth quoted in this lesson
+  url: 'https://www.nvidia.com/en-us/data-center/h100/'
+- title: "Hopper (microarchitecture) (Wikipedia)"
+  type: doc
+  meta: the H100's 132 SMs and its design
+  url: 'https://en.wikipedia.org/wiki/Hopper_(microarchitecture)'
+whyThisMatters: "GPUs train and run almost all of today's machine learning, and power graphics and scientific computing. Knowing that they trade a fast single thread for enormous throughput, and what breaks that throughput, is what lets you decide when a GPU will help, and write code that keeps it busy."
+---
+
+A CPU core is built to run one thread as fast as possible: deep pipelines, out-of-order execution, branch prediction and big caches. A GPU spends its transistors the other way: thousands of simple lanes, and very little per thread. This lesson is about how that works. It uses NVIDIA's terms, since they're the most widely used; AMD and Intel GPUs have the same ideas under other names.
+
+## SIMT: threads in warps
+
+You write a GPU program (a **kernel**) as code for one thread, and launch thousands or millions of copies, each with its own index. In CUDA:
+
+```c
+__global__ void saxpy(int n, float a, const float *x, float *y) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n) {
+        y[i] = a * x[i] + y[i];
+    }
+}
+```
+
+The hardware groups threads into **warps** of 32 (NVIDIA's warp size, in the CUDA guide). A warp has **one** instruction stream: each cycle it issues one instruction, and all 32 threads execute it in lock-step, each on its own data in its own lane. That's **SIMT**, single instruction, multiple threads: SIMD underneath, but programmed as separate threads, with the hardware masking off lanes that shouldn't run. AMD's equivalent is a *wavefront*, of 32 or 64.
+
+Warps run on **streaming multiprocessors** (SMs). An H100 (SXM version) has 132 SMs, and the CUDA guide's table for its generation (compute capability 9.0) allows up to 2048 resident threads, 64 warps, per SM. That's over 270,000 threads resident at once on one chip.
+
+## Divergence
+
+What if threads in one warp take different sides of an `if`? The warp still has only one instruction stream, so it runs **both** sides, one after the other, with the lanes that didn't take each side switched off. This is **divergence**.
+
+Try it. In each case a warp of 32 threads meets an `if` whose then-branch and else-branch are each 10 instructions long. How many instruction slots does the `if` take, and what fraction of lane-slots do useful work?
+
+1. `if (threadIdx.x % 2 == 1)`: odd threads take it.
+2. `if (threadIdx.x < 32)`, for a block of 64 threads: the whole first warp takes it, the whole second warp doesn't.
+3. `if (data[i] > 0)`, where 1 thread in each warp has a positive value.
+
+<details>
+<summary>Check your answer</summary>
+
+1. **Odd threads:** every warp has both kinds, so it runs both branches: 20 slots, each with 16 lanes active. 320 useful lane-instructions out of 640: **50%**.
+2. **`threadIdx.x < 32`:** the split falls exactly between warps, so each warp takes one side only: **10 slots, 100%**. Divergence costs nothing when whole warps agree.
+3. **1 thread positive:** each warp still runs both sides: 20 slots. The then-branch does 1 × 10 useful lane-instructions and the else-branch 31 × 10, so 320 out of 640: **50%** again. A rare case costs as much as a common one if it appears in every warp.
+
+Branchy, data-dependent code is the classic way to waste a GPU.
+
+</details>
+
+<KeyIdea>A warp is 32 threads sharing one instruction stream. When they agree, all 32 lanes work; when they diverge, the warp runs every path in turn with some lanes idle.</KeyIdea>
+
+## Hiding latency with warps
+
+A load from the GPU's main memory takes hundreds of cycles. A CPU hides that with big caches and out-of-order execution. A GPU does it differently: it keeps many warps resident on each SM, each with its registers already loaded, and every cycle the scheduler picks a warp that's ready. A warp waiting for memory simply isn't picked. Switching costs nothing, because no state has to move.
+
+So a GPU needs many more threads than it has lanes. The fraction of the maximum warps actually resident is the **occupancy**, and it's limited by what each thread uses. An SM of this generation has 65,536 32-bit registers (the CUDA guide's table). If a kernel uses 64 registers per thread, how many threads fit on one SM, and what is the occupancy (out of the 2048-thread maximum)? What if it uses 32?
+
+<details>
+<summary>Check your answer</summary>
+
+- **64 registers per thread:** 65,536 / 64 = 1,024 threads, which is 32 warps. Occupancy is 1024 / 2048 = **50%**.
+- **32 registers per thread:** 65,536 / 32 = 2,048 threads, the maximum: **100%**.
+
+Fewer registers per thread means more warps to switch between, so latency is better hidden. If the compiler is forced to spill instead, the extra memory traffic can cost more than the occupancy gains. Shared memory per block limits occupancy in the same way.
+
+</details>
+
+## The memory side
+
+A GPU's memory is built for throughput:
+- **Registers,** private per thread.
+- **Shared memory,** a small fast scratchpad per SM that the program manages explicitly, shared by a block's threads.
+- **A shared L2.**
+- **High-bandwidth memory (HBM),** stacked beside the chip. NVIDIA lists 3.35 TB/s of memory bandwidth for the H100 SXM.
+
+To get that bandwidth, the 32 threads of a warp should read **neighbouring** addresses at the same time, so one wide memory transaction serves them all. This is **coalescing**, the GPU's version of spatial locality. In the `saxpy` kernel above, thread `i` reads `x[i]`, so a warp reads 32 consecutive floats: perfectly coalesced. Scattered reads turn one transaction into many.
+
+## What suits a GPU
+
+Put together, a GPU shines when the work has:
+
+- **lots of independent parallel work:** millions of elements, not a few threads;
+- **little divergence:** the same instructions for neighbouring data;
+- **regular memory access:** neighbouring threads touch neighbouring data;
+- **much arithmetic per byte moved,** or at least enough to amortise copying the data to the GPU and back.
+
+Matrix multiplication, image processing and neural networks fit perfectly. Pointer-chasing, branchy code with little parallelism (a compiler, a database index walk, most web servers) belongs on a CPU.
+
+## Done when
+
+You can describe warps and SIMT, compute the cost of divergence and the occupancy from register use, explain how warps hide latency and why coalescing matters, and say which work suits a GPU.

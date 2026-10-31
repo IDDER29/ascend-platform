@@ -59,35 +59,6 @@ export function getLesson(level: string, slug: string): Lesson | null {
   return readLesson(ref.filePath);
 }
 
-interface LessonNavItem {
-  href: string;
-  title: string;
-}
-
-/**
- * Prev/next across the whole curriculum, not just within one level: the last
- * lesson of a level points to the first lesson of the next level, and vice
- * versa. Returns null at the very start/end of the curriculum (there's no
- * lesson before Level 00 #1, and this pilot doesn't yet have a lesson after
- * Level 03's last one -- that slot is the Shellforge project, out of scope).
- */
-export function getLessonNavigation(
-  level: LevelId,
-  order: number,
-): { prev: LessonNavItem | null; next: LessonNavItem | null } {
-  const all = getAllLessons();
-  const index = all.findIndex((l) => l.meta.level === level && l.meta.order === order);
-  if (index === -1) return { prev: null, next: null };
-
-  const toNavItem = (lesson: Lesson | undefined): LessonNavItem | null =>
-    lesson ? { href: `/curriculum/${lesson.meta.level}/${lesson.meta.slug}`, title: lesson.meta.title } : null;
-
-  return {
-    prev: toNavItem(all[index - 1]),
-    next: toNavItem(all[index + 1]),
-  };
-}
-
 export function getAllLessonParams(): { level: string; slug: string }[] {
   return listLessonRefs().map((r) => ({ level: r.level, slug: r.slug }));
 }

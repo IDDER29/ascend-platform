@@ -1,0 +1,14 @@
+{
+  "id": "c-language/hdr-no-guard",
+  "sourceHash": "2fa00940d9a1a177",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "In file included from shapes.h:1,\n                 from main.c:3:\npoint.h:1:8: error: redefinition of ‘struct point’\n    1 | struct point {\n      |        ^~~~~\nIn file included from main.c:2:\npoint.h:1:8: note: originally defined here\n    1 | struct point {\n      |        ^~~~~\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

@@ -1,0 +1,7 @@
+The program asks the operating system for memory, and the allocator hands back a pointer.
+A pointer is just an address. The program stores values at that address, reads them back,
+and when the work is done it frees the memory so the allocator can reuse it. If the program
+forgets to free memory, the memory leaks; if it uses a pointer after the memory is freed, the
+pointer dangles, and reading through it is undefined behaviour. Careful programs decide who owns
+each block of memory, write that down next to the function that allocates it, and free every
+block exactly once. Tools such as the address sanitizer check the rules while the program runs.

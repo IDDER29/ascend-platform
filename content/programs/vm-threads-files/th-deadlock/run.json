@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/th-deadlock",
+  "sourceHash": "56f0210f550f2ac5",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O2 -pthread main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "starting two transfers\n",
+    "stderr": "",
+    "exitCode": null,
+    "signal": "SIGTERM",
+    "timedOut": true
+  },
+  "generated": "2026-10-31"
+}

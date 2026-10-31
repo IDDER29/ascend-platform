@@ -1,0 +1,121 @@
+---
+title: "From gates to a tiny CPU: datapath and control"
+level: level-00-bits-logic
+slug: from-gates-to-cpu
+order: 56
+timeMin: 12
+learningOutcomes:
+- Name the parts of the tiny CPU's datapath and what each one holds
+- Explain why the parts share one bus, and why only one part may put a value on it at a time
+- Describe the control unit as a circuit that turns an opcode and a step number into control signals
+- Trace LDA and ADD as a short list of steps, starting with the two fetch steps every instruction shares
+primer:
+- title: "The fetch-execute loop"
+  type: doc
+  meta: Reread · 3 min · this lesson opens up the loop you already know.
+  essential: true
+- title: 'The Central Processing Unit (CPU): Crash Course Computer Science #7'
+  type: video
+  meta: Watch · 11 min · builds a CPU from registers, RAM and an ALU.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=FZGugFqdr60'
+knowledgeCheck:
+- question: What is the difference between the datapath and the control unit?
+  answer: The datapath is the part that holds and moves data (registers, memory, the ALU and the bus between them). The control unit moves nothing itself; every clock tick it sets the control signals that decide which part puts a value on the bus and which part loads it.
+  jumpToId: two-halves-of-a-cpu
+  jumpToLabel: Two halves of a CPU
+- question: Why can only one part drive the bus at a time?
+  answer: The bus is one set of shared wires. If two parts put different values on it at once, the wires carry a garbled mix (and the outputs fight each other), so the control unit enables exactly one output per step.
+  jumpToId: one-bus-shared-by-everything
+  jumpToLabel: One bus, shared by everything
+- question: List the steps the tiny CPU takes to run ADD 15.
+  answer: "Fetch: the program counter goes to the memory address register; then memory goes to the instruction register and the program counter adds 1. Execute: the instruction's address part (15) goes to the memory address register; memory goes to register B; the ALU's sum goes to register A and the flags are updated."
+  jumpToId: every-instruction-is-a-few-steps
+  jumpToLabel: Every instruction is a few steps
+assignment:
+  instruction: "Ben Eater's control logic page shows the control signals of the real breadboard CPU this tiny CPU copies. Read it, then write out the steps for STA n (store A into address n) in the same form as this lesson's tables, and check your answer against his."
+  resourceName: 'eater.net: CPU control logic'
+  resourceType: site
+  resourceUrl: 'https://eater.net/8bit/control'
+additionalResources:
+- title: Datapath (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Datapath'
+- title: Control unit (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Control_unit'
+- title: 'nand2tetris.org: Project 5, Computer Architecture'
+  type: doc
+  meta: build a whole CPU from the gates you made earlier
+  url: 'https://www.nand2tetris.org/project05'
+whyThisMatters: "This is the moment the course closes the loop: the gates, adders, flip-flops and registers you built become one machine. Once you can see an instruction as a few control steps on a shared bus, nothing about a CPU is magic any more, and later ideas like pipelining (overlapping those steps) and microcode (storing them in a table) are small additions to a picture you already have."
+---
+
+You've built every piece separately: an adder, registers that hold a byte, memory with addresses, a clock. You've also watched the fetch-execute loop run programs. This lesson connects the two. It shows how those parts are wired together and what makes them do the right thing on each clock tick.
+
+By the end you'll be able to point at each part of the tiny CPU, explain how values move between them, and list the steps behind one instruction.
+
+## Two halves of a CPU
+
+A CPU has two halves:
+
+- The <b>datapath</b> holds and moves data. It is made of the parts you already know: registers, memory, the ALU, and the wires between them.
+- The <b>control unit</b> decides what the datapath does on each clock tick. It doesn't hold any of your data. It only switches parts on and off.
+
+<KeyIdea>The datapath is where the data goes. The control unit is what tells it where to go.</KeyIdea>
+
+## The parts of the tiny CPU
+
+Here is everything inside the tiny CPU you've been running programs on:
+
+<TruthTable caption='The datapath of the tiny CPU' rowsJson='[["part", "what it holds or does"], ["program counter (PC)", "the address of the next instruction"], ["memory address register", "the address memory should read or write"], ["memory", "16 boxes of one byte: the program and its data"], ["instruction register (IR)", "the instruction being run"], ["register A", "the main working value"], ["register B", "the second value for ADD and SUB"], ["ALU", "adds or subtracts A and B, and sets the flags"], ["flags", "zero and carry, from the last ALU result"], ["output register", "the number on the display"]]' />
+
+There's nothing new in this table. The registers are the flip-flops and load enables from the clock lesson. The ALU is the adder with a subtract option. Memory is the addressed boxes from the memory lesson.
+
+## One bus, shared by everything
+
+The parts don't each have their own wires to every other part. They share a single set of eight wires called the <b>bus</b>. On each clock tick, one part puts its value on the bus and one or more parts load that value from it.
+
+Each part has two switches the control unit can turn on:
+
+- An <b>out</b> signal: put my value on the bus.
+- An <b>in</b> signal: load the value on the bus at the next clock tick.
+
+Only one part may have its out signal on at a time. The bus is one set of wires, so two values on it at once would mix into garbage. Turning outs and ins on in the right order is the whole job of the control unit.
+
+<KeyIdea>Moving a value is one clock tick: one part's out signal, another part's in signal.</KeyIdea>
+
+## Every instruction is a few steps
+
+Every instruction starts with the same two fetch steps. They bring the instruction from memory into the instruction register:
+
+<TruthTable caption='Fetch: the same two steps for every instruction' rowsJson='[["step", "out", "in", "also"], ["0", "program counter", "memory address register", ""], ["1", "memory", "instruction register", "program counter + 1"]]' />
+
+Then the steps depend on the opcode. LDA 14 needs two more steps. The address part of the instruction (14) goes to the memory address register, and then that box of memory goes into A:
+
+<TruthTable caption='LDA n: load a byte from memory into A' rowsJson='[["step", "out", "in"], ["2", "instruction register (the address part)", "memory address register"], ["3", "memory", "register A"]]' />
+
+ADD 15 needs three more steps, because the sum has to come back out of the ALU:
+
+<TruthTable caption='ADD n: add a byte from memory to A' rowsJson='[["step", "out", "in", "also"], ["2", "instruction register (the address part)", "memory address register", ""], ["3", "memory", "register B", ""], ["4", "ALU (A + B)", "register A", "update the flags"]]' />
+
+Some instructions are shorter. OUT is a single step after the fetch (A goes to the output register). JMP n is also a single step: the address part goes into the program counter. That one step is the whole of a jump.
+
+Step through this program and match each instruction to its table above. The simulator shows one whole instruction per Step, not each small step inside it.
+
+<TinyCpu caption='LDA, ADD, OUT: each one a few steps on the bus' programJson='["LDA 14", "ADD 15", "OUT", "HLT"]' dataJson='{"14": 28, "15": 14}' />
+
+## The control unit is a lookup table
+
+So what is the control unit, physically? It's a circuit with two inputs:
+
+- the opcode, from the top four bits of the instruction register;
+- a <b>step counter</b>, which counts 0, 1, 2, 3, 4 with the clock and goes back to 0 when an instruction is done.
+
+From those two inputs it produces every out and in signal. You could build it from gates, but it's easier to write it as a table: for each opcode and step, which signals are on. Ben Eater's breadboard CPU stores exactly that table in a small memory chip. A table of steps like this is called <b>microcode</b>.
+
+<KeyIdea>Opcode plus step number in, control signals out. That is all a control unit is.</KeyIdea>
+
+That finishes the picture. The clock ticks and the step counter moves on. The control unit looks up which part drives the bus and which part loads it. The datapath moves one value. Repeat that for every step of every instruction and the program runs.

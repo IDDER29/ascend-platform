@@ -1,0 +1,186 @@
+---
+title: "Writing small tests in C"
+level: level-06-c-tools
+slug: tests-in-c
+order: 10
+timeMin: 11
+learningOutcomes:
+- Write tests for C functions with assert, and explain why assert alone stops at the first failure and vanishes with NDEBUG
+- Build a tiny test runner that checks every case, reports each failure with its line, and exits non-zero if any failed
+- Choose test cases per behaviour, including edge cases such as empty input
+- Run tests with make test, and again under sanitizers, so a bug that doesn't change a result still fails the build
+primer:
+- title: "Sanitizers: ASan and UBSan"
+  type: doc
+  meta: Reread · 3 min · the second half of every test run.
+  essential: true
+- title: "make: building only what changed"
+  type: doc
+  meta: Reread · 2 min · a test target is just another rule.
+  essential: false
+knowledgeCheck:
+- question: Why must a test program exit with a non-zero status when a test fails?
+  answer: "Everything that runs tests automatically (make, git bisect run, CI) looks only at the exit status: 0 means success. A test program that prints FAIL but exits 0 counts as passing, and the failure goes unnoticed."
+  jumpToId: a-tiny-test-runner
+  jumpToLabel: A tiny test runner
+- question: The reversed() test passed in a normal build but failed under ASan. Which result do you trust, and why?
+  answer: "ASan's. The function reads one byte before the start of the string. In the normal build that byte happened not to change the output, so the assert passed, but the read is undefined behaviour that can crash or misbehave elsewhere. Running tests under sanitizers catches bugs that don't change a result this time."
+  jumpToId: tests-under-sanitizers
+  jumpToLabel: Tests under sanitizers
+assignment:
+  instruction: "Add a test runner like the one here to one of your own C projects, with a test function per function under test, and at least one edge case each (empty input, one element, the largest value). Add make test and make test-asan targets, and make sure both exit non-zero when you deliberately break a function."
+  resourceName: 'cppreference: assert'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/error/assert'
+additionalResources:
+- title: "Unity: a small unit-test framework for C"
+  type: doc
+  meta: what this lesson's runner grows into
+  url: 'https://www.throwtheswitch.org/unity'
+- title: "Test-driven development (Wikipedia)"
+  type: doc
+  meta: write the failing test first
+  url: 'https://en.wikipedia.org/wiki/Test-driven_development'
+whyThisMatters: "Tests turn 'I think it works' into a command that proves it, every time anything changes. In C, where a bug can sit silently until it corrupts memory, small fast tests run under sanitizers on every build are the cheapest protection you have."
+---
+
+A test is a small program that calls your functions with known inputs and checks the answers. C has no test framework built in, but you don't need one to start: `assert`, a dozen-line runner and a make target go a long way.
+
+The functions under test are in `strutil.c`: `count_char` counts a character in a string, and `is_palindrome` says whether a string reads the same backwards. Every run below is real gcc 15.2 output.
+
+## Tests with assert
+
+`assert(condition)` does nothing if the condition is true. If it's false, it prints the file, line and condition, then calls `abort()`. One of these expectations is wrong. Predict what you'll see.
+
+<CRun program="c-tools/tests-assert" caption='Tests written with assert' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`Assertion 'is_palindrome("abca")' failed` at `main.c:9`, and the program is killed by SIGABRT. The test was wrong, not the function: "abca" isn't a palindrome. Tests have bugs too, so read a failure before "fixing" the code.
+
+Two weaknesses of plain `assert`:
+
+- It **stops at the first failure**, so the test for `""` after it never ran. With ten failures you'd find them one at a time.
+- It can **disappear**, as the next run shows.
+
+</details>
+
+Same tests, built with `-DNDEBUG`, as release builds often are:
+
+<CRun program="c-tools/tests-ndebug" caption='The same tests, with -DNDEBUG' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+"all tests passed". `NDEBUG` ("no debug") turns every `assert` into nothing, so the wrong expectation is never checked at all. Never build tests with `-DNDEBUG`. And never put code with side effects inside an `assert`, like `assert(fclose(f) == 0)`, because with `NDEBUG` the call itself vanishes.
+
+</details>
+
+## A tiny test runner
+
+A runner fixes both problems. `CHECK` counts every check, prints each failure and carries on, and `main` exits with status 1 if anything failed:
+
+```c
+static int checks = 0, failures = 0;
+
+#define CHECK(cond)                                                      \
+    do {                                                                 \
+        checks++;                                                        \
+        if (!(cond)) {                                                   \
+            failures++;                                                  \
+            printf("FAIL %s:%d: %s\n", __FILE__, __LINE__, #cond);       \
+        }                                                                \
+    } while (0)
+```
+
+`#cond` turns the condition into a string, and `__FILE__` and `__LINE__` say where it is. The `do { ... } while (0)` wrapper makes the macro behave like one statement, even after an `if` without braces. Tests are grouped into one function per behaviour. One check below asks a real design question. Predict the output.
+
+<CRun program="c-tools/tests-runner" caption='Every check, every failure' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+"FAIL main.c:27: is_palindrome("Level")", then "8 checks, 1 failed", with exit status 1. The function compares characters exactly, so 'L' and 'l' differ. Whether that's a bug depends on what `is_palindrome` is meant to do, and writing the test forced the question. Decide, write it in the header comment, and make the test agree.
+
+Notice the edge cases: an empty string for both functions, and a character that never appears. Most bugs live at the edges.
+
+</details>
+
+## make test
+
+A `test` target makes running the tests one command, and its exit status flows through make:
+
+```make
+test: test_strutil
+	./test_strutil
+
+test-asan: test_strutil.c strutil.c strutil.h
+	$(CC) $(CFLAGS) -fsanitize=address,undefined -fno-sanitize-recover=undefined test_strutil.c strutil.c -o test_strutil_asan
+	./test_strutil_asan
+```
+
+A real session, with the tests passing:
+
+```
+$ make test; echo "exit status: $?"
+cc -std=c17 -Wall -Wextra -g test_strutil.c strutil.c -o test_strutil
+./test_strutil
+7 checks, 0 failed
+exit status: 0
+```
+
+Then someone "optimises" `count_char` to skip the first character: `for (s++; *s != '\0'; s++)`. "banana" still gives 3, because the first letter isn't an 'a':
+
+```
+$ make test; echo "exit status: $?"
+cc -std=c17 -Wall -Wextra -g test_strutil.c strutil.c -o test_strutil
+./test_strutil
+FAIL test_strutil.c:19: count_char("", 'a') == 0
+7 checks, 1 failed
+make: *** [Makefile:7: test] Error 1
+exit status: 2
+```
+
+Why did only the empty-string test catch it, and what does `make test-asan` add?
+
+<details>
+<summary>Check your answer</summary>
+
+For "banana" and "banana"/'z', skipping the first character happens not to change the count. For `""`, `s++` steps past the terminating zero, so the loop reads memory beyond the string until it happens to hit a zero byte. The count came out wrong, and the edge case caught it.
+
+That read past the end is undefined behaviour, so the wrong count wasn't even guaranteed. Under `make test-asan` the same bug is reported precisely: a `global-buffer-overflow`, a READ of size 1 in `count_char` at `strutil.c:7`. make reports the failure as exit status 2: when a command it runs fails, make stops and exits with 2. A tool running `make test` just needs "not zero".
+
+</details>
+
+## Tests under sanitizers
+
+Sometimes a bug doesn't change the answer at all. `reversed` copies a string backwards, but its loop runs one step too far and reads the byte just before the string. The plain build:
+
+<CRun program="c-tools/tests-plain" caption='The test, plain build' show="strutil.c" />
+
+And the same test with `-fsanitize=address,undefined`:
+
+<CRun program="c-tools/tests-asan" caption='The same test, under ASan' show="main.c" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The plain build passes: the extra step reads `s[-1]` (because `len - 1 - len` wraps around to the largest `size_t`, and pointer arithmetic brings it back to one byte before `s`), writes it to `out[5]`, and the next line overwrites `out[5]` with `'\0'`. So the result is correct. The ASan build reports a **heap-buffer-overflow** READ "1 bytes before 6-byte region", in `reversed` at `strutil.c:8`, and fails.
+
+This is why every test suite should also run under sanitizers: a test checks answers, and a sanitizer checks how they were reached. The fix is `i < len`.
+
+</details>
+
+<KeyIdea>A good C test: one function per behaviour, edge cases included, every failure reported with its line, a non-zero exit when anything fails, never built with NDEBUG, and run again under ASan and UBSan.</KeyIdea>
+
+## Try it
+
+A test file has `assert(remove_all(list) == 0);` as its only call to `remove_all`, and the release build uses `-DNDEBUG -O2`. What goes wrong?
+
+<details>
+<summary>Check your answer</summary>
+
+With `NDEBUG` the whole `assert` disappears, including the call inside it, so `remove_all` is never called in the release build. If it's meant to free a list, the program now leaks, or worse, later code depends on the list being empty. Call the function first, then check its result: `int left = remove_all(list); assert(left == 0);`.
+
+</details>

@@ -1,0 +1,134 @@
+---
+title: "Files, directories and inodes"
+level: level-08-vm-threads-files
+slug: inodes
+order: 12
+timeMin: 10
+learningOutcomes:
+- Explain what an inode holds, and that a file's name is not part of it
+- Explain a directory as a table from names to inode numbers
+- Predict what hard links, symbolic links and unlink do to a file and its link count
+- Explain why an open file keeps its data after its last name is removed
+primer:
+- title: "Files and file systems"
+  type: doc
+  meta: "Foundations · files and folders built on storage blocks, without the mechanism."
+  essential: true
+- title: "Users, groups and permissions"
+  type: doc
+  meta: "Systems & Software · the owner and mode bits stored in the inode."
+  essential: false
+knowledgeCheck:
+- question: b.txt is a hard link to a.txt, and c.txt is a symbolic link to a.txt. After rm a.txt, which can still be read, and why?
+  answer: "b.txt. It's a second name for the same inode, whose link count drops from 2 to 1, so the inode and data stay. c.txt is a separate inode holding the path to a.txt; that path no longer exists, so opening c.txt fails with No such file or directory."
+  jumpToId: hard-and-symbolic-links
+  jumpToLabel: Hard and symbolic links
+- question: A program opens a file, then unlinks it. Why can it still read and write the file?
+  answer: "unlink removes a name and lowers the link count, here to 0, but the kernel frees the inode only when the link count is 0 and nothing has it open. The open file descriptor keeps the inode alive until it's closed."
+  jumpToId: open-files-outlive-their-names
+  jumpToLabel: Open files outlive their names
+assignment:
+  instruction: "In a scratch folder, create a file, make a hard link and a symbolic link to it, and run ls -li and stat on all three. Then rename the original (mv), check which link still works, and explain why in terms of inodes and names."
+  resourceName: 'OSTEP: Files and Directories'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/file-intro.pdf'
+additionalResources:
+- title: "Linux man page: inode(7)"
+  type: doc
+  meta: every field of an inode, as stat reports it
+  url: 'https://man7.org/linux/man-pages/man7/inode.7.html'
+whyThisMatters: "Names, links and inodes explain a whole set of everyday puzzles: why deleting a huge log file didn't free any space, why a moved file breaks some links and not others, why rm on an open file doesn't stop the program using it. They're also the base of how every Unix file system stores things."
+---
+
+In Foundations, a file was a named thing in a folder, built on storage blocks. A Unix file system splits that into two separate things: the **inode**, which is the file itself, and **names**, which are just entries in directories pointing at inodes.
+
+## The inode
+
+An inode is a fixed-size record, one per file, holding everything about the file except its name:
+
+- the type (regular file, directory, symbolic link, device and so on) and the permission bits;
+- the owner and group;
+- the size, and the timestamps (last access, modification, status change, creation);
+- the **link count**: how many names point at it;
+- where the data is on the disk (the next lesson is about this).
+
+Each inode has a number, unique within its file system. `stat` shows the inode of a file on this machine's ext4 disk (the owner's name is replaced with `learner` here):
+
+```
+$ stat big.bin
+  File: big.bin
+  Size: 1000000   	Blocks: 1960       IO Block: 4096   regular file
+Device: 259,2	Inode: 10535190    Links: 1
+Access: (0664/-rw-rw-r--)  Uid: ( 1001/   learner)   Gid: ( 1001/   learner)
+Access: 2026-10-31 13:12:09.434941930 +0000
+Modify: 2026-10-31 13:12:09.448942046 +0000
+Change: 2026-10-31 13:12:09.448942046 +0000
+ Birth: 2026-10-31 13:12:09.434941930 +0000
+```
+
+Inode 10535190, one link, 1 MB of data, 1960 blocks of 512 bytes allocated. The name `big.bin` isn't in the inode at all.
+
+## Directories map names to inodes
+
+A directory is a file whose contents are a table of entries: a name and an inode number. Opening `/home/learner/notes.txt` means: find the root directory's inode, look up `home` in it to get another inode number, look up `learner` in that, then `notes.txt`. Each step reads a directory. The kernel caches these lookups, because paths are resolved constantly.
+
+So a "file in a folder" is really an entry in a table. Renaming a file within one file system just rewrites entries; the inode and its data never move.
+
+<KeyIdea>The inode is the file: its data, size, owner, permissions and link count. A name is just a directory entry pointing at an inode number.</KeyIdea>
+
+## Hard and symbolic links
+
+Since names are just entries, one inode can have several:
+
+- A **hard link** (`link()`, or `ln a b`) adds another entry pointing at the **same inode**, and the link count goes up.
+- A **symbolic link** (`symlink()`, or `ln -s a c`) is a **new inode** of type link, whose contents are a path. Opening it makes the kernel follow that path.
+- **`unlink()`** (what `rm` calls) removes one name and lowers the link count. The inode is freed only when no names are left.
+
+This program makes `a`, a hard link `b` and a symbolic link `c`, then removes `a`. Predict each answer, including whether `b` and `c` can still be read.
+
+<CRun program="vm-threads-files/inode-links" caption='Hard links, symbolic links and unlink' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `a` and `b` share an inode, and its link count is 2: one inode, two names.
+- `stat(c)` follows the link and reaches `a`'s inode; `lstat(c)` looks at the link itself, a separate inode of 17 bytes. Those 17 bytes are the path `/tmp/ascend-a.txt`.
+- After `unlink(a)` the count is 1, and `b` still reads `hello`: the data never belonged to the name `a`.
+- `c` fails with **No such file or directory**: it holds a path, and that path is gone. A symbolic link that points nowhere is called **dangling**.
+
+The same thing on ext4, in a shell, with real inode numbers:
+
+```
+$ ls -li notes.txt hard.txt soft.txt
+10535431 -rw-rw-r-- 2 learner learner 6 Oct 31 13:13 hard.txt
+10535431 -rw-rw-r-- 2 learner learner 6 Oct 31 13:13 notes.txt
+10535433 lrwxrwxrwx 1 learner learner 9 Oct 31 13:13 soft.txt -> notes.txt
+$ rm notes.txt
+$ cat hard.txt
+hello
+$ cat soft.txt
+cat: soft.txt: No such file or directory
+```
+
+`hard.txt` and `notes.txt` show the same number in the first column; `soft.txt` has its own.
+
+</details>
+
+## Open files outlive their names
+
+The kernel frees an inode only when its link count is 0 **and** no process has it open. This program creates a file, unlinks it straight away, then keeps writing and reading through its descriptor. Predict the link count it reports.
+
+<CRun program="vm-threads-files/inode-unlinked" caption='Writing to a file that has no name' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The name is gone at once, and `fstat` reports a link count of **0**, yet the write and the read both work: the open descriptor holds the inode. When the program closes it, the kernel finally frees the inode and its blocks.
+
+This is the classic "I deleted the 10 GB log file and the disk is still full" puzzle: a running program still has it open. It's also a useful trick for temporary files: create, unlink, use, and the file vanishes even if the program crashes.
+
+</details>
+
+## Done when
+
+You can say what an inode holds and what it doesn't, describe a path lookup, predict link counts through `link`, `symlink` and `unlink`, and explain why an unlinked open file still works.

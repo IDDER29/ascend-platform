@@ -1,0 +1,15 @@
+{
+  "id": "sum-to-n",
+  "title": "sum_to(n): add 1 + 2 + ... + n",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux (System V ABI)",
+  "flags": {
+    "O0": "gcc -O0 -fno-asynchronous-unwind-tables -fno-pie -no-pie -S source.c",
+    "O2": "gcc -O2 -fno-asynchronous-unwind-tables -fno-pie -no-pie -S source.c",
+    "O2m32": "gcc -m32 -O2 -fno-asynchronous-unwind-tables -fno-pie -no-pie -S function.c"
+  },
+  "output": "55",
+  "generated": "2026-11-01",
+  "note": "Real compiler output, generated on the Ascend build machine and committed unchanged. -fno-asynchronous-unwind-tables only removes .cfi lines to keep the listing short; -fno-pie/-no-pie keep addresses simple. Other gcc versions or targets will print different assembly for the same C. O2-m32.s is the same sum_to function (function.c, copied verbatim from source.c) compiled for 32-bit x86; it is compiled on its own because this machine has no 32-bit C library headers for stdio.h.",
+  "targetM32": "32-bit x86 Linux (i386 System V ABI)"
+}

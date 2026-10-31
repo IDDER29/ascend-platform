@@ -1,0 +1,20 @@
+{
+  "id": "c-contract/ub-sanitized",
+  "sourceHash": "bdcfcad65aaf55b8",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=undefined -fno-sanitize=object-size main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "-2147483648 1 1\n",
+    "stderr": "main.c:11:9: runtime error: signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'\nmain.c:12:15: runtime error: shift exponent 32 is too large for 32-bit type 'int'\nmain.c:13:10: runtime error: index 4 out of bounds for type 'int [4]'\n",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

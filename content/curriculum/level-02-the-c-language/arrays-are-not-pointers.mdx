@@ -1,0 +1,126 @@
+---
+title: "Arrays are not pointers"
+level: level-02-the-c-language
+slug: arrays-are-not-pointers
+order: 12
+timeMin: 9
+learningOutcomes:
+- State the decay rule, when an array expression becomes a pointer to its first element
+- Name the exceptions, sizeof and the & operator, and predict their results
+- Explain why an array parameter is really a pointer, and pass the length alongside it
+- Tell arr, &arr[0] and &arr apart by type, even though they hold the same address
+primer:
+- title: "Pointer arithmetic"
+  type: doc
+  meta: Reread · 3 min · p + 1 moves by the size of what p points to.
+  essential: true
+- title: "Arrays and loops together"
+  type: doc
+  meta: "C Basics · sizeof arr / sizeof arr[0] for the length."
+  essential: false
+knowledgeCheck:
+- question: Inside void show(int a[10]), why is sizeof a equal to 8?
+  answer: "An array parameter is adjusted to a pointer: int a[10] in a parameter list means int *a. The function receives only the address of the first element, so sizeof a is the size of a pointer, 8 bytes on x86-64. The 10 is ignored, which is why gcc warns."
+  jumpToId: array-parameters-are-pointers
+  jumpToLabel: Array parameters are pointers
+- question: arr and &arr print the same address. Why does arr + 1 move 4 bytes but &arr + 1 move 40?
+  answer: "They have different types. arr decays to int * (a pointer to one int), so + 1 moves one int. &arr is int (*)[10] (a pointer to the whole array of 10 ints), so + 1 moves past the whole 40-byte array."
+  jumpToId: same-address-different-types
+  jumpToLabel: Same address, different types
+assignment:
+  instruction: "Write a function that returns the largest element of an int array, first wrongly as int max(int a[]) using sizeof a to find the length, then correctly as int max(const int *a, size_t n). Compile both with -Wall -Wextra, read the warning on the first, and test the second on arrays of different lengths."
+  resourceName: "Beej's Guide to C: Arrays, part II"
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/arrays-part-ii.html'
+additionalResources:
+- title: "cppreference: Array to pointer conversion"
+  type: doc
+  meta: the exact decay rule and its exceptions
+  url: 'https://en.cppreference.com/w/c/language/conversion'
+- title: "cppreference: Array declaration"
+  type: doc
+  meta: arrays as function parameters
+  url: 'https://en.cppreference.com/w/c/language/array'
+whyThisMatters: "\"Arrays are pointers\" is one of the most repeated half-truths in C, and the half that's false causes real bugs: functions that think they know an array's length, sizeof giving 8 instead of 40, and pointers to arrays that skip much further than expected. The exact rule is short, and it explains every case."
+---
+
+You've used array indexing and pointer arithmetic interchangeably, because `a[i]` is defined as `*(a + i)`. That makes it tempting to say an array *is* a pointer. It isn't. An array is a block of elements; a pointer is a variable holding one address. What connects them is a single rule.
+
+## The decay rule
+
+In almost every expression, an array is converted ("decays") to a pointer to its first element. `int arr[10];` used as `arr` means `&arr[0]`, of type `int *`.
+
+There are two everyday exceptions, where the array stays a whole array:
+
+- the operand of `sizeof`,
+- the operand of `&`.
+
+(A string literal used to initialise a `char` array is a third.) Predict all four lines, then run it.
+
+<CRun program="c-language/anp-sizeof" caption='sizeof an array, a pointer and a parameter' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `sizeof arr` is 40: under `sizeof` there's no decay, so it's the whole array, 10 ints of 4 bytes.
+- `sizeof p` is 8: `p` is a pointer, and pointers are 8 bytes on x86-64.
+- `sizeof arr / sizeof arr[0]` is 10, the element count. It only works where `arr` is a real array.
+- Inside `show`, `sizeof a` is 8. gcc even warns: "'sizeof' on array function parameter 'a' will return size of 'int *'".
+
+</details>
+
+<KeyIdea>An array decays to a pointer to its first element in almost every expression. sizeof and & are the exceptions; an array parameter is a pointer from the start.</KeyIdea>
+
+## Array parameters are pointers
+
+`void show(int a[10])` looks like it takes an array of 10 ints. It doesn't. In a parameter list, C **adjusts** an array type to a pointer type, so it means exactly `void show(int *a)`. The 10 is ignored: you could pass an array of 3, or of 300, without a warning about the size.
+
+So a function can never find out the length of an array it was passed. That's why C functions that take arrays also take a length:
+
+```c
+#include <stddef.h>
+#include <stdio.h>
+
+int sum(const int *a, size_t n) {
+    int total = 0;
+    for (size_t i = 0; i < n; i++) {
+        total += a[i];
+    }
+    return total;
+}
+
+int main(void) {
+    int scores[] = {3, 5, 9};
+    printf("%d\n", sum(scores, sizeof scores / sizeof scores[0]));
+    return 0;
+}
+```
+
+The length is computed where the array really is an array (in `main`), then passed along with the pointer. Writing the parameter as `const int *a` rather than `int a[]` is honest about what it receives.
+
+## Same address, different types
+
+`arr`, `&arr[0]` and `&arr` all hold the same address. But `&arr` is one of the exceptions: it doesn't decay, so it's a pointer to the **whole array**, of type `int (*)[10]`. Types decide what `+ 1` does.
+
+<CRun program="c-language/anp-address" caption='One address, two types' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The addresses are equal, but `first + 1` moves 4 bytes (one `int`) while `whole + 1` moves 40 bytes (one whole array of 10 ints). Pointer arithmetic always steps by the size of the pointed-to type, and the two pointers point to different types.
+
+You'll meet `int (*)[N]` again when you pass two-dimensional arrays: `int grid[3][4]` decays to `int (*)[4]`, a pointer to the first row.
+
+</details>
+
+## You can't assign an array
+
+A pointer variable can be pointed somewhere else. An array can't be moved, so it can't be assigned:
+
+<CRun program="c-language/anp-assign" caption='Assigning one array to another' />
+
+"assignment to expression with array type": `a` names a fixed block of memory, not a variable holding an address. To copy the elements, use a loop or `memcpy(a, b, sizeof a)`. (Arrays inside a struct *can* be copied by assigning the struct, a handy exception.)
+
+## Done when
+
+You can state the decay rule and its two exceptions, explain why a function can't know an array argument's length, predict `sizeof` for an array, a pointer and a parameter, and say what `&arr + 1` points to.

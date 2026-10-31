@@ -1,0 +1,20 @@
+{
+  "id": "memory-allocator/malloc-tests",
+  "sourceHash": "eb1f15c7e81e9275",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O1 -g -fsanitize=undefined main.c mymalloc.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "three blocks:\n  offset       8       32 bytes  used\n  offset      40      128 bytes  used\n  offset     168       32 bytes  used\n  offset     200  1048368 bytes  free\nafter free(b) and malloc(50):\n  offset       8       32 bytes  used\n  offset      40       80 bytes  used\n  offset     120       48 bytes  free\n  offset     168       32 bytes  used\n  offset     200  1048368 bytes  free\nafter freeing everything:\n  offset       8  1048560 bytes  free\nall tests passed\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

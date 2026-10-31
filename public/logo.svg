@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 40" role="img" aria-label="Ascend">
+  <rect width="36" height="36" x="0" y="2" rx="11" fill="#16181d"/>
+  <g transform="translate(8.1 10.1) scale(0.825)" fill="none" stroke="#d7f26b" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m6 15 6-6 6 6"/>
+    <path d="m6 9 6-6 6 6" opacity=".55"/>
+  </g>
+  <text x="48" y="28" fill="#16181d" font-family="'Bricolage Grotesque', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="24" font-weight="800" letter-spacing="-0.5">Ascend</text>
+</svg>

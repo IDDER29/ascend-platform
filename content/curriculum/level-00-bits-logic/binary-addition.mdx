@@ -1,0 +1,88 @@
+---
+title: "Adding in binary: carries and fixed width"
+level: level-00-bits-logic
+slug: binary-addition
+order: 15
+timeMin: 7
+learningOutcomes:
+- Add two binary numbers column by column, carrying into the next column exactly as in decimal
+- Use the four rules for adding two bits and a carry
+- Explain what happens to a carry out of the top bit when the result must fit in a fixed width
+- Tell the bits that are kept apart from the carry-out and from the true mathematical sum
+primer:
+- title: "Bits, nibbles, bytes and words"
+  type: doc
+  meta: Reread · 2 min · this lesson adds numbers that must fit in one byte.
+  essential: true
+- title: 'Representing Numbers and Letters with Binary: Crash Course Computer Science #4'
+  type: video
+  meta: Watch · 10 min · includes binary addition with carries.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=1GSjbWt0c9M'
+knowledgeCheck:
+- question: What is 1 + 1 in one binary column, and what is 1 + 1 + 1 (with a carry coming in)?
+  answer: "1 + 1 is 10 in binary: write 0, carry 1. 1 + 1 + 1 is 11 in binary: write 1, carry 1."
+  jumpToId: four-rules-for-one-column
+  jumpToLabel: Four rules for one column
+- question: An 8-bit register holds 200 and you add 100. What does it hold afterwards, and where did the rest go?
+  answer: "It holds 44. The true sum, 300, needs 9 bits (1 0010 1100). Only the low 8 bits fit, 0010 1100, which is 44. The ninth bit is the carry-out: it doesn't fit in the register, though a CPU saves it in its carry flag."
+  jumpToId: when-the-sum-needs-another-bit
+  jumpToLabel: When the sum needs another bit
+assignment:
+  instruction: "Add these pairs as 8-bit numbers by hand, column by column, writing every carry: 0101 1010 + 0011 0110, 1111 0000 + 0001 0000, and 1000 0001 + 1000 0001. For each, write the 8 bits kept, the carry-out, and the true sum in decimal. Check your answers by converting to decimal."
+  resourceName: 'Wikipedia: Binary number, the section on addition'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Binary_number'
+additionalResources:
+- title: 'nand2tetris.org: Project 2, Boolean Arithmetic'
+  type: doc
+  meta: the same addition, built from gates
+  url: 'https://www.nand2tetris.org/project02'
+- title: Carry flag (Wikipedia)
+  type: doc
+  meta: reference, where a CPU keeps the carry-out
+  url: 'https://en.wikipedia.org/wiki/Carry_flag'
+whyThisMatters: "Every sum a computer makes is done this way, one column at a time, inside a fixed number of bits. In Logic & Circuits you'll build this exact process out of gates, and in Build a CPU you'll watch the carry-out land in a flag. Knowing that the register keeps only some of the bits is what stops you from trusting a result that quietly wrapped round."
+---
+
+Adding in binary is the addition you already know, with only two digits. The one new thing is what happens at the top: a computer adds inside a fixed number of bits, and sometimes the answer needs one more than it has.
+
+By the end you'll be able to add binary numbers by hand, carries and all, and say exactly which bits a register keeps.
+
+## Four rules for one column
+
+Adding two bits in one column has only four cases, plus a carry that may come in from the column to the right:
+
+<TruthTable caption='Adding bits in one column' rowsJson='[["adding", "total", "write", "carry"], ["0 + 0", "0", "0", "0"], ["0 + 1", "1", "1", "0"], ["1 + 1", "2", "0", "1"], ["1 + 1 + 1 (with a carry in)", "3", "1", "1"]]' />
+
+It's the same as decimal, where 7 + 5 = 12 means "write 2, carry 1". In binary you carry as soon as a column reaches 2, because 2 is written 10.
+
+## Column by column
+
+Add 107 and 54 as bytes. Start at the right-hand column and move left, carrying as you go:
+
+<CodeBlock lang='text' linesJson='["  carries:  1111 1100", "            0110 1011    (107)", "          + 0011 0110    ( 54)", "          -----------", "            1010 0001    (161)"]' />
+
+Check it in decimal: 107 + 54 = 161, and 1010 0001 is 128 + 32 + 1 = 161. Every column follows one of the four rules above.
+
+<KeyIdea>Binary addition is decimal addition with a carry every time a column reaches 2.</KeyIdea>
+
+## When the sum needs another bit
+
+Now add 200 and 100. The true sum is 300, but 300 needs 9 bits and a byte has only 8.
+
+<CodeBlock lang='text' linesJson='["            1100 1000    (200)", "          + 0110 0100    (100)", "          -----------", "          1 0010 1100    (300 needs 9 bits)", "            0010 1100    (the 8 bits kept: 44)"]' />
+
+The ninth bit is the <b>carry-out</b>. A register is 8 flip-flops wide, so there's nowhere to keep it, and the byte that remains reads as 44. The hardware doesn't refuse and doesn't warn you: it keeps the low 8 bits. Most CPUs do save the carry-out in a one-bit <b>carry flag</b>, which a program can check, as you'll see in Build a CPU.
+
+<ByteLab bytesJson='[200, 100, 44]' caption='200, 100 and the byte their sum leaves behind' />
+
+So there are three different things here, and it's worth keeping them apart:
+
+- the <b>true sum</b>, 300, which is just arithmetic;
+- the <b>bits kept</b>, 0010 1100, which are what the register holds;
+- the <b>carry-out</b>, 1, which says the true sum didn't fit.
+
+<KeyIdea>A fixed-width sum keeps the low bits. When there's a carry-out, the bits kept are not the true sum.</KeyIdea>
+
+That is the first case of a number running out of bits. Negative numbers come next, and after them a closer look at overflow: when a fixed width gives a wrong answer, and how to tell.

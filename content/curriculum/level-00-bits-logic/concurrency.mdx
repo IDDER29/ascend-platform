@@ -1,0 +1,173 @@
+---
+title: "Sharing one machine"
+level: level-00-bits-logic
+slug: concurrency
+order: 107
+timeMin: 8
+learningOutcomes:
+- Explain how one CPU core seems to run many programs at once by switching between them
+- Say what must be saved and restored when the OS switches from one program to another
+- Show how two threads adding to the same variable can lose an update
+- Explain how a lock prevents the lost update, and what it costs
+primer:
+- title: "Programs, processes and address spaces"
+  type: doc
+  meta: Reread · 3 min · a process is a running program with its own state.
+  essential: true
+- title: "Variables in memory: x = x + 1, step by step"
+  type: doc
+  meta: Reread · 3 min · x = x + 1 is a read, an add and a write.
+  essential: true
+knowledgeCheck:
+- question: Your laptop has 12 cores but is running 300 processes. How do they all make progress?
+  answer: "The OS gives each core to one thread at a time for a short slice (a few milliseconds), then switches, saving that thread's registers and restoring another's. Switching hundreds of times a second makes them all appear to run at once."
+  jumpToId: one-cpu-many-programs
+  jumpToLabel: One CPU, many programs
+- question: Two threads each add 1 to count a million times, yet it ends at 1169538. What went wrong?
+  answer: "count = count + 1 is three steps: read, add, write. When two threads both read the same value before either writes back, both write the same new value, and one of the two additions is lost."
+  jumpToId: step-through-the-lost-update
+  jumpToLabel: Step through the lost update
+- question: What does a lock guarantee, and what does it cost?
+  answer: "Only one thread at a time can be between lock and unlock, so each read-add-write finishes before another starts and no update is lost. The cost is waiting: threads queue for the lock, so the protected part runs one at a time."
+  jumpToId: locks-one-at-a-time
+  jumpToLabel: "Locks: one at a time"
+assignment:
+  instruction: "Compile the two-thread counter from this lesson with gcc -O0 -pthread and run it five times, writing down each result. Then add a pthread_mutex_t around count = count + 1 and run it five times again. Explain both sets of results in terms of read, add and write, and time both versions with the time command."
+  resourceName: 'OSTEP: Concurrency: An Introduction'
+  resourceType: pdf
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/threads-intro.pdf'
+additionalResources:
+- title: 'Wikipedia: Context switch'
+  type: doc
+  meta: what the OS saves when it switches
+  url: 'https://en.wikipedia.org/wiki/Context_switch'
+- title: 'Wikipedia: Race condition'
+  type: doc
+  meta: more examples of results that depend on timing
+  url: 'https://en.wikipedia.org/wiki/Race_condition'
+- title: 'OSTEP: Locks'
+  type: pdf
+  meta: how locks are built from special CPU instructions
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/threads-locks.pdf'
+whyThisMatters: "Every modern program shares the machine: with other programs, and often between its own threads. Bugs from sharing are the hardest kind, because they depend on timing and may show up once in a thousand runs. Seeing exactly how an update gets lost is the first step to never writing one."
+---
+
+Right now your computer is running hundreds of programs, and probably has fewer than 20 cores. The tiny CPU runs exactly one program from start to HALT. This lesson is about how a real machine shares itself, and the new kind of bug sharing creates.
+
+## One CPU, many programs
+
+The OS gives a core to one thread (one line of execution within a process) for a short **time slice**, a few milliseconds. When the slice ends, a timer interrupt hands control to the kernel, which picks another thread and lets it run. Hundreds of switches a second make everything appear to run at once.
+
+A switch also happens when a thread has to wait: for a disk read, a network packet, a key press. Rather than let the core sit idle, the kernel runs someone else until the data arrives.
+
+## What a switch saves
+
+A thread's progress lives in the CPU: its PC, its registers, its stack pointer, its flags. To pause a thread and resume it later, exactly where it was, the kernel copies all of that out to memory and copies the next thread's values in. This is a **context switch**.
+
+It's the same idea as CALL saving the return address on the tiny CPU's stack, but for the whole CPU state. Done right, the thread can't tell it was ever paused.
+
+<KeyIdea>A context switch saves one thread's CPU state (PC, registers, SP, flags) and restores another's, so many threads take turns on one core.</KeyIdea>
+
+## Real threads, a lost update
+
+Two threads, each adding 1 to the same global variable a million times:
+
+```c
+#include <pthread.h>
+#include <stdio.h>
+
+long count = 0;
+
+void *work(void *arg) {
+    (void)arg;
+    for (int i = 0; i < 1000000; i++) {
+        count = count + 1;
+    }
+    return NULL;
+}
+
+int main(void) {
+    pthread_t a, b;
+    pthread_create(&a, NULL, work, NULL);
+    pthread_create(&b, NULL, work, NULL);
+    pthread_join(a, NULL);
+    pthread_join(b, NULL);
+    printf("%ld\n", count);
+    return 0;
+}
+```
+
+It should print 2000000. Three runs on a 12-core laptop (gcc 15.2, `-O0 -pthread`; your numbers will differ, and change every run):
+
+```
+1169538
+1025546
+1202624
+```
+
+Hundreds of thousands of additions disappeared, and a different number each time.
+
+## Step through the lost update
+
+`count = count + 1` isn't one step. As you saw in the variables lesson, it's read, add, write. Below, two threads share box 0x80 on the tiny CPU. Thread A uses R0 and thread B uses R1, and their instructions are interleaved the way a switch (or two cores) might interleave them:
+
+```
+LDA R0, [0x80]    ; A reads 0
+LDA R1, [0x80]    ; B reads 0, before A has written
+INC R0            ; A: 1
+INC R1            ; B: 1
+STA R0, [0x80]    ; A writes 1
+STA R1, [0x80]    ; B writes 1: A's addition is lost
+```
+
+Two additions, and box 0x80 ends at 1. Reorder the six instructions so that box 0x80 ends at 2. The rule: each thread's own three instructions must stay in their order (read, then INC, then write), since you're only choosing how the two threads interleave.
+
+<TinyCpu2 editable caption='Interleave two threads' programJson='["LDA R0, [0x80]", "LDA R1, [0x80]", "INC R0", "INC R1", "STA R0, [0x80]", "STA R1, [0x80]", "HALT"]' goalJson='{"mem":{"128":2}}' />
+
+<details>
+<summary>Check your answer</summary>
+
+Let one thread finish its read, add and write before the other reads:
+
+```
+LDA R0, [0x80]
+INC R0
+STA R0, [0x80]
+LDA R1, [0x80]
+INC R1
+STA R1, [0x80]
+HALT
+```
+
+B now reads A's 1 and writes 2. Any order where B's read comes after A's write (or A's after B's) works. Every other order loses an update. With threads, you don't get to choose the order, so the two-thread counter loses updates whenever an unlucky interleaving happens, which over two million additions is very often.
+
+</details>
+
+## Locks: one at a time
+
+The fix is to make read, add and write happen as one unbroken unit for each thread. A **lock** (a mutex) does that: only one thread at a time can be between lock and unlock; any other thread trying to lock waits.
+
+```c
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+void *work(void *arg) {
+    (void)arg;
+    for (int i = 0; i < 1000000; i++) {
+        pthread_mutex_lock(&lock);
+        count = count + 1;
+        pthread_mutex_unlock(&lock);
+    }
+    return NULL;
+}
+```
+
+```
+2000000
+2000000
+```
+
+Correct every time. The cost: the protected part runs one thread at a time, and locking itself takes work, so this version is slower. Choosing what to share, and how little to lock, is a large part of concurrent programming.
+
+## Sharing more than the CPU
+
+The CPU isn't the only thing shared. Memory, files, the network and the display all have many programs wanting them. The OS coordinates each one: it divides memory between processes, queues disk requests, and decides whose window is on top. Wherever two parties use one thing, someone has to decide the order.

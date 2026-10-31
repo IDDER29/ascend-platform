@@ -1,0 +1,170 @@
+---
+title: "Capstone: Build and verify a small RISC-V core"
+level: level-19-riscv-core
+slug: project-riscv-core
+order: 2
+timeMin: 90
+learningOutcomes:
+- Read a complete single-cycle RV32I core in Verilog and explain its decode, ALU, branch and memory logic
+- Run a C program compiled by a real RISC-V gcc on the core in simulation, and match a cycle trace to the disassembly
+- Verify the core by comparing its output with the same program compiled and run natively
+- Diagnose two realistic decode bugs from what a program printed, and explain why each did what it did
+primer:
+- title: "The RISC-V instruction set"
+  type: doc
+  meta: Reread · 4 min · the formats and immediates this core decodes.
+  essential: true
+- title: "Project: An ALU in Verilog"
+  type: doc
+  meta: "Digital design with Verilog · the ALU and testbench style used here."
+  essential: true
+- title: "Testbenches"
+  type: doc
+  meta: "Verification · self-checking tests and reference models."
+  essential: false
+knowledgeCheck:
+- question: How does the core know whether bit 30 of an instruction means "subtract" or is part of an immediate?
+  answer: "It depends on the opcode and funct3. For register-register ALU instructions (opcode 0110011), bit 30 picks SUB over ADD and SRA over SRL. For immediate instructions it's bit 10 of the immediate, except for the shifts (funct3 101), where it picks SRAI over SRLI. The correct core only lets bit 30 choose the operation for immediate shifts."
+  jumpToId: part-4-two-bugs
+  jumpToLabel: "Part 4: Two bugs"
+- question: Why is matching the native output strong evidence that the core is right, but not proof?
+  answer: "The program runs tens of thousands of instructions: loops, calls, the stack, loads and stores, signed comparisons, a library multiply. A wrong result anywhere would very likely show up in the six numbers. But it only exercises what this program happens to use: an instruction or case it never reaches, like a byte store or a shift by 31, could still be wrong. Compliance suites and formal checks close those gaps."
+  jumpToId: part-5-how-sure-are-you
+  jumpToLabel: "Part 5: How sure are you?"
+assignment:
+  instruction: "Extend the core on your own machine with Icarus Verilog and a RISC-V gcc (riscv64-unknown-elf-gcc, -march=rv32i -mabi=ilp32). Add byte and halfword loads and stores (LB, LBU, LH, LHU, SB, SH) and write a C program that uses chars to test them against the native build. Then pipeline it into the five stages from the Pipelining course, with forwarding, and check that every program still prints the same numbers in fewer cycles per instruction."
+  resourceName: 'RISC-V ratified specifications (the unprivileged ISA manual)'
+  resourceType: site
+  resourceUrl: 'https://riscv.org/specifications/ratified/'
+additionalResources:
+- title: "riscv-tests: the official RISC-V test programs"
+  type: doc
+  meta: per-instruction tests real cores are checked against
+  url: 'https://github.com/riscv-software-src/riscv-tests'
+- title: "riscv-formal"
+  type: doc
+  meta: formal verification for RISC-V cores, built on Yosys
+  url: 'https://github.com/YosysHQ/riscv-formal'
+whyThisMatters: "This is where the whole track lands: a processor you can read end to end, running code from a real compiler, checked against a real machine. Everything since the first bit (gates, adders, registers, the tiny CPU, assembly, C, the toolchain, pipelines and Verilog) is in these few hundred lines, and you know what each line is for."
+---
+
+This capstone puts the whole track together. You'll read a complete RISC-V processor written in Verilog, run a C program compiled by a real RISC-V gcc on it, and verify it the way processor designers do: by comparing its behaviour with a machine you already trust. Then you'll diagnose two bugs from nothing but what a program printed.
+
+## Part 1: The core
+
+The core is **single-cycle**: every instruction is fetched, decoded, executed and written back in one clock cycle. Pipelining it comes later, in the assignment. It implements the RV32I base instructions gcc emits: LUI, AUIPC, JAL, JALR, the six branches, LW, SW, the immediate and register ALU operations. The setup around it:
+
+- **Memory:** one 16 KiB memory holds code from address 0, then data, with the stack growing down from 0x3FF0.
+- **Output:** a store to address 0xFFF0 prints a number in the testbench.
+- **Halting:** a store to 0xFFF4 stops the simulation.
+
+Read `core.v` in the run in Part 3. Find these four things:
+
+1. where each immediate format is built;
+2. why `x0` always reads 0;
+3. how a branch changes `next_pc`;
+4. what JALR does with the lowest bit.
+
+<details>
+<summary>Check your answer</summary>
+
+1. `imm_i`, `imm_s`, `imm_b`, `imm_u` and `imm_j` reassemble the scattered immediate bits of each format and sign-extend them from bit 31, so the sign is always in the same place, as the RISC-V instruction set lesson showed. B and J immediates get a 0 appended: branch and jump targets are always even.
+2. Reads of register 0 are forced to 0 (`(rs1 == 0) ? 32'd0 : x[rs1]`), and writes to `rd == 0` are skipped. The register exists in the array but is never used.
+3. Each branch computes `taken` from the comparison its `funct3` selects (signed for BLT/BGE, unsigned for BLTU/BGEU), and only if it's taken does `next_pc` become `pc + imm_b`. Otherwise it stays `pc + 4`.
+4. JALR clears bit 0 of the target, `(a + imm_i) & ~32'd1`, as the specification requires.
+
+</details>
+
+## Part 2: The first instructions
+
+The program starts with a few lines of assembly (`start.S`): set the stack pointer, call `main`, then store `main`'s return value to 0xFFF4 to stop. This is the real disassembly of the start of the compiled program:
+
+```
+00000000 <_start>:
+   0:	00004137          	lui	sp,0x4
+   4:	ff010113          	addi	sp,sp,-16 # 3ff0 <data+0x3a1c>
+   8:	49c000ef          	jal	4a4 <main>
+000004a4 <main>:
+ 4a4:	fe010113          	addi	sp,sp,-32
+ 4a8:	000017b7          	lui	a5,0x1
+ 4ac:	00812c23          	sw	s0,24(sp)
+```
+
+And this is the core executing them, one line per clock cycle. Predict the value of `sp` (x2) after each of the first four instructions.
+
+<HdlRun design="riscv-core/trace" caption='The first twelve cycles' show="tb_trace.v" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `lui sp,0x4` puts 0x4 in the upper 20 bits: **16384** (0x4000).
+- `addi sp,sp,-16` gives **16368** (0x3FF0).
+- `jal 4a4` writes the return address, 8 + 4 = **12**, to `ra` (x1), and the next pc is 0x4a4.
+- `addi sp,sp,-32` in `main` makes room for its frame: **16336**.
+- The `sw` lines save registers into that frame: `sw s0,24(sp)` writes address 16336 + 24 = 0x3FE8, and `sw ra,28(sp)` saves the 12.
+
+Every number in the trace is exactly what the disassembly says should happen. That's the first check of any processor.
+
+</details>
+
+## Part 3: A real program
+
+The test program is ordinary C: a sum, a recursive Fibonacci, a prime counter, and a scan of an array. Because RV32I has no multiply instruction, gcc implements `d * d` with a call to `__mulsi3` from its support library, libgcc, which uses shifts and adds. First, the same file compiled for x86-64 and run natively:
+
+<CRun program="architect/riscv-native" caption='The program, run natively on x86-64' />
+
+Now compiled for RV32I by `riscv64-unknown-elf-gcc -march=rv32i -mabi=ilp32 -O2`, and run on the core. Predict the output, and roughly how many cycles it takes.
+
+<HdlRun design="riscv-core/sum" caption='The same program on the core' show="core.v,tb_core.v" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The same six numbers: 5050, 610, 46, 12, 2 and -3. It stopped after **70129 cycles**, and since the core is single-cycle, that's 70129 instructions. Most of them are in the prime counter's inner loop, which finds remainders by repeated subtraction because RV32I has no divide instruction either.
+
+The x86 build and the RISC-V build came from two different compiler back ends producing two different instruction sets, and only one of them ran on hardware you wrote yourself. They still agree on every value, down to the sign of `-10 >> 2`.
+
+</details>
+
+## Part 4: Two bugs
+
+Each of these cores has one changed line in its decoder. Run each, then work out the bug from the output alone before you look at the change.
+
+<HdlRun design="riscv-core/bug-srai" caption='Core A' show="tb_core.v" predict />
+
+<HdlRun design="riscv-core/bug-addi" caption='Core B' show="tb_core.v" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+**Core A** gets everything right except the last value: 1073741821 instead of -3. That's -10 shifted right by 2 **with zeros** coming in at the top instead of copies of the sign bit: 0xFFFFFFF6 becomes 0x3FFFFFFD. So the arithmetic shift with an immediate, SRAI, behaved like SRLI. The changed line ignores bit 30 for immediate instructions: `alu(funct3, 1'b0, a, imm_i)`.
+
+**Core B** prints 5050, then never finishes. The changed line lets bit 30 choose "subtract" for **every** immediate instruction: `alu(funct3, funct7[5], a, imm_i)`. In ADDI, bit 30 is just bit 10 of the immediate. It's set in `addi sp,sp,-16` (0xff010113), so that instruction computed sp - (-16), and the stack pointer moved up instead of down. The first loop doesn't touch the stack, so 5050 comes out right. The first real function call, `fib`, saves registers through the wrong stack pointer, returns to garbage, and runs forever.
+
+Both bugs are in the same few bits of the same instruction format, and they fail in completely different ways: one wrong digit, or a hang. That's why the RISC-V specification's exact field meanings matter, and why a core is tested with many programs, not one.
+
+</details>
+
+## Part 5: How sure are you?
+
+The core printed the right answers for one program of 70129 instructions. How much does that prove, and what would you add before calling it correct?
+
+<details>
+<summary>Check your answer</summary>
+
+It's strong evidence for what the program used: loops, calls and returns, the stack, word loads and stores, signed and unsigned comparisons, shifts, and the library multiply. A single wrong bit in any of those would very likely have changed one of the six numbers, as Core A shows.
+
+It proves nothing about what the program never did. This program never uses LUI with a large negative value, BLTU, a shift by 31, AUIPC far from zero, or a misaligned jump. Real cores close those gaps in layers:
+
+- **Directed per-instruction tests:** the official `riscv-tests`, each checking one instruction's corner cases.
+- **Compliance suites:** for example RISCOF, which compare against a reference simulator.
+- **Random programs:** generated in large numbers, with every register write compared against a reference model, instruction by instruction.
+- **Formal checks:** `riscv-formal` proves each instruction's behaviour against the specification for every input, using the same Yosys tools as the Verification course.
+
+</details>
+
+<KeyIdea>A processor is a decoder, a register file, an ALU and a next-pc rule, in a few hundred lines. You check it the way you checked everything on this track: run real programs, compare with a machine you trust, and read a trace when they disagree.</KeyIdea>
+
+## Done when
+
+You've explained the immediates, x0, branches and JALR, predicted the first trace and the program's output, diagnosed Core A and Core B from their output, and said what else you'd need before calling the core correct. Then do the assignment: add byte loads and stores, and pipeline the core.

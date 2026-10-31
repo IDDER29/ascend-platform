@@ -1,0 +1,20 @@
+{
+  "id": "vm-threads-files/pool-hang",
+  "sourceHash": "5261b01c331dfea6",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O1 -g -pthread main.c threadpool.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "",
+    "exitCode": null,
+    "signal": "SIGTERM",
+    "timedOut": true
+  },
+  "generated": "2026-10-31"
+}

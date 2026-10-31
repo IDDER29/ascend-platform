@@ -1,0 +1,129 @@
+---
+title: "Arrays and loops together"
+level: level-04-c-basics
+slug: arrays-and-loops
+order: 10
+timeMin: 9
+learningOutcomes:
+- Declare and initialise an array, and find its length with sizeof
+- Walk an array with a for loop to sum it, find its largest element and reverse it
+- Spot an off-by-one loop that steps past the last element, and catch it with -fsanitize=undefined
+- Pass an array to a function together with its length
+primer:
+- title: "Arrays: values side by side"
+  type: doc
+  meta: Reread · 3 min · an array is boxes in a row; a[i] is the box at start + i × size.
+  essential: true
+- title: "Loops: while, for and do"
+  type: doc
+  meta: Reread · 2 min · the for loop you'll use on every array.
+  essential: true
+knowledgeCheck:
+- question: An array is declared int a[5]. Which indexes are valid, and what's wrong with for (int i = 0; i <= 5; i++)?
+  answer: "Indexes 0 to 4. The loop also runs with i = 5, so a[5] reads or writes the box just past the array. C doesn't check, so this silently touches whatever is there: undefined behaviour. Use i < 5."
+  jumpToId: one-step-too-far
+  jumpToLabel: One step too far
+- question: Why does a function that takes an array also need its length as a parameter?
+  answer: "An array passed to a function arrives as the address of its first element. Inside the function, sizeof can't recover the original length, so the caller, which knows it, must pass it in."
+  jumpToId: arrays-and-functions
+  jumpToLabel: Arrays and functions
+assignment:
+  instruction: "Write a program with an array of 8 test scores. Print the scores, their average with one decimal place, the lowest and highest, and how many are above the average. Put each calculation in its own function that takes the array and its length. Compile with -Wall -Wextra -fsanitize=undefined and check it runs clean."
+  resourceName: "Beej's Guide to C: Arrays"
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/arrays.html'
+additionalResources:
+- title: "cppreference: Array declaration"
+  type: doc
+  meta: the exact rules, including initialisers
+  url: 'https://en.cppreference.com/w/c/language/array'
+- title: "CS50 Week 2: Arrays"
+  type: video
+  meta: arrays, loops over them, and strings as arrays
+  url: 'https://cs50.harvard.edu/x/weeks/2/'
+whyThisMatters: "Arrays are the most common data structure in C and the fastest, because their elements sit side by side in memory. They're also where C's most famous bugs come from: C never checks an index. Writing loops that stay inside the array, and using tools that catch the ones that don't, is a core skill for everything after this."
+---
+
+In Foundations you saw that an array is boxes in a row, and that `a[i]` is the box at the start address plus `i` times the element size. Now you'll write the loops that real C programs run over arrays, and meet the bug that every C programmer makes at least once.
+
+## Declaring and walking an array
+
+```c
+int temps[] = {14, 17, 21, 19, 12, 23};
+```
+
+declares an array of `int` and fills it. With an initialiser, you can leave the size out and the compiler counts it: 6 here. Without one, you give the size: `int scores[100];` (and its contents start as garbage, unless it's declared outside every function or `static`, in which case they start as 0).
+
+`sizeof temps` is the whole array's size in bytes, and `sizeof temps[0]` is one element's, so their ratio is the number of elements. That works anywhere the array itself is in scope. Predict this program's line:
+
+<CRun program="c-basics/arrays-sum-max" caption='Sum, maximum and average' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`6 days, total 106, max 23, average 17.7`. The loop visits indexes 0 to 5. `max` starts as the first element (not 0, which would be wrong for an array of negative numbers) and is replaced whenever a bigger one turns up. `(double)sum / n` converts before dividing; `sum / n` would be integer division, giving 17.
+
+</details>
+
+The standard loop is `for (size_t i = 0; i < n; i++)`: start at 0, stop *before* `n`. `size_t` is the unsigned type that `sizeof` gives, and the natural type for sizes and indexes.
+
+## One step too far
+
+This program means to store the squares 0, 1, 4, 9 and 16. We compiled it with `-fsanitize=undefined`, which adds checks for undefined behaviour while it runs:
+
+<CRun program="c-basics/arrays-off-by-one" caption='A loop that runs once too often' />
+
+`int squares[N]` with `N` 5 has indexes 0 to 4. The loop condition `i <= N` lets it run with `i = 5`, and `squares[5] = 25;` writes into the 4 bytes just past the array. C doesn't stop you: the program carried on and printed its answer. Only the sanitizer noticed, reporting the exact line and column, and that index 5 is out of bounds for `int [5]`.
+
+Without the sanitizer, the program almost certainly runs and looks fine. The write lands on whatever happens to be next to the array, maybe another variable, maybe part of the stack frame, and the damage shows up later, somewhere else. That's why this bug is so dangerous, and why it has been behind countless security holes.
+
+<KeyIdea>An array of n elements has indexes 0 to n - 1. Loop with i &lt; n, never i &lt;= n. C doesn't check, so turn the checks on while you test.</KeyIdea>
+
+## Reversing in place
+
+Walking from both ends at once is a common pattern. What does this print?
+
+<CRun program="c-basics/arrays-reverse" caption='Two indexes, moving toward each other' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`7 6 5 4 3 2 1`. `i` starts at the front and `j` at the back; each pass swaps `a[i]` and `a[j]` with a temporary, then moves them toward each other. The loop stops when they meet (`i < j` fails), so with 7 elements the middle one, 4, stays put. Using `i <= j` would also work, swapping the middle element with itself; going on past the middle would swap everything back.
+
+</details>
+
+## Arrays and functions
+
+When you pass an array to a function, C passes the address of its first element, not a copy of the array. So the function can change the caller's elements, and it can't know the length on its own:
+
+```c
+#include <stdio.h>
+
+void scale(int values[], size_t n, int factor) {
+    for (size_t i = 0; i < n; i++) {
+        values[i] *= factor;
+    }
+}
+
+int main(void) {
+    int prices[] = {3, 5, 8};
+    size_t n = sizeof prices / sizeof prices[0];
+    scale(prices, n, 10);
+    for (size_t i = 0; i < n; i++) {
+        printf("%d ", prices[i]);
+    }
+    printf("\n");
+    return 0;
+}
+```
+
+This prints `30 50 80`: unlike an `int` argument, the array's elements were changed. Inside `scale`, `values` is really a pointer, so `sizeof values` would be the size of an address (8 bytes on this machine), not of the array. That's why the length always travels as a separate parameter. The C Language explains exactly why arrays behave this way.
+
+A classmate's version of `scale` uses `sizeof values / sizeof values[0]` to find the length instead of taking `n`. With `prices` of 3 ints, how many elements would it scale, on a machine with 8-byte addresses and 4-byte ints?
+
+<details>
+<summary>Check your answer</summary>
+
+2. `sizeof values` is 8, the size of a pointer, and `sizeof values[0]` is 4, so it computes 8 / 4 = 2 and scales only the first two prices. gcc warns about exactly this, even without `-Wall`: `sizeof` on array function parameter `values` will return size of `int *`.
+
+</details>

@@ -1,0 +1,20 @@
+{
+  "id": "c-language/fp-dispatch",
+  "sourceHash": "681cc831bf6b8c78",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "3 + 4 = 7\n10 / 2 = 5\n6 * 7 = 42\n9 - 12 = -3\nunknown operator 'x'\n8 / 0: can't divide by zero\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

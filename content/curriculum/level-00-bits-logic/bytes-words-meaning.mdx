@@ -1,0 +1,99 @@
+---
+title: "Bits, nibbles, bytes and words"
+level: level-00-bits-logic
+slug: bytes-words-meaning
+order: 14
+timeMin: 7
+learningOutcomes:
+- Work out how many patterns a fixed number of bits can hold, and the largest number they can store
+- Name the common sizes, from a nibble and a byte to a word, and say what each is used for
+- Explain that a word is the size a particular CPU works with most naturally, not a fixed number
+- Tell a kilobyte (1000 bytes) apart from a kibibyte (1024 bytes), and explain why the two get mixed up
+primer:
+- title: "Binary & number bases"
+  type: doc
+  meta: Reread · 3 min · place values are the key to every size in this lesson.
+  essential: true
+- title: 'Representing Numbers and Letters with Binary: Crash Course Computer Science #4'
+  type: video
+  meta: Watch · 10 min · bytes, wider numbers and why sizes come in powers of two.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=1GSjbWt0c9M'
+knowledgeCheck:
+- question: How many different patterns can 8 bits make, and what is the largest unsigned number a byte can hold?
+  answer: "256 patterns, because each extra bit doubles the count: 2 to the power 8 is 256. Counting from 0, they hold 0 to 255, so the largest is 255."
+  jumpToId: every-bit-doubles-the-patterns
+  jumpToLabel: Every bit doubles the patterns
+- question: Is a word always 32 bits?
+  answer: No. A word is the size a particular CPU handles most naturally, the width of its registers. It was 16 bits on many older machines, is 64 bits on most laptops and phones today, and is 8 bits on the tiny CPU in this path.
+  jumpToId: words-the-size-a-cpu-likes
+  jumpToLabel: "Words: the size a CPU likes"
+- question: A drive is sold as 500 GB, but the computer says 465. Has anything gone missing?
+  answer: "No. The drive maker means 500 billion bytes (powers of 1000). Many computers count in powers of 1024, so they report 500,000,000,000 divided by 1,073,741,824, about 465.7, and still label it GB. Same bytes, two units."
+  jumpToId: kilobytes-and-kibibytes
+  jumpToLabel: Kilobytes and kibibytes
+assignment:
+  instruction: "Find three numbers on devices around you: a phone's storage, a laptop's memory, a file's size. For each, say whether it is likely counted in powers of 1000 or 1024, and convert one of them to the other unit. Then answer: how many bits wide is your own computer's word? (Search its processor name plus \"64-bit\".)"
+  resourceName: 'Wikipedia: Binary prefix'
+  resourceType: doc
+  resourceUrl: 'https://en.wikipedia.org/wiki/Binary_prefix'
+additionalResources:
+- title: Byte (Wikipedia)
+  type: doc
+  meta: reference, including how the byte came to be 8 bits
+  url: 'https://en.wikipedia.org/wiki/Byte'
+- title: Word (computer architecture) (Wikipedia)
+  type: doc
+  meta: reference, word sizes across machines
+  url: 'https://en.wikipedia.org/wiki/Word_(computer_architecture)'
+- title: Nibble (Wikipedia)
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Nibble'
+whyThisMatters: "Every value a computer holds has a fixed width, and that width decides what fits. When you later pick a type in C, read a memory dump, or wonder why a counter suddenly jumps back to zero, you are looking at these sizes. Knowing that a byte holds 0 to 255, and that a word is whatever the CPU works in, turns those moments from surprises into arithmetic."
+---
+
+You can now read and write numbers in binary. Real computers never handle a loose, open-ended row of bits, though. They work in fixed sizes: so many bits, no more, no fewer. This lesson names those sizes and shows what each one can hold.
+
+By the end you'll be able to say how many values fit in a given number of bits, name the common sizes, and explain why a 500 GB drive shows up as 465.
+
+## Every bit doubles the patterns
+
+One bit has 2 patterns: 0 and 1. Add a second bit and each of those can be followed by a 0 or a 1, so there are 4: 00, 01, 10, 11. Every extra bit doubles the count again.
+
+<TruthTable caption='How much fits in n bits' rowsJson='[["bits", "patterns", "unsigned range"], ["1", "2", "0 to 1"], ["4", "16", "0 to 15"], ["8", "256", "0 to 255"], ["16", "65,536", "0 to 65,535"], ["32", "4,294,967,296", "0 to 4,294,967,295"]]' />
+
+The largest number is always one less than the number of patterns, because counting starts at 0. That is why 255 turns up so often: it is the biggest value one byte can hold.
+
+<KeyIdea>n bits make 2 to the power n patterns. Counting from 0, the largest unsigned value is that number minus one.</KeyIdea>
+
+## Nibbles and bytes
+
+Some sizes have names:
+
+- A <b>nibble</b> is 4 bits. It holds 0 to 15, which is exactly one hexadecimal digit. That is why hex is so convenient: two hex digits are one byte.
+- A <b>byte</b> is 8 bits, the smallest amount most computers give an address to. A memory address names a byte, not a bit. A byte holds 0 to 255, or 00 to FF in hex.
+
+<ByteLab bytesJson='[255, 15, 170]' caption='Three bytes: click any bit to flip it' />
+
+Early computers used bytes of different sizes. The 8-bit byte became the standard in the 1960s, with IBM's System/360. It is a power of two, splits neatly into two nibbles, and has room for every letter, digit and punctuation mark in English text.
+
+## Words: the size a CPU likes
+
+A <b>word</b> is the amount of data a particular CPU handles most naturally: the width of its registers and of most of its arithmetic. Unlike a byte, a word is not one fixed size.
+
+<TruthTable caption='Word sizes on different machines' rowsJson='[["machine", "word"], ["the tiny CPU in this path", "8 bits"], ["many 1980s home computers", "8 or 16 bits"], ["PCs in the 1990s and 2000s", "32 bits"], ["most laptops and phones today", "64 bits"]]' />
+
+When someone says a computer is "64-bit", they mean its word is 64 bits wide: it adds, compares and moves 64-bit numbers in one step. A wider word handles bigger numbers at once and can name more memory addresses.
+
+<KeyIdea>A byte is always 8 bits. A word is whatever size the CPU in front of you works in.</KeyIdea>
+
+## Kilobytes and kibibytes
+
+In everyday units, kilo means 1000. But 1000 isn't a power of two, and 1024 (2 to the power 10) is close to it, so early programmers borrowed "kilobyte" for 1024 bytes. Now the same word means two different numbers, and the gap grows with every step up:
+
+<TruthTable caption='Two ways to count' rowsJson='[["name", "powers of 1000", "powers of 1024"], ["kilo / kibi", "1,000", "1,024"], ["mega / mebi", "1,000,000", "1,048,576"], ["giga / gibi", "1,000,000,000", "1,073,741,824"]]' />
+
+The standard fix is a separate name for the binary units: <b>kibibyte</b> (KiB) for 1024 bytes, mebibyte (MiB), gibibyte (GiB). Drive makers count in powers of 1000. Many operating systems count in powers of 1024 but still print "GB". So a drive sold as 500 GB, which is 500,000,000,000 bytes, shows up as about 465 "GB": 500,000,000,000 divided by 1,073,741,824. No bytes are missing; the units are different.
+
+That's the size of things. Next you'll add numbers that have to fit in one of these fixed sizes, and see what happens when they don't.

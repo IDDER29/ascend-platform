@@ -1,0 +1,100 @@
+---
+title: "Simplifying logic: identities and De Morgan's laws"
+level: level-00-bits-logic
+slug: boolean-algebra
+order: 28
+timeMin: 8
+learningOutcomes:
+- Use the basic identities (A AND 1 = A, A OR 0 = A, A AND NOT A = 0 and others) to simplify an expression
+- State De Morgan's laws and check them with a truth table
+- Show that two different circuits are equivalent by comparing their truth tables
+- Simplify a circuit so it uses fewer gates without changing what it does
+primer:
+- title: "Boolean logic & truth tables"
+  type: doc
+  meta: Reread · 3 min · AND, OR, NOT and their tables.
+  essential: true
+- title: 'Boolean Logic & Logic Gates: Crash Course Computer Science #3'
+  type: video
+  meta: Watch · 10 min · the same operators, and how they become hardware.
+  essential: false
+  url: 'https://www.youtube.com/watch?v=gI-qXk7XojA'
+knowledgeCheck:
+- question: What does De Morgan's first law say, in words?
+  answer: "NOT (A AND B) is the same as (NOT A) OR (NOT B): \"not both\" means \"at least one is false\". The second law swaps AND and OR: NOT (A OR B) is (NOT A) AND (NOT B)."
+  jumpToId: de-morgans-laws
+  jumpToLabel: "De Morgan's laws"
+- question: How do you prove two circuits do the same thing?
+  answer: Compare their truth tables. If every row gives the same output, the circuits are equivalent, even if they use different gates. With a few inputs you can check every row; that is a complete proof.
+  jumpToId: same-table-same-circuit
+  jumpToLabel: Same table, same circuit
+- question: Simplify (A AND B) OR (A AND NOT B).
+  answer: "It's just A. Pull A out: A AND (B OR NOT B). B OR NOT B is always 1, and A AND 1 is A. Whatever B is, the output follows A."
+  jumpToId: simplify-a-circuit
+  jumpToLabel: Simplify a circuit
+assignment:
+  instruction: "In nand2tetris Project 1, build Not, And and Or from Nand alone, using the online simulator. For each, write the expression you used and check it against the truth table. Then explain which of De Morgan's laws you needed for Or."
+  resourceName: 'nand2tetris.org: Project 1, Boolean Logic'
+  resourceType: site
+  resourceUrl: 'https://www.nand2tetris.org/project01'
+additionalResources:
+- title: "De Morgan's laws (Wikipedia)"
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/De_Morgan%27s_laws'
+- title: Boolean algebra (Wikipedia)
+  type: doc
+  meta: reference, with every identity
+  url: 'https://en.wikipedia.org/wiki/Boolean_algebra'
+whyThisMatters: "Fewer gates means a smaller, cheaper, faster chip, and the same rules let compilers simplify your if statements and let you rewrite a confusing condition like !(a && b) into one you can read. Whenever two pieces of logic look different, a truth table tells you for certain whether they are."
+---
+
+There's usually more than one circuit that does the same job. Some use many gates, some use few. Boolean algebra is the set of rules for rewriting a logic expression into an equal one, so you can find the simplest.
+
+By the end you'll be able to simplify an expression with the basic identities, use De Morgan's laws, and prove two circuits equal with a truth table.
+
+## The basic identities
+
+Each of these is true for every value of A, which you can check by trying A = 0 and A = 1:
+
+<TruthTable caption='Identities that always hold' rowsJson='[["identity", "in words"], ["A AND 1 = A", "ANDing with 1 changes nothing"], ["A AND 0 = 0", "ANDing with 0 always gives 0"], ["A OR 0 = A", "ORing with 0 changes nothing"], ["A OR 1 = 1", "ORing with 1 always gives 1"], ["A AND A = A", "a value ANDed with itself is itself"], ["A OR A = A", "the same for OR"], ["A AND NOT A = 0", "a value and its opposite are never both 1"], ["A OR NOT A = 1", "one of them is always 1"], ["NOT NOT A = A", "two NOTs cancel"]]' />
+
+Two more let you move things around: AND and OR don't care about order (A AND B = B AND A), and you can pull out a shared part, like factoring in ordinary algebra: (A AND B) OR (A AND C) = A AND (B OR C).
+
+<KeyIdea>Every identity is a truth table you can check in a few rows. That's why boolean algebra can be trusted completely.</KeyIdea>
+
+## De Morgan's laws
+
+Two rules connect AND, OR and NOT. They're named after Augustus De Morgan:
+
+- NOT (A AND B) = (NOT A) OR (NOT B)
+- NOT (A OR B) = (NOT A) AND (NOT B)
+
+In words: "not both" means "at least one is not", and "neither" means "this is not, and that is not". Here's the first law, row by row:
+
+<TruthTable caption='Checking De Morgan: the last two columns always match' rowsJson='[["A", "B", "NOT (A AND B)", "(NOT A) OR (NOT B)"], ["0", "0", "1", "1"], ["0", "1", "1", "1"], ["1", "0", "1", "1"], ["1", "1", "0", "0"]]' />
+
+The left-hand side is NAND. So De Morgan says a NAND is the same as an OR of two inverted inputs, which is one reason NAND can build everything.
+
+## Same table, same circuit
+
+Two circuits are <b>equivalent</b> when they give the same output for every input. With a handful of inputs you can check every row, so a matching truth table is a complete proof, not just good evidence.
+
+XOR is a good example. It isn't one of the three basic operators, but it can be built from them: A XOR B = (A AND NOT B) OR (NOT A AND B). In words: A without B, or B without A.
+
+## Simplify a circuit
+
+Take this expression: (A AND B) OR (A AND NOT B). Drawn as a circuit it needs a NOT, two ANDs and an OR: four gates.
+
+Pull out the shared A: A AND (B OR NOT B). Now B OR NOT B is always 1, and A AND 1 is A. The whole thing is just A: no gates at all. B doesn't matter.
+
+Try it in the lab. OUT starts as the four-gate version. The target column is what it should do. Rewrite OUT with as few gates as you can, keeping every row matched. Then try the second output: make NB equal NOT (A OR B) using only AND and NOT.
+
+<GateLab caption='Simplify, then use De Morgan' inputsJson='["A","B"]' outputsJson='["OUT","NB"]' targetJson='{"OUT":"(A AND B) OR (A AND NOT B)","NB":"NOT (A OR B)"}' startJson='["OUT = (A AND B) OR (A AND NOT B)","NB = NOT A"]' />
+
+<details>
+<summary>Check your answer</summary>
+
+OUT = A matches every row with no gates at all. For NB, De Morgan's second law gives the answer: NOT (A OR B) is (NOT A) AND (NOT B), so NB = NOT A AND NOT B.
+
+</details>

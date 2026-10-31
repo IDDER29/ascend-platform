@@ -7,8 +7,21 @@ const SESSION_DAYS = 30;
 
 let warnedDevSecret = false;
 
+/** Production signs sessions only with a real secret: at least 32 characters, set in the environment. */
+const MIN_SECRET_LENGTH = 32;
+
+function isProduction(): boolean {
+  return process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL);
+}
+
 function getSecretKey() {
   const secret = process.env.AUTH_SECRET;
+  if (isProduction() && (!secret || secret.length < MIN_SECRET_LENGTH)) {
+    throw new Error(
+      `AUTH_SECRET must be set to a random string of at least ${MIN_SECRET_LENGTH} characters in production ` +
+        "(for example: openssl rand -base64 48).",
+    );
+  }
   if (!secret) {
     if (!warnedDevSecret) {
       console.warn(
@@ -30,10 +43,22 @@ export async function createSessionToken(userId: string): Promise<string> {
     .sign(getSecretKey());
 }
 
-export async function verifySessionToken(token: string): Promise<string | null> {
+export type Session = { userId: string; /** Seconds since the epoch, when the session was issued. */ issuedAt: number };
+
+export async function verifySessionToken(token: string): Promise<Session | null> {
+  let key: Uint8Array;
   try {
-    const { payload } = await jwtVerify(token, getSecretKey());
-    return typeof payload.sub === "string" ? payload.sub : null;
+    key = getSecretKey();
+  } catch (err) {
+    // A missing production secret is a deployment error, not a signed-out visitor: say so loudly.
+    console.error("[auth]", err);
+    return null;
+  }
+  try {
+    const { payload } = await jwtVerify(token, key);
+    return typeof payload.sub === "string" && typeof payload.iat === "number"
+      ? { userId: payload.sub, issuedAt: payload.iat }
+      : null;
   } catch {
     return null;
   }
@@ -59,7 +84,8 @@ export async function clearSessionCookie() {
   store.delete(COOKIE_NAME);
 }
 
-export async function getSessionUserId(): Promise<string | null> {
+/** The session in this request's cookie, if it's valid. Revocation (a password change) is checked by getCurrentUser. */
+export async function getSession(): Promise<Session | null> {
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
   if (!token) return null;

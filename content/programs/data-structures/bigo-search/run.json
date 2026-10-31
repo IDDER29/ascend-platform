@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/bigo-search",
+  "sourceHash": "83d4ca21fd8709c2",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "        n       linear       binary\n     1000         1000           10\n     4000         4000           12\n    16000        16000           14\n    64000        64000           16\n   256000       256000           18\n  1024000      1024000           20\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

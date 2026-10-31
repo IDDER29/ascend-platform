@@ -1,0 +1,128 @@
+---
+title: "Speculation and the reorder buffer"
+level: level-12-advanced-execution
+slug: speculation
+order: 4
+timeMin: 12
+learningOutcomes:
+- "Explain speculative execution: running instructions past a branch before the branch has resolved"
+- Explain how the reorder buffer commits results in program order, and cancels wrong-path work after a misprediction
+- Explain precise exceptions, and why they depend on committing in order
+- Calculate what branch mispredictions cost an out-of-order core, and explain at a high level why Spectre exists
+primer:
+- title: "Branch prediction"
+  type: doc
+  meta: Reread · 3 min · the guess speculation runs on.
+  essential: true
+- title: "Out-of-order execution"
+  type: doc
+  meta: Reread · 3 min · issue when ready, commit in order, the window.
+  essential: true
+knowledgeCheck:
+- question: A branch was mispredicted, and fifty instructions after it have already executed. Why can the core simply throw them away?
+  answer: "None of them has committed. Their results sit in the reorder buffer and in physical registers that the program can't see yet. The core discards those entries, restores the rename table to its state at the branch, and fetches from the right target; the program-visible state was never changed."
+  jumpToId: the-reorder-buffer-keeps-the-promise
+  jumpToLabel: The reorder buffer keeps the promise
+- question: "If speculative work is always cancelled, how can Spectre leak data?"
+  answer: "Cancelling restores registers and memory, but not every trace the work left in the microarchitecture. A speculatively executed load can bring a line into the cache that depends on secret data. The program state is rolled back, but the cache isn't, and the attacker can then time accesses to find which line is cached, and so learn the secret."
+  jumpToId: when-cancelled-work-leaves-traces
+  jumpToLabel: When cancelled work leaves traces
+assignment:
+  instruction: "Read sections 1 and 2 of the Spectre paper (linked below) and write a short paragraph, in your own words, explaining the bounds-check bypass example: what the victim code does, what the branch predictor is trained to guess, and which trace the speculative load leaves behind."
+  resourceName: 'Kocher et al.: Spectre Attacks: Exploiting Speculative Execution (2019)'
+  resourceType: pdf
+  resourceUrl: 'https://spectreattack.com/spectre.pdf'
+additionalResources:
+- title: "Re-order buffer (Wikipedia)"
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Re-order_buffer'
+- title: "Spectre (security vulnerability) (Wikipedia)"
+  type: doc
+  meta: variants and mitigations
+  url: 'https://en.wikipedia.org/wiki/Spectre_(security_vulnerability)'
+- title: "Speculative execution (Wikipedia)"
+  type: doc
+  meta: reference
+  url: 'https://en.wikipedia.org/wiki/Speculative_execution'
+whyThisMatters: "Speculation is how a modern core keeps hundreds of instructions in flight, and the reorder buffer is how it stays correct while doing so. Spectre showed that the gap between 'correct' and 'leaves no trace' is a real security boundary, one that still shapes hardware, operating systems and compilers."
+---
+
+Out-of-order execution needs a big window of instructions to choose from. But roughly one instruction in five is a branch, and until a branch resolves, the core doesn't know which instructions come next. Waiting would empty the window every few instructions. So the core doesn't wait: it **speculates**.
+
+## Running past the branch
+
+**Speculative execution** means fetching, issuing and executing instructions along the path the branch predictor guessed, before the branch has resolved. If the guess is right, which it is the great majority of the time with a good predictor, the work is simply kept. If it's wrong, the work must vanish as if it never happened.
+
+In Pipelining's five-stage pipeline, a wrong guess cost 2 flushed instructions. In a deep out-of-order core it costs much more: the branch may resolve 15 to 20 or more cycles after it was fetched, and everything fetched since then is thrown away.
+
+What does that cost in practice? A program runs 1 billion instructions, 20% of them branches. The predictor is right 95% of the time, each misprediction costs 15 cycles, and without mispredictions the core manages a CPI of 0.5. How much do mispredictions slow it down?
+
+<details>
+<summary>Check your answer</summary>
+
+- Branches: 1,000,000,000 × 0.20 = 200,000,000.
+- Mispredictions: 200,000,000 × 0.05 = 10,000,000.
+- Cycles lost: 10,000,000 × 15 = 150,000,000.
+- Cycles without them: 1,000,000,000 × 0.5 = 500,000,000.
+
+Total 650,000,000 cycles, a CPI of 0.65: the program is **30% slower** because of 5% wrong guesses. That's why predictors are so elaborate, and why going from 95% to 97% accuracy is worth a lot of hardware.
+
+</details>
+
+## The reorder buffer keeps the promise
+
+The **reorder buffer** (ROB) is a queue, in program order, of every instruction in flight. Each entry records the instruction, whether it has finished, its result's physical register, and any exception it raised. Instructions may finish in any order, but they **commit** only from the head of the ROB, oldest first. Committing is the moment a result becomes part of the program-visible state.
+
+So speculation needs no special undo machinery for the results themselves:
+
+- **Branch resolves as predicted:** nothing happens; the instructions behind it commit in turn.
+- **Branch was mispredicted:** every ROB entry younger than the branch is discarded, the rename table is restored to its state at the branch, and fetch restarts at the correct target. Nothing younger than the branch had committed, so the program sees no trace of the wrong path.
+- **Stores** wait in a store buffer and reach memory only when they commit, so a wrong-path store never changes memory.
+
+The ROB's size is also the window from the last lesson: how far the core can run ahead of its oldest unfinished instruction. This block starts with a `div`, which takes 10 cycles, followed by eight additions that don't depend on it. The window is 2. Make it finish in 13 cycles.
+
+<OooLab caption='How much room to run ahead' blockJson='["div r1, r2, r3","add r4, r5, r5","add r6, r7, r7","add r8, r9, r9","add r10, r11, r11","add r12, r13, r13","add r14, r15, r15","add r16, r17, r17","add r18, r19, r19"]' optionsJson='{"outOfOrder":true,"width":2,"window":2,"renaming":true}' goalJson='{"maxCycles":13}' />
+
+<details>
+<summary>Check your answer</summary>
+
+A window of **8** or more. (This lab's model leaves out branches and fetch, so it shows the window on its own.)
+
+| Window | Cycles |
+|---|---|
+| 2 | 19 |
+| 4 | 15 |
+| 8 | 13 |
+| 32 | 13 |
+
+With a window of 2, only the `div` and one add fit, so the other adds can't even enter until the `div` commits in cycle 11. With 8 or more, all eight adds execute during the `div`'s 10 cycles and wait, finished, in the ROB. When the `div` completes in cycle 11, they commit four per cycle behind it, in cycles 11, 12 and 13. That last part can't shrink: commit is in order, so nothing commits before the `div`.
+
+In this example the adds don't depend on the `div`, so even in-order issue gets 13 once the window is big enough. The window is what matters here. A real ROB holds a few hundred instructions, which is why a core can keep working through a long cache miss.
+
+</details>
+
+<KeyIdea>Speculation executes past unresolved branches; the reorder buffer commits in program order, so a wrong guess is undone by discarding everything younger than the branch.</KeyIdea>
+
+## Precise exceptions
+
+The same in-order commit gives **precise exceptions**. If an instruction faults (a page fault, a division by zero), the fault is recorded in its ROB entry and raised only when the instruction reaches the head. At that moment every older instruction has committed and no younger one has, so the operating system sees the state exactly as if the program had run one instruction at a time and stopped at the faulting one. It can fix the page, restart at that instruction, and the program never knows. Without precise exceptions, virtual memory as you met it in Systems Programmer couldn't work.
+
+An instruction on a wrong path can fault too, for example a load from an invalid address. That fault is never raised, because the instruction never commits.
+
+## When cancelled work leaves traces
+
+Discarding the ROB entries undoes the program-visible state: registers and memory. But speculative instructions also change the **microarchitecture**: which lines are in the cache, the predictor's tables, the TLB. Those changes are not rolled back.
+
+That gap is **Spectre**, disclosed in 2018. In its first variant:
+
+1. An attacker trains the branch predictor so a bounds check (`if (i < size)`) is predicted true.
+2. They then call the code with an out-of-bounds `i`. The core speculatively reads a secret byte from beyond the array, then uses it as an index into a second array, bringing one line into the cache.
+3. The branch resolves, the misprediction is detected, and the work is discarded: the program state is correct.
+4. But one cache line, chosen by the secret, is now cached. The attacker times accesses to the second array, finds the fast one, and learns the secret.
+
+Defences include fences that stop speculation at sensitive points, compiler changes such as retpolines and masking indices, operating system changes, and newer hardware that limits what speculative work can affect. None removes speculation itself: it's too valuable to give up.
+
+## Done when
+
+You calculated the 30% slowdown, can explain how the ROB discards a wrong path and gives precise exceptions, found the window that gives 13 cycles, and can explain Spectre's four steps.

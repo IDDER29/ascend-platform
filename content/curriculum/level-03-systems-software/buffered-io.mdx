@@ -1,0 +1,123 @@
+---
+title: "Buffered I/O: stdio and write"
+level: level-03-systems-software
+slug: buffered-io
+order: 8
+timeMin: 10
+learningOutcomes:
+- Explain why printf collects output in a buffer in your process before calling the write system call
+- Predict stdio's buffering mode from where stdout goes, a terminal, a pipe or a file, and count the resulting write calls
+- Explain three classic surprises (mixed printf and write, output repeated after fork, output lost in a crash) from the buffer
+- Choose a fix for each, with fflush, setvbuf, stderr or write
+primer:
+- title: "File descriptors & redirection"
+  type: doc
+  meta: Reread · 3 min · fd 1, and where it can point.
+  essential: true
+- title: "System calls: the real API"
+  type: doc
+  meta: Reread · 2 min · what a write() call costs.
+  essential: true
+knowledgeCheck:
+- question: A program printf()s 1000 short lines. Why does strace show 1000 write calls when stdout is a terminal, but only 3 when it is a pipe?
+  answer: "stdio picks its buffering from where stdout goes. To a terminal it's line buffered, so each newline sends the line at once (1000 writes). To a pipe or a file it's fully buffered: it fills a 4096-byte buffer and writes it in one call, so 8893 bytes take 3 writes."
+  jumpToId: where-the-bytes-wait
+  jumpToLabel: Where the bytes wait
+- question: Why does "hello, printed once" appear twice when the program's output goes to a pipe?
+  answer: "On a pipe, printf only put the line in the buffer, in the process's memory. fork copied that memory, buffer included, so both processes held the unsent line, and each flushed its own copy when it exited. On a terminal, the line had already been written before fork, so it appears once."
+  jumpToId: three-surprises
+  jumpToLabel: Three surprises
+assignment:
+  instruction: "Write a program that prints a progress line every second for five seconds (printf without a newline, then a newline at the end). Run it on a terminal and piped into cat, and explain the difference. Then fix it so the progress appears in both cases, using fflush(stdout)."
+  resourceName: 'setvbuf (cppreference)'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/io/setvbuf'
+additionalResources:
+- title: "stdio(3) manual page"
+  type: doc
+  meta: buffering modes, stdin, stdout and stderr
+  url: 'https://man7.org/linux/man-pages/man3/stdio.3.html'
+- title: "CS:APP chapter 10: System-level I/O"
+  type: doc
+  meta: Unix I/O versus standard I/O, and when to use which
+  url: 'https://csapp.cs.cmu.edu/'
+whyThisMatters: "Buffering is why a program's output can arrive late, twice, out of order or not at all, and why a log that ends just before a crash may be missing its last lines. Your shell will fork and exec all day, so it has to get this right."
+---
+
+`printf` doesn't print. It copies bytes into a **buffer** in your own process's memory; only when the buffer is flushed does stdio call `write`, the system call that hands bytes to the kernel. Since a system call costs far more than copying a few bytes, stdio sends as few as it can. This lesson shows when that happens, and the surprises that come with it.
+
+## Where the bytes wait
+
+stdio sets each output stream's mode when the program starts:
+
+| stdout goes to | Mode | Flushed when |
+|---|---|---|
+| a terminal | **line buffered** | a newline is written, or the buffer fills |
+| a pipe or a file | **fully buffered** | the buffer (4096 bytes here) fills |
+| (stderr, anywhere) | **unbuffered** | every call |
+
+Every stream is also flushed by `fflush`, by `exit` (and returning from `main`), and before stdio reads from a line-buffered input. Here is a program that `printf`s 1000 lines, `line 1` to `line 1000`, 8893 bytes in all, traced with `strace -e trace=write` on real Linux runs (the terminal is provided by `script`). The counts and sizes are summarised from strace's log; the `write` lines are copied from it:
+
+```
+to a terminal: 1000 write calls
+write(1, "line 1\n", 7)                 = 7
+write(1, "line 2\n", 7)                 = 7
+to a pipe: 3 write calls
+write(1, "line 1\nline 2\nline 3\nline 4\nline"..., 4096) = 4096
+to a file: 3 write calls
+sizes: 4096 4096 701
+```
+
+Same program, same output, 333 times fewer system calls when nobody is watching line by line. That's why buffering exists.
+
+## Three surprises
+
+The lesson's programs are run by the build machine with stdout connected to a **pipe**, so stdout is fully buffered in every run below. Predict each output first.
+
+**1. Mixing printf and write.**
+
+<CRun program="systems/buf-order" caption='printf, write, printf' predict />
+
+**2. Buffered output and fork.**
+
+<CRun program="systems/buf-fork" caption='printf, then fork' predict />
+
+**3. A crash.**
+
+<CRun program="systems/buf-crash" caption='Two lines, then a crash' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+1. `B A C`. `"A "` and `"C\n"` went into the buffer; `write` sent `"B "` straight to the kernel. The buffer was flushed at exit, after B. On a terminal you'd still see `B A C`, because `"A "` has no newline; the order only looks right when every `printf` ends a line.
+2. The line appears **twice**. `printf` left it in the buffer, `fork` copied the whole process memory including the buffer, and both parent and child flushed their copy when they exited. On a terminal it would appear once: the newline had already sent it before `fork`.
+3. **Nothing** is printed. Both lines were waiting in the buffer when the null-pointer write killed the process with `SIGSEGV`, and a process killed by a signal never runs `exit`, so the buffer was never flushed. The output was lost. That's how a log "stops" a few lines before the real crash.
+
+</details>
+
+<KeyIdea>printf writes into memory in your process; only a flush calls write and reaches the kernel. Whatever is still in the buffer when you fork is copied, and whatever is there when you crash is lost.</KeyIdea>
+
+## Fixes
+
+Each surprise has a standard fix:
+
+- **Before `fork` or `exec`, call `fflush(stdout)`** (or `fflush(NULL)` for every stream), so nothing is copied or thrown away. Shells and servers do this everywhere.
+- **For progress messages and logs, choose line buffering** with `setvbuf(stdout, NULL, _IOLBF, 0)` at the start, or write diagnostics to **stderr**, which is unbuffered.
+- **Don't mix** `printf` and `write` on the same descriptor; if you must, `fflush` first.
+
+Here is the crashing program with line buffering turned on as its first line:
+
+<CRun program="systems/buf-crash-flushed" caption='The same crash, line buffered' />
+
+Which lines appear now, and what does it cost?
+
+<details>
+<summary>Check your answer</summary>
+
+Steps 1 and 2 appear, because each line was written as soon as it ended. Step 3 never runs. The cost is one `write` call per line, as on a terminal, which is fine for a log and too slow for a program that prints millions of lines. For bulk output, keep full buffering and `fflush` at the points that matter.
+
+</details>
+
+## Done when
+
+You can predict stdio's buffering from where stdout goes, explain the three surprises from the buffer, and pick `fflush`, `setvbuf`, stderr or `write` to fix each.

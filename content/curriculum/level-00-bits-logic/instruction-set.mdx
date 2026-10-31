@@ -85,6 +85,10 @@ Here's a whole program that adds 28 and 14 and shows the answer. The instruction
 
 The program counter starts at 0. LDA 14 puts 28 in A, ADD 15 makes it 42, OUT shows 42, and HLT stops. Four instructions, four trips round the fetch-execute loop.
 
+Now run it yourself. Before each Step, say out loud what you expect to change: which box is read, what A becomes, what appears on the display.
+
+<TinyCpu caption='Run it: 28 + 14 on the tiny CPU' programJson='["LDA 14", "ADD 15", "OUT", "HLT"]' dataJson='{"14": 28, "15": 14}' />
+
 ## Code and data share memory
 
 Look at address 14 again: 0001 1100. Read as data it's the number 28. Read as an instruction it would be LDA 12. The box doesn't know; only the program counter decides. If the CPU ever fetched from address 14, it would run the number as an instruction.

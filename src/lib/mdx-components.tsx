@@ -5,6 +5,7 @@ import { KeyIdea } from "@/components/lesson/key-idea";
 import { Visual } from "@/components/lesson/visual";
 import { CodeBlock } from "@/components/lesson/code-block";
 import { TruthTable } from "@/components/lesson/truth-table";
+import { TinyCpu } from "@/components/lesson/tiny-cpu";
 import { SectionHeading } from "@/components/bookmarks/lesson-bookmarks";
 
 export const mdxComponents: MDXComponents = {
@@ -14,6 +15,7 @@ export const mdxComponents: MDXComponents = {
   Visual,
   CodeBlock,
   TruthTable,
+  TinyCpu,
   h2: (props) => (
     <SectionHeading
       className="group/section mt-9 mb-3 scroll-mt-[88px] font-display text-2xl font-bold tracking-tight"

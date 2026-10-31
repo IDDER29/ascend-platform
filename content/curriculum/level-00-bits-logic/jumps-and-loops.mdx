@@ -78,6 +78,8 @@ This program shows 3, 2, 1, 0 and stops. Address 15 holds the number 1, used for
 
 <TruthTable caption='A countdown with a conditional jump' rowsJson='[["address", "instruction", "what it does"], ["0", "LDI 3", "A = 3"], ["1", "OUT", "show A"], ["2", "SUB 15", "A = A - 1, and set the flags"], ["3", "JZ 5", "if A is 0, jump to 5"], ["4", "JMP 1", "otherwise go back and show A"], ["5", "OUT", "show the final 0"], ["6", "HLT", "stop"], ["15", "1", "the number 1"]]' />
 
+<TinyCpu caption='Run the countdown' programJson='["LDI 3", "OUT", "SUB 15", "JZ 5", "JMP 1", "OUT", "HLT"]' dataJson='{"15": 1}' />
+
 Trace it: A starts at 3 and is shown. SUB makes it 2; the zero flag is 0, so JZ falls through and JMP goes back to show 2. The same happens for 1. The fourth SUB makes A 0, the zero flag is set, and JZ jumps out to address 5, which shows 0 and halts.
 
 ## Every if and loop is a jump

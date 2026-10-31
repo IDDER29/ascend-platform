@@ -33,7 +33,7 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
     {
       id: "memory-layout",
       title: "Memory layout",
-      blurb: "How address space is carved up — stack, heap, and where values live.",
+      blurb: "How address space is carved up: stack, heap, and where values live.",
       items: [
         { slug: "the-address-space" },
         { slug: "the-stack-and-the-heap" },
@@ -63,7 +63,7 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
     {
       id: "pointers",
       title: "Pointers",
-      blurb: "Addresses as values — arithmetic, indirection, and double pointers.",
+      blurb: "Addresses as values: arithmetic, indirection, and double pointers.",
       items: [
         { slug: "what-a-pointer-really-is" },
         { slug: "pointer-arithmetic" },

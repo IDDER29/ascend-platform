@@ -4,7 +4,7 @@ import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
 import { loadPracticePageData } from "@/lib/practice/server-page-data";
 
 export const metadata: Metadata = {
-  title: "Review complete — Practice",
+  title: "Review complete · Practice",
 };
 
 type Props = {

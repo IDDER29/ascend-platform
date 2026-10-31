@@ -19,7 +19,7 @@ function parseLessonKeys(raw: string | string[] | undefined): string[] {
 }
 
 export const metadata: Metadata = {
-  title: "Custom deck — Practice",
+  title: "Custom deck · Practice",
   description: "Build a custom practice deck from the lessons you want to drill.",
 };
 

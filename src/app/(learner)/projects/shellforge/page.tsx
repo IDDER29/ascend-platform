@@ -9,7 +9,7 @@ import { loadAchievementsInput } from "@/lib/achievements/server-page-data";
 import { SIGNIN_HREF } from "@/lib/routes";
 
 export const metadata: Metadata = {
-  title: "ShellForge — Build your own shell",
+  title: "ShellForge · Build your own shell",
   description: "The capstone of Systems Programmer: a working shell in C.",
 };
 
@@ -84,7 +84,7 @@ export default async function ShellForgePage() {
             pipes and redirections, and survive Ctrl-C. Everything from Systems Programmer, in one real program.
           </p>
           <p className="m-0 text-[13.5px] text-[var(--coach-hero-muted)]">
-            About 6 hours · C · You build it on your own machine and share the repo — there&apos;s no automatic grader.
+            About 6 hours · C · You build it on your own machine and share the repo. There&apos;s no automatic grader.
           </p>
         </section>
 
@@ -96,7 +96,7 @@ export default async function ShellForgePage() {
               </h2>
               <p className="m-0 text-[15px] leading-relaxed text-[var(--coach-ink-secondary)]">
                 A shell is the program that reads what you type and asks the operating system to do it. Yours will be
-                small but real — the same read, parse, start, wait loop as bash. The moment it runs{" "}
+                small but real: the same read, parse, start, wait loop as bash. The moment it runs{" "}
                 <code className="rounded bg-[var(--coach-tint-neutral-bg)] px-1.5 py-0.5 font-[family-name:var(--font-plex-mono)] text-[13.5px]">
                   ls | grep .c
                 </code>
@@ -156,7 +156,7 @@ export default async function ShellForgePage() {
               <p className="m-0 text-[13.5px] leading-relaxed text-[var(--coach-ink-secondary)]">
                 {shipped
                   ? "It's on your profile, and it earned you Shell Smith."
-                  : "Two real steps — then it shows on your profile and earns Shell Smith."}
+                  : "Two real steps, then it shows on your profile and earns Shell Smith."}
               </p>
               {loaded ? (
                 <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
@@ -210,7 +210,7 @@ export default async function ShellForgePage() {
                 A layout that works
               </h2>
               <p className="m-0 text-[13px] text-[var(--coach-ink-muted)]">
-                A suggestion — there&apos;s no starter repo to clone.
+                A suggestion: there&apos;s no starter repo to clone.
               </p>
               <ul className="m-0 flex list-none flex-col gap-1 rounded-xl bg-[var(--coach-code-bg)] p-3 font-[family-name:var(--font-plex-mono)] text-[13px] text-[var(--coach-code-ink)]">
                 {LAYOUT.map((f) => (

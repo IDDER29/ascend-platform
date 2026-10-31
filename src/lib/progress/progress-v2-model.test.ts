@@ -88,7 +88,7 @@ test("hero tracks the first unfinished lesson and finished topics become milesto
   assert.deepEqual(model.hero.track[0].lessons.map((l) => l.done), [true, true]);
   assert.deepEqual(
     model.milestones.map((m) => m.label),
-    ["Finished Bits & Logic", "First lesson done — what-is-a-bit"],
+    ["Finished Bits & Logic", "First lesson done: what-is-a-bit"],
   );
 });
 

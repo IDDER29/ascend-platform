@@ -57,7 +57,7 @@ export const PATHS: PathDef[] = [
     eyebrow: "Foundations",
     title: "Python Foundations",
     pitch: "The Python you need for applied AI: the language, the tools and good project habits.",
-    body: "This course is the Python on-ramp for applied AI. You'll learn language basics, tooling, and project habits in the order shown — everything you need before RAG, agents, and LLM apps, without wandering the whole Python universe first.",
+    body: "This course is the Python on-ramp for applied AI. You'll learn language basics, tooling, and project habits in the order shown: everything you need before RAG, agents, and LLM apps, without wandering the whole Python universe first.",
     courses: [
       {
         id: "python-language",
@@ -82,20 +82,20 @@ export const PATHS: PathDef[] = [
     eyebrow: "Path",
     title: "Systems Programmer",
     pitch: "How the machine runs, how C talks to it and how the OS keeps it alive, ending with a shell you write yourself.",
-    body: "This path takes you through Ascend's systems curriculum. Take the courses in the order shown: how the machine runs, how C touches hardware, how the OS keeps it alive — then prove it with ShellForge. You'll learn everything you need to understand the machine end-to-end and write software that meets it.",
+    body: "This path takes you through Ascend's systems curriculum. Take the courses in the order shown: how the machine runs, how C touches hardware, how the OS keeps it alive. Then prove it with ShellForge. You'll learn everything you need to understand the machine end-to-end and write software that meets it.",
     requiresLabel: "Requires Foundations",
     requiresSlug: "foundations",
     courses: [
       {
         id: "machine-memory",
         title: LEVELS["level-01-machine-memory"].name,
-        body: "How the machine actually runs — CPU, memory, and the address space.",
+        body: "How the machine actually runs: CPU, memory, and the address space.",
         levelId: "level-01-machine-memory",
       },
       {
         id: "the-c-language",
         title: LEVELS["level-02-the-c-language"].name,
-        body: "How code touches that hardware — C as craft.",
+        body: "How code touches that hardware, with C as craft.",
         levelId: "level-02-the-c-language",
       },
       {
@@ -107,7 +107,7 @@ export const PATHS: PathDef[] = [
       {
         id: "shellforge",
         title: "ShellForge",
-        body: "Capstone — prove the path with a working shell.",
+        body: "Capstone: prove the path with a working shell.",
         href: "/projects/shellforge",
         plannedProjects: 1,
       },
@@ -148,7 +148,7 @@ export const PATHS: PathDef[] = [
       {
         id: "bone-to-bone",
         title: "Bone to bone",
-        body: "Build and operate a system from the ground up — projects that stick.",
+        body: "Build and operate a system from the ground up, with projects that stick.",
         plannedLessons: 6,
         plannedProjects: 3,
       },
@@ -195,7 +195,7 @@ export const PATHS: PathDef[] = [
     eyebrow: "Path",
     title: "AI Engineer",
     pitch: "Build grounded AI apps that use tools: from a first API call to RAG, agents and outputs you can trust.",
-    body: "This path takes you through applied LLM systems. Take the courses in order: LLM applications, RAG, agents, then contracts & decoding. You'll learn to build grounded, tool-using AI apps — from first API call to structured outputs you can trust.",
+    body: "This path takes you through applied LLM systems. Take the courses in order: LLM applications, RAG, agents, then contracts & decoding. You'll learn to build grounded, tool-using AI apps, from first API call to structured outputs you can trust.",
     requiresLabel: "Requires Python Foundations",
     requiresSlug: "python-foundations",
     courses: [

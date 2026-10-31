@@ -70,7 +70,7 @@ export function MomentumCard({ momentum }: { momentum: ProgressV2Model["momentum
           </div>
           {cardsTotal === 0 ? (
             <p className="m-0 text-[13px] text-[var(--coach-ink-secondary)]">
-              No cards answered yet — a{" "}
+              No cards answered yet. A{" "}
               <Link href={PRACTICE_ROUTES.home} className="font-semibold text-[var(--coach-ink)] underline underline-offset-2">
                 review session in Practice
               </Link>{" "}

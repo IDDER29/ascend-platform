@@ -25,7 +25,7 @@ export function MemoryCard({ history }: { history: PracticeSessionRecord[] }) {
         About <span className="font-semibold text-[var(--coach-ink)]">{Math.round(memory.now * 100)}%</span> now
         {memory.reviewToday
           ? `; reviewing today brings it to about ${Math.round(memory.afterReview * 100)}%.`
-          : " — nothing below 90%."}
+          : "; nothing is below 90%."}
       </p>
       <MemoryCurveChart memory={memory} />
       <Link

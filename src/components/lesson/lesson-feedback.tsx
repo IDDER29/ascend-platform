@@ -41,7 +41,7 @@ export function LessonFeedback({
         </button>
       </div>
       {choice === "up" ? (
-        <div className="text-xs text-ink-fainter">Thanks — glad it landed.</div>
+        <div className="text-xs text-ink-fainter">Thanks, glad it landed.</div>
       ) : null}
       {choice === "down" ? (
         <div className="max-w-sm text-center text-xs leading-relaxed text-ink-fainter">
@@ -57,7 +57,7 @@ export function LessonFeedback({
               so we can fix it.
             </>
           ) : (
-            "Thanks for the signal — we'll keep improving this lesson."
+            "Thanks for the signal. We'll keep improving this lesson."
           )}
         </div>
       ) : null}

@@ -37,7 +37,7 @@ export function ThisWeekCard({ week }: { week: ProgressV2Model["week"] }) {
           <Stat label="Cards answered" value={String(week.cardsAnswered)} />
           <Stat
             label="Accuracy"
-            value={week.accuracy === null ? "—" : `${week.accuracy}%`}
+            value={week.accuracy === null ? "None" : `${week.accuracy}%`}
             note={deltaNote(week.accuracyDelta)}
           />
         </div>

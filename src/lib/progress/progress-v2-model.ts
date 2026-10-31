@@ -252,8 +252,8 @@ export function buildProgressV2Model(input: ProgressV2Input): ProgressV2Model {
           shade,
           label:
             shade === 0
-              ? `${l.title} — not practiced yet`
-              : `${l.title} — ${pct(strength.solid + strength.mastered, strength.total)}% remembered`,
+              ? `${l.title}: not practiced yet`
+              : `${l.title}: ${pct(strength.solid + strength.mastered, strength.total)}% remembered`,
         };
       }),
   }));
@@ -318,7 +318,7 @@ export function buildProgressV2Model(input: ProgressV2Input): ProgressV2Model {
     const first = lessons.find((l) => l.key === byDate[0].key);
     milestones.push({
       at: byDate[0].completedAt,
-      label: `First lesson done${first ? ` — ${first.title}` : ""}`,
+      label: `First lesson done${first ? `: ${first.title}` : ""}`,
     });
   }
   for (const level of levels) {

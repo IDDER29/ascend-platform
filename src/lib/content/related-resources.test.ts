@@ -5,7 +5,7 @@ import { relatedResources, type LearnMoreResource } from "./related-resources";
 const LESSON: LearnMoreResource[] = [
   { title: "Crash Course: Early Computing", type: "video", meta: "12 min", url: "https://example.com/a" },
   {
-    title: "Two's complement — Wikipedia",
+    title: "Two's complement (Wikipedia)",
     type: "doc",
     meta: "Reference: signed integers",
     url: "https://example.com/b",

@@ -165,7 +165,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
                     Study these first
                   </h2>
                   <p className="m-0 mt-0.5 text-[14px] text-[var(--coach-ink-muted)]">
-                    The lesson assumes them — a quick skim is enough.
+                    The lesson assumes them, so a quick skim is enough.
                   </p>
                 </div>
                 <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -222,7 +222,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
                   Check yourself
                 </h2>
                 <p className="m-0 mt-1 text-[15px] leading-relaxed text-[var(--coach-ink-secondary)]">
-                  Answer each in your own words before you look — trying to recall is what makes it stick, even when you
+                  Answer each in your own words before you look: trying to recall is what makes it stick, even when you
                   get it wrong.
                 </p>
               </div>
@@ -281,7 +281,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
                     Go deeper
                   </h2>
                   <p className="m-0 mt-1 text-[15px] text-[var(--coach-ink-secondary)]">
-                    Optional — if you want more on this.
+                    Optional, if you want more on this.
                   </p>
                 </div>
                 <ResourceList resources={deeper} />

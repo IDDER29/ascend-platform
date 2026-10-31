@@ -16,7 +16,7 @@ export function PathProgress({ model }: { model: CoachPathModel }) {
         <div className="flex items-baseline justify-between">
           <span className="text-[15px] text-[var(--coach-ink-secondary)]">Hit rate</span>
           <span className="font-display text-4xl font-extrabold leading-none">
-            {hit ? `${hit.accuracy}%` : "—"}
+            {hit ? `${hit.accuracy}%` : "None"}
           </span>
         </div>
         <div

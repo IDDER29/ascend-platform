@@ -21,8 +21,8 @@ export const PRACTICE_PATH_MARKS: Record<string, string> = {
 };
 
 export const PRACTICE_PATH_BLURBS: Record<string, string> = {
-  foundations: "Bits, logic, and first principles — your always-open warm-up.",
-  "systems-programmer": "Machine, memory, and C — unlock as you climb.",
+  foundations: "Bits, logic, and first principles: your always-open warm-up.",
+  "systems-programmer": "Machine, memory, and C. Unlock as you climb.",
 };
 
 export function practicePathSlugForLevel(level: string): string | null {

@@ -197,7 +197,7 @@ export function CheckYourself({
         >
           {notYet.length === 0
             ? `You had all ${items.length}. That's this lesson down.`
-            : `You had ${got} of ${items.length}. Re-read what you missed now — and it'll come back in Practice.`}{" "}
+            : `You had ${got} of ${items.length}. Re-read what you missed now, and it'll come back in Practice.`}{" "}
           <button
             type="button"
             onClick={startOver}

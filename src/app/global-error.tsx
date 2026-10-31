@@ -29,7 +29,7 @@ export default function GlobalError({
       >
         <h1 style={{ fontSize: 24, fontWeight: 800 }}>Ascend hit a server error.</h1>
         <p style={{ maxWidth: 420, color: "#5C5773" }}>
-          The whole app failed to load — not just this page. Your account and progress are
+          The whole app failed to load, not just this page. Your account and progress are
           untouched. Try again in a moment.
         </p>
         <button

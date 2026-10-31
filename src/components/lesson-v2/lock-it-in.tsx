@@ -30,7 +30,7 @@ export function LockItIn({
       </div>
       <p className="m-0 text-[14.5px] leading-relaxed text-[var(--coach-ink-secondary)] [text-wrap:pretty]">
         {canReview
-          ? `This lesson has ${n} Practice ${n === 1 ? "card" : "cards"}. Recalling them over the next days — not rereading — is what makes it stick; Practice brings each one back just before you'd forget it.`
+          ? `This lesson has ${n} Practice ${n === 1 ? "card" : "cards"}. Recalling them over the next days, not rereading, is what makes it stick; Practice brings each one back just before you'd forget it.`
           : `This lesson has ${n} Practice ${n === 1 ? "card" : "cards"}. Mark the lesson done and they join your reviews, coming back just before you'd forget them.`}
       </p>
       <div className="flex flex-wrap items-center gap-3">

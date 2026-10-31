@@ -3,7 +3,7 @@ import type { PracticeItem } from "../types";
 const L01 = "level-01-machine-memory";
 
 export const LEVEL_01_BANK: PracticeItem[] = [
-  // ── Lesson 1: inside-the-cpu — registers, ALU, control unit, flags ──
+  // ── Lesson 1: inside-the-cpu: registers, ALU, control unit, flags ──
   {
     kind: "mcq",
     id: "cpuhw-01",
@@ -66,7 +66,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     kind: "flashcard",
     id: "cpuhw-fc-01",
     front: "Name the three core components of a CPU and what each does.",
-    back: "Registers hold values right now; the ALU does math and comparisons on those values; the control unit steers everything — it holds the next instruction's address and directs the ALU and register file.",
+    back: "Registers hold values right now; the ALU does math and comparisons on those values; the control unit steers everything: it holds the next instruction's address and directs the ALU and register file.",
     reviewLabel: "Three core CPU components",
     lessonLevel: L01,
     lessonSlug: "inside-the-cpu",
@@ -129,7 +129,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     hint: "It is the basic tick that paces the CPU.",
   },
 
-  // ── Lesson 2: assembly-a-first-look — mnemonics, operands, cmp/jump ──
+  // ── Lesson 2: assembly-a-first-look: mnemonics, operands, cmp/jump ──
   {
     kind: "mcq",
     id: "asm-01",
@@ -229,7 +229,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     kind: "flashcard",
     id: "asm-fc-03",
     front: "What does `cmp` do with the result of its subtraction?",
-    back: "Nothing — it throws the result away and keeps only the flags, which a following jump instruction reads.",
+    back: "Nothing. It throws the result away and keeps only the flags, which a following jump instruction reads.",
     reviewLabel: "What cmp keeps",
     lessonLevel: L01,
     lessonSlug: "assembly-a-first-look",
@@ -270,7 +270,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     hint: "j + the first letter of 'less'.",
   },
 
-  // ── Lesson 3: the-address-space — addresses, regions, growth ──
+  // ── Lesson 3: the-address-space: addresses, regions, growth ──
   {
     kind: "mcq",
     id: "addrspace-01",
@@ -291,7 +291,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
       "Both grow upward",
       "Heap grows upward; stack grows downward",
       "Heap grows downward; stack grows upward",
-      "Neither — both are fixed when the program loads",
+      "Neither: both are fixed when the program loads",
     ],
     correct: 1,
     hint: "They grow toward each other across a shared gap.",
@@ -345,7 +345,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     kind: "flashcard",
     id: "addrspace-fc-03",
     front: "What is a memory address?",
-    back: "The number of one byte in memory — like a house number on a long street where each house holds exactly one byte, counting up from 0.",
+    back: "The number of one byte in memory, like a house number on a long street where each house holds exactly one byte, counting up from 0.",
     reviewLabel: "Define a memory address",
     lessonLevel: L01,
     lessonSlug: "the-address-space",
@@ -386,7 +386,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     hint: "Four consecutive byte addresses, starting at 0x1000.",
   },
 
-  // ── Lesson 4: the-stack-and-the-heap — frames, allocation, trade-offs ──
+  // ── Lesson 4: the-stack-and-the-heap: frames, allocation, trade-offs ──
   {
     kind: "mcq",
     id: "stackheap1-01",
@@ -415,7 +415,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
       "They stay valid until the program exits, since stack memory is never reused",
     ],
     correct: 2,
-    hint: "Nothing is cleaned up — the stack pointer just moves.",
+    hint: "Nothing is cleaned up. The stack pointer just moves.",
     reviewLabel: "Locals after function return",
     lessonLevel: L01,
     lessonSlug: "the-stack-and-the-heap",
@@ -454,7 +454,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     kind: "flashcard",
     id: "stackheap1-fc-01",
     front: "Why is pushing a stack frame cheap?",
-    back: "The stack pointer just moves down to carve out space — pushing is just a subtraction.",
+    back: "The stack pointer just moves down to carve out space: pushing is just a subtraction.",
     figure: { type: "frames", frames: [{ name: "main()", rows: ["locals"] }, { name: "parse()", rows: ["return address", "locals"] }, { name: "next_token()", rows: ["return address", "locals"] }] },
     reviewLabel: "Why stack push is cheap",
     lessonLevel: L01,
@@ -507,7 +507,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     hint: "The most recently pushed frame is the first one popped.",
   },
 
-  // ── Lesson 5: caches-and-locality — hierarchy, locality, cache lines ──
+  // ── Lesson 5: caches-and-locality: hierarchy, locality, cache lines ──
   {
     kind: "mcq",
     id: "cache-01",
@@ -541,10 +541,10 @@ export const LEVEL_01_BANK: PracticeItem[] = [
       "for (Node *n = head; n != NULL; n = n->next) sum2 += n->value;",
     ],
     options: [
-      "The array loop — contiguous elements share cache lines",
-      "The linked-list loop — pointers are faster than indexes",
+      "The array loop: contiguous elements share cache lines",
+      "The linked-list loop: pointers are faster than indexes",
       "Both are equally fast since they do the same work",
-      "The linked-list loop — nodes are always stored in cache",
+      "The linked-list loop: nodes are always stored in cache",
     ],
     correct: 0,
     hint: "Think about where each element sits in memory relative to the next.",
@@ -574,7 +574,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     kind: "flashcard",
     id: "cache-fc-01",
     front: "What is spatial locality?",
-    back: "If a program used one address, it's likely to use a nearby address soon — like walking through an array element by element.",
+    back: "If a program used one address, it's likely to use a nearby address soon, like walking through an array element by element.",
     reviewLabel: "Define spatial locality",
     lessonLevel: L01,
     lessonSlug: "caches-and-locality",
@@ -585,7 +585,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     kind: "flashcard",
     id: "cache-fc-02",
     front: "What is a cache line, and which kind of locality does it exploit?",
-    back: "A contiguous chunk (typically 64 bytes) the cache fetches when the CPU asks for one uncached byte. It exploits spatial locality — betting you'll want the neighbors soon.",
+    back: "A contiguous chunk (typically 64 bytes) the cache fetches when the CPU asks for one uncached byte. It exploits spatial locality, betting you'll want the neighbors soon.",
     reviewLabel: "Cache line and locality",
     lessonLevel: L01,
     lessonSlug: "caches-and-locality",
@@ -626,7 +626,7 @@ export const LEVEL_01_BANK: PracticeItem[] = [
     hint: "Cache levels are numbered outward from the CPU.",
   },
 
-  // ── Lesson 6: endianness — byte order, conventions, network order ──
+  // ── Lesson 6: endianness: byte order, conventions, network order ──
   {
     kind: "mcq",
     id: "endian-01",

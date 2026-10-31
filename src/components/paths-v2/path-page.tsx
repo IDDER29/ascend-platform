@@ -317,7 +317,7 @@ export function PathPage({ path, earns, other }: { path: PathView; earns: BadgeV
               >
                 Leave this path
               </button>
-              <span className="text-[12.5px] text-[var(--coach-ink-muted)]"> — your progress stays.</span>
+              <span className="text-[12.5px] text-[var(--coach-ink-muted)]"> Your progress stays.</span>
             </form>
           )}
         </aside>

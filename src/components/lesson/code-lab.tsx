@@ -47,7 +47,7 @@ export function CodeLab() {
           </svg>
         </span>
         <span className="text-[13.5px] font-bold text-ink">Try it yourself</span>
-        <span className="text-xs text-ink-faint">— edit line 3, then run</span>
+        <span className="text-xs text-ink-faint">(edit line 3, then run)</span>
         <button
           onClick={() => setRan(true)}
           className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-brand-gradient px-4 py-2 text-[12.5px] font-extrabold text-white shadow-[0_6px_16px_rgba(13,159,110,0.22)] transition-transform hover:-translate-y-0.5 active:translate-y-0"
@@ -87,7 +87,7 @@ export function CodeLab() {
             <span className="text-[#6b6f78]"> compiled &amp; ran in 0.04s ✓</span>
           </>
         ) : (
-          <span className="text-[#6b6f78]">— press Run to compile and execute —</span>
+          <span className="text-[#6b6f78]">Press Run to compile and execute.</span>
         )}
       </div>
 

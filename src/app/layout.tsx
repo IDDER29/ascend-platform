@@ -27,12 +27,12 @@ const plexMono = IBM_Plex_Mono({
 });
 
 const DESCRIPTION =
-  "A free, open-source, bottom-up computer-science curriculum. Bits, logic, the CPU, memory, C, and operating systems — from a single bit up.";
+  "A free, open-source, bottom-up computer-science curriculum. Bits, logic, the CPU, memory, C, and operating systems, from a single bit up.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  // Pages give just their own name ("Practice"); the template adds the brand.
-  title: { default: "Ascend — Learn how computers really work", template: "%s — Ascend" },
+  // Pages give just their own name ("Practice"); the template adds " · Ascend".
+  title: { default: "Ascend · Learn how computers really work", template: "%s · Ascend" },
   description: DESCRIPTION,
   applicationName: "Ascend",
   // Listing icons here replaces Next's automatic tags, so every one is named: the SVG favicon first

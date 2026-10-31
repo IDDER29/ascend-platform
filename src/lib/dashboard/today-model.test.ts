@@ -12,7 +12,7 @@ const at = (day: number) => new Date(2026, 9, day, 10).toISOString();
 const LESSONS: TodayLesson[] = [
   [BITS, "what-is-a-bit", "What is a bit?"],
   [BITS, "binary", "Binary"],
-  [BITS, "project-half-adder", "Project — Half-adder"],
+  [BITS, "project-half-adder", "Project: Half-adder"],
   [MACHINE, "inside-the-cpu", "Inside the CPU"],
   [MACHINE, "memory", "Memory"],
 ].map(([level, slug, title]) => ({
@@ -49,7 +49,7 @@ test("nothing done: start with the first lesson, no standing for a guest", () =>
   assert.deepEqual(t.next.topicStep, { index: 1, total: 3, done: 0 });
   assert.deepEqual(
     t.next.then.map((l) => l.title),
-    ["Binary", "Project — Half-adder", "Inside the CPU"],
+    ["Binary", "Project: Half-adder", "Inside the CPU"],
   );
   assert.equal(t.standing, null);
 });

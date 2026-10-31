@@ -66,7 +66,7 @@ export default function CommunityPage() {
             Learn alongside people on the same climb.
           </h1>
           <p className="mb-3 text-[15.5px] leading-relaxed text-ink-secondary">
-            Stuck on a segfault, comparing solutions, or just want to say the drop finally clicked — this is where
+            Stuck on a segfault, comparing solutions, or just want to say the drop finally clicked: this is where
             Ascend learners talk to each other.
           </p>
           <p className="mb-5 rounded-xl border border-xp-border bg-xp-bg px-4 py-3 text-left text-[13px] leading-relaxed text-brand-violet">
@@ -236,7 +236,7 @@ export default function CommunityPage() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs italic text-ink-faint">No replies yet — be the first.</p>
+                          <p className="text-xs italic text-ink-faint">No replies yet. Be the first.</p>
                         )}
                       </div>
                     )}
@@ -262,8 +262,8 @@ export default function CommunityPage() {
           </button>
           {guidelinesOpen && (
             <ol className="ml-[59px] mt-1 flex w-full list-decimal flex-col gap-1.5 pl-4 text-[13px] leading-relaxed text-ink-secondary">
-              <li>Be kind — everyone here is at a different point on the same climb.</li>
-              <li>Search before you post — your question may already have a great answer.</li>
+              <li>Be kind: everyone here is at a different point on the same climb.</li>
+              <li>Search before you post, since your question may already have a great answer.</li>
               <li>Keep full project solutions inside &quot;Show your project&quot;, not other categories.</li>
               <li>No spoilers for knowledge-check answers outside a clearly marked spoiler.</li>
             </ol>

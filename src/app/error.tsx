@@ -41,7 +41,7 @@ export default function Error({
           Something broke on our end.
         </h1>
         <p className="mx-auto mb-8 max-w-[440px] text-[15.5px] leading-relaxed text-ink-secondary sm:text-[16.5px]">
-          Not you — this page hit a real server error. Your account and progress are untouched.
+          Not you: this page hit a real server error. Your account and progress are untouched.
           Try again, or use one of these to get back on track.
         </p>
 

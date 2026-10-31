@@ -42,7 +42,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
       <div className={`${HUB_CONTENT_CLASS} flex flex-col gap-5`}>
         {visible.isSelf ? (
           <p className="m-0 rounded-xl bg-[var(--coach-tint-blue-bg)] px-4 py-2.5 text-[13.5px] text-[var(--coach-tint-blue-ink)]">
-            {visible.isPublic ? "This is how visitors see your profile. " : "Your profile is private — only you can see this page. "}
+            {visible.isPublic ? "This is how visitors see your profile. " : "Your profile is private. Only you can see this page. "}
             <Link href={PROFILE_ROUTES.owner} className="font-semibold underline underline-offset-2">
               Back to editing
             </Link>

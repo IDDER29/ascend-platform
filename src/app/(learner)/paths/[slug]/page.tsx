@@ -10,7 +10,7 @@ import { loadPracticePageData } from "@/lib/practice/server-page-data";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const path = getPathBySlug((await params).slug);
-  return { title: path ? `${path.title} — Paths` : "Path", description: path?.body };
+  return { title: path ? `${path.title} · Paths` : "Path", description: path?.body };
 }
 
 const MAIN =

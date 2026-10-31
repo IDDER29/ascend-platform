@@ -45,7 +45,7 @@ export function LessonMemory({ lessonKey }: { lessonKey: string }) {
   const holding = !memory.reviewToday;
   return (
     <span
-      title={`You'd recall about ${pct}% of this lesson's Practice cards${holding ? "" : " — some are due"}`}
+      title={`You'd recall about ${pct}% of this lesson's Practice cards${holding ? "" : "; some are due"}`}
       className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold tabular-nums ${
         holding
           ? "bg-[var(--coach-tint-blue-bg)] text-[var(--coach-tint-blue-ink)]"

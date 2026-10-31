@@ -104,7 +104,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
       {
         kind: "live",
         slug: "project-half-adder",
-        title: "Project — Half-adder",
+        title: "Project: Half-adder",
         timeMin: 25,
         role: "project",
       },
@@ -113,7 +113,7 @@ export const FOUNDATIONS_OUTLINE: FoundationsOutlineSection[] = [
   {
     id: "machine-runs",
     title: "How a machine runs",
-    blurb: "The fetch–execute loop — how a CPU runs a program one instruction at a time.",
+    blurb: "The fetch–execute loop: how a CPU runs a program one instruction at a time.",
     items: [
       {
         kind: "live",

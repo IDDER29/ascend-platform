@@ -31,7 +31,7 @@ export const RESOURCES = [
   },
   {
     title: "dup2(2) man page",
-    meta: "Documentation — pipes & redirection",
+    meta: "Documentation: pipes & redirection",
     href: "https://man7.org/linux/man-pages/man2/dup2.2.html",
   },
 ];

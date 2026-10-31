@@ -54,7 +54,7 @@ function TopicBlock({ course, index }: { course: PathCourse; index: number }) {
                     className="-mx-2 flex min-h-11 items-center justify-between gap-3 rounded-lg px-2 text-[15px] text-[var(--coach-ink)] no-underline hover:bg-[var(--coach-tint-neutral-bg)]"
                   >
                     <span className="min-w-0">
-                      {lesson.title.replace(/^Project — /, "")}
+                      {lesson.title.replace(/^Project: /, "")}
                       {lesson.project && (
                         <span className="ml-2 rounded-full bg-[var(--coach-tint-lime-bg)] px-2 py-0.5 text-[12px] font-semibold text-[var(--coach-tint-lime-ink)]">
                           Project

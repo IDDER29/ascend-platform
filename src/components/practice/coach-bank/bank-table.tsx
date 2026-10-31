@@ -82,8 +82,8 @@ function Score({ row }: { row: BankRow }) {
       {row.correct}/{row.seen}
     </span>
   ) : (
-    <span className="text-[var(--coach-ink-muted)]" aria-label="Not answered yet">
-      —
+    <span className="whitespace-nowrap text-[var(--coach-ink-muted)]" aria-label="Not answered yet">
+      Not yet
     </span>
   );
 }

@@ -78,7 +78,7 @@ export function CodeBlock({
             </span>
           ) : (
             <span className="text-[#6b6f78]">
-              — press Run to compile and execute —
+              Press Run to compile and execute.
             </span>
           )}
         </div>

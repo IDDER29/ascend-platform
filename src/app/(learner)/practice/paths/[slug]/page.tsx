@@ -15,7 +15,7 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const title = PRACTICE_PATH_TITLES[slug];
-  return { title: title ? `${title} — Practice` : "Practice" };
+  return { title: title ? `${title} · Practice` : "Practice" };
 }
 
 export default async function PracticePathPage({ params }: Props) {

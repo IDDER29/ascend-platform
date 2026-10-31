@@ -56,7 +56,7 @@ export function SaveButton({
   }, [open]);
 
   const Icon = saved ? BookmarkCheck : BookmarkIcon;
-  const name = saved ? `Saved — change why you saved ${target.title}` : `Save ${target.title} to Bookmarks`;
+  const name = saved ? `Saved. Change why you saved ${target.title}` : `Save ${target.title} to Bookmarks`;
 
   return (
     <span

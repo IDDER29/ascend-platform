@@ -57,7 +57,7 @@ export function ComingBack({
       </div>
       {misses.length === 0 ? (
         <p className="m-0 border-t border-[var(--coach-divider)] pt-3 text-sm text-[var(--coach-ink-secondary)]">
-          Nothing to fix — every card was right.
+          Nothing to fix: every card was right.
         </p>
       ) : (
         <ul className="m-0 list-none p-0">

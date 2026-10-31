@@ -338,6 +338,78 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       ],
     },
   ],
+  "level-06-c-tools": [
+    {
+      id: "build",
+      title: "Build",
+      blurb: "From source files to a program, and only rebuilding what changed.",
+      items: [
+        {
+          slug: "gcc-flags-and-warnings",
+          description: "What gcc does from preprocessing to linking, and which flags and warnings catch bugs before the program runs.",
+        },
+        {
+          slug: "make",
+          description: "How a Makefile describes what depends on what, so make rebuilds only the files that changed.",
+        },
+        {
+          slug: "libraries",
+          description: "How static libraries are copied into a program and shared ones are loaded at run time, and how to build both.",
+        },
+      ],
+    },
+    {
+      id: "inspect",
+      title: "Look inside",
+      blurb: "See what a program is and what it does while it runs.",
+      items: [
+        {
+          slug: "gdb",
+          description: "How to stop a program at a breakpoint, step through it line by line and read a backtrace when it crashes.",
+        },
+        {
+          slug: "objdump-readelf-nm",
+          description: "How to look inside an executable: its sections, its symbols and the machine code the compiler produced.",
+        },
+        {
+          slug: "strace",
+          description: "How to watch every system call a program makes, and use that to see why it fails or hangs.",
+        },
+      ],
+    },
+    {
+      id: "catch",
+      title: "Catch bugs early",
+      blurb: "Let tools find the bugs before your users do.",
+      items: [
+        {
+          slug: "sanitizers",
+          description: "How AddressSanitizer and UndefinedBehaviorSanitizer catch memory errors and undefined behaviour as your program runs.",
+        },
+        {
+          slug: "git",
+          description: "How to track a C project with git: commits, branches, ignoring build output and finding the change that broke it.",
+        },
+        {
+          slug: "tests-in-c",
+          description: "How to write small, fast tests for C functions with assert and a simple runner, and run them on every build.",
+        },
+      ],
+      upcoming: [
+        {
+          id: "valgrind",
+          title: "valgrind and memory checking",
+          description: "How valgrind finds memory leaks, invalid reads and uninitialised values in a program without recompiling it.",
+        },
+        {
+          id: "project-debug-a-program",
+          title: "Project: Debug a broken program",
+          description: "Use gdb, sanitizers and valgrind to find and fix the bugs in a broken program, proving you can debug with tools.",
+          project: true,
+        },
+      ],
+    },
+  ],
   "level-07-data-structures": [
     {
       id: "linear",

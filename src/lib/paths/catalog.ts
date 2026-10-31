@@ -193,9 +193,9 @@ export const PATHS: PathDef[] = [
       },
       {
         id: "c-tools",
-        title: "Tools",
+        title: LEVELS["level-06-c-tools"].name,
         body: "Build, inspect and debug like a systems programmer: gcc, make, gdb, objdump, strace and sanitizers.",
-        outline: O.C_TOOLS,
+        levelId: "level-06-c-tools",
       },
       {
         id: "data-structures",

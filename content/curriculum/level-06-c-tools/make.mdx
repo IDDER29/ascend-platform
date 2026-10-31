@@ -1,0 +1,192 @@
+---
+title: "make: building only what changed"
+level: level-06-c-tools
+slug: make
+order: 2
+timeMin: 11
+learningOutcomes:
+- Write a Makefile rule with a target, prerequisites and a recipe, and explain how make decides what to rebuild
+- Use automatic variables ($@, $< and $^) and a pattern rule so one rule builds every object file
+- Mark targets such as clean as .PHONY, and explain what goes wrong without it
+- Explain why a naive Makefile misses header changes, and fix it with gcc -MMD -MP
+primer:
+- title: "Header files and separate compilation"
+  type: doc
+  meta: "The C Language · why programs are split into .c and .h files."
+  essential: true
+- title: "What gcc really does: flags and warnings"
+  type: doc
+  meta: Reread · 2 min · -c builds one object file at a time.
+  essential: false
+knowledgeCheck:
+- question: How does make decide whether to rebuild main.o?
+  answer: "It compares modification times. If main.o doesn't exist, or any of its prerequisites (the files listed after the colon) is newer than it, make runs the recipe. Otherwise main.o is up to date and is left alone."
+  jumpToId: rules-and-timestamps
+  jumpToLabel: Rules and timestamps
+- question: Why did changing MAX_VALUES in stats.h leave the program printing the old value with the naive Makefile?
+  answer: "The rules only listed main.c as a prerequisite of main.o, so make didn't know main.o depends on stats.h. Nothing it watched had changed, so it rebuilt nothing. gcc -MMD -MP writes the real dependencies (main.o: main.c stats.h) into .d files that the Makefile includes."
+  jumpToId: the-header-trap
+  jumpToLabel: The header trap
+assignment:
+  instruction: "Write a Makefile for one of your multi-file C programs with CFLAGS, a pattern rule, automatic variables, .PHONY clean and -MMD -MP dependencies. Check it: run make twice (the second does nothing), touch one .c file (only it rebuilds), and edit a header (everything that includes it rebuilds)."
+  resourceName: 'GNU make manual'
+  resourceType: doc
+  resourceUrl: 'https://www.gnu.org/software/make/manual/make.html'
+additionalResources:
+- title: "Paul Smith: Auto-Dependency Generation"
+  type: doc
+  meta: the header-dependency technique, from make's maintainer
+  url: 'https://make.mad-scientist.net/papers/advanced-auto-dependency-generation/'
+whyThisMatters: "Real C projects have hundreds of files, and rebuilding all of them after every edit wastes minutes each time. make rebuilds exactly what changed, but only if the Makefile tells the truth about dependencies. The header trap is one of the most common causes of mysterious stale builds."
+---
+
+The C Language's headers lesson used a tiny Makefile. Now you'll write a proper one and understand exactly what it does. All sessions below are real, run with GNU make on Linux.
+
+The project has three files: `main.c`, `stats.c` and `stats.h`. Here is the program it builds:
+
+<CRun program="c-tools/make-stats" caption='The project being built' />
+
+## Rules and timestamps
+
+A Makefile is a list of **rules**:
+
+```
+target: prerequisites
+	recipe
+```
+
+The target is a file to make, the prerequisites are the files it's made from, and the recipe is the commands that make it. **The recipe line must start with a tab**, not spaces.
+
+make decides by **modification time**: a target is rebuilt if it doesn't exist, or if any prerequisite is newer than it. It works backwards from the first target, so each prerequisite is brought up to date first.
+
+## A real Makefile
+
+```
+CC = gcc
+CFLAGS = -std=c17 -Wall -Wextra -O2
+
+stats: main.o stats.o
+	$(CC) $^ -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+.PHONY: clean
+clean:
+	rm -f stats *.o
+```
+
+- `CC` and `CFLAGS` are **variables**, used as `$(CC)`.
+- The **automatic variables** are `$@` (the target), `$<` (the first prerequisite) and `$^` (all of them).
+- **`%.o: %.c`** is a **pattern rule**: it says how to make any `.o` from the `.c` of the same name, so you don't write one rule per file.
+- **`.PHONY: clean`** says `clean` isn't a file, just a name for a job.
+
+Predict what each `make` below does before you read its output.
+
+```
+$ make
+gcc -std=c17 -Wall -Wextra -O2 -c main.c -o main.o
+gcc -std=c17 -Wall -Wextra -O2 -c stats.c -o stats.o
+gcc main.o stats.o -o stats
+$ make
+make: 'stats' is up to date.
+$ touch stats.c
+$ make
+gcc -std=c17 -Wall -Wextra -O2 -c stats.c -o stats.o
+gcc main.o stats.o -o stats
+```
+
+<details>
+<summary>Check your answer</summary>
+
+The first `make` builds both objects through the pattern rule, then links them with `$^` (main.o stats.o) into `$@` (stats). The second finds every target newer than its prerequisites and does nothing. After `touch stats.c`, only `stats.o` is out of date, so make recompiles just that file and relinks. `main.o` is reused. In a big project, that's the difference between rebuilding one file and rebuilding hundreds.
+
+</details>
+
+<KeyIdea>make rebuilds a target when a prerequisite is newer, so a Makefile is only as good as its list of prerequisites.</KeyIdea>
+
+## Phony targets
+
+`clean` makes no file called `clean`. Without `.PHONY`, here's what happens once a file with that name exists:
+
+```
+$ touch clean
+$ make clean
+make: 'clean' is up to date.
+```
+
+The file `clean` exists and has no prerequisites, so make thinks the target is already made and runs nothing. `.PHONY: clean` tells make to always run the recipe, whatever files exist. Mark `clean`, `all`, `test` and similar job names as phony.
+
+And here is the tab rule broken, with four spaces before the recipe:
+
+```
+$ make
+Makefile:2: *** missing separator.  Stop.
+```
+
+## The header trap
+
+`stats.h` defines `MAX_VALUES`, which `main.c` prints. Change it from 100 to 50 and run `make` with the Makefile above:
+
+```
+$ make
+make: 'stats' is up to date.
+$ ./stats
+sum 108, largest 42, room for 100
+```
+
+The program still says 100. Why?
+
+<details>
+<summary>Check your answer</summary>
+
+The pattern rule says `main.o` depends on `main.c` only. make has no idea that `main.c` includes `stats.h`, so when the header changed, nothing make watches was newer than `main.o`. The program was left built from the old header. Worse, in a real project some objects might be rebuilt with the new header and some not, and the program would mix two different ideas of the same struct or constant.
+
+</details>
+
+The fix is to let gcc write the real dependencies as it compiles. `-MMD` makes it write a `.d` file next to each object, listing every header the source included (skipping system headers), and `-MP` adds an empty rule for each header, so deleting a header doesn't break the build:
+
+```
+CC = gcc
+CFLAGS = -std=c17 -Wall -Wextra -O2 -MMD -MP
+OBJS = main.o stats.o
+
+stats: $(OBJS)
+	$(CC) $^ -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+-include $(OBJS:.o=.d)
+
+.PHONY: clean
+clean:
+	rm -f stats *.o *.d
+```
+
+```
+$ make
+gcc -std=c17 -Wall -Wextra -O2 -MMD -MP -c main.c -o main.o
+gcc -std=c17 -Wall -Wextra -O2 -MMD -MP -c stats.c -o stats.o
+gcc main.o stats.o -o stats
+$ cat main.d
+main.o: main.c stats.h
+stats.h:
+```
+
+Then, after changing `MAX_VALUES` to 50:
+
+```
+$ make
+gcc -std=c17 -Wall -Wextra -O2 -MMD -MP -c main.c -o main.o
+gcc -std=c17 -Wall -Wextra -O2 -MMD -MP -c stats.c -o stats.o
+gcc main.o stats.o -o stats
+$ ./stats
+sum 108, largest 42, room for 50
+```
+
+`-include` reads the `.d` files if they exist (the `-` means "don't complain if they don't yet"), so make now knows that both objects depend on `stats.h`. Editing the header rebuilds everything that includes it.
+
+## Done when
+
+You can write a rule, explain the rebuild decision, use `$@`, `$<`, `$^` and a pattern rule, say why `clean` is phony, and fix the header trap with `-MMD -MP`.

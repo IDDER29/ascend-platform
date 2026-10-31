@@ -119,8 +119,8 @@ export const LEVELS: Record<
   "level-06-c-tools": {
     name: "Tools",
     short: "The Workshop",
-    totalConcepts: 11,
-    timeLabel: "~2 hr",
+    totalConcepts: 9,
+    timeLabel: "~1 hr 40 min",
   },
   "level-07-data-structures": {
     name: "Data Structures in C",

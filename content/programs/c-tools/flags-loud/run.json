@@ -1,0 +1,20 @@
+{
+  "id": "c-tools/flags-loud",
+  "sourceHash": "571fb47e36df625a",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -Wshadow -Wconversion -Wpedantic -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘average’:\nmain.c:9:13: warning: declaration of ‘count’ shadows a global declaration [-Wshadow]\n    9 |         int count = scores[i];  /* a second \"count\" */\n      |             ^~~~~\nmain.c:3:5: note: shadowed declaration is here\n    3 | int count = 0;\n      |     ^~~~~\nmain.c:12:15: warning: conversion from ‘long int’ to ‘int’ may change value [-Wconversion]\n   12 |     int avg = total / n;        /* long into int */\n      |               ^~~~~\nmain.c:13:29: warning: conversion from ‘int’ to ‘unsigned char’ may change value [-Wconversion]\n   13 |     unsigned char doubled = avg * 2;  /* int into unsigned char */\n      |                             ^~~\n"
+  },
+  "run": {
+    "stdout": "twice the average: 44\ncount: 0\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

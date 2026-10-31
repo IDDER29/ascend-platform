@@ -1,0 +1,20 @@
+{
+  "id": "c-tools/tests-asan",
+  "sourceHash": "b449bfcb250c150f",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=address,undefined main.c strutil.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "=================================================================\n==606525==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x772e621e000f at pc 0x6548635906a5 bp 0x7fff0c86bc90 sp 0x7fff0c86bc80\nREAD of size 1 at 0x772e621e000f thread T0\n    #0 0x6548635906a4 in reversed ./strutil.c:8\n    #1 0x654863590481 in main ./main.c:14\n    #2 0x7b0e6322a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #3 0x7b0e6322a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #4 0x6548635902c4 in _start (/tmp/build/prog+0x22c4) (BuildId: 6f4ebc933b84d8807984bf052fa4231569e607ec)\n\n0x772e621e000f is located 1 bytes before 6-byte region [0x772e621e0010,0x772e621e0016)\nallocated by thread T0 here:\n    #0 0x7b0e63f2b60f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67\n    #1 0x654863590419 in main ./main.c:8\n    #2 0x7b0e6322a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #3 0x7b0e6322a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #4 0x6548635902c4 in _start (/tmp/build/prog+0x22c4) (BuildId: 6f4ebc933b84d8807984bf052fa4231569e607ec)\n\nSUMMARY: AddressSanitizer: heap-buffer-overflow ./strutil.c:8 in reversed\nShadow bytes around the buggy address:\n  0x772e621dfd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x772e621dfe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x772e621dfe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x772e621dff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x772e621dff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x772e621e0000: fa[fa]06 fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x772e621e0080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x772e621e0100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x772e621e0180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x772e621e0200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x772e621e0280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==606525==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

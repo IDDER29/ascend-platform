@@ -1,0 +1,20 @@
+{
+  "id": "c-tools/san-leak",
+  "sourceHash": "61c8f44730ea5aa9",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O1 -g -fsanitize=address main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "\n=================================================================\n==605090==ERROR: LeakSanitizer: detected memory leaks\n\nDirect leak of 45 byte(s) in 3 object(s) allocated from:\n    #0 0x755f3ad2b60f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67\n    #1 0x56185e5f1233 in copy ./main.c:7\n    #2 0x56185e5f1233 in main ./main.c:16\n\nSUMMARY: AddressSanitizer: 45 byte(s) leaked in 3 allocation(s).\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

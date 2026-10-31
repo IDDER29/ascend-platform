@@ -13,6 +13,7 @@ import type { CrestId } from "./catalog";
 export const CREST_OF: Record<LevelId, CrestId> = {
   "level-00-bits-logic": "gate",
   "level-01-machine-memory": "core",
+  "level-04-c-basics": "brace",
   "level-02-the-c-language": "pointer",
   "level-03-systems-software": "shell",
 };

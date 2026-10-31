@@ -20,6 +20,15 @@ export function CrestArt({ crest }: { crest: CrestId }) {
           <path d="M19 9v5M24 9v5M29 9v5M19 34v5M24 34v5M29 34v5M9 19h5M9 24h5M9 29h5M34 19h5M34 24h5M34 29h5" />
         </>
       );
+    // C Basics: a block in curly braces, the shape of every C program.
+    case "brace":
+      return (
+        <>
+          <path d="M18 11c-3.5 0-5 1.6-5 5v4.5c0 2.2-1.2 3.5-3.5 3.5c2.3 0 3.5 1.3 3.5 3.5V32c0 3.4 1.5 5 5 5" />
+          <path d="M30 11c3.5 0 5 1.6 5 5v4.5c0 2.2 1.2 3.5 3.5 3.5c-2.3 0-3.5 1.3-3.5 3.5V32c0 3.4-1.5 5-5 5" />
+          <path d="M21 24h6" />
+        </>
+      );
     // The C Language: a pointer (*) aiming into a box.
     case "pointer":
       return (

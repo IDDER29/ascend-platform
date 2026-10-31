@@ -1,0 +1,20 @@
+{
+  "id": "c-basics/switch-fallthrough",
+  "sourceHash": "383444faf49c7d5c",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘main’:\nmain.c:7:9: warning: this statement may fall through [-Wimplicit-fallthrough=]\n    7 |         printf(\"easy\\n\");\n      |         ^~~~~~~~~~~~~~~~\nmain.c:8:5: note: here\n    8 |     case 2:\n      |     ^~~~\nmain.c:9:9: warning: this statement may fall through [-Wimplicit-fallthrough=]\n    9 |         printf(\"medium\\n\");\n      |         ^~~~~~~~~~~~~~~~~~\nmain.c:10:5: note: here\n   10 |     case 3:\n      |     ^~~~\nmain.c:11:9: warning: this statement may fall through [-Wimplicit-fallthrough=]\n   11 |         printf(\"hard\\n\");\n      |         ^~~~~~~~~~~~~~~~\nmain.c:12:5: note: here\n   12 |     default:\n      |     ^~~~~~~\n"
+  },
+  "run": {
+    "stdout": "medium\nhard\nunknown\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

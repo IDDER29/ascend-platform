@@ -12,7 +12,7 @@ learningOutcomes:
 primer:
   - title: "The fetch-execute loop, revisited"
     type: "doc"
-    meta: "Read · 3 min · refresh the fetch-decode-execute cycle from Level 00 before meeting the hardware that runs it."
+    meta: "Read · 3 min · refresh the fetch-decode-execute cycle from Foundations before meeting the hardware that runs it."
     essential: true
   - title: "Logic gates & the ALU's building blocks"
     type: "video"
@@ -46,7 +46,7 @@ additionalResources:
   url: 'https://www.felixcloutier.com/x86/'
 ---
 
-In Level 00 you built the <b>fetch-execute loop</b> up from gates: fetch an instruction, decode it, execute it, repeat — forever, thousands of millions of times a second. That loop is real, but so far it's been an idea. This lesson puts a body on it: the actual pieces of silicon that do the fetching, the deciding, and the arithmetic.
+In Foundations you built the <b>fetch-execute loop</b> up from gates: fetch an instruction, decode it, execute it, repeat — forever, thousands of millions of times a second. That loop is real, but so far it's been an idea. This lesson puts a body on it: the actual pieces of silicon that do the fetching, the deciding, and the arithmetic.
 
 Three characters do almost all the work inside a CPU: a small set of <b>registers</b> for holding values right now, an <b>ALU</b> (arithmetic logic unit) for doing math and comparisons on those values, and a <b>control unit</b> that steers the whole show. Get comfortable with these three, and every instruction you'll ever read — in assembly, in a debugger, in a crash dump — starts making sense.
 
@@ -68,7 +68,7 @@ A few registers have jobs so important they get their own names. The `program co
 
 ## The ALU: where decisions and math happen
 
-The <b>ALU</b> takes one or two values from registers, applies an operation — add, subtract, AND, OR, shift, compare — and produces a result, usually written back into a register. This is the same digital logic from Level 00: adders and multiplexers built from gates, just wired up to accept whichever operation the control unit selects for this instruction.
+The <b>ALU</b> takes one or two values from registers, applies an operation — add, subtract, AND, OR, shift, compare — and produces a result, usually written back into a register. This is the same digital logic from Foundations: adders and multiplexers built from gates, just wired up to accept whichever operation the control unit selects for this instruction.
 
 Every ALU operation also sets a small set of one-bit <b>flags</b>: was the result zero? negative? did it overflow the register's width? did a carry fall out the top? Those flags aren't trivia — they're how the CPU makes decisions. A `compare` is really just a subtraction whose result is thrown away and whose flags are kept, and next lesson's conditional jumps read those flags to decide where to go next.
 

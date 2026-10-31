@@ -1,0 +1,120 @@
+---
+title: "if, else and switch"
+level: level-04-c-basics
+slug: if-else-switch
+order: 5
+timeMin: 9
+learningOutcomes:
+- Write if, else if and else chains whose conditions are tested in order
+- Explain what counts as true in C (any nonzero value) and predict which branch runs
+- Use switch with break and default, and predict what happens when a break is missing
+- Explain the dangling else, and why braces on every branch prevent it
+primer:
+- title: "Conditions, loops and functions"
+  type: doc
+  meta: Reread · 3 min · if and else as jumps, from Foundations.
+  essential: true
+- title: "Operators and expressions"
+  type: doc
+  meta: Reread · 2 min · comparisons give 1 or 0.
+  essential: true
+knowledgeCheck:
+- question: In an if, else if, else chain, a score of 95 matches both s >= 90 and s >= 50. Which branch runs?
+  answer: "Only the first one whose condition is true, s >= 90. The conditions are tested top to bottom, and once one branch runs, the rest of the chain is skipped. That's why the strictest test goes first."
+  jumpToId: choosing-one-branch
+  jumpToLabel: Choosing one branch
+- question: A switch case has no break. What happens when that case matches?
+  answer: "Execution falls through into the next case's statements, and keeps going until it reaches a break or the end of the switch. -Wextra makes gcc warn about it; when it is intended, mark it with a /* fall through */ comment."
+  jumpToId: switch-and-the-missing-break
+  jumpToLabel: Switch and the missing break
+assignment:
+  instruction: "Write a program with an int month (1 to 12) set at the top, and use a switch to print how many days it has (ignore leap years), with February its own case, the 30-day months sharing cases, and a default that prints an error for anything else. Test it with 2, 4, 12 and 13."
+  resourceName: 'cppreference: switch statement'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/language/switch'
+additionalResources:
+- title: "cppreference: if statement"
+  type: doc
+  meta: reference
+  url: 'https://en.cppreference.com/w/c/language/if'
+whyThisMatters: "Every decision a program makes goes through these statements. Getting the order of an else if chain right, knowing what C treats as true, and never losing a break are small habits that prevent a big share of real-world logic bugs."
+---
+
+In Foundations you saw an if turn into a compare and a conditional jump. In C you write the decision, and the compiler makes the jumps. This lesson covers the two ways to choose: `if` chains and `switch`.
+
+## Choosing one branch
+
+An `if` runs its block when the condition is true. `else if` adds another test, tried only if every test before it failed, and `else` catches everything left. Exactly one branch of the chain runs.
+
+<CRun program="c-basics/grade" caption='Grading four scores' />
+
+95 passes `s >= 90`, so it gets an A, and the other tests are never tried, even though 95 is also above 80 and 50. Order matters: if `s >= 50` came first, every passing score would land there. Put the strictest test first.
+
+The `for` loop and the array `{95, 82, 64, 40}` just feed four scores through the same chain; loops come next lesson and arrays later in C Basics.
+
+## What counts as true
+
+C has no separate true and false for conditions: zero is false, and every other value is true.
+
+<CRun program="c-basics/truthy" caption='Which numbers are true?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Only 0 is false. 1, -1 and 42 are all true. So `if (count)` means "if count isn't zero", which you'll see a lot in C code. It also means a mistake such as `if (x = 5)` compiles: the assignment gives 5, which is true.
+
+</details>
+
+## Switch and the missing break
+
+`switch` compares one integer value against fixed `case` labels and jumps to the match. `break` leaves the switch; `default` catches values with no case. Several labels can share one block, as 6 and 7 do here:
+
+<CRun program="c-basics/switch-days" caption='Days of the week' />
+
+`switch` is a jump to a label, not a set of separate branches. Without a `break`, execution just continues into the next case's statements. Predict what this prints for `difficulty = 2`.
+
+<CRun program="c-basics/switch-fallthrough" caption='Three missing breaks' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+medium
+hard
+unknown
+```
+
+The switch jumps to `case 2:`, prints `medium`, and with no `break` falls through into `case 3:` and `default:` too. gcc's `-Wextra` warns about each fall-through, and the warnings point at the exact statements. The fix is a `break;` after each `printf`. Falling through on purpose is occasionally useful; then say so with a `/* fall through */` comment, which also silences the warning.
+
+</details>
+
+<KeyIdea>An if chain runs the first branch whose condition is nonzero. A switch jumps to the matching case and runs on until a break: never leave one out by accident.</KeyIdea>
+
+## The dangling else
+
+Without braces, an `else` belongs to the nearest `if` above it, whatever the indentation says. Read this program and predict its output, then run it.
+
+<CRun program="c-basics/dangling-else" caption='Whose else is it?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Only `done`. The indentation suggests the `else` belongs to `if (a > 0)`, but C attaches it to the inner `if (b > 0)`. Since `a > 0` is false, the whole inner if, else included, is skipped, and "a is not positive" is never printed. gcc warns: "suggest explicit braces to avoid ambiguous 'else'".
+
+The fix, and the habit, is braces on every branch:
+
+```c
+if (a > 0) {
+    if (b > 0) {
+        printf("both positive\n");
+    }
+} else {
+    printf("a is not positive\n");
+}
+```
+
+</details>
+
+## Done when
+
+You can order an else if chain correctly, say which values C treats as true, write a switch with a break on every case and a default, and explain the dangling else.

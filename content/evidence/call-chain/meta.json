@@ -1,0 +1,13 @@
+{
+  "id": "call-chain",
+  "title": "sum_squares calls square twice",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux (System V ABI)",
+  "flags": {
+    "O0": "gcc -O0 -fno-asynchronous-unwind-tables -fno-pie -no-pie -S source.c",
+    "O2": "gcc -O2 -fno-asynchronous-unwind-tables -fno-pie -no-pie -S source.c"
+  },
+  "output": "25",
+  "generated": "2026-10-31",
+  "note": "Real compiler output, generated on the Ascend build machine and committed unchanged. -fno-asynchronous-unwind-tables only removes .cfi lines; -fno-pie/-no-pie keep addresses simple. At -O2 gcc inlines square into sum_squares and computes main's sum_squares(3, 4) = 25 at compile time; Ubuntu's gcc also turns printf into the checked __printf_chk."
+}

@@ -1,0 +1,14 @@
+{
+  "id": "c-basics/err-undeclared",
+  "sourceHash": "1ae1620029c9edfd",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "main.c: In function ‘main’:\nmain.c:6:9: error: ‘totl’ undeclared (first use in this function); did you mean ‘total’?\n    6 |         totl = total + i;\n      |         ^~~~\n      |         total\nmain.c:6:9: note: each undeclared identifier is reported only once for each function it appears in\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

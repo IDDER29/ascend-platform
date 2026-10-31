@@ -1,0 +1,119 @@
+---
+title: "Reading compiler errors"
+level: level-04-c-basics
+slug: reading-compiler-errors
+order: 4
+timeMin: 9
+learningOutcomes:
+- Read a gcc message's file, line and column, and tell an error from a warning
+- Fix the most common errors, a missing semicolon, an undeclared name and a missing include, from gcc's message alone
+- Explain why the line gcc points at is sometimes after the real mistake, and why to fix the first error first
+- Treat warnings as bugs, and recognise a format mismatch and an assignment used as a condition
+primer:
+- title: "Hello, world: compile and run"
+  type: doc
+  meta: Reread · 2 min · where gcc's messages appear.
+  essential: true
+- title: "Operators and expressions"
+  type: doc
+  meta: Reread · 2 min · = versus ==.
+  essential: false
+knowledgeCheck:
+- question: "gcc says main.c:5:5: error: expected ',' or ';' before 'printf'. Where is the mistake most likely to be?"
+  answer: "At the end of line 4. gcc only notices a statement wasn't finished when it reaches the next token, printf on line 5, so it reports that position; the missing semicolon belongs at the end of the line before."
+  jumpToId: the-error-points-after-the-mistake
+  jumpToLabel: The error points after the mistake
+- question: The program compiled with only a warning about %d and a double. Why is that still a bug?
+  answer: "A warning means gcc built a program but thinks it does something you didn't mean. Here printf reads an int where a double was passed, so it prints a meaningless number. Treat warnings as errors: fix every one before running."
+  jumpToId: warnings-are-bugs-waiting
+  jumpToLabel: Warnings are bugs waiting
+assignment:
+  instruction: "Take any working program from this course and break it on purpose five ways: delete a semicolon, misspell a variable, remove the #include, drop a closing brace, and use %d for a double. Compile after each change, copy gcc's first message, and write one sentence on what it means and where the real mistake was."
+  resourceName: 'GCC manual: warning options'
+  resourceType: doc
+  resourceUrl: 'https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html'
+additionalResources:
+- title: "GCC manual: how messages are formatted"
+  type: doc
+  meta: carets, fix-it hints and colours
+  url: 'https://gcc.gnu.org/onlinedocs/gcc/Diagnostic-Message-Formatting-Options.html'
+whyThisMatters: "You'll read far more compiler messages than you'll write programs. Reading them calmly, finding the real line, fixing the first one and never ignoring a warning turns compiling from a fight into a conversation with a very careful reviewer."
+---
+
+gcc reads your whole program before it builds anything, and it tells you exactly what it couldn't understand or didn't like. This lesson is about reading what it says. Every message below is real gcc 15 output for the program shown.
+
+## Anatomy of a message
+
+<CRun program="c-basics/err-undeclared" caption='A misspelled name' />
+
+Read the first message piece by piece:
+
+- `main.c:6:9:` is the file, line 6, column 9.
+- `error:` means gcc can't build a program at all. (A `warning:` means it can, but suspects a mistake.)
+- `'totl' undeclared (first use in this function)` is the problem: there's no variable called `totl`.
+- Below it, gcc quotes the line, puts a caret `^~~~` under the exact spot, and here even suggests the fix: `did you mean 'total'?`
+
+The `note:` lines add detail. Here gcc says it reports each undeclared name once per function, so one typo doesn't produce a page of errors.
+
+## The error points after the mistake
+
+<CRun program="c-basics/err-semicolon" caption='A missing semicolon' />
+
+The error is reported on line 5, at `printf`, but line 5 is fine: the semicolon is missing from the end of line 4. gcc only learns a statement wasn't finished when it reaches the next token, so it reports where it noticed, not where you went wrong. When an error makes no sense on its own line, look at the line before.
+
+The second message is a side effect: because the declaration of `count` was never finished, gcc thinks `count` is never used. Fix the first error and this one disappears too.
+
+## Fix the first error first
+
+One mistake can confuse the parser for the rest of the file. Predict how many errors gcc reports for this one missing bracket, then run it.
+
+<CRun program="c-basics/err-cascade" caption='One mistake, how many errors?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Two. The real mistake is the missing `)` on line 5, and gcc even shows where it belongs. The second error, at the last `}` on line 9, only happens because the `if` was never closed properly. Fix the first error, recompile, and the second is gone.
+
+So always start at the top. Later errors are often echoes of earlier ones; fixing them first wastes time.
+
+</details>
+
+## A missing include
+
+<CRun program="c-basics/err-no-include" caption='printf without stdio.h' />
+
+Without `#include <stdio.h>` the compiler has no declaration of `printf`. Since gcc 14 that's an error by default (`implicit declaration of function`). The `note:` lines say exactly what to do, and the `+++ |+#include <stdio.h>` line is a fix-it hint: the line to add, and where. Older compilers only warned here and then guessed `printf`'s type, which is why old tutorials sometimes "work" without the include.
+
+## Warnings are bugs waiting
+
+This program compiles with two warnings. Predict what it prints, then run it.
+
+<CRun program="c-basics/warn-format" caption='It compiled, so it works?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It prints a meaningless number, here 546760040, and a different one on another machine or run. `%d` tells `printf` to read an `int`, but a `double` was passed, and on x86-64 the two even travel in different registers, so `printf` reads whatever happened to be in the integer one. gcc said exactly this, and even suggested `%f`. The second warning, an unused variable, is harmless here but often means a typo.
+
+The fix is `%f`. The habit is bigger: compile with `-Wall -Wextra`, and fix every warning before running. Many teams add `-Werror`, which turns warnings into errors.
+
+</details>
+
+## Try it
+
+This compiles with a warning, and the output looks plausible. What is the bug, and what did the programmer mean?
+
+<CRun program="c-basics/warn-assign-in-if" caption='Still playing?' />
+
+<details>
+<summary>Check your answer</summary>
+
+`if (lives = 3)` assigns 3 to `lives`, and the value of an assignment is the value assigned, 3, which is true. So the condition is always true and `lives` is overwritten. The programmer meant `if (lives == 3)`, which compares and prints nothing here, since lives is 0. gcc's hint, "suggest parentheses around assignment used as truth value", is its way of saying "did you mean ==?"; you'd only add the extra parentheses if the assignment really was intended.
+
+</details>
+
+<KeyIdea>Read the first message, at its file, line and column; if the line looks fine, look just before it. Errors stop the build, warnings let a bug through: fix both.</KeyIdea>
+
+## Done when
+
+You can read a message's position and kind, fix a missing semicolon, an undeclared name and a missing include from the message alone, and you build with `-Wall -Wextra` and fix every warning.

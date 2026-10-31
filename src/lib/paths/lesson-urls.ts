@@ -33,6 +33,10 @@ const LEVEL_OWNER: Record<
     pathSlug: "systems-programmer",
     courseId: "machine-memory",
   },
+  "level-04-c-basics": {
+    pathSlug: "systems-programmer",
+    courseId: "c-basics",
+  },
   "level-02-the-c-language": {
     pathSlug: "systems-programmer",
     courseId: "the-c-language",

@@ -3,6 +3,7 @@ import { z } from "zod";
 export const levelIds = [
   "level-00-bits-logic",
   "level-01-machine-memory",
+  "level-04-c-basics",
   "level-02-the-c-language",
   "level-03-systems-software",
 ] as const;
@@ -89,8 +90,14 @@ export const LEVELS: Record<
   "level-01-machine-memory": {
     name: "Machine & Memory",
     short: "The Machine",
-    totalConcepts: 6,
-    timeLabel: "~47 min",
+    totalConcepts: 8,
+    timeLabel: "~67 min",
+  },
+  "level-04-c-basics": {
+    name: "C Basics",
+    short: "The First Programs",
+    totalConcepts: 12,
+    timeLabel: "~2.5 hr",
   },
   "level-02-the-c-language": {
     name: "The C Language",

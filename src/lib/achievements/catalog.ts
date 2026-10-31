@@ -39,7 +39,7 @@ export const TASK_RANKS: Record<MissionRank, string> = {
 };
 
 /** Original emblems for the four clans (one per topic). */
-export type CrestId = "gate" | "core" | "pointer" | "shell";
+export type CrestId = "gate" | "core" | "brace" | "pointer" | "shell";
 
 export type Achievement = {
   id: string;
@@ -64,10 +64,11 @@ export const GROUP_TITLES: Record<AchievementGroup, string> = {
 
 const BITS: LevelId = "level-00-bits-logic";
 const MACHINE: LevelId = "level-01-machine-memory";
+const C_BASICS: LevelId = "level-04-c-basics";
 const C: LevelId = "level-02-the-c-language";
 const SYSTEMS: LevelId = "level-03-systems-software";
 
-export const CREST_IDS = ["gate-clan", "core-clan", "pointer-clan", "shell-clan"];
+export const CREST_IDS = ["gate-clan", "core-clan", "brace-clan", "pointer-clan", "shell-clan"];
 
 /** Every badge Ascend awards, each with its own exact rule. Ids are stable: earned rows reference them. */
 export const ACHIEVEMENTS: Achievement[] = [
@@ -76,6 +77,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "ten-down", group: "learning", label: "Ten Down", glyph: "❖", means: "Finished ten lessons", rules: [{ kind: "lessons", count: 10 }] },
   { id: "gatekeeper", group: "learning", label: "Gatekeeper", glyph: "◇", means: "Finished every lesson in Bits & Logic", rules: [{ kind: "topic", topic: BITS }] },
   { id: "machinist", group: "learning", label: "Machinist", glyph: "▣", means: "Finished every lesson in Machine & Memory", rules: [{ kind: "topic", topic: MACHINE }] },
+  { id: "first-compile", group: "learning", label: "First Compile", glyph: "❴", means: "Finished every lesson in C Basics", rules: [{ kind: "topic", topic: C_BASICS }] },
   { id: "pointer-wrangler", group: "learning", label: "Pointer Wrangler", glyph: "◆", means: "Finished every lesson in The C Language", rules: [{ kind: "topic", topic: C }] },
   { id: "systems-thinker", group: "learning", label: "Systems Thinker", glyph: "⬢", means: "Finished every lesson in Systems & Software", rules: [{ kind: "topic", topic: SYSTEMS }] },
 
@@ -106,6 +108,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "signal-keeper", group: "building", label: "Signal Keeper", glyph: "⌇", means: "Got a message through a noisy line with a threshold and a code (optional project)", rules: [{ kind: "project", projectId: "noisy-channel" }] },
   { id: "format-maker", group: "building", label: "Format Maker", glyph: "▦", means: "Decoded a tiny image format and wrote its specification (optional project)", rules: [{ kind: "project", projectId: "file-format" }] },
   { id: "minimizer", group: "building", label: "Minimizer", glyph: "⊟", means: "Made circuits smaller and built a full adder from NAND only (optional project)", rules: [{ kind: "project", projectId: "smaller-circuit" }] },
+  { id: "game-maker", group: "building", label: "Game Maker", glyph: "⚄", means: "Wrote a complete C guessing game that survives bad input", rules: [{ kind: "project", projectId: "guessing-game" }] },
   { id: "cpu-tracer", group: "building", label: "CPU Tracer", glyph: "▤", means: "Shipped a program for the tiny CPU", rules: [{ kind: "project", projectId: "tiny-cpu" }] },
   { id: "ship-it", group: "building", label: "Shell Smith", glyph: "◈", means: "Shipped ShellForge, a working shell", rules: [{ kind: "project", projectId: "shellforge" }] },
 
@@ -120,7 +123,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: "comeback", group: "habits", label: "Comeback", glyph: "✦", means: "Came back to Practice after two weeks away", rules: [{ kind: "comeback", gapDays: 14 }] },
 
   // Combinations: the parts are the rule, shown openly.
-  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "ship-it"] }] },
+  { id: "builder", group: "combination", label: "Builder", glyph: "⧉", means: "Shipped every curriculum project", rules: [{ kind: "badges", ids: ["code-maker", "cartographer", "converter", "byte-detective", "gate-builder", "nand-maker", "alu-architect", "clockmaker", "memory-keeper", "bus-driver", "cpu-tracer", "microcoder", "puzzle-solver", "assembler", "memory-watcher", "translator", "compiler-reader", "boundary-walker", "system-tracer", "game-maker", "ship-it"] }] },
   { id: "sharp-mind", group: "combination", label: "Sharp Mind", glyph: "✺", means: "Deep memory, a clean run and a week of practice", rules: [{ kind: "badges", ids: ["deep-memory", "clean-run", "week-of-practice"] }] },
   { id: "whole-machine", group: "combination", label: "The Whole Machine", glyph: "✸", means: "Finished every lesson and shipped every project", rules: [{ kind: "allLessons" }, { kind: "badges", ids: ["builder"] }] },
 ];
@@ -134,6 +137,7 @@ export const INSIGNIA: Achievement[] = [
   { id: "headband", group: "learning", label: "Headband", glyph: "⌃", means: "Graduated by finishing a whole topic", rules: [{ kind: "anyTopic" }], insignia: { kind: "headband" } },
   { id: "gate-clan", group: "learning", label: "Gate Clan", glyph: "◇", means: "Joined the Gate Clan by finishing every lesson in Bits & Logic", rules: [{ kind: "topic", topic: BITS }], insignia: { kind: "crest", crest: "gate" } },
   { id: "core-clan", group: "learning", label: "Core Clan", glyph: "▣", means: "Joined the Core Clan by finishing every lesson in Machine & Memory", rules: [{ kind: "topic", topic: MACHINE }], insignia: { kind: "crest", crest: "core" } },
+  { id: "brace-clan", group: "learning", label: "Brace Clan", glyph: "❴", means: "Joined the Brace Clan by finishing every lesson in C Basics", rules: [{ kind: "topic", topic: C_BASICS }], insignia: { kind: "crest", crest: "brace" } },
   { id: "pointer-clan", group: "learning", label: "Pointer Clan", glyph: "◆", means: "Joined the Pointer Clan by finishing every lesson in The C Language", rules: [{ kind: "topic", topic: C }], insignia: { kind: "crest", crest: "pointer" } },
   { id: "shell-clan", group: "learning", label: "Shell Clan", glyph: "⬢", means: "Joined the Shell Clan by finishing every lesson in Systems & Software", rules: [{ kind: "topic", topic: SYSTEMS }], insignia: { kind: "crest", crest: "shell" } },
 ];

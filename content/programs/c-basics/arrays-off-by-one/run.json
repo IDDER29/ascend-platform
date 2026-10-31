@@ -1,0 +1,20 @@
+{
+  "id": "c-basics/arrays-off-by-one",
+  "sourceHash": "b945d7180709bd19",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -fsanitize=undefined main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "last square: 16\n",
+    "stderr": "main.c:8:16: runtime error: index 5 out of bounds for type 'int [5]'\nmain.c:8:20: runtime error: store to address 0x7ffe3ada2024 with insufficient space for an object of type 'int'\n0x7ffe3ada2024: note: pointer points here\n  10 00 00 00 00 00 00 00  00 84 55 5e 5f de 7d d3  00 00 00 00 00 00 00 00  78 21 da 3a fe 7f 00 00\n              ^ \n",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

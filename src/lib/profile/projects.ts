@@ -293,6 +293,16 @@ export const CURRICULUM_PROJECTS: CurriculumProject[] = [
     href: null,
   },
   {
+    id: "guessing-game",
+    title: "Number-guessing game",
+    inSentence: "number-guessing game",
+    proves: "A complete C program that loops, reads input safely, gives hints and can be tested with a seed.",
+    level: "level-04-c-basics",
+    requires: { kind: "lesson", level: "level-04-c-basics", slug: "project-guessing-game" },
+    badgeId: "game-maker",
+    href: null,
+  },
+  {
     id: "shellforge",
     title: "ShellForge",
     inSentence: "ShellForge",

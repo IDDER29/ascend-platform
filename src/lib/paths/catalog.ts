@@ -175,9 +175,9 @@ export const PATHS: PathDef[] = [
       },
       {
         id: "c-basics",
-        title: "C Basics",
+        title: LEVELS["level-04-c-basics"].name,
         body: "Types, operators, control flow, functions and the compile-run loop: the C you need before the deep parts.",
-        outline: O.C_BASICS,
+        levelId: "level-04-c-basics",
       },
       {
         id: "the-c-language",

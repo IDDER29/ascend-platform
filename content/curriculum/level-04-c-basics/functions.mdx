@@ -1,0 +1,158 @@
+---
+title: "Functions, parameters and return values"
+level: level-04-c-basics
+slug: functions
+order: 7
+timeMin: 9
+learningOutcomes:
+- Declare, define and call a C function that takes parameters and returns a value
+- Explain why a function needs to be declared before it is called, and what a prototype tells the compiler
+- Predict what happens to a caller's variable when it is passed to a function, using pass by value
+- Recognise and fix a function that can end without returning a value
+primer:
+- title: "Functions and the call stack"
+  type: doc
+  meta: Reread · 3 min · each call gets a frame; arguments are copied into it.
+  essential: true
+- title: "Loops: while, for and do"
+  type: doc
+  meta: Reread · 2 min · the last lesson; loops are what most functions contain.
+  essential: false
+knowledgeCheck:
+- question: Why does the compiler need to see a declaration of square before main calls it?
+  answer: "C reads a file from top to bottom. To compile a call, gcc must already know the function's parameter types and return type, so it can check the arguments and pass them correctly. A prototype near the top (or the full definition above main) gives it that."
+  jumpToId: declare-define-call
+  jumpToLabel: "Declare, define, call"
+- question: try_to_reset(score) sets its parameter n to 0. Why is score still 42 afterwards?
+  answer: "C passes arguments by value: n is a new variable in try_to_reset's frame, holding a copy of 42. Changing the copy never touches score. To change score, return the new value and assign it, or (later) pass a pointer."
+  jumpToId: arguments-are-copies
+  jumpToLabel: "Arguments are copies"
+assignment:
+  instruction: "Write int max3(int a, int b, int c) that returns the largest of three numbers, using a helper int max2(int a, int b). Call it from main with a few test cases, including equal numbers and negatives, and compile with gcc -std=c17 -Wall -Wextra until there are no warnings."
+  resourceName: "Beej's Guide to C: Functions"
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/functions.html'
+additionalResources:
+- title: "cppreference: Functions"
+  type: doc
+  meta: the exact rules for declarations, definitions and calls
+  url: 'https://en.cppreference.com/w/c/language/functions'
+- title: "CS50 Week 1: C"
+  type: video
+  meta: functions and the first C programs, with live examples
+  url: 'https://cs50.harvard.edu/x/weeks/1/'
+whyThisMatters: "Every real C program is built from functions, and nearly every beginner bug with them comes from two rules: C must see a function before you call it, and arguments are copies. Knowing both turns confusing compiler messages and variables that refuse to change into problems you can solve in seconds."
+---
+
+In Foundations you saw functions from the machine's side: a call pushes a return address, the function gets a frame on the stack, and its result comes back in a register. Now you'll write them the way C programmers do, and meet the two rules that cause most beginner confusion.
+
+## Declare, define, call
+
+A function has a name, the parameters it takes, and the type of value it returns:
+
+<CRun program="c-basics/functions-square" caption='One function, called three times' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`16 36 16`. `square(4)` is 16, so `a` is 16. `square(a - 10)` is `square(6)`, which is 36. `square(square(2))` works inside out: `square(2)` is 4, and `square(4)` is 16.
+
+</details>
+
+Three parts to notice:
+
+- **The declaration** (`int square(int n);`, called a **prototype**) tells the compiler the function exists, what it takes and what it returns. It ends with a semicolon and has no body.
+- **The definition** (`int square(int n) { ... }`) is the function itself. Here it comes after `main`, which is fine because the prototype came first.
+- **The call** (`square(4)`) evaluates the argument, runs the body with `n` set to it, and becomes the value after `return`.
+
+C reads a file from top to bottom. If `main` called `square` before any declaration of it, gcc would stop with an error, because it can't check the call against a function it hasn't seen. Either put the prototype first, or define the function above its callers. Larger programs put prototypes in header files, which you'll meet later.
+
+A function that returns nothing has the return type `void`, and a function that takes nothing says so with `(void)`, as `int main(void)` does.
+
+## Arguments are copies
+
+What does this print?
+
+<CRun program="c-basics/functions-by-value" caption='Can a function reset your variable?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`inside:  n = 0`, then `after try_to_reset: score = 42`, then `after reset:        score = 0`.
+
+C passes arguments **by value**. When `main` calls `try_to_reset(score)`, the value 42 is copied into a brand new variable `n` in `try_to_reset`'s frame. Setting `n` to 0 changes the copy, and the copy disappears when the function returns. `score` was never touched.
+
+The second version works because it doesn't try to change anything from the inside: it *returns* the new value, and `main` assigns it with `score = reset(score);`.
+
+</details>
+
+<KeyIdea>A parameter is a new variable holding a copy of the argument. To give a caller a new value, return it; changing a caller's variable directly needs a pointer, which comes in The C Language.</KeyIdea>
+
+## Every path must return
+
+This function should return 1 for positive numbers, -1 for negative ones and 0 for zero. It has a bug. We compiled it with `-Werror=return-type`, which turns that one warning into an error so the broken program can't run.
+
+<CRun program="c-basics/functions-missing-return" caption='A function with a missing case' />
+
+When `x` is 0, neither `return` runs and the function falls off its end. Using the value of such a call is **undefined behaviour**: C makes no promise at all about what you get, and a different compiler or optimisation setting can give a different answer. gcc catches it, but only if you turn warnings on with `-Wall`.
+
+Fix the function so every path returns a value.
+
+<details>
+<summary>Check your answer</summary>
+
+Add the missing case, usually as a final `return` after the `if` chain:
+
+```c
+#include <stdio.h>
+
+int sign(int x) {
+    if (x > 0) {
+        return 1;
+    } else if (x < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+int main(void) {
+    printf("%d %d %d\n", sign(5), sign(-3), sign(0));
+    return 0;
+}
+```
+
+It prints `1 -1 0`. A final `return` outside every `if` is the simplest way to be sure no path is missed.
+
+</details>
+
+## Small functions, good names
+
+Splitting work into functions isn't only about reuse. A function with a clear name turns a block of code into one readable step:
+
+```c
+#include <stdio.h>
+
+int is_leap_year(int year) {
+    return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+}
+
+int days_in_february(int year) {
+    return is_leap_year(year) ? 29 : 28;
+}
+
+int main(void) {
+    printf("%d %d %d\n", days_in_february(2024), days_in_february(1900), days_in_february(2000));
+    return 0;
+}
+```
+
+This prints `29 28 29`. Each function does one thing, takes everything it needs as parameters, and returns its answer, so you can test it on its own. Functions that only read their parameters and return a result, like these, are the easiest to get right.
+
+Predict what `days_in_february(2100)` returns, and say which rule decides it.
+
+<details>
+<summary>Check your answer</summary>
+
+28. 2100 is divisible by 4 but also by 100, and not by 400, so `is_leap_year` returns 0 (false). Like 1900, it's a century year that isn't a leap year.
+
+</details>

@@ -1,0 +1,151 @@
+---
+title: "printf and scanf"
+level: level-04-c-basics
+slug: printf-and-scanf
+order: 9
+timeMin: 10
+learningOutcomes:
+- Format output with printf using %d, %x, %f, %c, %s and %zu, with widths and precision
+- Read numbers with scanf, passing the address of each variable with &
+- Check scanf's return value to tell whether the input was really read
+- Recognise format mismatches from gcc's -Wformat warnings, and know why fgets is the safer way to read lines
+primer:
+- title: "Scope: where a name lives"
+  type: doc
+  meta: Reread · 2 min · the last lesson.
+  essential: false
+- title: "What a pointer means"
+  type: doc
+  meta: Reread · 3 min · &x is the address of x, which is what scanf needs.
+  essential: true
+knowledgeCheck:
+- question: Why does scanf("%d", &age) need the &, when printf("%d", age) doesn't?
+  answer: "printf only needs the value of age, so a copy is enough. scanf must store a new value into age, and a function can't change its caller's variable through a copy; it needs the variable's address, which &age gives it."
+  jumpToId: reading-input-with-scanf
+  jumpToLabel: Reading input with scanf
+- question: The user types three 4 instead of two numbers. What does scanf("%d %d", &a, &b) return, and what should the program do?
+  answer: "It returns 0: it couldn't read even the first number, and a and b are unchanged (still uninitialised). The program should check that the return value is 2 and, if not, say the input was wrong instead of using a and b."
+  jumpToId: always-check-what-scanf-returns
+  jumpToLabel: Always check what scanf returns
+assignment:
+  instruction: "Write a program that reads a temperature in Celsius with scanf, checks that a number was read, and prints it in Fahrenheit with one decimal place (F = C * 9 / 5 + 32, using double). Try it with a number, with letters, and with an empty input (press Ctrl+D), and make every case print something sensible."
+  resourceName: "cppreference: printf"
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/io/fprintf'
+additionalResources:
+- title: "cppreference: scanf"
+  type: doc
+  meta: every conversion and exactly what it returns
+  url: 'https://en.cppreference.com/w/c/io/fscanf'
+- title: "C FAQ: problems with scanf"
+  type: doc
+  meta: the classic scanf traps, and what to use instead
+  url: 'https://c-faq.com/stdio/scanfprobs.html'
+- title: "cppreference: fgets"
+  type: doc
+  meta: reading a whole line safely
+  url: 'https://en.cppreference.com/w/c/io/fgets'
+whyThisMatters: "Programs talk to people through output and input. printf is how you'll inspect every value while debugging for years to come, and input is where untrusted data enters a program. Reading it carefully and checking that it worked is the first habit of safe C."
+---
+
+You've used `printf` to print values. Now you'll control exactly how they look, read numbers typed by the user, and learn the habit that separates careful C from fragile C: checking that input was really read.
+
+## Formatting with printf
+
+`printf` takes a **format string** and then the values to fill in. Each `%` in the format is a **conversion** that says what type comes next and how to print it. Predict every bracket:
+
+<CRun program="c-basics/printf-formats" caption='The same values, formatted different ways' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- `%d` prints an `int` in decimal. A number in between sets a minimum **width**: `%5d` pads to 5 characters on the left, `%-5d` on the right, `%05d` with zeros.
+- `%x` and `%X` print in hexadecimal (255 is `ff`), and `%o` in octal (8 is `10`).
+- `%f` prints a `double` with 6 decimal places by default; `%.2f` sets the **precision** to 2, and `%8.3f` is width 8 with 3 places. `%e` uses scientific notation.
+- `%c` prints a `char` as a character; the same `char` with `%d` prints its code, 66 for `B`.
+- `%s` prints a string; widths work the same way.
+- `%zu` is for `size_t`, the type `sizeof` gives. `%%` prints a single `%`.
+
+</details>
+
+The conversion must match the type of the value. `printf` can't check this itself: it just reads the bytes where it expects them. gcc *can* check it when the format is a string literal, and `-Wall` turns that check on.
+
+## Reading input with scanf
+
+`scanf` reads typed input and converts it, using the same kind of format string. The difference: it has to *store* what it reads into your variables. Since C passes arguments by value, a copy of a variable is no use to it. It needs each variable's **address**, which is what `&` gives:
+
+<CRun program="c-basics/scanf-sum" caption='Reading two numbers' />
+
+The run above typed `3 4` as input, from a file in place of the keyboard. `%d` skips any spaces or newlines, then reads digits until something that isn't part of a number. So `3 4`, `3   4` and `3` then Enter then `4` all read the same.
+
+## Always check what scanf returns
+
+People type the wrong thing. `scanf` returns how many conversions it managed, and that number is your only reliable signal. Here's the same program with `three 4` typed:
+
+<CRun program="c-basics/scanf-bad-input" caption='When the input is not a number' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`Two numbers: That wasn't two numbers.`, and the program exits with status 1.
+
+`%d` met `t`, which can't start a number. `scanf` stopped at once and returned 0: zero conversions. Nothing was stored, so `a` and `b` still hold whatever garbage they started with. Without the `!= 2` check, the program would print a sum of two uninitialised variables, which is undefined behaviour. The `three 4` is still waiting, unread, in the input.
+
+</details>
+
+<KeyIdea>scanf returns the number of values it stored. Compare it with how many you asked for, every time, before you use the variables.</KeyIdea>
+
+## The classic mistakes
+
+This program has two format mistakes. We compiled it with `-Werror=format` so gcc refuses to build it, but even plain `-Wall` warns about both:
+
+<CRun program="c-basics/scanf-wrong-format" caption='Two format mistakes' />
+
+Read gcc's messages and fix both lines.
+
+<details>
+<summary>Check your answer</summary>
+
+- `printf("Average: %d\n", average);` passes a `double` where `%d` promises an `int`. gcc even suggests the fix: `%f` (or `%.1f`).
+- `scanf("%d", age);` passes the *value* of `age` instead of its address, so `scanf` would write to whatever address that garbage number happens to be. It must be `scanf("%d", &age);`. gcc also notices that `age` is used before it has a value.
+
+Without warnings, both compile and run, the first printing a nonsense number and the second probably crashing. This is why every program in this course is compiled with `-Wall -Wextra`.
+
+A third classic: reading a word with `%s` into a `char` array has no limit on length, so a long word overflows the array. Give a maximum width, like `%19s` for a 20-byte array (19 characters and the terminating zero), or read whole lines instead.
+
+</details>
+
+## Reading a line with fgets
+
+`scanf` is fine for small exercises, but it is awkward for real input: it leaves the rest of a bad line unread and treats spaces as separators. Real programs usually read a whole line first, with a limit, then pick it apart:
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    char line[100];
+    int age;
+    printf("Your age: ");
+    if (fgets(line, sizeof line, stdin) == NULL) {
+        printf("No input.\n");
+        return 1;
+    }
+    if (sscanf(line, "%d", &age) != 1) {
+        printf("That's not a number.\n");
+        return 1;
+    }
+    printf("Next year you'll be %d.\n", age + 1);
+    return 0;
+}
+```
+
+`fgets(line, sizeof line, stdin)` reads one line, but never more than 99 characters plus the terminating zero, so it can't overflow `line`. It returns `NULL` at the end of input. Then `sscanf` reads from the string the same way `scanf` reads from the keyboard, and you check its result the same way.
+
+What does this program print if the user just presses Ctrl+D (end of input) at the prompt?
+
+<details>
+<summary>Check your answer</summary>
+
+`Your age: No input.` `fgets` reads nothing, returns `NULL`, and the program says so and exits with status 1, instead of reading garbage.
+
+</details>

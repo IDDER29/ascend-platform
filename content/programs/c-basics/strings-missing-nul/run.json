@@ -1,0 +1,20 @@
+{
+  "id": "c-basics/strings-missing-nul",
+  "sourceHash": "5aa013d0cbb93a70",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -fsanitize=address main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘main’:\nmain.c:4:24: warning: initializer-string for array of ‘char’ truncates NUL terminator but destination lacks ‘nonstring’ attribute (6 chars into 5 available) [-Wunterminated-string-initialization]\n    4 |     char greeting[5] = \"hello\";\n      |                        ^~~~~~~\n"
+  },
+  "run": {
+    "stdout": "",
+    "stderr": "=================================================================\n==559998==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7034d28f0025 at pc 0x7434d4e78b32 bp 0x7ffeb43369a0 sp 0x7ffeb4336158\nREAD of size 6 at 0x7034d28f0025 thread T0\n    #0 0x7434d4e78b31 in puts ../../../../src/libsanitizer/sanitizer_common/sanitizer_common_interceptors.inc:1278\n    #1 0x566c0ceac2e8 in main (/tmp/build/prog+0x12e8) (BuildId: 1311dc141840ef5bcccdba32df2aad94aede85fa)\n    #2 0x7434d4a2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #3 0x7434d4a2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #4 0x566c0ceac124 in _start (/tmp/build/prog+0x1124) (BuildId: 1311dc141840ef5bcccdba32df2aad94aede85fa)\n\nAddress 0x7034d28f0025 is located in stack of thread T0 at offset 37 in frame\n    #0 0x566c0ceac1f8 in main (/tmp/build/prog+0x11f8) (BuildId: 1311dc141840ef5bcccdba32df2aad94aede85fa)\n\n  This frame has 1 object(s):\n    [32, 37) 'greeting' (line 4) <== Memory access at offset 37 overflows this variable\nHINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork\n      (longjmp and C++ exceptions *are* supported)\nSUMMARY: AddressSanitizer: stack-buffer-overflow (/tmp/build/prog+0x12e8) (BuildId: 1311dc141840ef5bcccdba32df2aad94aede85fa) in main\nShadow bytes around the buggy address:\n  0x7034d28efd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7034d28efe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7034d28efe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7034d28eff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7034d28eff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x7034d28f0000: f1 f1 f1 f1[05]f3 f3 f3 00 00 00 00 00 00 00 00\n  0x7034d28f0080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7034d28f0100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7034d28f0180: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7034d28f0200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x7034d28f0280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==559998==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

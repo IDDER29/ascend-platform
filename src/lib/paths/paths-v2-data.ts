@@ -44,6 +44,7 @@ const PROJECT_BADGE: Record<string, string> = {
   "level-00-bits-logic/project-file-format": "format-maker",
   "level-00-bits-logic/project-smaller-circuit": "minimizer",
   "level-00-bits-logic/project-tiny-cpu": "cpu-tracer",
+  "level-04-c-basics/project-guessing-game": "game-maker",
   "/projects/shellforge": "ship-it",
 };
 

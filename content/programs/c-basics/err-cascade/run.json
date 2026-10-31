@@ -1,0 +1,14 @@
+{
+  "id": "c-basics/err-cascade",
+  "sourceHash": "c0fb745eb88b89c3",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": false,
+    "stderr": "main.c: In function ‘main’:\nmain.c:5:14: error: expected ‘)’ before ‘{’ token\n    5 |     if (x > 2 {\n      |        ~     ^~\n      |              )\nmain.c:9:1: error: expected expression before ‘}’ token\n    9 | }\n      | ^\n"
+  },
+  "run": null,
+  "generated": "2026-10-31"
+}

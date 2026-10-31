@@ -1,0 +1,20 @@
+{
+  "id": "c-basics/guess-final",
+  "sourceHash": "3c4333b0bb5050e3",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog 7 < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "I'm thinking of a number from 1 to 100. You have 7 tries.\nGuess 1: Too low.\nGuess 2: Please type a whole number from 1 to 100.\nGuess 2: Too low.\nGuess 3: Too high.\nGuess 4: Too high.\nGuess 5: Yes! It was 78. You took 5 tries.\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

@@ -1,0 +1,120 @@
+---
+title: "Hello, world: compile and run"
+level: level-04-c-basics
+slug: hello-world
+order: 1
+timeMin: 8
+learningOutcomes:
+- Write a first C program, compile it with gcc and run the result
+- Explain what each line of hello world does, including the include, main and return
+- Explain what the exit status returned by main is and how to see it
+- Use a newline correctly so output appears on the lines you intended
+primer:
+- title: "Compiling and assembling"
+  type: doc
+  meta: Reread · 3 min · what gcc does between your source and a program.
+  essential: true
+- title: "CS50x 2025: Lecture 1, C"
+  type: video
+  meta: Watch · the first C programs, compiled and run step by step.
+  essential: false
+knowledgeCheck:
+- question: What does the line return 0; at the end of main do?
+  answer: "It ends the program and hands 0 back to whatever started it (usually the shell) as the exit status. By convention 0 means success and any other number means something went wrong; in a shell, echo $? shows it."
+  jumpToId: the-exit-status
+  jumpToLabel: The exit status
+- question: Why does printf("one"); printf("two\n"); print onetwo on one line?
+  answer: "printf prints exactly the characters you give it and nothing more. Only \\n starts a new line, and the first call has none, so the second call carries on where the first stopped."
+  jumpToId: newlines-are-yours-to-write
+  jumpToLabel: Newlines are yours to write
+assignment:
+  instruction: "Install gcc if you don't have it (on Linux and in WSL it's usually there already; on macOS run xcode-select --install). Type the hello world program yourself, don't copy it, then compile it with gcc -std=c17 -Wall -Wextra hello.c -o hello and run ./hello. Then make main return 7, rebuild, and check the exit status with echo $?."
+  resourceName: "Beej's Guide to C: Hello, World!"
+  resourceType: doc
+  resourceUrl: 'https://beej.us/guide/bgc/html/split/hello-world.html'
+additionalResources:
+- title: "CS50x 2025: Lecture 1, C"
+  type: video
+  meta: Harvard's CS50, a first lecture on C
+  url: 'https://www.youtube.com/watch?v=89cbCbWrM4U'
+- title: "Beej's Guide to C Programming"
+  type: doc
+  meta: a free, friendly book on C
+  url: 'https://beej.us/guide/bgc/html/split/'
+whyThisMatters: "Every C program you'll ever write, from a one-liner to an operating system, goes through the same loop: write source, compile it, run it, read what happened. Getting that loop under your fingers, and knowing what each line of the smallest program means, is what everything else in C Basics builds on."
+---
+
+In Foundations you saw gcc turn C into assembly and then into a program. Now you'll write C yourself. This lesson is the smallest whole program there is, and the loop you'll use for every program after it: write, compile, run, read what happened.
+
+## The smallest whole program
+
+Here is hello world in C. Underneath it are the two commands that build and run it, and what they printed. Every program in this course was really compiled and run like this; the output you see is what gcc and the program actually printed.
+
+<CRun program="c-basics/hello" caption='Hello, world' />
+
+Line by line:
+
+- `#include <stdio.h>` pulls in the declarations of the standard input and output functions, `printf` among them. Without it the compiler doesn't know what `printf` is (you'll see that error in Reading compiler errors).
+- `int main(void)` starts the function every C program begins in. `int` is the type of value it gives back, and `void` says it takes no arguments.
+- The braces `{ }` hold the function's body. Each statement in it ends with a semicolon.
+- `printf("Hello, world!\n");` prints the text between the quotes. `\n` is one character: a newline.
+- `return 0;` ends `main`, and so the program, handing back 0.
+
+The two commands matter as much as the code. `gcc -std=c17 -Wall -Wextra -O0 main.c -o prog` compiles `main.c` as standard C17, turns on the useful warnings (`-Wall -Wextra`; always use them), skips optimisation, and names the result `prog`. `./prog` runs it: the `./` says "the program in this folder".
+
+<KeyIdea>A C program is source text that gcc turns into a program file. You change the source, compile again, and run the new program: nothing changes until you rebuild.</KeyIdea>
+
+## Newlines are yours to write
+
+`printf` prints exactly the characters you give it, no more. Predict what this prints, line by line, then run it.
+
+<CRun program="c-basics/two-lines" caption='Where do the lines break?' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+```
+onetwo
+three
+
+four
+```
+
+The first `printf` has no `\n`, so `two` carries straight on after `one`. `three\n\n` ends its line and then adds an empty one. Forgetting the final `\n` is a classic: on many terminals the shell prompt then appears glued to the end of your output.
+
+</details>
+
+## The exit status
+
+`main` returns an `int`, and that number goes back to whatever started the program, usually your shell. It's called the **exit status**. By convention, 0 means "worked" and anything else means "something went wrong", with the number saying what.
+
+<CRun program="c-basics/exit-status" caption='A program that reports failure' />
+
+The output looks normal, but the program exited with status 3. In a shell, `echo $?` right after running a program prints the last exit status. Scripts and build tools such as `make` check it: a nonzero status stops a build. So `return 0;` isn't decoration; it's how your program tells the world it succeeded.
+
+Since C99, if `main` reaches its closing brace without a `return`, it returns 0 anyway. That rule is only for `main`, though; it's clearer to write `return 0;`.
+
+## Try it
+
+Change the hello world program so it prints your name on one line and `Welcome to C` on the next, using two `printf` calls, then exits with status 0. Write it out before you check.
+
+<details>
+<summary>Check your answer</summary>
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    printf("My name is Ada\n");
+    printf("Welcome to C\n");
+    return 0;
+}
+```
+
+Each `printf` ends with `\n`, so each sentence gets its own line. One `printf("My name is Ada\nWelcome to C\n");` would print the same thing: what matters is where the newlines are, not how many calls you make.
+
+</details>
+
+## Done when
+
+You've compiled and run hello world on your own machine, changed it, rebuilt it and seen the change, and checked an exit status with `echo $?`.

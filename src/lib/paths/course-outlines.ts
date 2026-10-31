@@ -40,17 +40,13 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
           description:
             "How assembly maps onto machine code, and how to read a short function line by line, compare-and-jump included.",
         },
-      ],
-      upcoming: [
         {
-          id: "calls-and-returns",
-          title: "Calls and returns in assembly",
+          slug: "calls-and-returns",
           description:
             "How call and ret use the stack to jump into a function and come back, with arguments and results passed in registers.",
         },
         {
-          id: "reading-compiler-output",
-          title: "Reading what the compiler wrote",
+          slug: "reading-compiler-output",
           description: "How to read the assembly a C compiler produces and match each line back to the code you wrote.",
         },
       ],
@@ -91,6 +87,78 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
     },
   ],
 
+  "level-04-c-basics": [
+    {
+      id: "first-programs",
+      title: "Your first C programs",
+      blurb: "Write, compile and run C, and read what the compiler tells you.",
+      items: [
+        {
+          slug: "hello-world",
+          description: "How to write a first C program, compile it with gcc and run it, and what each line of hello world does.",
+        },
+        {
+          slug: "variables-and-types",
+          description: "How to declare variables of types like int, char and double, and why each type has a size and a range.",
+        },
+        {
+          slug: "operators-and-expressions",
+          description: "How C's arithmetic, comparison and logical operators work, including integer division and precedence.",
+        },
+        {
+          slug: "reading-compiler-errors",
+          description: "How to read gcc's errors and warnings, find the line they point to, and fix the most common mistakes.",
+        },
+      ],
+    },
+    {
+      id: "control-and-functions",
+      title: "Control flow and functions",
+      blurb: "Decisions, loops and functions: how a C program is shaped.",
+      items: [
+        {
+          slug: "if-else-switch",
+          description: "How a C program makes decisions with if, else and switch, and how C decides what counts as true.",
+        },
+        {
+          slug: "loops",
+          description: "How while, for and do loops repeat work, and how to avoid loops that run one time too many or never stop.",
+        },
+        {
+          slug: "functions",
+          description: "How to split a program into functions that take parameters and return values, and why C passes arguments by value.",
+        },
+        {
+          slug: "scope",
+          description: "Where each name in a C program can be seen, from one block to a whole file, and what happens when names shadow each other.",
+        },
+      ],
+    },
+    {
+      id: "io-and-arrays",
+      title: "Input, output and arrays",
+      blurb: "Talk to the user, and keep many values in a row.",
+      items: [
+        {
+          slug: "printf-and-scanf",
+          description: "How to print formatted output with printf, read input with scanf, and check that the input was actually read.",
+        },
+        {
+          slug: "arrays-and-loops",
+          description: "How to store many values in an array and process them with a loop, without stepping past its last element.",
+        },
+        {
+          slug: "characters-and-strings",
+          description: "How C stores characters as small numbers and text as arrays of chars ending in a zero byte.",
+        },
+        {
+          slug: "project-guessing-game",
+          description: "Build a number-guessing game that reads input, loops and gives hints, proving you can write a whole C program.",
+          role: "project",
+        },
+      ],
+    },
+  ],
   "level-02-the-c-language": [
     {
       id: "c-memory-model",

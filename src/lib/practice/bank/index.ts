@@ -17,6 +17,9 @@ import { COURSE7_B_BANK } from "./level-00-course7-b";
 import { COURSE8_A_BANK } from "./level-00-course8-a";
 import { COURSE8_B_BANK } from "./level-00-course8-b";
 import { LEVEL_01_BANK } from "./level-01";
+import { LEVEL_04_BANK } from "./level-04";
+import { C_BASICS_A_BANK } from "./level-04-a";
+import { C_BASICS_B_BANK } from "./level-04-b";
 import { LEVEL_02_BANK } from "./level-02";
 import { LEVEL_03_BANK } from "./level-03";
 
@@ -44,6 +47,9 @@ export const PRACTICE_BANK: PracticeItem[] = [
   // Fresh-number cards: new numbers each review (see generated.ts).
   ...GENERATED_BANK,
   ...LEVEL_01_BANK,
+  ...C_BASICS_A_BANK,
+  ...C_BASICS_B_BANK,
+  ...LEVEL_04_BANK,
   ...LEVEL_02_BANK,
   ...LEVEL_03_BANK,
 ];

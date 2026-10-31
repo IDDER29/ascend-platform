@@ -1,0 +1,20 @@
+{
+  "id": "c-basics/unsigned-countdown",
+  "sourceHash": "780b3eb23babbd01",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": "main.c: In function ‘main’:\nmain.c:5:32: warning: comparison of unsigned expression in ‘>= 0’ is always true [-Wtype-limits]\n    5 |     for (unsigned int i = 3; i >= 0; i--) {\n      |                                ^~\n"
+  },
+  "run": {
+    "stdout": "3\n2\n1\n0\n4294967295\n4294967294\nstopped by hand: i >= 0 is always true for unsigned\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

@@ -24,6 +24,10 @@ const LEVEL_OWNERS: PracticeLevelOwner[] = [
     pathSlug: "systems-programmer",
   },
   {
+    level: "level-04-c-basics",
+    pathSlug: "systems-programmer",
+  },
+  {
     level: "level-02-the-c-language",
     pathSlug: "systems-programmer",
   },

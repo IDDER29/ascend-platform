@@ -1,0 +1,129 @@
+---
+title: "Why one process can't read another's memory"
+level: level-03-systems-software
+slug: process-isolation
+order: 10
+timeMin: 10
+learningOutcomes:
+- Explain why the same virtual address in two processes names two different pieces of memory
+- Describe what the MMU and the kernel do when a process touches an address it has no mapping for
+- Explain the only ways one process can read another's memory on Linux, and the permission checks on each
+- Read a real EPERM or Permission denied from a cross-process read and say which rule caused it
+primer:
+- title: "Virtual and physical addresses"
+  type: doc
+  meta: "Foundations · translation, and why each process has its own addresses."
+  essential: true
+- title: "Users, groups and permissions"
+  type: doc
+  meta: Reread · 3 min · the user checks that also guard other processes.
+  essential: true
+knowledgeCheck:
+- question: Parent and child both use the global secret at the same virtual address, yet hold different strings. How?
+  answer: "Each process has its own page tables. After fork, the same virtual address in each is translated by the MMU to a different physical page (the child gets its own copy as soon as it writes). An address only means something inside one process."
+  jumpToId: same-address-different-memory
+  jumpToLabel: Same address, different memory
+- question: What happens, step by step, when a process reads an address nothing is mapped at?
+  answer: "The MMU finds no translation and raises a page fault, switching to the kernel. The kernel checks the process's memory map, finds no area containing that address, and sends the process SIGSEGV, which kills it by default. The read never reaches any other process's memory."
+  jumpToId: touching-memory-you-dont-own
+  jumpToLabel: Touching memory you don't own
+- question: Why could the parent read its child's memory with process_vm_readv but not process 1's?
+  answer: "Reading another process's memory needs ptrace-level permission. The child has the same user and is the parent's descendant, which Linux allows (that's how debuggers work). Process 1 runs as root, so an ordinary user is refused with EPERM."
+  jumpToId: the-sanctioned-doors-and-their-locks
+  jumpToLabel: The sanctioned doors, and their locks
+assignment:
+  instruction: "On a Linux machine, start sleep 300 in one terminal and find its pid with pgrep sleep. From another terminal, try cat /proc/<pid>/mem and gdb -p <pid>, then read cat /proc/sys/kernel/yama/ptrace_scope and explain the result. Then start sleep from a small C program that forks and reads its child with process_vm_readv, and explain why that works."
+  resourceName: 'ptrace(2): access mode checks'
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man2/ptrace.2.html'
+additionalResources:
+- title: "OSTEP: Address spaces"
+  type: doc
+  meta: why every process gets its own view of memory
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/vm-intro.pdf'
+- title: "process_vm_readv(2) manual page"
+  type: doc
+  meta: reading another process's memory, with permission
+  url: 'https://man7.org/linux/man-pages/man2/process_vm_readv.2.html'
+whyThisMatters: "Isolation is what makes a crash in one program harmless to the rest, and what stops a malicious app from reading your browser's passwords. Knowing exactly where it comes from (the MMU, the kernel's maps and its permission checks) lets you reason about debuggers, sandboxes and containers."
+---
+
+Foundations showed that every process has its own addresses. This lesson goes further: what stops one process from simply reading another's memory, what happens when it tries, and the few legitimate ways it can be done, each with a lock on it.
+
+## Same address, different memory
+
+Two processes can use the same number as an address and mean completely different memory. The program below forks: the child writes a new string into the global `secret`, and the parent reads back from its child at **the same address** using `process_vm_readv`, a system call that asks the kernel to copy memory out of another process (more on it below). Predict the first two lines.
+
+<CRun program="systems/iso-read-memory" caption='One address, two processes' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- The parent's own `secret` still says `nothing yet`.
+- Through the kernel, the same address in the **child** holds `the child's secret`.
+
+One virtual address, two different contents. Each process has its own **page tables**, the kernel-made map the CPU's **MMU** uses to translate every address the process uses into a physical location. After `fork`, parent and child start out sharing physical pages, read-only. As soon as the child writes, the kernel gives it a private copy of that page (**copy-on-write**) and changes only the child's map. From then on, `secret` in each process translates to different physical memory.
+
+(The third line is in the last section below.)
+
+</details>
+
+## Touching memory you don't own
+
+A process can only name addresses through its own map, so the only way to "reach" another process's memory directly would be an address its map doesn't cover. Here is what happens:
+
+<CRun program="systems/iso-bad-address" caption='Reading an unmapped address' />
+
+Explain the sequence of events that ended the program.
+
+<details>
+<summary>Check your answer</summary>
+
+1. The load from `0x10000` goes to the MMU, which finds **no translation** for it in this process's page tables.
+2. The MMU raises a **page fault**: a trap into the kernel, like a system call the program didn't ask for.
+3. The kernel looks at the process's list of mapped areas (what `/proc/<pid>/maps` shows) and finds none containing `0x10000`. If there were one, it might have loaded the page and resumed the program; here there's nothing.
+4. The kernel sends the process **SIGSEGV**, a segmentation fault, which kills it. Its exit is reported as "killed by signal 11".
+
+At no point did the read touch memory belonging to anyone else. A process's addresses can only ever translate to its own pages, or fault. That's the whole of isolation in one sentence, and it's enforced by hardware on every memory access, not by a check the program could skip.
+
+</details>
+
+<KeyIdea>Each process sees memory only through its own page tables. An address outside its maps faults into the kernel and ends in SIGSEGV, so a process can't even name another's memory.</KeyIdea>
+
+## The sanctioned doors, and their locks
+
+Debuggers, profilers and crash reporters genuinely need to read other processes. Linux offers a few doors, all through the kernel, which checks permission first:
+
+- `ptrace`, which debuggers like gdb use to attach to a process and read or change it;
+- `/proc/<pid>/mem`, a file view of a process's memory;
+- `process_vm_readv` and `process_vm_writev`.
+
+All three use the same **ptrace access check**: the caller must have the same user as the target (or be privileged), and on this Ubuntu machine, the **Yama** security module adds one more rule (`/proc/sys/kernel/yama/ptrace_scope` is `1`): an ordinary process may only inspect its own **descendants**.
+
+Back to the third line of the first program: the parent could read its child, but reading process 1 failed with `Operation not permitted` (`EPERM`). And here is a real session trying to read a `sleep` started by the same user but not as a child of the reader:
+
+```
+$ setsid sleep 60 &
+$ head -c 16 /proc/580256/mem
+head: cannot open '/proc/580256/mem' for reading: Permission denied
+$ gdb -q -batch -p 580256
+Could not attach to process.  If your uid matches the uid of the target
+process, check the setting of /proc/sys/kernel/yama/ptrace_scope, or try
+again as the root user.  For more details, see /etc/sysctl.d/10-ptrace.conf
+```
+
+Which rule refused each attempt: process 1, and the unrelated `sleep`?
+
+<details>
+<summary>Check your answer</summary>
+
+- **Process 1** runs as root and the program doesn't, so the basic same-user rule fails: `EPERM`.
+- **The unrelated `sleep`** has the same user, so the basic rule would allow it, but it isn't a descendant of `head` or `gdb`, so Yama's `ptrace_scope = 1` refuses. gdb even names the setting. That rule exists so that a compromised program (say, a browser tab's helper) can't read secrets out of your other programs running as you.
+
+The child was readable because it passed both: same user, and a descendant. That's why `gdb ./prog` (gdb starts the program, so it's gdb's child) works where `gdb -p` on an unrelated process doesn't, unless you use `sudo` or change the setting.
+
+</details>
+
+## Done when
+
+You can explain why one address names different memory in two processes, follow a bad access from the MMU to SIGSEGV, and say which permission rule allows or refuses each way of reading another process's memory.

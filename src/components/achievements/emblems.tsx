@@ -39,6 +39,25 @@ export function CrestArt({ crest }: { crest: CrestId }) {
           <path d="M29 38.5l-2 5.5M35 38.5l2 5.5" />
         </>
       );
+    // Data Structures in C: a small tree of nodes joined by pointers.
+    case "tree":
+      return (
+        <>
+          <circle cx="24" cy="11" r="4.5" />
+          <circle cx="13" cy="34" r="4.5" />
+          <circle cx="35" cy="34" r="4.5" />
+          <path d="M21.8 15l-6.6 14.8M26.2 15l6.6 14.8" />
+        </>
+      );
+    // Virtual Memory, Threads & Files: stacked memory pages, one mapped through to the next.
+    case "page":
+      return (
+        <>
+          <rect x="8" y="8" width="20" height="24" rx="2" />
+          <rect x="20" y="16" width="20" height="24" rx="2" />
+          <path d="M12 14h12M12 19h8M24 22h12M24 27h12M24 32h8" />
+        </>
+      );
     // The C Language: a pointer (*) aiming into a box.
     case "pointer":
       return (

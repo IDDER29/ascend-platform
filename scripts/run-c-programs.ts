@@ -28,6 +28,9 @@ const MAX_OUTPUT = 4000;
 const cap = (text: string) =>
   text.length <= MAX_OUTPUT ? text : `${text.slice(0, MAX_OUTPUT)}\n... (output cut here)\n`;
 
+/** Quote an argument the way a learner would have to type it in a shell. */
+const shellQuote = (arg: string) => (/^[A-Za-z0-9_./=:,+-]+$/.test(arg) ? arg : `'${arg.replaceAll("'", `'\\''`)}'`);
+
 const argv = process.argv.slice(2);
 const all = argv.includes("--all");
 const named = argv.filter((a) => !a.startsWith("--"));
@@ -56,6 +59,7 @@ for (const id of ids) {
   if (compile.ok) {
     const started = Date.now();
     const r = spawnSync(exe, meta.args ?? [], {
+      argv0: "./prog", // what argv[0] is when a learner types ./prog
       cwd: dir,
       input: programStdin(id) ?? "",
       encoding: "utf8",
@@ -74,7 +78,7 @@ for (const id of ids) {
     compiler,
     target,
     compileCommand: ["gcc", ...flags, ...sources, "-o", "prog"].join(" "),
-    runCommand: ["./prog", ...(meta.args ?? [])].join(" ") + (programStdin(id) !== null ? " < input.txt" : ""),
+    runCommand: ["./prog", ...(meta.args ?? []).map(shellQuote)].join(" ") + (programStdin(id) !== null ? " < input.txt" : ""),
     compile,
     run,
     generated: today,

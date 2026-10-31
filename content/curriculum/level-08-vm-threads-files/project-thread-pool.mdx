@@ -1,0 +1,161 @@
+---
+title: "Project: A thread pool"
+level: level-08-vm-threads-files
+slug: project-thread-pool
+order: 11
+timeMin: 50
+learningOutcomes:
+- Build a thread pool from a mutex-guarded queue and two condition variables, and explain what each one protects or signals
+- Explain why a worker waits in a while loop, and why it runs each task with the lock released
+- Use ThreadSanitizer to find a data race that ordinary tests don't catch
+- Diagnose a hang caused by a missing signal, from what the program did and didn't print
+primer:
+- title: "Condition variables"
+  type: doc
+  meta: Reread · 4 min · the queue and the two waits here.
+  essential: true
+- title: "Mutexes and locks"
+  type: doc
+  meta: Reread · 3 min · the lock that guards the pool.
+  essential: true
+- title: "Race conditions"
+  type: doc
+  meta: Reread · 2 min · what ThreadSanitizer reports.
+  essential: false
+knowledgeCheck:
+- question: Why does the worker unlock the mutex before calling t->fn(t->arg)?
+  answer: "Tasks can take a long time. Holding the pool's lock while one runs would stop every other worker from taking a task, and stop the caller from submitting, so the pool would run one task at a time. The lock only needs to cover the queue and the counters."
+  jumpToId: part-2-read-the-pool
+  jumpToLabel: "Part 2: Read the pool"
+- question: The race version passes every test, yet ThreadSanitizer reports a data race. Which is right?
+  answer: "ThreadSanitizer. pending is written by a worker without the lock while the main thread writes it with the lock held, so the two writes can collide and lose an update. The tests only passed because this run's timing happened not to lose one; another run, machine or load could, and tp_wait would then wait forever or return early."
+  jumpToId: part-4-a-race-the-tests-miss
+  jumpToLabel: "Part 4: A race the tests miss"
+assignment:
+  instruction: "On your own machine, use the pool to count the words in many files at once: one task per file, each writing its count into its own slot. Run it under -fsanitize=thread, then add a shared total that every task adds to, and make it correct twice: once with the pool's mutex pattern and once with an atomic."
+  resourceName: 'OSTEP: Condition Variables'
+  resourceType: doc
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/threads-cv.pdf'
+additionalResources:
+- title: "Thread pool (Wikipedia)"
+  type: doc
+  meta: the pattern and where it's used
+  url: 'https://en.wikipedia.org/wiki/Thread_pool'
+- title: "ThreadSanitizer (Google sanitizers wiki)"
+  type: doc
+  meta: how TSan finds data races, and how to read its reports
+  url: 'https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual'
+whyThisMatters: "Web servers, databases, build systems and game engines all run work on a pool of threads, because creating a thread per job is slow and unbounded. Building one yourself, then breaking it in the two classic ways, is how mutexes and condition variables stop being rules and become tools you can reason with."
+---
+
+A thread pool starts a few worker threads once, then feeds them tasks from a queue. In this project you read a complete pool, run its tests under ThreadSanitizer, and then meet the two classic ways such code goes wrong: a race and a lost wakeup.
+
+## Part 1: The interface
+
+```c
+/* A fixed set of worker threads that run submitted tasks. The pool owns its
+   threads and its queue; the caller owns each task's argument and must keep it
+   alive until tp_wait has returned. */
+typedef struct threadpool threadpool;
+
+threadpool *tp_new(int workers);                          /* NULL on failure */
+int tp_submit(threadpool *p, void (*fn)(void *), void *arg); /* 0 on success */
+void tp_wait(threadpool *p);       /* returns when every submitted task has finished */
+void tp_free(threadpool *p);       /* waits, stops the workers and frees the pool */
+```
+
+A task is a function pointer and a `void *` argument. What does the comment ask of the caller, and what could go wrong if the caller ignored it?
+
+<details>
+<summary>Check your answer</summary>
+
+Each argument must stay alive until `tp_wait` returns, because a worker may run the task long after `tp_submit` has returned. If a caller passed the address of a local variable in a loop and then returned, or reused one variable for every task, the workers would read memory that had changed or no longer existed. The test below gives each task its own `job` in a static array, which lives for the whole program.
+
+</details>
+
+## Part 2: Read the pool
+
+The run below prints all three files. In `threadpool.c`, the mutex `lock` guards everything in the struct after it, and there are two condition variables:
+
+- **`has_work`:** a worker sleeps on it when the queue is empty; `tp_submit` signals it, and `tp_free` broadcasts it to wake every worker for shutdown.
+- **`all_done`:** `tp_wait` sleeps on it until `pending`, the number of tasks queued or running, reaches 0. A worker broadcasts it when it finishes the last one.
+
+Find two places where the code is careful about the lock, and say what each prevents.
+
+<details>
+<summary>Check your answer</summary>
+
+- **The worker waits in `while (p->head == NULL && !p->stopping)`, not `if`.** `pthread_cond_wait` can return without a signal (a spurious wakeup), and even after a real signal another worker may already have taken the task. The loop re-checks the condition with the lock held, so a worker never takes from an empty queue.
+- **The worker unlocks before `t->fn(t->arg)` and locks again after.** Tasks run in parallel, and the lock covers only the queue and the counters. Holding it while a task runs would make the pool run one task at a time.
+
+Also notice:
+
+- `tp_wait` checks `pending` in a `while` loop under the same lock that workers hold when they change it, so it can't miss the moment it reaches 0.
+- `tp_free` sets `stopping` and broadcasts, and each worker leaves only once the queue is empty. Every submitted task still runs.
+
+</details>
+
+## Part 3: Run the tests
+
+The test submits 1000 tasks, each squaring a number into its own `job`, then checks the total against the formula n(n + 1)(2n + 1) / 6. It then submits a second batch and frees the pool without calling `tp_wait`. It's built with **ThreadSanitizer** (`-fsanitize=thread`), which watches every memory access while the program runs and reports any two threads touching the same memory without synchronisation.
+
+<CRun program="vm-threads-files/pool-tests" caption='The pool and its tests, under ThreadSanitizer' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Both sums are right: 333833500 for the squares of 1 to 1000, and 4000 for the second batch, which `tp_free` waited for. ThreadSanitizer is silent, so it saw no data race during this run. The tasks never share data, since each writes only its own `job`, and every shared field of the pool is touched only with `lock` held.
+
+</details>
+
+## Part 4: A race the tests miss
+
+This version makes one change in the worker: it decrements `pending` before taking the lock again.
+
+```c
+free(t);
+int left = --p->pending; /* the lock isn't held here */
+pthread_mutex_lock(&p->lock);
+if (left == 0) {
+    pthread_cond_broadcast(&p->all_done);
+}
+```
+
+Predict: do the tests still pass? Does ThreadSanitizer say anything?
+
+<CRun program="vm-threads-files/pool-race" caption='The race, under ThreadSanitizer' show="main.c" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The tests pass, and ThreadSanitizer reports a **data race** anyway. A worker writes `pending` at `threadpool.c:43` with no mutex held, while the main thread writes it in `tp_submit` at line 92 with the mutex held. TSan exits with status 66 to make the failure visible. (The addresses and thread ids in its report differ on every run.)
+
+Both are right about what happened, but only TSan is right about the program. `--p->pending` is a read, a subtract and a write. If a worker and `tp_submit` interleave there, one update is lost:
+
+- `pending` ends one too high: `tp_wait` sleeps forever.
+- `pending` ends one too low: `tp_wait` returns while a task is still running, and the caller reads a result that isn't written yet.
+
+This run's timing didn't lose an update. Another run, another machine or a busier system might. That's why concurrent code is checked with a race detector, not only with tests.
+
+</details>
+
+## Part 5: A wakeup that never comes
+
+This version decrements `pending` correctly, under the lock, but forgets to broadcast `all_done` when it reaches 0. It's built without a sanitizer. Predict what it prints.
+
+<CRun program="vm-threads-files/pool-hang" caption='The missing broadcast' show="main.c" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+It prints nothing and never finishes; the run was stopped after 3 seconds. Every task ran and `pending` reached 0, but `tp_wait` was asleep on `all_done`, and nothing ever signalled it. A condition variable has no memory: a thread that waits isn't woken by a change that happened without a signal.
+
+Nothing printed because the first `printf` comes after `tp_wait`. There's no crash, no error and no sanitizer report, just a program that stops making progress. When you debug a hang, check every wait: what condition is it waiting for, and which code signals it when that condition becomes true? In gdb, `thread apply all bt` shows the main thread parked inside `pthread_cond_wait` from `tp_wait`.
+
+</details>
+
+<KeyIdea>A mutex protects shared state; a condition variable carries the news that the state changed. Wait in a loop, signal on every change someone may be waiting for, never touch shared state without the lock, and check it all with ThreadSanitizer.</KeyIdea>
+
+## Done when
+
+You've explained the interface's lifetime rule, the two careful uses of the lock, why the race slipped past the tests, and why the missing broadcast hangs. Then do the assignment: use the pool on real files.

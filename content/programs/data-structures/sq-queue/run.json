@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/sq-queue",
+  "sourceHash": "4a5b9c9707f79830",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "enqueue 100 into slot 0\nenqueue 200 into slot 1\nenqueue 300 into slot 2\ndequeue 100 from slot 0\ndequeue 200 from slot 1\nenqueue 400 into slot 3\nenqueue 500 into slot 0\nenqueue 600 into slot 1\nenqueue 700: full\ndequeue 300 from slot 2\ndequeue 400 from slot 3\ndequeue 500 from slot 0\ndequeue 600 from slot 1\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

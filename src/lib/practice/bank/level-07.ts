@@ -1,0 +1,93 @@
+import type { PracticeItem } from "../types";
+
+const L07 = "level-07-data-structures";
+
+/** Data Structures in C: the project's cards. The lessons' cards are in level-07-a.ts and level-07-b.ts. */
+export const LEVEL_07_BANK: PracticeItem[] = [
+  // ── project-hash-map ──
+  {
+    kind: "bug",
+    id: "hashmap-bug-01",
+    prompt: "This hm_put stores keys. Which line breaks the map when the caller later changes or frees its string?",
+    code: [
+      "entry *e = malloc(sizeof *e);",
+      "if (e == NULL) return false;",
+      "e->key = (char *) key;",
+      "e->value = value;",
+    ],
+    bugLine: 2,
+    fix: "It keeps the caller's pointer instead of a copy; malloc strlen(key) + 1 bytes, copy the key, and free the copy in hm_remove and hm_free.",
+    hint: "Who owns the string after the call?",
+    reviewLabel: "Storing a key without copying it",
+    lessonLevel: L07,
+    lessonSlug: "project-hash-map",
+    conceptId: "key-ownership",
+  },
+  {
+    kind: "output",
+    id: "hashmap-output-01",
+    prompt: "A map starts with 8 buckets and doubles when adding an entry would make it more than 3/4 full. How many buckets after 20 puts of different keys?",
+    code: ["for (int i = 0; i < 20; i++) hm_put(m, keys[i], i);", "printf(\"%zu\\n\", hm_capacity(m));"],
+    output: "32",
+    hint: "8 holds 6, 16 holds 12, 32 holds 24.",
+    reviewLabel: "Counting the doublings",
+    lessonLevel: L07,
+    lessonSlug: "project-hash-map",
+    conceptId: "load-factor",
+  },
+  {
+    kind: "mcq",
+    id: "hashmap-01",
+    prompt: "Why does hm_remove walk an entry ** link instead of an entry *?",
+    options: [
+      "One assignment unlinks the head or a middle entry",
+      "It makes the hash function run fewer times",
+      "Pointers to pointers are faster to dereference",
+      "It lets the map grow while it is removing",
+    ],
+    correct: 0,
+    hint: "What must change to unlink an entry?",
+    reviewLabel: "Unlinking with a pointer to a pointer",
+    lessonLevel: L07,
+    lessonSlug: "project-hash-map",
+    conceptId: "pointer-to-pointer",
+  },
+  {
+    kind: "mcq",
+    id: "hashmap-02",
+    prompt: "A failed assert ends a test program, and the earlier ok lines it printed to a pipe never appear. Why?",
+    options: [
+      "stdout was buffered, and abort does not flush it",
+      "assert deletes everything printed before it",
+      "The pipe only keeps the last line it received",
+      "printf writes nothing until main returns",
+    ],
+    correct: 0,
+    hint: "Where does printf's output wait?",
+    reviewLabel: "Lost output on abort",
+    lessonLevel: L07,
+    lessonSlug: "project-hash-map",
+    conceptId: "buffered-output",
+  },
+  {
+    kind: "flashcard",
+    id: "hashmap-fc-01",
+    front: "Why is a put into a growing hash map O(1) on average, when growing costs O(n)?",
+    back: "After growing at n entries, the map doesn't grow again until it holds 2n, so the O(n) moves are spread over n puts: amortised O(1) each. The worst case for one put is still O(n).",
+    reviewLabel: "Amortised growth",
+    lessonLevel: L07,
+    lessonSlug: "project-hash-map",
+    conceptId: "amortised",
+  },
+  {
+    kind: "typed",
+    id: "hashmap-typed-01",
+    prompt: "What do you call a struct type the header declares but never defines, so users can only hold pointers to it?",
+    answers: ["opaque", "an opaque type", "opaque type", "an opaque struct", "opaque struct", "incomplete type", "an incomplete type"],
+    hint: "Users can't see inside.",
+    reviewLabel: "Opaque types",
+    lessonLevel: L07,
+    lessonSlug: "project-hash-map",
+    conceptId: "opaque-type",
+  },
+];

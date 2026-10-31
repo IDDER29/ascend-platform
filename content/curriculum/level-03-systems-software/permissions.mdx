@@ -1,0 +1,151 @@
+---
+title: "Users, groups and permissions"
+level: level-03-systems-software
+slug: permissions
+order: 9
+timeMin: 10
+learningOutcomes:
+- Read a permission string such as -rw-r----- and its octal form 0640, for the owner, the group and everyone else
+- Explain how the kernel decides whether a process may read, write or run a file, from the process's user and groups
+- Explain what read, write and execute mean on a directory, and why x without r lets you open a file you can't list
+- Predict a new file's mode from the mode passed to open and the umask, and explain what the setuid bit on passwd is for
+primer:
+- title: "System calls: the real API"
+  type: doc
+  meta: Reread · 2 min · every permission check happens inside a system call.
+  essential: true
+- title: "Protection, failures and trust"
+  type: doc
+  meta: "Foundations · why systems check access at all."
+  essential: false
+knowledgeCheck:
+- question: A file is -rw-r----- and owned by alice, group staff. Who can read it, and who can change it?
+  answer: "alice can read and write (rw-); members of staff can read (r--); everyone else can do nothing (---). The kernel checks only one class: owner if the process's user is alice, otherwise group if it is in staff, otherwise others."
+  jumpToId: reading-a-permission-string
+  jumpToLabel: Reading a permission string
+- question: A directory is d-wx------. Why does ls fail on it, while cat on a file inside it works?
+  answer: "On a directory, r means 'list the names' and x means 'pass through it to a name you already know'. Without r, ls can't read the list of names; with x, opening box/item.txt by its exact name is still allowed."
+  jumpToId: directories-are-different
+  jumpToLabel: Directories are different
+- question: A program creates a file with open(..., 0666) while its umask is 022. What mode does the file get, and why?
+  answer: "0644. The umask lists the bits a new file must not get: 0666 with 022 cleared is 0644, so group and others lose write permission."
+  jumpToId: the-mode-a-new-file-gets
+  jumpToLabel: The mode a new file gets
+assignment:
+  instruction: "On a Linux machine, make a folder with three files and one subfolder, and give each a different mode with chmod using both octal (640) and symbolic (u=rw,g=r,o=) forms. For each, write down what you predict ls -l shows and which of cat, echo >> and ./ would work, then check."
+  resourceName: 'chmod(1) manual page'
+  resourceType: doc
+  resourceUrl: 'https://man7.org/linux/man-pages/man1/chmod.1.html'
+additionalResources:
+- title: "path_resolution(7): how permissions are checked"
+  type: doc
+  meta: the exact rules the kernel follows, directory by directory
+  url: 'https://man7.org/linux/man-pages/man7/path_resolution.7.html'
+- title: "credentials(7) manual page"
+  type: doc
+  meta: user and group ids of a process, real and effective
+  url: 'https://man7.org/linux/man-pages/man7/credentials.7.html'
+whyThisMatters: "Permissions are the first line of every security decision on a Unix system: which config files a server can read, why your script won't run, why a build fails in CI. Reading them fluently, and knowing the kernel checks them on every open, makes those problems quick to solve."
+---
+
+Every process runs as a **user** (a number, the uid) and belongs to some **groups** (gids). Every file has an owner, a group and a set of permission bits. When a process calls `open`, `execve`, `mkdir` or any other system call that touches a file, the kernel compares the two and says yes or no. This lesson is about that comparison.
+
+The sessions below are real, run in `/tmp` on Linux. The account name has been replaced with `learner`.
+
+## Reading a permission string
+
+```
+$ ls -l notes.txt
+-rw-rw-r-- 1 learner learner 12 Oct 31 13:07 notes.txt
+$ chmod 600 notes.txt; ls -l notes.txt
+-rw------- 1 learner learner 12 Oct 31 13:07 notes.txt
+$ chmod u=rw,g=r,o= notes.txt; ls -l notes.txt
+-rw-r----- 1 learner learner 12 Oct 31 13:07 notes.txt
+```
+
+The first character is the type (`-` for a file, `d` for a directory). Then come three groups of three: the **owner's**, the **group's** and **everyone else's**, each `r`ead, `w`rite and e`x`ecute. Each group is also one octal digit, with r = 4, w = 2, x = 1: `rw-` is 6, `r--` is 4, `---` is 0, so `-rw-r-----` is `0640`.
+
+The kernel uses exactly **one** of the three groups: the owner's if the process's uid owns the file; otherwise the group's if the process is in the file's group; otherwise everyone else's. (The superuser, uid 0, skips most of these checks.)
+
+## The kernel checks on every call
+
+This program creates a file, changes its mode and tries to open it, then tries a file it doesn't own. Predict each line:
+
+<CRun program="systems/perm-modes" caption='open, chmod and the permission check' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+- **0644:** the program asked for 0666, but its umask was 022 (see below).
+- After `chmod 0000`, even the **owner** gets `Permission denied` (the `EACCES` error). Owning a file doesn't mean you may read it; it means you may *change its permissions*, which is what `chmod 0400` then does.
+- `/etc/shadow`, where password hashes live, is `-rw-r----- root shadow`. This process is neither root nor in the `shadow` group, so the "others" bits apply: `---`, denied.
+
+Note when the check happens: at `open`. Once a process has a file descriptor, later `read` calls aren't checked again, even if the file's mode changes. That's why the kernel can hand a descriptor to a process that couldn't open the file itself.
+
+</details>
+
+## Directories are different
+
+On a directory the bits mean something else:
+
+- **r:** list the names in it.
+- **w:** create, delete and rename entries in it (with x).
+- **x:** pass through it, to reach a name you already know.
+
+```
+$ chmod 300 box; ls -ld box
+d-wx------ 2 learner learner 60 Oct 31 13:08 box
+$ ls box
+ls: cannot open directory 'box': Permission denied
+$ cat box/item.txt
+inside
+```
+
+Why can you read a file in a directory you can't list? And what would happen with `r` but no `x`?
+
+<details>
+<summary>Check your answer</summary>
+
+Opening `box/item.txt` only needs to *pass through* `box` to the name `item.txt`, which `x` allows. Listing needs `r`, which is missing. With `r` but no `x` you get the opposite: `ls box` shows the names, but opening any of them fails, because you can't pass through. This is also why deleting a file depends on the **directory's** `w` permission, not the file's: deleting changes the directory's list of names.
+
+</details>
+
+## Running programs and scripts
+
+```
+$ ls -l hello.sh
+-rw-rw-r-- 1 learner learner 35 Oct 31 13:07 hello.sh
+$ ./hello.sh
+bash: ./hello.sh: Permission denied
+$ chmod +x hello.sh; ./hello.sh
+hello from a script
+```
+
+`execve` needs the `x` bit. Without it the shell reports `Permission denied`, and exit status 126.
+
+## The mode a new file gets
+
+A program passes a mode to `open` or `mkdir`, usually 0666 for files and 0777 for directories, and the kernel clears the bits in the process's **umask**. A umask of 022 removes write permission for group and others (0666 becomes 0644). Many desktop Linux systems use 002, which keeps write permission for your own group (0664, `-rw-rw-r--`, as in the first `ls -l` above). The umask is inherited across `fork` and `exec`, like the environment.
+
+## Raising privileges on purpose: setuid
+
+```
+$ ls -l /etc/shadow /usr/bin/passwd
+-rw-r----- 1 root shadow  1326 Aug 19 00:26 /etc/shadow
+-rwsr-xr-x 1 root root   93640 Feb  2  2026 /usr/bin/passwd
+```
+
+Ordinary users can't read `/etc/shadow`, yet `passwd` changes your password inside it. How?
+
+<details>
+<summary>Check your answer</summary>
+
+The `s` in `-rwsr-xr-x` is the **setuid** bit. When anyone runs `passwd`, `execve` gives the new process the file owner's user id, root, as its *effective* uid, so the kernel's checks treat it as root. `passwd` is written carefully to change only the calling user's own entry. A setuid-root program with a bug lets any user act as root, which is why there are very few of them and why they are audited closely.
+
+</details>
+
+<KeyIdea>Every process has a user and groups; every file has an owner, a group and nine permission bits. The kernel compares them on each system call that opens, runs or changes a file, using only the owner's, the group's or everyone else's bits.</KeyIdea>
+
+## Done when
+
+You can read and write permission strings and octal modes, predict an `EACCES`, explain `r` and `x` on directories, compute a new file's mode from the umask, and say what setuid does.

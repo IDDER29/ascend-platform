@@ -1,0 +1,119 @@
+---
+title: "Dynamic arrays that grow"
+level: level-07-data-structures
+slug: dynamic-arrays
+order: 1
+timeMin: 11
+learningOutcomes:
+- Build a dynamic array in C as a struct holding a pointer, a length and a capacity, with checked growth through realloc
+- Explain why doubling the capacity makes appends cheap on average, and growing by one makes them slow
+- Use realloc safely, so a failed grow never loses the original block
+- Explain why a pointer into a dynamic array goes stale when the array grows, and avoid it
+primer:
+- title: Dynamic memory
+  type: doc
+  meta: Reread · 3 min · malloc, realloc and free.
+  essential: true
+- title: "Ownership: who frees what"
+  type: doc
+  meta: Reread · 2 min · the vector owns its block.
+  essential: true
+knowledgeCheck:
+- question: "Growing by doubling, 10,000 pushes copied 16,383 items. Growing by one, they copied 49,995,000. Why such a difference?"
+  answer: "Doubling copies all n items only when the array is full, and fullness comes at sizes 1, 2, 4, 8 and so on, so the copies add up to less than 2n in total: about 1.6 per push here. Growing by one copies every item on every push, which adds up to about n squared over 2."
+  jumpToId: doubling-versus-growing-by-one
+  jumpToLabel: Doubling versus growing by one
+- question: Why does the program write int *bigger = realloc(v->data, ...) and check bigger, instead of v->data = realloc(v->data, ...)?
+  answer: "If realloc fails it returns NULL but leaves the old block allocated. Assigning straight to v->data would overwrite the only pointer to that block, leaking it and losing every item. A separate variable keeps the old block safe until the new one is known to exist."
+  jumpToId: growing-safely-with-realloc
+  jumpToLabel: Growing safely with realloc
+assignment:
+  instruction: "Write a dynamic array of doubles with vec_push, vec_get (checking the index) and vec_free. Count copies as in the lesson, then try growing by 1.5 times instead of 2. Compare the copies and the wasted capacity at the end, and say which you'd pick."
+  resourceName: 'cppreference: realloc'
+  resourceType: doc
+  resourceUrl: 'https://en.cppreference.com/w/c/memory/realloc'
+additionalResources:
+- title: "Dynamic array (Wikipedia)"
+  type: doc
+  meta: growth factors and amortised cost
+  url: 'https://en.wikipedia.org/wiki/Dynamic_array'
+- title: "Beej's Guide to C: Manual memory allocation"
+  type: doc
+  meta: malloc, realloc and free, with examples
+  url: 'https://beej.us/guide/bgc/html/split/manual-memory-allocation.html'
+whyThisMatters: "The growable array is the most used data structure in programming: Python's list, C++'s vector and Rust's Vec are all this. Building one yourself in C shows exactly what they cost, why appends are fast, and why holding a pointer into one is a classic bug."
+---
+
+A C array has a fixed size, chosen when it's created. Real programs rarely know in advance how many items they'll get: lines in a file, words in a text, players in a game. A **dynamic array** solves that: it keeps its items in a heap block, and when the block is full it gets a bigger one.
+
+## A struct with three parts
+
+A dynamic array needs three things, so it's a struct:
+
+```c
+typedef struct {
+    int *data;   /* the heap block holding the items */
+    size_t len;  /* how many items are in use */
+    size_t cap;  /* how many fit before we must grow */
+} Vec;
+```
+
+`len` is what the user sees; `cap` is how much room is already paid for. A push writes at `data[len]` when there's room, and grows the block first when `len == cap`. The vector **owns** its block: whoever made it must call `vec_free` once, and nobody else frees `data`.
+
+## Growing safely with realloc
+
+`realloc(p, size)` returns a block of the new size holding the old contents. It may extend the block where it is, or allocate a new one, copy everything across and free the old one. It can also fail:
+
+```c
+static int vec_reserve(Vec *v, size_t new_cap) {
+    int *bigger = realloc(v->data, new_cap * sizeof *bigger);
+    if (bigger == NULL) {
+        return -1;          /* v is unchanged: the old block is still valid */
+    }
+    v->data = bigger;
+    v->cap = new_cap;
+    return 0;
+}
+```
+
+The new pointer goes into a separate variable first. If `realloc` fails it returns `NULL` and leaves the old block alone; writing `v->data = realloc(v->data, ...)` would throw away the only pointer to it. Callers check `vec_push`'s return value in turn, so running out of memory is reported, never ignored.
+
+## Doubling versus growing by one
+
+How much bigger should the new block be? This program pushes 20 items with doubling and prints the capacity at each grow, then pushes 10,000 items each way and counts how many items `realloc` had to copy (counting the worst case, as if every grow moved the block). Predict both counts before you run it.
+
+<CRun program="data-structures/da-grow" caption='Doubling against growing by one' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+With doubling the capacity goes 1, 2, 4, 8, 16, 32, and 10,000 pushes copied 16,383 items: about 1.6 copies per push. Growing by one copied 49,995,000, about 5,000 per push.
+
+The reason is arithmetic. Doubling copies everything only when it's full, which happens at 1, 2, 4, ..., 8192 items, and 1 + 2 + 4 + ... + 8192 is 16,383, less than 2 copies per push. Each push costs **O(1) on average** (amortised), even though a single push that triggers a grow costs O(n). Growing by one copies 1 + 2 + ... + 9,999 items, about n²/2: **O(n) per push**. For a million items that's half a trillion copies.
+
+The price of doubling is space: just after a grow, up to half the capacity is empty. Some libraries grow by 1.5 times to waste less.
+
+</details>
+
+<KeyIdea>Grow a dynamic array by a factor, not by a fixed amount: doubling makes appends O(1) on average, at the cost of some unused capacity.</KeyIdea>
+
+## A pointer that goes stale
+
+This program keeps a pointer to the first item, then pushes one more item, which makes the array grow. It's built with AddressSanitizer. Predict the second line.
+
+<CRun program="data-structures/da-stale-pointer" caption='Holding a pointer across a push' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The first line prints 10. The fifth push fills a full array, so `realloc` moves the items to a new, bigger block and frees the old one. `first` still points into the old block, so reading it is a **heap-use-after-free**, which ASan reports at `main.c:33`.
+
+Without ASan this might even print 10: `realloc` sometimes grows a block in place, and freed memory often still holds its old bytes. That's what makes this bug nasty: it works in testing, then fails when the block happens to move. (ASan always moves the block, to catch exactly this.)
+
+The rule: any pointer into a dynamic array is valid only until the next operation that may grow it. Keep an **index** instead, and turn it into a pointer only when you use it: `v.data[i]`.
+
+</details>
+
+## Done when
+
+You can write a vector struct with checked growth, explain the 16,383 and the 49,995,000, use `realloc` without risking a leak, and say why indexes are safer than pointers into a growing array.

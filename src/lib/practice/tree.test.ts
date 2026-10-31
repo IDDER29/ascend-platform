@@ -51,9 +51,13 @@ test("practiceSectionsForPath combines course outlines owned by a path", () => {
       "program-structure",
       "the-rules",
       "the-traps",
+      "linear",
+      "lookup",
+      "cost",
       "processes",
       "ipc-signals",
       "files",
+      "isolation",
     ],
   );
   assert.deepEqual(practiceSectionsForPath("unknown"), []);

@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/ht-copied-key",
+  "sourceHash": "30f8bc08f85321f9",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=address,undefined main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "slot 4: red x3\nslot 5: green x2\nslot 6: blue x1\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

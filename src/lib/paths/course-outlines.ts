@@ -338,6 +338,66 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       ],
     },
   ],
+  "level-07-data-structures": [
+    {
+      id: "linear",
+      title: "Lists and arrays",
+      blurb: "Values in a row, and the trade-offs between keeping them packed or linked.",
+      items: [
+        {
+          slug: "dynamic-arrays",
+          description: "How an array grows by reallocating with extra room, and why doubling its capacity keeps appends fast on average.",
+        },
+        {
+          slug: "linked-lists",
+          description: "How nodes linked by pointers form a list, and when cheap inserts and removals are worth the slow lookups.",
+        },
+        {
+          slug: "stacks-and-queues",
+          description: "How stacks give last-in first-out and queues first-in first-out order, built on arrays or linked lists.",
+        },
+      ],
+    },
+    {
+      id: "lookup",
+      title: "Fast lookup",
+      blurb: "Find a value without looking at every one.",
+      items: [
+        {
+          slug: "hash-tables",
+          description: "How a hash function turns a key into a slot, how collisions are handled, and why lookups are fast on average.",
+        },
+        {
+          slug: "binary-search-trees",
+          description: "How a binary search tree keeps keys in order for fast search, and why it slows down when it becomes unbalanced.",
+        },
+        {
+          slug: "heaps",
+          description: "How a heap stored in an array always gives you the smallest or largest item quickly, as a priority queue.",
+        },
+      ],
+    },
+    {
+      id: "cost",
+      title: "Cost and layout",
+      blurb: "How much work a structure does, and how it sits in memory.",
+      items: [
+        {
+          slug: "big-o",
+          description: "How to describe how a program's work grows with its input using Big-O, and compare data structures by it.",
+        },
+        {
+          slug: "cache-friendly-layout",
+          description: "Why data packed together in memory is faster than data scattered behind pointers, and how to lay it out well.",
+        },
+        {
+          slug: "project-hash-map",
+          description: "Build a reusable hash map library in C that grows as it fills, proving you can design, test and measure a data structure.",
+          role: "project",
+        },
+      ],
+    },
+  ],
   "level-03-systems-software": [
     {
       id: "processes",
@@ -354,17 +414,13 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
           description:
             "Why programs must trap into the kernel to do I/O, how printf ends in write(), and how to read errors with errno and strace.",
         },
-      ],
-      upcoming: [
         {
-          id: "context-switching",
-          title: "Context switching: how the OS takes turns",
+          slug: "context-switching",
           description:
             "How the kernel saves one process's registers and restores another's, so many programs can share one CPU.",
         },
         {
-          id: "environment-and-exit",
-          title: "Arguments, environment and exit codes",
+          slug: "environment-and-exit",
           description:
             "How a program receives its arguments and environment variables, and how its exit code tells the caller whether it worked.",
         },
@@ -397,11 +453,8 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
           description:
             "What file descriptors are, how dup2() redirects them, and how a shell uses that to implement >, < and |.",
         },
-      ],
-      upcoming: [
         {
-          id: "buffered-io",
-          title: "Buffered I/O: stdio and write",
+          slug: "buffered-io",
           description:
             "Why stdio collects output in a buffer before calling write(), and when that buffering surprises you.",
         },
@@ -412,16 +465,13 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
       title: "Users, permissions and isolation",
       blurb: "Who may do what, and why one process can't touch another's memory.",
       items: [
-      ],
-      upcoming: [
         {
-          id: "permissions",
-          title: "Users, groups and permissions",
-          description: "How Unix decides who can read, write or run a file, using users, groups and permission bits.",
+          slug: "permissions",
+          description:
+            "How Unix decides who can read, write or run a file, using users, groups and permission bits.",
         },
         {
-          id: "process-isolation",
-          title: "Why one process can't read another's memory",
+          slug: "process-isolation",
           description:
             "How virtual memory gives each process its own address space, so one program cannot read another's memory.",
         },

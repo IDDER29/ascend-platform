@@ -199,9 +199,9 @@ export const PATHS: PathDef[] = [
       },
       {
         id: "data-structures",
-        title: "Data Structures in C",
+        title: LEVELS["level-07-data-structures"].name,
         body: "Arrays, lists, hash tables and trees, built by hand, with what each costs and how it sits in memory.",
-        outline: O.DATA_STRUCTURES,
+        levelId: "level-07-data-structures",
         milestone: "Understand C deeply",
       },
       {

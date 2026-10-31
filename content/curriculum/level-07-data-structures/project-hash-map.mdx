@@ -1,0 +1,158 @@
+---
+title: "Project: A hash map library"
+level: level-07-data-structures
+slug: project-hash-map
+order: 9
+timeMin: 50
+learningOutcomes:
+- Design a small C library around a header that states who owns what
+- Implement a chained hash map that grows to keep its chains short, and explain why its operations are fast on average
+- Test a library with assert-based tests under the address and undefined-behaviour sanitizers
+- Use the library from another program through its interface only, including a callback over every entry
+primer:
+- title: "Hash tables"
+  type: doc
+  meta: Reread · 4 min · buckets, collisions and load factor.
+  essential: true
+- title: "Ownership: who frees what"
+  type: doc
+  meta: Reread · 3 min · the contract the header states.
+  essential: true
+- title: "Function pointers"
+  type: doc
+  meta: Reread · 2 min · hm_each takes one.
+  essential: false
+knowledgeCheck:
+- question: Why does hm_put copy the key instead of keeping the caller's pointer?
+  answer: "The caller owns its string and may change or free it after the call. If the map kept the pointer, a changed key would be filed in the wrong bucket and a freed one would dangle. Copying gives the map its own key, which it frees in hm_remove and hm_free."
+  jumpToId: part-4-break-the-contract
+  jumpToLabel: "Part 4: Break the contract"
+- question: The map grows when it would be more than 3/4 full. Why does that keep hm_get fast?
+  answer: "With at most 3/4 of an entry per bucket on average, the chain in any bucket is short, so a lookup compares only a few keys. Doubling the buckets costs work proportional to the entries, but it happens so rarely that each put pays only a constant amount on average."
+  jumpToId: part-2-read-the-implementation
+  jumpToLabel: "Part 2: Read the implementation"
+assignment:
+  instruction: "Extend the library on your own machine: add hm_stats, which reports the longest chain and the number of empty buckets, then fill a map with 100000 keys and report both. Then change the hash to a deliberately bad one (just the first character) and compare. Keep the tests passing under -fsanitize=address,undefined."
+  resourceName: 'Crafting Interpreters: Hash Tables'
+  resourceType: doc
+  resourceUrl: 'https://craftinginterpreters.com/hash-tables.html'
+additionalResources:
+- title: "Fowler-Noll-Vo hash function (Wikipedia)"
+  type: doc
+  meta: the FNV-1a hash used here
+  url: 'https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function'
+- title: "Hash table (Wikipedia)"
+  type: doc
+  meta: chaining, open addressing and load factor
+  url: 'https://en.wikipedia.org/wiki/Hash_table'
+whyThisMatters: "Hash maps are everywhere: symbol tables in compilers, caches, databases, every dictionary in a scripting language. Writing one as a proper library, with a clear contract, tests and sanitizers, is the step from knowing a data structure to shipping one others can rely on."
+---
+
+In this project you put a whole data structure into a reusable library: a map from strings to `int`s that grows as it fills. You'll read its interface and implementation, run its tests, break its ownership contract on purpose, and use it from a second program.
+
+## Part 1: The interface
+
+A C library is its header. Everything a user may rely on is here, and nothing else:
+
+```c
+/* A map from strings to ints. The map copies every key it stores and frees
+   those copies itself; the caller keeps ownership of the keys it passes in. */
+typedef struct hashmap hashmap;
+
+hashmap *hm_new(void);                                 /* NULL if out of memory */
+void hm_free(hashmap *m);                              /* frees the map and its key copies */
+bool hm_put(hashmap *m, const char *key, int value);   /* false if out of memory */
+bool hm_get(const hashmap *m, const char *key, int *value);
+bool hm_remove(hashmap *m, const char *key);
+size_t hm_count(const hashmap *m);
+size_t hm_capacity(const hashmap *m);
+/* Call fn once for every key and value, in no particular order. */
+void hm_each(const hashmap *m, void (*fn)(const char *key, int value, void *ctx), void *ctx);
+```
+
+Find three design decisions in it, and say what each protects the user from.
+
+<details>
+<summary>Check your answer</summary>
+
+- **`typedef struct hashmap hashmap;` with no fields:** an **opaque type**. Users can only hold a pointer and call the functions, so they can't depend on the layout, and the implementation can change freely.
+- **The ownership comment:** the map copies keys and frees its copies, and the caller keeps its own strings. Nobody has to guess who frees what.
+- **Every way to fail is visible:** `hm_new` can return `NULL`, `hm_put` returns `false` when memory runs out, and `hm_get` returns whether it found the key, with the value written through a pointer. No call silently fails.
+
+`const hashmap *` on the read-only functions is a fourth: it promises `hm_get` and `hm_count` never change the map.
+
+</details>
+
+## Part 2: Read the implementation
+
+The implementation is a **chained** hash table:
+
+- An array of buckets, each the head of a linked list of entries.
+- **FNV-1a** hashes each key. The bucket is the hash's low bits: the number of buckets is a power of two, so `hash & (capacity - 1)` picks one cheaply.
+- When a put would take the map past **3/4 full** (entries over buckets), it doubles the buckets and moves every entry to its new bucket. The entries are reused, not copied.
+
+The tests below print its files, `hashmap.c` included. Read `hm_put`, `grow` and `hm_remove`. Why does `hm_remove` walk a pointer to a pointer (`entry **link`) instead of a pointer to an entry?
+
+<details>
+<summary>Check your answer</summary>
+
+To unlink an entry, you must change whatever points at it. That's either the bucket's head (`m->buckets[i]`) or the `next` field of the previous entry. `link` always points at that pointer, whichever it is, so one line, `*link = e->next;`, handles both cases. There's no special case for "the first entry in the bucket".
+
+Growth keeps chains short. At most 3/4 of an entry per bucket on average means a lookup compares only a few keys, so `hm_get` is O(1) on average. Doubling costs O(n), but after growing at n entries the map doesn't grow again until it holds 2n, so those O(n) moves are spread over n puts and each put pays O(1) on average: **amortised** constant time. The worst case is still O(n), if every key landed in one bucket. A good hash makes that very unlikely.
+
+</details>
+
+## Part 3: Run the tests
+
+`main.c` is a test program: one function per behaviour, each checking with `assert`. It's built with both sanitizers, and ASan also checks for leaks when the program exits. Predict how many buckets the map has after 1000 keys, then run it.
+
+<CRun program="data-structures/hashmap-tests" caption='The library and its tests' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+All five tests pass, and the sanitizers report nothing: no out-of-bounds access, no use after free, no leak. The map has 2048 buckets. It starts with 8 and doubles whenever adding an entry would make it more than 3/4 full. 1024 buckets hold at most 768 entries, so the 769th key doubles it to 2048, which holds up to 1536.
+
+</details>
+
+## Part 4: Break the contract
+
+Now a version that "saves memory" by keeping the caller's key pointer instead of a copy. It no longer frees keys, since it doesn't own them. Only `hashmap.c` changed. Predict which test fails, and why.
+
+<CRun program="data-structures/hashmap-bug" caption='The same tests, with keys not copied' show="main.c" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+`test_keys_are_copied` fails. The test stores `key`, a local array holding "cat", then changes it to "bat". The map's entry points at that same array, so the entry now says "bat", yet it sits in the bucket for "cat". Looking up "cat" finds an entry with a different key, so the lookup fails, and the `assert` stops the program.
+
+Two more things to notice:
+
+- **The earlier "ok" lines are missing.** `printf` output going to a pipe is fully buffered, and `abort()` (which a failed `assert` calls) ends the program without flushing that buffer. When a program dies, print diagnostics to `stderr`, which is unbuffered, or call `fflush(stdout)` first.
+- **In real code this bug is worse.** If the caller's string is freed, the map holds a dangling pointer, and every later lookup in that bucket reads freed memory.
+
+</details>
+
+## Part 5: Use it from another program
+
+A word counter that knows nothing about buckets or chains, only the header. It reads text, counts each word, then uses `hm_each` with a callback to collect the words seen at least twice, and sorts them.
+
+<CRun program="data-structures/hashmap-wordcount" caption='Counting words with the library' show="main.c" predict />
+
+<details>
+<summary>Check your answer</summary>
+
+26 different words, with "a" 7 times and "map" 5 times, then the words seen twice. Note the details that make it correct and repeatable:
+
+- **Counting:** `hm_get` leaves `n` at 0 for a new word, so one `hm_put(m, word, n + 1)` both adds and updates.
+- **The callback:** `hm_each` passes a `void *ctx` through to the callback, so `collect` can fill an array without any global variable.
+- **The order:** the map promises no order, so `qsort` sorts by count, then alphabetically. The output would otherwise depend on bucket layout and could change if the hash or capacity changed.
+- **Cleanup:** `collect` stores the map's own key pointers, which stay valid until `hm_free`. That's why `free(c.items)` comes before `hm_free(m)`, and it runs leak-free under ASan.
+
+</details>
+
+<KeyIdea>A library is a contract: an opaque type, a header that says who owns what and how each call can fail, and tests that prove the promises, run under sanitizers.</KeyIdea>
+
+## Done when
+
+You've explained the header's design, the pointer-to-pointer removal and the amortised growth, predicted the bucket count, diagnosed the broken contract (including the missing output) and traced the word counter. Then do the assignment: measure your map with `hm_stats`.

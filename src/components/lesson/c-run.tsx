@@ -9,12 +9,25 @@ const MONO = "font-[family-name:var(--font-plex-mono)]";
  * A real C program, compiled and run by gcc on the build machine: its source, the exact commands, any
  * compiler messages, and what it printed (content/programs/<program>/run.json, written by
  * scripts/run-c-programs.ts and checked against the source by a test, so it can't drift). With `predict`,
- * the output stays hidden until the learner has predicted it. <CRun program="c-basics/hello" predict />
+ * the output stays hidden until the learner has predicted it. With `show="main.c"` (a comma-separated list),
+ * only those files are printed, for a program whose other files the lesson has already shown.
+ * <CRun program="c-basics/hello" predict />
  */
-export function CRun({ program, caption, predict = false }: { program: string; caption?: string; predict?: boolean }) {
+export function CRun({
+  program,
+  caption,
+  predict = false,
+  show,
+}: {
+  program: string;
+  caption?: string;
+  predict?: boolean;
+  show?: string;
+}) {
   if (!PROGRAM_ID.test(program)) throw new Error(`Bad program id: ${program}`);
   const run = JSON.parse(readFileSync(path.join(PROGRAMS_DIR, program, "run.json"), "utf8")) as ProgramRun;
-  const files = programFiles(program);
+  const shown = show?.split(",").map((f) => f.trim());
+  const files = programFiles(program).filter((f) => !shown || shown.includes(f.name));
   const stdin = programStdin(program);
 
   return (

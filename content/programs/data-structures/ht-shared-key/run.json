@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/ht-shared-key",
+  "sourceHash": "3244f8a0564639d5",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog < input.txt",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "slot 4: red x5\nslot 5: red x1\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

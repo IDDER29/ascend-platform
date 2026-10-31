@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/bst-leak",
+  "sourceHash": "8adde842cb6340ce",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=address,undefined main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "built a tree of 5 keys\n",
+    "stderr": "\n=================================================================\n==580680==ERROR: LeakSanitizer: detected memory leaks\n\nDirect leak of 24 byte(s) in 1 object(s) allocated from:\n    #0 0x7b708432b60f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67\n    #1 0x5f1c679df3d1 in insert ./main.c:11\n    #2 0x5f1c679df7f7 in insert ./main.c:22\n    #3 0x5f1c679dfb92 in main ./main.c:37\n    #4 0x7b708362a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #5 0x7b708362a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #6 0x5f1c679df2e4 in _start (/tmp/build/prog+0x22e4) (BuildId: fa39176d600f44ee8822c433bc9a6728681b6144)\n\nDirect leak of 24 byte(s) in 1 object(s) allocated from:\n    #0 0x7b708432b60f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67\n    #1 0x5f1c679df3d1 in insert ./main.c:11\n    #2 0x5f1c679df68a in insert ./main.c:20\n    #3 0x5f1c679dfb92 in main ./main.c:37\n    #4 0x7b708362a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #5 0x7b708362a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #6 0x5f1c679df2e4 in _start (/tmp/build/prog+0x22e4) (BuildId: fa39176d600f44ee8822c433bc9a6728681b6144)\n\nIndirect leak of 24 byte(s) in 1 object(s) allocated from:\n    #0 0x7b708432b60f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67\n    #1 0x5f1c679df3d1 in insert ./main.c:11\n    #2 0x5f1c679df7f7 in insert ./main.c:22\n    #3 0x5f1c679df68a in insert ./main.c:20\n    #4 0x5f1c679dfb92 in main ./main.c:37\n    #5 0x7b708362a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #6 0x7b708362a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #7 0x5f1c679df2e4 in _start (/tmp/build/prog+0x22e4) (BuildId: fa39176d600f44ee8822c433bc9a6728681b6144)\n\nIndirect leak of 24 byte(s) in 1 object(s) allocated from:\n    #0 0x7b708432b60f in malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:67\n    #1 0x5f1c679df3d1 in insert ./main.c:11\n    #2 0x5f1c679df68a in insert ./main.c:20\n    #3 0x5f1c679df68a in insert ./main.c:20\n    #4 0x5f1c679dfb92 in main ./main.c:37\n    #5 0x7b708362a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #6 0x7b708362a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #7 0x5f1c679df2e4 in _start (/tmp/build/prog+0x22e4) (BuildId: fa39176d600f44ee8822c433bc9a6728681b6144)\n\nSUMMARY: AddressSanitizer: 96 byte(s) leaked in 4 allocation(s).\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

@@ -1,0 +1,117 @@
+---
+title: "Cache-friendly data layout"
+level: level-07-data-structures
+slug: cache-friendly-layout
+order: 8
+timeMin: 11
+learningOutcomes:
+- Explain why visiting memory in order is fast, using cache lines and the hardware prefetcher
+- Predict which of two loops with the same Big-O runs faster, from the order in which they touch memory
+- Compare an array with a linked list, and an array of structs with a struct of arrays, by how much of each cache line is used
+- Measure a layout change with clock_gettime, and read timings honestly as varying by machine and run
+primer:
+- title: Caches & locality
+  type: doc
+  meta: "Machine & Memory · cache lines, hits and misses, and locality."
+  essential: true
+- title: "Big-O: counting the work"
+  type: doc
+  meta: Reread · 2 min · Big-O ignores what each step costs; this lesson is about that cost.
+  essential: true
+- title: "Linked lists"
+  type: doc
+  meta: Reread · 2 min · nodes joined by pointers, which this lesson times.
+  essential: false
+knowledgeCheck:
+- question: Summing a 2048 by 2048 int array took 2.4 ms in row order and 16.5 ms in column order here. Both are O(n). Why the difference?
+  answer: "C stores the array row after row. In row order each step moves 4 bytes on, so every 64-byte cache line fetched serves 16 elements, and the prefetcher sees the pattern. In column order each step jumps 8 KB, a different cache line every time, so most reads wait for memory."
+  jumpToId: rows-and-columns
+  jumpToLabel: Rows and columns
+- question: Why can a struct of arrays be faster than an array of structs, when a loop needs only one field?
+  answer: "In an array of 64-byte structs, reading only x uses 8 bytes of every 64-byte line fetched. In a struct of arrays, the x values are packed together, so every byte fetched is used: about 8 times less memory traffic for the same loop."
+  jumpToId: array-of-structs-or-struct-of-arrays
+  jumpToLabel: Array of structs, or struct of arrays
+assignment:
+  instruction: "Take a program from this course that walks a linked list or a 2D array, and time it with clock_gettime at -O2 in two layouts (in order and scattered, or row and column order). Run each three times, report the median, and explain the difference in terms of cache lines."
+  resourceName: "What every programmer should know about memory (Drepper)"
+  resourceType: pdf
+  resourceUrl: 'https://people.freebsd.org/~lstewart/articles/cpumemory.pdf'
+additionalResources:
+- title: "Locality of reference (Wikipedia)"
+  type: doc
+  meta: temporal and spatial locality
+  url: 'https://en.wikipedia.org/wiki/Locality_of_reference'
+- title: "AoS and SoA (Wikipedia)"
+  type: doc
+  meta: arrays of structs and structs of arrays
+  url: 'https://en.wikipedia.org/wiki/AoS_and_SoA'
+whyThisMatters: "On a modern computer, reading memory is often the slowest thing a program does. Two programs with the same Big-O can differ by a factor of a hundred depending on how their data is laid out, so choosing a layout the cache likes is one of the biggest speedups you can get without changing the algorithm."
+---
+
+Big-O counts steps as if every step cost the same. On real hardware they don't: a read that hits the cache takes a few cycles, and one that has to go to main memory can take hundreds. In Machine & Memory you met cache lines and locality. Here you'll measure what they do to data structures.
+
+## How to read the timings
+
+The programs below time themselves with `clock_gettime(CLOCK_MONOTONIC, ...)`, built with `-O2`. The times are real, from one run on the build machine. **They vary**: by machine, by run and by what else the computer is doing. Your numbers will differ. Read the *ratios*, not the milliseconds. Each program also prints a sum, so you can see both versions do the same work (and so the compiler can't skip the loop).
+
+Counting cache misses directly with `perf stat -e cache-misses` needs permission to read the CPU's performance counters. On the build machine that's switched off for ordinary users, so this lesson measures time instead. On your own Linux machine, try perf on these programs; you may need `sudo`.
+
+## Rows and columns
+
+C stores a 2D array **row after row**: `grid[r][c]` is followed in memory by `grid[r][c + 1]`. This program sums a 2048 by 2048 grid of ints (16 MB, far bigger than the caches) twice: row by row, then column by column. Same additions, same Big-O. Predict which is faster, and by roughly how much.
+
+<CRun program="data-structures/cache-rows-cols" caption='Summing a grid two ways' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Row order was about 7 times faster here (2.4 ms against 16.5 ms). Memory moves between RAM and cache in **cache lines** of 64 bytes. In row order, one line holds 16 consecutive ints, so one slow fetch serves 16 additions, and the **prefetcher**, the hardware that spots a steady stride and fetches ahead, keeps the next lines coming. In column order each step jumps a whole row, 8 KB, landing in a different line every time. Most of each fetched line is wasted, and the stride defeats much of the prefetching.
+
+The fix costs nothing: make the inner loop run over the last index.
+
+</details>
+
+## Arrays and linked lists
+
+A linked list does the same O(n) walk as an array, but each step follows a pointer to wherever the next node happens to be. This program sums 4 million values three ways: in an array; in a linked list whose nodes lie in memory in list order; and in the same list after shuffling the links so each `next` points somewhere far away. Predict the order of the three times.
+
+<CRun program="data-structures/cache-list-vs-array" caption='The same sum, three layouts' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+Here the array took 1.6 ms, the in-order list 10.3 ms, and the scattered list 671.6 ms, about 400 times slower than the array for exactly the same additions.
+
+- The **array** packs 16 ints per cache line, the prefetcher streams them in, and the compiler can use vector instructions that add several at once.
+- The **in-order list** still moves forward through memory, so the prefetcher helps, but each node is 16 bytes (a value, padding and a pointer), so only 4 nodes fit in a line, and each step must wait for the pointer before it knows where to go next.
+- The **scattered list** misses the cache on almost every node, and each miss must finish before the next address is known, so no prefetching can help.
+
+Lists built over time by `malloc` often end up scattered like this. That's why, for most uses, a dynamic array beats a linked list in practice, even where the list's Big-O looks the same or better.
+
+</details>
+
+<KeyIdea>Memory arrives in 64-byte cache lines. Layouts that use every byte of each line, in order, are fast; layouts that jump around, or that load bytes they don't need, are slow, whatever their Big-O says.</KeyIdea>
+
+## Array of structs, or struct of arrays
+
+A simulation keeps 2 million particles, each with a position, a velocity, a mass and an id: 64 bytes. There are two ways to store them:
+
+- an **array of structs (AoS)**: `struct particle p[N]`, each particle's fields together;
+- a **struct of arrays (SoA)**: one array per field, `x[N]`, `y[N]` and so on.
+
+This loop needs only one field: the average x. Predict which layout is faster.
+
+<CRun program="data-structures/cache-aos-soa" caption='One field from 2 million particles' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The struct of arrays was about 3 times faster here (2.5 ms against 8.1 ms). With AoS, every 64-byte line fetched holds one whole particle, and the loop uses 8 of its bytes: seven eighths of the memory traffic is wasted. With SoA, the x values are packed together: every byte fetched is an x the loop needs.
+
+AoS isn't wrong, though. When a loop uses **all** the fields of each particle together, AoS keeps them in one line, and SoA has to fetch from eight places. Choose the layout from how the data is *used*: game engines and numerical code often use SoA for their hot loops for exactly this reason.
+
+</details>
+
+## Done when
+
+You can explain each of the three measurements by cache lines and prefetching, say which loop order to use for a 2D array, and choose between AoS and SoA from how the data is used.

@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/da-stale-pointer",
+  "sourceHash": "0dce06d854cddc54",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 -g -fsanitize=address,undefined main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "first = 10\n",
+    "stderr": "=================================================================\n==578886==ERROR: AddressSanitizer: heap-use-after-free on address 0x6f35b8be0010 at pc 0x62c2ce6bab68 bp 0x7ffc4b1b02c0 sp 0x7ffc4b1b02b0\nREAD of size 4 at 0x6f35b8be0010 thread T0\n    #0 0x62c2ce6bab67 in main ./main.c:33\n    #1 0x7315b9c2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #2 0x7315b9c2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #3 0x62c2ce6ba2c4 in _start (/tmp/build/prog+0x22c4) (BuildId: 9db9776c072202d4ecd68c740b188fdb7911d1fe)\n\n0x6f35b8be0010 is located 0 bytes inside of 16-byte region [0x6f35b8be0010,0x6f35b8be0020)\nfreed by thread T0 here:\n    #0 0x7315ba92a6cf in realloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:81\n    #1 0x62c2ce6ba5c0 in vec_push ./main.c:12\n    #2 0x62c2ce6baaff in main ./main.c:32\n    #3 0x7315b9c2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #4 0x7315b9c2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #5 0x62c2ce6ba2c4 in _start (/tmp/build/prog+0x22c4) (BuildId: 9db9776c072202d4ecd68c740b188fdb7911d1fe)\n\npreviously allocated by thread T0 here:\n    #0 0x7315ba92a6cf in realloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:81\n    #1 0x62c2ce6ba5c0 in vec_push ./main.c:12\n    #2 0x62c2ce6ba9c8 in main ./main.c:26\n    #3 0x7315b9c2a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59\n    #4 0x7315b9c2a717 in __libc_start_main_impl ../csu/libc-start.c:360\n    #5 0x62c2ce6ba2c4 in _start (/tmp/build/prog+0x22c4) (BuildId: 9db9776c072202d4ecd68c740b188fdb7911d1fe)\n\nSUMMARY: AddressSanitizer: heap-use-after-free ./main.c:33 in main\nShadow bytes around the buggy address:\n  0x6f35b8bdfd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6f35b8bdfe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6f35b8bdfe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6f35b8bdff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n  0x6f35b8bdff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00\n=>0x6f35b8be0000: fa fa[fd]fd fa fa fa fa fa fa fa fa fa fa fa fa\n  0x6f35b8be0080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x6f35b8be0100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x6f35b8be0180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x6f35b8be0200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\n  0x6f35b8be0280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa\nShadow byte legend (one shadow byte represents 8 application bytes):\n  Addressable:           00\n  Partially addressable: 01 02 03 04 05 06 07 \n  Heap left redzone:       fa\n  Freed heap region:       fd\n  Stack left redzone:      f1\n  Stack mid redzone:       f2\n  Stack right redzone:     f3\n  Stack after return:      f5\n  Stack use after scope:   f8\n  Global redzone:          f9\n  Global init order:       f6\n  Poisoned by user:        f7\n  Container overflow:      fc\n  Array cookie:            ac\n  Intra object redzone:    bb\n  ASan internal:           fe\n  Left alloca redzone:     ca\n  Right alloca redzone:    cb\n==578886==ABORTING\n",
+    "exitCode": 1,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

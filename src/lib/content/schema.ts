@@ -6,7 +6,9 @@ export const levelIds = [
   "level-04-c-basics",
   "level-02-the-c-language",
   "level-05-c-contract",
+  "level-07-data-structures",
   "level-03-systems-software",
+  "level-08-vm-threads-files",
 ] as const;
 
 export const LevelIdSchema = z.enum(levelIds);
@@ -80,7 +82,7 @@ export interface Lesson {
 
 export const LEVELS: Record<
   LevelId,
-  { name: string; short: string; totalConcepts: number; timeLabel: string; locked?: boolean }
+  { name: string; short: string; totalConcepts: number; timeLabel: string }
 > = {
   "level-00-bits-logic": {
     name: "Bits & Logic",
@@ -112,11 +114,22 @@ export const LEVELS: Record<
     totalConcepts: 8,
     timeLabel: "~2 hr",
   },
+  "level-07-data-structures": {
+    name: "Data Structures in C",
+    short: "The Toolbox",
+    totalConcepts: 9,
+    timeLabel: "~2.5 hr",
+  },
   "level-03-systems-software": {
     name: "Systems & Software",
     short: "The Architect",
-    totalConcepts: 5,
-    timeLabel: "~55 min",
-    locked: true,
+    totalConcepts: 10,
+    timeLabel: "~1 hr 45 min",
+  },
+  "level-08-vm-threads-files": {
+    name: "Virtual Memory, Threads & Files",
+    short: "The Engine Room",
+    totalConcepts: 14,
+    timeLabel: "~3 hr",
   },
 };

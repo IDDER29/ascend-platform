@@ -1,0 +1,3 @@
+A map is a table, and a table is a map. The map keeps a copy of each key,
+so the caller can change its own string. A good map grows as it fills, and
+a map that grows keeps each chain short.

@@ -1,0 +1,204 @@
+---
+title: "Context switching: how the OS takes turns"
+level: level-03-systems-software
+slug: context-switching
+order: 3
+timeMin: 10
+learningOutcomes:
+- Explain what a context switch saves and restores, and where the saved state is kept
+- Tell a voluntary switch (the process waits) from an involuntary one (its time slice ends), and count both on Linux
+- Predict how two CPU-bound processes share one core, from their wall-clock and CPU times
+- Estimate what a context switch costs, and explain why it matters for programs that switch often
+primer:
+- title: "Sharing one machine"
+  type: doc
+  meta: "Foundations · time slices and what a switch saves, the first look."
+  essential: true
+- title: "Processes & the process table"
+  type: doc
+  meta: Reread · 3 min · the kernel's record of each process, where saved registers live.
+  essential: true
+knowledgeCheck:
+- question: A program sleeps for 1 ms, 100 times. Why does /usr/bin/time report about 100 voluntary context switches?
+  answer: "Each sleep is a system call that says 'wake me in 1 ms'. With nothing to do, the process gives up the CPU, so the kernel saves its registers and runs something else. That's a voluntary switch, one per sleep. When the timer fires, the kernel makes it runnable again and restores its registers."
+  jumpToId: voluntary-and-involuntary-switches
+  jumpToLabel: Voluntary and involuntary switches
+- question: Two copies of a 1-second CPU-bound program are pinned to the same core. Roughly how long does each take by the clock, and why?
+  answer: "About 2 seconds each, while still using only about 1 second of CPU. The scheduler gives each a few milliseconds at a time and switches between them hundreds of times (involuntary switches), so both progress at half speed and finish at about the same time."
+  jumpToId: two-programs-one-core
+  jumpToLabel: Two programs, one core
+assignment:
+  instruction: "Run /usr/bin/time -v on three commands of your choice: one that mostly computes, one that mostly waits (sleep, or reading from the network), and one that does both. Predict the voluntary and involuntary switch counts before each run, then compare and explain any surprises."
+  resourceName: 'OSTEP: Limited Direct Execution'
+  resourceType: doc
+  resourceUrl: 'https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-mechanisms.pdf'
+additionalResources:
+- title: "OSTEP: Scheduling, introduction"
+  type: doc
+  meta: how the scheduler decides who runs next
+  url: 'https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-sched.pdf'
+- title: "proc_pid_status(5): the ctxt_switches counters"
+  type: doc
+  meta: the Linux manual page for /proc/[pid]/status
+  url: 'https://man7.org/linux/man-pages/man5/proc_pid_status.5.html'
+whyThisMatters: "Every program you run shares the CPU through context switches, and a program that switches too often (tiny reads, too many threads, a busy lock) can spend more time switching than working. Knowing what a switch is and how to count it is the first step to understanding latency and throughput in real systems."
+---
+
+Foundations showed the idea: the OS gives each thread a short time slice and switches between them, saving one thread's CPU state and restoring another's. This lesson makes it concrete on real Linux: what is saved, when switches happen, how to count them, and what they cost.
+
+## What the kernel saves and restores
+
+A running process's progress lives in the CPU: the instruction pointer, the stack pointer, the general registers, the flags, and the floating-point and vector registers. A **context switch** is the kernel doing three things:
+
+1. **Save** the current process's registers into its kernel record (on Linux, part of the `task_struct` and its kernel stack).
+2. **Choose** the next process to run. That's the scheduler's job.
+3. **Restore** that process's saved registers, including its instruction pointer, so it carries on exactly where it stopped. If it belongs to a different process, the kernel also switches the memory map, so the new process sees its own addresses.
+
+The process never notices. From its point of view the instructions just ran in order, with a gap it can only see on a clock.
+
+## A switch you can watch
+
+The kernel's switch happens in kernel mode, where you can't watch it. But C's `ucontext` functions do the same job inside one program: `swapcontext(&from, &to)` saves the current registers into `from` and loads the ones in `to`, including the stack pointer and instruction pointer. Predict the order of the lines, then run it.
+
+<CRun program="systems/ctx-swapcontext" caption='Two contexts taking turns' predict />
+
+<details>
+<summary>Check your answer</summary>
+
+The lines alternate: main, task, main, task, main, task, then `main: done`. Each `swapcontext` saves where its caller was and jumps into the other context, which resumes **inside its own loop**, at the instruction after its last `swapcontext`, with its own variables (`i`) intact on its own stack. Nothing was returned, and nothing was called again from the top.
+
+The kernel's context switch is the same move, done for whole processes: save the registers somewhere safe, load another set, and the CPU continues someone else's work. The differences are that the kernel decides *when* (on a timer or when a process waits) and also switches the memory map. (`ucontext` is old and marked obsolescent in POSIX; it's here only because it makes a switch visible.)
+
+</details>
+
+<KeyIdea>A context switch saves one process's registers into the kernel's record of it and restores another's. The instruction pointer and stack pointer come back too, so the process resumes mid-instruction-stream, unaware.</KeyIdea>
+
+## Voluntary and involuntary switches
+
+Linux counts two kinds of switch for every process:
+
+- **Voluntary:** the process gave up the CPU itself, because it had to wait: for a sleep to end, a disk read, a pipe, a lock.
+- **Involuntary:** the kernel took the CPU away, usually because the time slice ended and someone else was waiting to run.
+
+Here are two real runs under GNU `time -v` (Linux 7.0, 12 cores; your numbers will differ). `napper` sleeps 1 ms, 100 times; `spin` adds numbers in a loop for a few seconds.
+
+```
+$ /usr/bin/time -v ./napper
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.12
+	Voluntary context switches: 101
+	Involuntary context switches: 1
+$ /usr/bin/time -v ./spin
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.67
+	Voluntary context switches: 1
+	Involuntary context switches: 113
+```
+
+The same counters are in `/proc/self/status`, as `voluntary_ctxt_switches` and `nonvoluntary_ctxt_switches`. This program reads them before and after 50 short sleeps:
+
+<CRun program="systems/ctx-counters" caption='Counting your own switches' />
+
+Why does `spin` have so few voluntary switches, and why did it get any involuntary ones on a 12-core machine?
+
+<details>
+<summary>Check your answer</summary>
+
+`spin` never waits for anything: it only computes, so it never gives up the CPU by itself. Its one voluntary switch comes from start-up or exit. It still got 113 involuntary switches because other programs on the machine (the desktop, background services) became runnable now and then, and the scheduler sometimes took the core away for them, even though 11 other cores existed. Over 2.67 seconds, that's an interruption about every 24 ms.
+
+`napper` is the opposite: one voluntary switch per sleep, plus one at start-up or exit, and almost never interrupted, because it hardly ever runs long enough for a slice to end.
+
+</details>
+
+## Two programs, one core
+
+`taskset -c 0` pins a program to core 0. Here is `spin`, set to about a second of work, first alone on core 0, then twice at once, both pinned to core 0:
+
+```
+$ taskset -c 0 ./spin
+1.08 s wall, 1.08 s user, 12 involuntary, 4 voluntary
+$ taskset -c 0 ./spin & taskset -c 0 ./spin
+B: 1.74 s wall, 0.86 s user, 316 involuntary, 1 voluntary
+A: 1.76 s wall, 0.88 s user, 309 involuntary, 1 voluntary
+```
+
+(The format is `/usr/bin/time -f "%e s wall, %U s user, %c involuntary, %w voluntary"`.) Explain the wall-clock times, and estimate how long each time slice was.
+
+<details>
+<summary>Check your answer</summary>
+
+Each program needed under a second of CPU (`user` time), but they had to share one core, so each made progress only about half of the time and took about twice as long by the clock. Both finish at almost the same moment because the scheduler shares the core fairly.
+
+Each was interrupted about 310 times while using about 0.87 s of CPU, so a typical turn was around 0.87 s / 310, roughly 3 ms, with the other program's turn in between. That's the time slice in practice; Linux's scheduler adjusts it with the number of runnable processes. (The user times, 0.86 s instead of 1.08 s, differ a little because the CPU's clock speed changes with load; real measurements are noisy, which is why we ran each more than once.)
+
+</details>
+
+## What a switch costs
+
+A switch isn't free: the kernel runs its own code, and the new process starts with caches and branch predictors full of someone else's data. This program bounces one byte between two processes through two pipes, 100,000 times, so every bounce wakes the other process:
+
+```c
+#define _POSIX_C_SOURCE 200809L
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
+
+#define ROUNDS 100000
+
+/* One byte each way, ROUNDS times: every bounce makes the other process runnable. */
+int main(void) {
+    int to_child[2], to_parent[2];
+    if (pipe(to_child) == -1 || pipe(to_parent) == -1) {
+        perror("pipe");
+        return 1;
+    }
+    char b = 'x';
+    if (fork() == 0) {
+        for (int i = 0; i < ROUNDS; i++) {
+            if (read(to_child[0], &b, 1) != 1 || write(to_parent[1], &b, 1) != 1) {
+                exit(1);
+            }
+        }
+        exit(0);
+    }
+    struct timespec t0, t1;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+    for (int i = 0; i < ROUNDS; i++) {
+        if (write(to_child[1], &b, 1) != 1 || read(to_parent[0], &b, 1) != 1) {
+            return 1;
+        }
+    }
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    wait(NULL);
+    double ns = (t1.tv_sec - t0.tv_sec) * 1e9 + (t1.tv_nsec - t0.tv_nsec);
+    printf("%d round trips, %.0f ns each\n", ROUNDS, ns / ROUNDS);
+    return 0;
+}
+```
+
+Real runs on the same machine, with the machine busy with other work (your numbers will differ):
+
+```
+$ taskset -c 0 ./pingpong
+100000 round trips, 4233 ns each
+100000 round trips, 4054 ns each
+100000 round trips, 4568 ns each
+$ ./pingpong
+100000 round trips, 9991 ns each
+100000 round trips, 7763 ns each
+```
+
+A round trip is two switches, plus four system calls. Roughly how much does one switch cost here? And why might it be slower when the two processes may run on any core?
+
+<details>
+<summary>Check your answer</summary>
+
+Pinned to one core, a round trip takes about 4 µs, so one switch plus its two system calls costs about 2 µs: thousands of instructions' worth of time. A program that does 100,000 tiny reads that each block would spend a fifth of a second just switching.
+
+On any core, the two processes usually run on different cores, so each bounce means waking a process on another core (an inter-processor interrupt), and that core may have been idle in a power-saving state. That's slower than handing the same core over. Measuring both ways, more than once, is how you find that out.
+
+</details>
+
+## Done when
+
+You can say what a switch saves and where, read voluntary and involuntary counts and explain them, predict how CPU-bound programs share a core, and estimate the cost of a switch from a measurement.

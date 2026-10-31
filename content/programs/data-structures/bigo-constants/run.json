@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/bigo-constants",
+  "sourceHash": "8202d7dea85f750d",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "     n    A: 100n     B: n*n  fewer steps\n    10       1000        100  B\n    50       5000       2500  B\n   100      10000      10000  same\n   200      20000      40000  A\n  1000     100000    1000000  A\n 10000    1000000  100000000  A\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

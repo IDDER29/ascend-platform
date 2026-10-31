@@ -45,9 +45,17 @@ const LEVEL_OWNER: Record<
     pathSlug: "systems-programmer",
     courseId: "c-contract",
   },
+  "level-07-data-structures": {
+    pathSlug: "systems-programmer",
+    courseId: "data-structures",
+  },
   "level-03-systems-software": {
     pathSlug: "systems-programmer",
     courseId: "systems-software",
+  },
+  "level-08-vm-threads-files": {
+    pathSlug: "systems-programmer",
+    courseId: "vm-threads-files",
   },
 };
 

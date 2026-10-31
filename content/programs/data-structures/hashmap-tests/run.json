@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/hashmap-tests",
+  "sourceHash": "bc782c3bad621c5a",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O1 -g -fsanitize=address,undefined main.c hashmap.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "ok  put and get\nok  putting a key again updates it\nok  remove\nok  the map keeps its own copy of each key\nok  1000 keys, 2048 buckets, all found\nall tests passed\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

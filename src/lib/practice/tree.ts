@@ -36,7 +36,15 @@ const LEVEL_OWNERS: PracticeLevelOwner[] = [
     pathSlug: "systems-programmer",
   },
   {
+    level: "level-07-data-structures",
+    pathSlug: "systems-programmer",
+  },
+  {
     level: "level-03-systems-software",
+    pathSlug: "systems-programmer",
+  },
+  {
+    level: "level-08-vm-threads-files",
     pathSlug: "systems-programmer",
   },
 ];

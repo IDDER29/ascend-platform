@@ -1,0 +1,20 @@
+{
+  "id": "data-structures/da-grow",
+  "sourceHash": "a6178ad3046121f9",
+  "compiler": "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "target": "x86-64 Linux",
+  "compileCommand": "gcc -std=c17 -Wall -Wextra -O0 main.c -o prog",
+  "runCommand": "./prog",
+  "compile": {
+    "ok": true,
+    "stderr": ""
+  },
+  "run": {
+    "stdout": "doubling, capacity after each grow: 1 2 4 8 16 32\ndoubling 10000 pushes: 16383 items copied, 1.6 per push\n+1       10000 pushes: 49995000 items copied, 4999.5 per push\n",
+    "stderr": "",
+    "exitCode": 0,
+    "signal": null,
+    "timedOut": false
+  },
+  "generated": "2026-10-31"
+}

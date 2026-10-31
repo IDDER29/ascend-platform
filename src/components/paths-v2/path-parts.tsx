@@ -33,6 +33,11 @@ export function PathGlyph({ slug, size = 24 }: { slug: string; size?: number }) 
   return <Icon size={size} strokeWidth={2.2} aria-hidden />;
 }
 
+/** What to take first: "Foundations", or "Foundations, through Assembly Language" when only part of it is needed. */
+export function requiresName(requires: NonNullable<PathView["requires"]>): string {
+  return requires.throughTitle ? `${requires.title}, through ${requires.throughTitle}` : requires.title;
+}
+
 /** "19 lessons · about 3 h · 2 projects", or what's planned for a path coming soon. */
 export function pathMeta(path: PathView): string {
   if (path.soon) {

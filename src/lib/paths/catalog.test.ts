@@ -13,6 +13,20 @@ test("path slugs are unique, and every requiresSlug and branchOf names a real pa
   }
 });
 
+test("alongside and requiresThrough name a real path and a real course", () => {
+  for (const p of PATHS) {
+    for (const c of p.courses) if (c.alongside) assert.ok(slugs.has(c.alongside), `${c.id} alongside ${c.alongside}`);
+    if (p.requiresThrough) {
+      const req = PATHS.find((x) => x.slug === p.requiresSlug);
+      assert.ok(req?.courses.some((c) => c.id === p.requiresThrough), `${p.slug} through ${p.requiresThrough}`);
+    }
+  }
+  // C can start after Foundations' assembly course; its last two go alongside Systems Programmer.
+  const foundations = PATHS.find((p) => p.slug === "foundations")!;
+  assert.equal(foundations.courses.find((c) => c.milestone === "Ready to start C")?.id, "foundations-assembly");
+  assert.equal(PATHS.find((p) => p.slug === "systems-programmer")!.requiresThrough, "foundations-assembly");
+});
+
 test("the main track has one path per stage, 1 to 3, each with a milestone, and side paths branch off it", () => {
   const stages = PATHS.filter((p) => p.stage).sort((a, b) => a.stage! - b.stage!);
   assert.deepEqual(

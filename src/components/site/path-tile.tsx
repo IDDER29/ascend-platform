@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PathIcon, pathMeta } from "@/components/paths-v2/path-parts";
+import { PathIcon, pathMeta, requiresName } from "@/components/paths-v2/path-parts";
 import type { PathView } from "@/lib/paths/paths-v2-model";
 import { CARD } from "./site-ui";
 
@@ -31,7 +31,7 @@ export function PathTile({ path }: { path: PathView }) {
         ))}
       </ul>
       {path.requires && (
-        <p className="m-0 text-[13px] text-[var(--coach-ink-muted)]">Builds on {path.requires.title}</p>
+        <p className="m-0 text-[13px] text-[var(--coach-ink-muted)]">Builds on {requiresName(path.requires)}</p>
       )}
     </Link>
   );

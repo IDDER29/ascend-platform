@@ -50,14 +50,28 @@ function StageCard({ path, here, progress }: { path: PathView; here: boolean; pr
           </span>
         </div>
       )}
-      {path.milestone && (
-        <p className="m-0 mt-auto flex items-center gap-2 text-[13.5px] text-[var(--coach-ink-secondary)]">
-          <Flag size={14} strokeWidth={2.4} aria-hidden className="shrink-0 text-[var(--coach-ink-muted)]" />
-          <span>
-            <span className="sr-only">Leaves you: </span>
-            {path.milestone}
-          </span>
-        </p>
+      {(path.milestone || path.courses.some((c) => c.milestone)) && (
+        <ul className="m-0 mt-auto flex list-none flex-col gap-1 p-0">
+          {path.courses
+            .filter((c) => c.milestone)
+            .map((c) => (
+              <li key={c.id} className="flex items-start gap-2 text-[13.5px] text-[var(--coach-ink-secondary)]">
+                <Flag size={14} strokeWidth={2.4} aria-hidden className="mt-0.5 shrink-0 text-[var(--coach-ink-muted)]" />
+                <span>
+                  {c.milestone} <span className="text-[var(--coach-ink-muted)]">after {c.title}</span>
+                </span>
+              </li>
+            ))}
+          {path.milestone && (
+            <li className="flex items-start gap-2 text-[13.5px] text-[var(--coach-ink-secondary)]">
+              <Flag size={14} strokeWidth={2.4} aria-hidden className="mt-0.5 shrink-0 text-[var(--coach-ink-muted)]" />
+              <span>
+                <span className="sr-only">Leaves you: </span>
+                {path.milestone}
+              </span>
+            </li>
+          )}
+        </ul>
       )}
     </Link>
   );

@@ -1,7 +1,17 @@
 import Link from "next/link";
 import type { PathView } from "@/lib/paths/paths-v2-model";
 import { TrackMap } from "./track-map";
-import { CARD, ContinueLink, JoinButton, PathGlyph, PathIcon, pathMeta, SECONDARY, TopicBar } from "./path-parts";
+import {
+  CARD,
+  ContinueLink,
+  JoinButton,
+  PathGlyph,
+  PathIcon,
+  pathMeta,
+  requiresName,
+  SECONDARY,
+  TopicBar,
+} from "./path-parts";
 
 function YourPathCard({ path }: { path: PathView }) {
   return (
@@ -75,7 +85,9 @@ function ExploreCard({ path }: { path: PathView }) {
       </ul>
       {path.requires && !path.soon && (
         <p className="m-0 text-[12.5px] text-[var(--coach-ink-muted)]">
-          {path.requires.done ? `Builds on ${path.requires.title} (done).` : `Best after ${path.requires.title}.`}
+          {path.requires.done
+            ? `Builds on ${requiresName(path.requires)} (done).`
+            : `Best after ${requiresName(path.requires)}.`}
         </p>
       )}
       <div className="mt-auto flex flex-wrap gap-2 pt-1">

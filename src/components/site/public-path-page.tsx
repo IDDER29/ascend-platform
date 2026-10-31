@@ -40,6 +40,14 @@ function TopicBlock({ course, index }: { course: PathCourse; index: number }) {
             {course.total === 0 ? "coming soon" : `${course.total} lessons · ${durationLabel(course.minutes)}`}
           </p>
           <h3 className="m-0 mt-0.5 text-[21px] font-bold leading-tight">{course.title}</h3>
+          {course.alongside && (
+            <p className="m-0 mt-1 text-[13.5px] font-semibold text-[var(--coach-ink-secondary)]">
+              Take alongside{" "}
+              <Link href={`${CATALOG_HREF}/${course.alongside.slug}`} className="text-[var(--coach-ink)] underline underline-offset-2">
+                {course.alongside.title}
+              </Link>
+            </p>
+          )}
           <p className="m-0 mt-1.5 text-[15px] leading-relaxed text-[var(--coach-ink-secondary)]">{course.body}</p>
         </div>
       </div>
@@ -220,7 +228,8 @@ export function PublicPathPage({ path, earns }: { path: PathView; earns: BadgeVi
               >
                 {path.requires.title}
               </Link>
-              . Start there if you&apos;re new to how computers work.
+              {path.requires.throughTitle ? `, through ${path.requires.throughTitle}` : ""}. Start there if you&apos;re
+              new to how computers work.
             </p>
           )}
         </div>

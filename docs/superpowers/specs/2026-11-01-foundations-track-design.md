@@ -6,7 +6,7 @@ A deep foundation in computing covers far more than one path can hold: informati
 ## The three stages
 | Stage | Path | Leaves you |
 |---|---|---|
-| 1 | Foundations (live, 5 courses) | Ready to start C |
+| 1 | Foundations (live, 8 courses) | Ready to start C (after course 6, Assembly Language), then Ready for any path |
 | 2 | Systems Programmer (live, expanded to 10 courses) | Understand C deeply (after Data Structures in C), then Understand the OS |
 | 3 | Computer Architect (soon) | Ready to design processors |
 
@@ -15,6 +15,9 @@ A deep foundation in computing covers far more than one path can hold: informati
 **Computer Architect**: Performance & trade-offs, Pipelining, Advanced execution, Caches & memory systems, Multicore & GPUs, Digital design with Verilog, Verification, From RTL to silicon, Compilers & theory, and the capstone, a RISC-V core designed and verified by the learner.
 
 **Side paths**: Python, Linux, Network and AI branch off Foundations; Security Engineer (new) branches off Systems Programmer. Network and Security have full lesson outlines; Linux, Python and AI keep course counts until their outline pass.
+
+## Foundations and Systems Programmer overlap (2026-11-01)
+C starts after Foundations' sixth course (Assembly Language): Systems Programmer `requiresThrough: "foundations-assembly"`, and Foundations' last two courses (From Source to Machine, The Complete System) carry `alongside: "systems-programmer"`. They overlap Systems Programmer on purpose: Foundations teaches each idea as a concept on the tiny CPU, Systems Programmer on a real machine in C. Exact duplicates are removed (Machine & Memory's planned "memory hierarchy" section went, since The Complete System teaches it).
 
 ## Decisions
 - **Outlines are data, shown as "Coming soon"**: courses with no lessons yet carry an `outline` (`src/lib/paths/planned-outlines.ts`); live topics carry `upcoming` items per section (`course-outlines.ts`). Planned counts come from the outlines, not typed by hand.

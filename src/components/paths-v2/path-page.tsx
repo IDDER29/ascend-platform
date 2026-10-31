@@ -10,7 +10,7 @@ import { practiceSessionHref } from "@/lib/practice/routes";
 import { durationLabel, type PathCourse, type PathItem, type PathView, type UpcomingItem } from "@/lib/paths/paths-v2-model";
 import { LessonMemory } from "./lesson-memory";
 import { TRACK_STAGES } from "./track-map";
-import { CARD, JoinButton, PathGlyph, pathMeta, TopicBar } from "./path-parts";
+import { CARD, JoinButton, PathGlyph, pathMeta, requiresName, TopicBar } from "./path-parts";
 
 /** Practice has a desk for this path (Foundations, Systems Programmer). */
 const practicePathSlugForPath = (slug: string) => (slug in PRACTICE_PATH_TITLES ? slug : null);
@@ -150,6 +150,18 @@ function ItemRow({ item }: { item: PathItem }) {
   );
 }
 
+/** A course that goes well alongside another path, rather than before it. */
+function AlongsidePill({ alongside }: { alongside: { slug: string; title: string } }) {
+  return (
+    <Link
+      href={`/paths/${alongside.slug}`}
+      className="rounded-full border-2 border-[var(--coach-border)] px-2 py-0.5 text-[11.5px] font-semibold text-[var(--coach-ink-secondary)] no-underline hover:border-[var(--coach-border-strong)]"
+    >
+      Take alongside {alongside.title}
+    </Link>
+  );
+}
+
 /** A point on the path worth marking: what you can do once the courses above it are done. */
 function MilestoneMark({ text, reached }: { text: string; reached: boolean }) {
   return (
@@ -275,6 +287,7 @@ function CourseCard({ course, index }: { course: PathCourse; index: number }) {
                 You&apos;re here
               </span>
             )}
+            {course.alongside && <AlongsidePill alongside={course.alongside} />}
           </div>
           <p className="m-0 mt-0.5 text-[13px] tabular-nums text-[var(--coach-ink-muted)]">
             {course.total === 0
@@ -373,13 +386,13 @@ export function PathPage({ path, earns, other }: { path: PathView; earns: BadgeV
         <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
           {path.requires && (
             <section className={`${CARD} flex flex-col gap-1.5 p-5`}>
-              <h2 className="m-0 text-[16px] font-bold">Builds on {path.requires.title}</h2>
+              <h2 className="m-0 text-[16px] font-bold">Builds on {requiresName(path.requires)}</h2>
               <p className="m-0 text-[13.5px] leading-relaxed text-[var(--coach-ink-secondary)]">
                 {path.soon
                   ? `When it opens, it will start where ${path.requires.title} ends.`
                   : path.requires.done
                     ? `You've finished ${path.requires.title}, so you're ready.`
-                    : `Every lesson is open, but it makes most sense after ${path.requires.title}.`}
+                    : `Every lesson is open, but it makes most sense after ${requiresName(path.requires)}.`}
               </p>
               {other && !path.requires.done && (
                 <Link

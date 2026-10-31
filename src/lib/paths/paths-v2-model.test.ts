@@ -107,7 +107,7 @@ test("progress: done marks, the current topic and lesson, the next step", () => 
   );
   assert.deepEqual(s.next, { title: "memory", href: "/lessons/memory" });
   assert.equal(s.courses[1].capstone, "not-started");
-  assert.deepEqual(s.requires, { slug: "foundations", title: "Foundations", done: false });
+  assert.deepEqual(s.requires, { slug: "foundations", title: "Foundations", throughTitle: null, done: false });
 });
 
 test("capstone ready after the lessons, shipped when its project is; the path is finished then", () => {
@@ -183,4 +183,21 @@ test("a course with only an outline is a topic of 'Coming soon' items, never the
   // The first course with lessons is where you are.
   assert.equal(machine.current, true);
   assert.deepEqual([s.stage, s.milestone, s.lessons.total], [2, "Understand the OS", 2]);
+});
+
+test("a path can need only part of another: requires.done counts courses up to `through`", () => {
+  const foundations: PathInput = {
+    ...PATHS[0],
+    courses: [
+      PATHS[0].courses[0],
+      { id: "later", title: "Later", body: "", levelId: MACHINE, sections: [{ id: "m", title: "M", blurb: "", lessonKeys: [`${MACHINE}/cpu`] }] },
+    ],
+  };
+  const systems: PathInput = {
+    ...PATHS[1],
+    requires: { slug: "foundations", title: "Foundations", through: "f", throughTitle: "Bits & Logic" },
+  };
+  const done = [`${BITS}/bit`, `${BITS}/project-half-adder`].map((key) => ({ key, completedAt: at(2) }));
+  const s = buildPathViews({ paths: [foundations, systems], lessons: LESSONS, completions: done, following: {}, shipped: new Set() })[1];
+  assert.deepEqual(s.requires, { slug: "foundations", title: "Foundations", throughTitle: "Bits & Logic", done: true });
 });

@@ -89,26 +89,6 @@ export const COURSE_OUTLINES: Partial<Record<LevelId, CourseOutlineSection[]>> =
         },
       ],
     },
-    {
-      id: "memory-hierarchy",
-      title: "The memory hierarchy",
-      blurb: "Registers, caches, RAM and storage: why there are so many kinds of memory.",
-      items: [],
-      upcoming: [
-        {
-          id: "the-memory-hierarchy",
-          title: "Registers, caches, RAM and storage",
-          description:
-            "Why computers use registers, caches, RAM and storage together, trading size for speed at each step.",
-        },
-        {
-          id: "ram-vs-storage",
-          title: "Why RAM forgets and storage doesn't",
-          description:
-            "Why RAM loses its contents when the power goes off while SSDs and disks keep theirs, and what each is used for.",
-        },
-      ],
-    },
   ],
 
   "level-02-the-c-language": [

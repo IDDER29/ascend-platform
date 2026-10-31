@@ -85,7 +85,14 @@ function pathInput(p: PathDef, lessons: PathLessonInfo[]): PathInput {
     body: p.body,
     status: p.status,
     href: `${PATHS_INDEX_HREF}/${p.slug}`,
-    requires: requires ? { slug: requires.slug, title: requires.title } : null,
+    requires: requires
+      ? {
+          slug: requires.slug,
+          title: requires.title,
+          through: requires.courses.find((c) => c.id === p.requiresThrough)?.id,
+          throughTitle: requires.courses.find((c) => c.id === p.requiresThrough)?.title,
+        }
+      : null,
     milestone: p.milestone ?? null,
     stage: p.stage ?? null,
     branchOf: p.branchOf ?? null,
@@ -101,6 +108,9 @@ function pathInput(p: PathDef, lessons: PathLessonInfo[]): PathInput {
         plannedLessons: counts?.lessons ?? c.plannedLessons,
         plannedProjects: counts?.projects ?? c.plannedProjects,
         milestone: c.milestone,
+        alongside: c.alongside
+          ? { slug: c.alongside, title: PATHS.find((x) => x.slug === c.alongside)?.title ?? c.alongside }
+          : undefined,
         sections: c.levelId
           ? sectionsFor(c.levelId, lessons).filter((s) => !c.sections || c.sections.includes(s.id))
           : // A course with no lessons yet: its outline, every item "Coming soon".

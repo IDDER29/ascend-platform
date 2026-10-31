@@ -26,7 +26,8 @@ export type PathInput = {
   body: string;
   status: "live" | "soon";
   href: string;
-  requires: { slug: string; title: string } | null;
+  /** The path to take first; `through` limits it to that path's courses up to one course (an id). */
+  requires: { slug: string; title: string; through?: string; throughTitle?: string } | null;
   /** What finishing the path means ("Understand the OS"). */
   milestone?: string | null;
   /** Its stage on the main track, if it's on it; or the path it branches off. */
@@ -43,6 +44,8 @@ export type PathInput = {
     plannedProjects?: number;
     /** A milestone reached once this course is done. */
     milestone?: string;
+    /** Another path this course is best taken alongside. */
+    alongside?: { slug: string; title: string };
     /** Named sections of the topic, each with its lessons (keys, in order). */
     sections: {
       id: string;
@@ -88,6 +91,7 @@ export type PathCourse = {
   capstone: "not-started" | "ready" | "shipped" | null;
   planned: { lessons: number; projects: number } | null;
   milestone: string | null;
+  alongside: { slug: string; title: string } | null;
 };
 
 export type PathView = {
@@ -107,7 +111,8 @@ export type PathView = {
   courses: PathCourse[];
   /** The next lesson on this path, or its capstone once the lessons are done. */
   next: { title: string; href: string } | null;
-  requires: { slug: string; title: string; done: boolean } | null;
+  /** `throughTitle`: only the required path's courses up to this one are needed first. */
+  requires: { slug: string; title: string; done: boolean; throughTitle: string | null } | null;
   milestone: string | null;
   stage: number | null;
   branchOf: string | null;
@@ -192,6 +197,7 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
           planned:
             items.length > 0 ? null : { lessons: course.plannedLessons ?? 0, projects: course.plannedProjects ?? 0 },
           milestone: course.milestone ?? null,
+          alongside: course.alongside ?? null,
         };
       }
       if (course.href && path.status === "live") {
@@ -212,6 +218,7 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
           capstone: shipped ? "shipped" : topicsDone ? "ready" : "not-started",
           planned: null,
           milestone: course.milestone ?? null,
+          alongside: course.alongside ?? null,
         };
       }
       return {
@@ -230,6 +237,7 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
         capstone: null,
         planned: { lessons: course.plannedLessons ?? 0, projects: course.plannedProjects ?? 0 },
         milestone: course.milestone ?? null,
+        alongside: course.alongside ?? null,
       };
     });
 
@@ -238,7 +246,10 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
     const capstone = courses.find((c) => c.kind === "capstone" && !c.finished);
     const open = items.find((i) => i.current);
     const requiresDef = path.requires ? input.paths.find((p) => p.slug === path.requires!.slug) : undefined;
-    const requiresKeys = requiresDef?.courses.flatMap((c) => c.sections.flatMap((s) => s.lessonKeys)) ?? [];
+    // Only the courses up to `through` count, when the path names one.
+    const throughAt = requiresDef?.courses.findIndex((c) => c.id === path.requires!.through) ?? -1;
+    const requiresCourses = requiresDef ? requiresDef.courses.slice(0, throughAt >= 0 ? throughAt + 1 : undefined) : [];
+    const requiresKeys = requiresCourses.flatMap((c) => c.sections.flatMap((s) => s.lessonKeys));
     const dates = items
       .map((i) => doneAt.get(i.key))
       .filter((d): d is string => Boolean(d))
@@ -265,7 +276,12 @@ export function buildPathViews(input: PathsV2Input): PathView[] {
           ? { title: capstone.title, href: capstone.href }
           : null,
       requires: path.requires
-        ? { ...path.requires, done: requiresKeys.length > 0 && requiresKeys.every((k) => doneAt.has(k)) }
+        ? {
+            slug: path.requires.slug,
+            title: path.requires.title,
+            throughTitle: path.requires.throughTitle ?? null,
+            done: requiresKeys.length > 0 && requiresKeys.every((k) => doneAt.has(k)),
+          }
         : null,
       milestone: path.milestone ?? null,
       stage: path.stage ?? null,

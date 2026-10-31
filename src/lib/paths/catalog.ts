@@ -27,6 +27,8 @@ export type PathCourse = {
   plannedProjects?: number;
   /** A milestone reached once this course is done ("Understand C deeply"). */
   milestone?: string;
+  /** A path (slug) to take this course alongside, rather than before it. */
+  alongside?: string;
 };
 
 export type PathDef = {
@@ -41,6 +43,8 @@ export type PathDef = {
   /** Shown on catalog meta line */
   requiresLabel?: string;
   requiresSlug?: string;
+  /** Only the required path's courses up to this one (an id) are needed first; without it, the whole path. */
+  requiresThrough?: string;
   /** Its place on the main track (Foundations → Systems Programmer → Computer Architect), if it's on it. */
   stage?: 1 | 2 | 3;
   /** What you can do once the whole path is done. */
@@ -58,7 +62,7 @@ export const PATHS: PathDef[] = [
     eyebrow: "Foundations",
     title: "Foundations",
     stage: 1,
-    milestone: "Ready to start C",
+    milestone: "Ready for any path",
     pitch: "How a computer really works, from a single bit to a program running on an operating system.",
     body: "A hands-on introduction to the ideas every real machine is built on, in eight short courses: what information is, how data becomes bits, how circuits compute and remember, how a CPU is built, how to program it in assembly, how code you write becomes instructions, and how the whole system fits together. No background needed, and every other path starts from here.",
     courses: [
@@ -103,6 +107,7 @@ export const PATHS: PathDef[] = [
         body: "Program the tiny CPU in assembly, write the assembler that turns it into bytes, and use the stack for subroutines.",
         levelId: "level-00-bits-logic",
         sections: ["assembly", "assembler", "subroutines"],
+        milestone: "Ready to start C",
       },
       {
         id: "foundations-source-to-machine",
@@ -110,6 +115,7 @@ export const PATHS: PathDef[] = [
         body: "How variables, arrays, pointers and functions live in memory, and how a compiler, assembler, linker and loader turn code into a running program.",
         levelId: "level-00-bits-logic",
         sections: ["source", "data-layout", "toolchain"],
+        alongside: "systems-programmer",
       },
       {
         id: "foundations-complete-system",
@@ -117,6 +123,7 @@ export const PATHS: PathDef[] = [
         body: "Memory and storage, devices, startup, the operating system, networks and protection, ending with one program traced all the way through.",
         levelId: "level-00-bits-logic",
         sections: ["system", "os", "beyond", "conclusion"],
+        alongside: "systems-programmer",
       },
     ],
   },
@@ -155,9 +162,10 @@ export const PATHS: PathDef[] = [
     stage: 2,
     milestone: "Understand the OS",
     pitch: "How the machine runs, how C talks to it and how the OS keeps it alive, ending with a shell you write yourself.",
-    body: "This path takes you through Ascend's systems curriculum. Take the courses in the order shown: how the machine runs, C from the basics to its exact rules, the tools and data structures C programmers live with, then how the OS keeps it all alive. Prove it with ShellForge and your own malloc. Some courses are still being written; their lessons are listed so you can see where the path goes.",
-    requiresLabel: "Requires Foundations",
+    body: "This path takes you through Ascend's systems curriculum. Start once you've finished Foundations up to Assembly Language; its last two courses go well alongside this path. Take the courses in the order shown: how the machine runs, C from the basics to its exact rules, the tools and data structures C programmers live with, then how the OS keeps it all alive. Prove it with ShellForge and your own malloc. Some courses are still being written; their lessons are listed so you can see where the path goes.",
+    requiresLabel: "Best after Foundations, through Assembly Language",
     requiresSlug: "foundations",
+    requiresThrough: "foundations-assembly",
     courses: [
       {
         id: "machine-memory",

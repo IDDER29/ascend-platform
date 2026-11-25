@@ -9,10 +9,7 @@ import { cardTarget } from "@/lib/bookmarks/model";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Check, X } from "lucide-react";
-import {
-  savePracticeSessionAction,
-  upsertPracticeCardsAction,
-} from "@/lib/practice/actions";
+import { reconcilePracticeAction } from "@/lib/practice/actions";
 import {
   applyGrades,
   dueQueueIds,
@@ -521,6 +518,8 @@ export function PracticeCoachV2SessionLive({
 }: PracticeCoachV2SessionLiveProps) {
   const router = useRouter();
   const started = useRef(false);
+  // A session is graded and saved once, however many times Continue or Escape arrive while leaving.
+  const finished = useRef(false);
   const completed = useMemo(
     () => new Set(completedKeys),
     [completedKeys],
@@ -659,7 +658,10 @@ export function PracticeCoachV2SessionLive({
     setPhase("prompt");
   }
 
-  function saveSession(nextAnswered: Answered[]): PracticeSessionRecord {
+  /** Grade and save the answers; null when nothing was answered. Call only once per session. */
+  function saveSession(nextAnswered: Answered[]): PracticeSessionRecord | null {
+    finished.current = true;
+    if (nextAnswered.length === 0) return null;
     const missIds = nextAnswered
       .filter((answer) => !gradeIsHit(answer.grade))
       .map((answer) => answer.questionId);
@@ -675,12 +677,6 @@ export function PracticeCoachV2SessionLive({
     );
     const updated = applyGrades(userId, nextAnswered);
 
-    if (userId) {
-      void upsertPracticeCardsAction(
-        updated.filter((card) => answeredIds.has(card.questionId)),
-      );
-    }
-
     const record: PracticeSessionRecord = {
       id: newSessionId(),
       at: new Date().toISOString(),
@@ -695,28 +691,24 @@ export function PracticeCoachV2SessionLive({
     };
     prependLocalSession(userId, record);
     if (userId) {
-      void savePracticeSessionAction({
-        id: record.id,
-        scopeType: record.scopeType,
-        scopeLabel: record.scopeLabel,
-        pathSlug: record.pathSlug,
-        correct: record.correct,
-        total: record.total,
-        missIds: record.missIds,
-        questionIds: record.questionIds,
-        at: record.at,
-      });
+      // If this doesn't arrive, PracticeSync sends it on a later load.
+      reconcilePracticeAction(
+        { cards: updated.filter((card) => answeredIds.has(card.questionId)), sessions: [record] },
+        userId,
+      ).catch((err) => console.warn("[practice] session not synced yet:", err));
     }
     return record;
   }
 
   function finishSession(nextAnswered: Answered[]) {
+    if (finished.current) return;
     const record = saveSession(nextAnswered);
-    router.push(`${PRACTICE_ROUTES.complete}?session=${record.id}`);
+    router.push(record ? `${PRACTICE_ROUTES.complete}?session=${record.id}` : PRACTICE_ROUTES.home);
   }
 
   function exitSession() {
-    if (answered.length > 0) saveSession(answered);
+    if (finished.current) return;
+    saveSession(answered);
     router.push(PRACTICE_ROUTES.home);
   }
 

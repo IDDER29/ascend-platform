@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/auth/auth";
 import { AuthProvider } from "@/lib/auth/context";
 import { AppShell } from "@/components/ui/app-shell";
 import { BookmarksSync } from "@/components/bookmarks/bookmarks-sync";
+import { PracticeSync } from "@/components/practice/practice-sync";
 
 /**
  * Single learner chrome for every signed-in/app route:
@@ -15,6 +16,7 @@ export default async function LearnerLayout({ children }: { children: React.Reac
   return (
     <AuthProvider user={user}>
       <BookmarksSync userId={user?.id ?? null} />
+      <PracticeSync userId={user?.id ?? null} />
       <AppShell>{children}</AppShell>
     </AuthProvider>
   );

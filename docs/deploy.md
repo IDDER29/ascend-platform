@@ -20,6 +20,8 @@ throwaway database that would lose data.
    - `AUTH_SECRET`: `openssl rand -base64 48`. Required; at least 32 characters. Changing it signs
      everyone out.
    - `NEXT_PUBLIC_SITE_URL`: e.g. `https://ascend.example` (sitemap, link previews, reset emails).
+   - `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` (recommended): `openssl rand -base64 32`, kept the same across
+     deploys, so tabs opened before a deploy have a better chance of still saving.
    - `RESEND_API_KEY` and `EMAIL_FROM` (optional): password reset by email. Without them the reset pages
      say reset isn't available yet. `EMAIL_FROM` must be on a domain verified in Resend.
 4. **Uptime:** point a monitor at `GET /api/health` (503 when the database is unreachable).
@@ -30,6 +32,10 @@ throwaway database that would lose data.
   then migrate production and promote.
 - Smoke test: sign up, finish a lesson, practise, bookmark, change the password (other sessions are
   signed out), request a reset email, delete the test account.
+- After a change to Practice or bookmark syncing, also: finish a 20-card session and open it in a second
+  browser; sign in as two accounts in one browser (neither sees the other's bookmarks); reset progress,
+  then reopen the second browser (nothing comes back). Rolling back past the syncing changes of November
+  2026 would erase reviews held only in a browser: fix forward instead.
 
 ## What production enforces
 - Postgres only (`src/lib/db/client.ts`), pooled with `prepare: false` for Neon's pooler, one retry on

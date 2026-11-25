@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Bookmark as BookmarkIcon, BookmarkCheck } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { NOTE_MAX } from "@/lib/bookmarks/sync-rules";
 import { REASONS, type BookmarkTarget } from "@/lib/bookmarks/model";
 import { removeBookmark, saveBookmark, updateBookmark, useBookmark } from "@/lib/bookmarks/use-bookmarks";
 
@@ -125,6 +126,7 @@ export function SaveButton({
             id={`${panelId}-note`}
             rows={2}
             defaultValue={saved.note}
+            maxLength={NOTE_MAX}
             onChange={(e) => updateBookmark(target.ref, { note: e.target.value })}
             placeholder="What to look at next time"
             className="mb-3 w-full resize-none rounded-lg border border-card-border bg-transparent px-2.5 py-1.5 text-[12.5px] text-ink placeholder:text-ink-fainter focus:border-brand-violet focus:outline-none"

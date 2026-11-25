@@ -23,7 +23,12 @@ test("only this learner's browser progress is cleared; a deleted account also lo
     "ascend_practice_cards_v1:u1",
     "ascend_practice_daily_goal_v1:u1",
     "ascend:check-yourself:level-00/what-is-a-bit",
-    "ascend:bookmarks",
+    "ascend:bookmarks:v2:u1",
+    "ascend:bookmarks:v2:u2",
+    "ascend:bookmarks:v2:guest",
+    "ascend:bookmarks:backup:u1",
+    "ascend:bookmarks-lastsync:u1",
+    "ascend:bookmarks-synced:u1",
     "ascend-theme",
   ];
   assert.deepEqual(storageKeysToClear(keys, "u1", "progress"), [
@@ -32,8 +37,14 @@ test("only this learner's browser progress is cleared; a deleted account also lo
     "ascend:check-yourself:level-00/what-is-a-bit",
   ]);
   assert.ok(storageKeysToClear(keys, "u1", "account").includes("ascend_practice_daily_goal_v1:u1"));
-  // Bookmarks belong to the account: a deletion clears them from this browser, a reset keeps them.
-  assert.ok(storageKeysToClear([...keys, "ascend:bookmarks-synced:u1"], "u1", "account").includes("ascend:bookmarks"));
-  assert.ok(storageKeysToClear([...keys, "ascend:bookmarks-synced:u1"], "u1", "account").includes("ascend:bookmarks-synced:u1"));
-  assert.ok(!storageKeysToClear(keys, "u1", "progress").includes("ascend:bookmarks"));
+  // Bookmarks belong to the account: a deletion clears this learner's from the browser, a reset keeps them.
+  const bookmarkKeys = (what: "progress" | "account") =>
+    storageKeysToClear(keys, "u1", what).filter((k) => k.startsWith("ascend:bookmarks"));
+  assert.deepEqual(bookmarkKeys("progress"), []);
+  assert.deepEqual(bookmarkKeys("account"), [
+    "ascend:bookmarks:v2:u1",
+    "ascend:bookmarks:backup:u1",
+    "ascend:bookmarks-lastsync:u1",
+    "ascend:bookmarks-synced:u1",
+  ]);
 });

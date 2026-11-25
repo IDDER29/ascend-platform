@@ -2,7 +2,8 @@ import type { Bookmark } from "./model";
 
 /** Limits on what one account can store, so a bookmark can't be used to fill the database. */
 export const MAX_BOOKMARKS = 1000;
-const MAX_TEXT = { ref: 500, title: 300, where: 300, href: 1000, note: 4000, preview: 1000 };
+export const NOTE_MAX = 4000;
+const MAX_TEXT = { ref: 500, title: 300, where: 300, href: 1000, preview: 1000 };
 
 const str = (v: unknown, max: number): string | null => (typeof v === "string" && v.length <= max ? v : null);
 
@@ -29,18 +30,34 @@ export function cleanBookmark(raw: unknown): Bookmark | null {
     ...(typeof b.questionId === "string" ? { questionId: b.questionId.slice(0, 200) } : {}),
     ...(typeof b.preview === "string" ? { preview: b.preview.slice(0, MAX_TEXT.preview) } : {}),
     reason,
-    note: str(b.note, MAX_TEXT.note) ?? "",
+    note: typeof b.note === "string" ? b.note.slice(0, NOTE_MAX) : "",
     savedAt: typeof b.savedAt === "string" && !Number.isNaN(Date.parse(b.savedAt)) ? b.savedAt : new Date().toISOString(),
   };
 }
 
 /**
  * The first time a browser syncs, its bookmarks and the account's are merged (nothing is lost; for a
- * bookmark in both, the account's copy wins). After that the account is the source of truth, so a
- * bookmark removed on one device doesn't come back from another.
+ * bookmark in both, the account's copy wins). After that see `laterMerge`.
  */
 export function firstMerge(local: Bookmark[], remote: Bookmark[]): { merged: Bookmark[]; toUpload: Bookmark[] } {
   const remoteRefs = new Set(remote.map((b) => b.ref));
   const toUpload = local.filter((b) => !remoteRefs.has(b.ref));
   return { merged: [...remote, ...toUpload], toUpload };
+}
+
+/**
+ * After the first sync the account leads, so a bookmark removed on one device doesn't come back from
+ * another. One saved here since the last sync never arrived, so it's kept and uploaded. Anything else the
+ * account no longer has is returned as `dropped`, for the caller to back up.
+ */
+export function laterMerge(
+  local: Bookmark[],
+  remote: Bookmark[],
+  lastSyncAt: number | null,
+): { merged: Bookmark[]; toUpload: Bookmark[]; dropped: Bookmark[] } {
+  const remoteRefs = new Set(remote.map((b) => b.ref));
+  const missing = local.filter((b) => !remoteRefs.has(b.ref));
+  const unsent = (b: Bookmark) => lastSyncAt !== null && Date.parse(b.savedAt) > lastSyncAt;
+  const toUpload = missing.filter(unsent);
+  return { merged: [...remote, ...toUpload], toUpload, dropped: missing.filter((b) => !unsent(b)) };
 }

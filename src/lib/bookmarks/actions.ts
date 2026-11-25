@@ -6,9 +6,18 @@ import { db, schema } from "@/lib/db/client";
 import type { Bookmark } from "./model";
 import { cleanBookmark, MAX_BOOKMARKS } from "./sync-rules";
 
-/** The signed-in account's bookmarks, or null for a guest or when accounts are offline. */
-export async function listBookmarksAction(): Promise<Bookmark[] | null> {
+/**
+ * The signed-in user, if they are who the browser says it's syncing (`ownerId`): a tab left open since
+ * someone else signed in must not touch their bookmarks.
+ */
+async function owner(ownerId?: string) {
   const user = await getCurrentUser();
+  return user && (ownerId === undefined || ownerId === user.id) ? user : null;
+}
+
+/** The signed-in account's bookmarks, or null for a guest or when accounts are offline. */
+export async function listBookmarksAction(ownerId?: string): Promise<Bookmark[] | null> {
+  const user = await owner(ownerId);
   if (!user || !db) return null;
   const rows = await db.select().from(schema.bookmarks).where(eq(schema.bookmarks.userId, user.id));
   return rows
@@ -23,8 +32,8 @@ export async function listBookmarksAction(): Promise<Bookmark[] | null> {
 }
 
 /** Save or update bookmarks for the signed-in account. Returns false if nothing could be saved. */
-export async function saveBookmarksAction(raw: unknown[]): Promise<boolean> {
-  const user = await getCurrentUser();
+export async function saveBookmarksAction(raw: unknown[], ownerId?: string): Promise<boolean> {
+  const user = await owner(ownerId);
   if (!user || !db || !Array.isArray(raw)) return false;
   const conn = db;
   const list = raw.slice(0, MAX_BOOKMARKS).map(cleanBookmark).filter((b): b is Bookmark => b !== null);
@@ -56,8 +65,8 @@ export async function saveBookmarksAction(raw: unknown[]): Promise<boolean> {
   return true;
 }
 
-export async function removeBookmarkAction(ref: string): Promise<boolean> {
-  const user = await getCurrentUser();
+export async function removeBookmarkAction(ref: string, ownerId?: string): Promise<boolean> {
+  const user = await owner(ownerId);
   if (!user || !db || typeof ref !== "string") return false;
   await db.delete(schema.bookmarks).where(and(eq(schema.bookmarks.userId, user.id), eq(schema.bookmarks.refId, ref)));
   return true;

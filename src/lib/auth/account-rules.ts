@@ -32,17 +32,19 @@ const USER_PROGRESS_PREFIXES = [
 ];
 const SHARED_PROGRESS_PREFIXES = ["ascend:check-yourself:"];
 /** Kept by a reset, cleared with the account. */
-const USER_SETTING_PREFIXES = ["ascend_practice_daily_goal_v1", "ascend:bookmarks-synced"];
-/** This browser's bookmarks belong to the account once synced, so they go with it (a reset keeps them). */
-const ACCOUNT_SHARED_KEYS = ["ascend:bookmarks"];
+const USER_SETTING_PREFIXES = [
+  "ascend_practice_daily_goal_v1",
+  // This browser's copy of the learner's bookmarks.
+  "ascend:bookmarks:v2",
+  "ascend:bookmarks:backup",
+  "ascend:bookmarks-lastsync",
+  "ascend:bookmarks-synced",
+];
 
 /** The localStorage keys to remove for a progress reset ("progress") or a deleted account ("account"). */
 export function storageKeysToClear(keys: string[], userId: string, what: "progress" | "account"): string[] {
   const mine = [...USER_PROGRESS_PREFIXES, ...(what === "account" ? USER_SETTING_PREFIXES : [])];
   return keys.filter(
-    (k) =>
-      mine.some((p) => k === `${p}:${userId}`) ||
-      SHARED_PROGRESS_PREFIXES.some((p) => k.startsWith(p)) ||
-      (what === "account" && ACCOUNT_SHARED_KEYS.includes(k)),
+    (k) => mine.some((p) => k === `${p}:${userId}`) || SHARED_PROGRESS_PREFIXES.some((p) => k.startsWith(p)),
   );
 }

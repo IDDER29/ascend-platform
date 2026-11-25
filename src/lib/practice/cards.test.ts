@@ -15,6 +15,7 @@ import {
   nextReviewAt,
   readCards,
   readNewDayMeta,
+  syncLocalCards,
   writeCards,
   writeNewDayMeta,
 } from "./cards";
@@ -90,6 +91,38 @@ test("mergeMissesAsLearning resets existing misses and creates missing cards", (
   }
   assert.equal(cards[0].ease, existing.ease - 0.2);
   assert.equal(cards[0].reps, 0);
+  // A missed review card has lapsed: (lapses, reps) must never go down, or syncing would undo the miss.
+  assert.equal(cards[0].lapses, existing.lapses + 1);
+});
+
+test("syncLocalCards keeps reviews the account never received", (t) => {
+  installLocalStorage(t);
+  const now = new Date("2026-09-25T15:00:00.000Z");
+  const saved = gradeCard(createNewCard("saved", now), "good", now);
+  const unsaved = gradeCard(createNewCard("unsaved", now), "good", now);
+  writeCards("u1", [saved, unsaved]);
+
+  // The account has an older copy of one card and nothing for the other.
+  const cards = syncLocalCards("u1", [createNewCard("unsaved", now), saved], ["saved", "unsaved", "next"]);
+
+  assert.deepEqual(
+    cards.map((card) => [card.questionId, card.state]),
+    [
+      ["saved", "review"],
+      ["unsaved", "review"],
+      ["next", "new"],
+    ],
+  );
+});
+
+test("syncLocalCards takes the account's card when it has been reviewed further", (t) => {
+  installLocalStorage(t);
+  const now = new Date("2026-09-25T15:00:00.000Z");
+  const once = gradeCard(createNewCard("q1", now), "good", now);
+  const twice = gradeCard(once, "good", new Date("2026-09-26T15:00:00.000Z"));
+  writeCards("u1", [once]);
+
+  assert.deepEqual(syncLocalCards("u1", [twice], []), [twice]);
 });
 
 test("storage helpers persist cards, metadata, unlocked cards, grades, and misses", (t) => {

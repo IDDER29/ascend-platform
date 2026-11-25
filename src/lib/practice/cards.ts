@@ -1,3 +1,4 @@
+import { reconcileCards } from "./card-merge";
 import { missQueueKey, readMissIds } from "./miss-queue";
 import {
   createNewCard,
@@ -112,6 +113,7 @@ export function mergeMissesAsLearning(
         ease: Math.max(1.3, existing.ease - 0.2),
         intervalDays: 0,
         dueAt: iso,
+        lapses: existing.state === "review" ? existing.lapses + 1 : existing.lapses,
         updatedAt: iso,
       });
     } else {
@@ -150,7 +152,10 @@ export function syncLocalCards(
   serverCards: PracticeCard[],
   unlockedIds: string[],
 ): PracticeCard[] {
-  if (serverCards.length > 0) writeCards(userId, serverCards);
+  // Merged, never replaced: this browser may hold reviews that haven't reached the account yet.
+  if (serverCards.length > 0) {
+    writeCards(userId, reconcileCards(readCards(userId), serverCards, { resetAt: null, floor: null }).merged);
+  }
   migrateMissQueueOnce(userId);
   return ensureUnlockedCards(userId, unlockedIds);
 }

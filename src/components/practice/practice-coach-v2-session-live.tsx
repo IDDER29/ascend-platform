@@ -16,12 +16,9 @@ import {
 import {
   applyGrades,
   dueQueueIds,
-  ensureUnlockedCards,
   gradeFromMcqCorrect,
-  migrateMissQueueOnce,
-  readCards,
   readNewDayMeta,
-  writeCards,
+  syncLocalCards,
 } from "@/lib/practice/cards";
 import {
   labelCoachV2Scope,
@@ -597,16 +594,11 @@ export function PracticeCoachV2SessionLive({
     if (started.current) return;
     started.current = true;
 
-    if (initialCards.length > 0) {
-      writeCards(userId, initialCards);
-    }
-    migrateMissQueueOnce(userId);
-    ensureUnlockedCards(
+    const cards = syncLocalCards(
       userId,
+      initialCards,
       unlocked.map((question) => question.id),
     );
-
-    const cards = readCards(userId);
     const meta = readNewDayMeta(userId);
     const now = new Date();
     let priorityIds: string[];

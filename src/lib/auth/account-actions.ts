@@ -11,6 +11,7 @@ import { hitRateLimit } from "@/lib/auth/rate-limit";
 import { LIMITS, TOO_MANY } from "@/lib/auth/rate-limit-rules";
 import { clearSessionCookie, setSessionCookie } from "@/lib/auth/session";
 import { db, schema } from "@/lib/db/client";
+import { deleteCards, writeResetMarker } from "@/lib/practice/store";
 
 export type AccountActionState = { error: string | null; ok?: boolean };
 
@@ -50,7 +51,14 @@ export async function resetProgressAction(_prev: AccountActionState, formData: F
   }
 
   const conn = db;
+  const store = { db: conn, schema };
+  // First, so a browser still holding old Practice data can't put it back, even if a delete below fails.
+  await writeResetMarker(store, found.user.id);
   for (const name of PROGRESS_TABLES) {
+    if (name === "practiceCards") {
+      await deleteCards(store, found.user.id);
+      continue;
+    }
     const table = schema[name];
     await conn.delete(table).where(eq(table.userId, found.user.id));
   }

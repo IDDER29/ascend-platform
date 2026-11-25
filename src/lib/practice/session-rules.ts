@@ -19,9 +19,10 @@ export type CleanSession = {
 
 /**
  * A session ready to store, or null if it can't be one. Card ids not in the bank are dropped (old history
- * can mention retired cards); the date may be up to a year old (history synced later) but not in the future.
+ * can mention retired cards); the date may be up to a year old (history synced later). A date in the future
+ * (a fast clock) counts as now.
  */
-export function cleanSession(input: unknown, knownCardIds: Set<string>, now = Date.now()): CleanSession | null {
+export function cleanSession(input: unknown, knownCardIds: ReadonlySet<string>, now = Date.now()): CleanSession | null {
   if (typeof input !== "object" || input === null) return null;
   const s = input as Record<string, unknown>;
   if (typeof s.id !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(s.id)) return null;
@@ -35,8 +36,8 @@ export function cleanSession(input: unknown, knownCardIds: Set<string>, now = Da
   let createdAt = new Date(now);
   if (typeof s.at === "string") {
     const t = Date.parse(s.at);
-    if (Number.isNaN(t) || t > now + 5 * 60 * 1000 || t < now - 365 * DAY) return null;
-    createdAt = new Date(t);
+    if (Number.isNaN(t) || t < now - 365 * DAY) return null;
+    createdAt = new Date(t > now + 5 * 60 * 1000 ? now : t);
   }
   return {
     id: s.id,

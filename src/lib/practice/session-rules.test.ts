@@ -22,9 +22,9 @@ test("impossible scores, scopes and ids are refused", () => {
   assert.equal(cleanSession(null, KNOWN, NOW), null);
 });
 
-test("dates: older history is fine, the future and the distant past are not", () => {
+test("dates: older history is fine, a fast clock counts as now, the distant past is refused", () => {
   assert.equal(cleanSession({ ...ok, at: "2026-10-20T08:00:00Z" }, KNOWN, NOW)?.createdAt.toISOString(), "2026-10-20T08:00:00.000Z");
-  assert.equal(cleanSession({ ...ok, at: "2027-01-01T00:00:00Z" }, KNOWN, NOW), null);
+  assert.equal(cleanSession({ ...ok, at: "2027-01-01T00:00:00Z" }, KNOWN, NOW)?.createdAt.getTime(), NOW);
   assert.equal(cleanSession({ ...ok, at: "2020-01-01T00:00:00Z" }, KNOWN, NOW), null);
   assert.equal(cleanSession({ ...ok, at: "not a date" }, KNOWN, NOW), null);
 });

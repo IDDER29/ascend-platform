@@ -11,195 +11,115 @@ import {
   type SavedDeck,
 } from "@/lib/practice/deck-recipe";
 import { isDailyGoal } from "@/lib/practice/daily-goal";
-import type { PracticeScopeType } from "@/lib/practice/history";
+import type { PracticeScopeType, PracticeSessionRecord } from "@/lib/practice/history";
 import { PRACTICE_BANK } from "@/lib/practice/bank";
 import { completionKey } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
 import { PRACTICE_ROUTES } from "@/lib/practice/routes";
 import { cleanSession } from "@/lib/practice/session-rules";
+import { applyCards, applySessions, readSyncState, type Store, type SyncState } from "@/lib/practice/store";
+import { MAX_SYNC_ITEMS } from "@/lib/practice/sync-limits";
 
 export type PracticeActionResult =
   | { ok: true }
   | { ok: false; error: string };
 
-function cardFields(card: PracticeCard) {
-  return {
-    questionId: card.questionId,
-    state: card.state,
-    reps: card.reps,
-    ease: card.ease,
-    intervalDays: card.intervalDays,
-    dueAt: card.dueAt,
-    lapses: card.lapses,
-    updatedAt: card.updatedAt,
-  };
-}
+const PRACTICE_BANK_IDS: ReadonlySet<string> = new Set(PRACTICE_BANK.map((q) => q.id));
 
-const MAX_UPSERT_CARDS = 8;
-const MIN_EASE = 1.3;
-const MAX_EASE = 3.0;
-const PRACTICE_BANK_IDS = new Set(PRACTICE_BANK.map((q) => q.id));
-const VALID_CARD_STATES = new Set<PracticeCard["state"]>([
-  "new",
-  "learning",
-  "review",
-]);
-
-function isNonNegativeInteger(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
-function isParseableDateString(value: unknown): value is string {
-  if (typeof value !== "string" || value.length === 0) return false;
-  const time = new Date(value).getTime();
-  return Number.isFinite(time);
-}
-
-function validatePracticeCardInput(
-  raw: unknown,
-): { ok: true; card: PracticeCard } | { ok: false; error: string } {
-  if (raw === null || typeof raw !== "object") {
-    return { ok: false, error: "Invalid practice card payload." };
-  }
-  const c = raw as Record<string, unknown>;
-  const questionId = c.questionId;
-  if (typeof questionId !== "string" || !PRACTICE_BANK_IDS.has(questionId)) {
-    return { ok: false, error: "Unknown or invalid practice question id." };
-  }
-  const state = c.state;
-  if (
-    typeof state !== "string" ||
-    !VALID_CARD_STATES.has(state as PracticeCard["state"])
-  ) {
-    return { ok: false, error: "Invalid practice card state." };
-  }
-  if (
-    !isNonNegativeInteger(c.reps) ||
-    !isNonNegativeInteger(c.lapses) ||
-    !isNonNegativeInteger(c.intervalDays)
-  ) {
-    return {
-      ok: false,
-      error: "Practice card reps, lapses, and interval must be non-negative integers.",
-    };
-  }
-  const ease = c.ease;
-  if (
-    typeof ease !== "number" ||
-    !Number.isFinite(ease) ||
-    ease < MIN_EASE ||
-    ease > MAX_EASE
-  ) {
-    return {
-      ok: false,
-      error: "Practice card ease must be a finite number between 1.3 and 3.0.",
-    };
-  }
-  if (!isParseableDateString(c.dueAt) || !isParseableDateString(c.updatedAt)) {
-    return { ok: false, error: "Practice card dates must be valid ISO timestamps." };
-  }
-  return {
-    ok: true,
-    card: {
-      questionId,
-      state: state as PracticeCard["state"],
-      reps: c.reps,
-      ease,
-      intervalDays: c.intervalDays,
-      dueAt: c.dueAt,
-      lapses: c.lapses,
-      updatedAt: c.updatedAt,
-    },
-  };
-}
-
-function validateUpsertCardsInput(
-  input: unknown,
-): { ok: true; cards: PracticeCard[] } | { ok: false; error: string } {
-  if (!Array.isArray(input)) {
-    return { ok: false, error: "Practice cards must be an array." };
-  }
-  if (input.length > MAX_UPSERT_CARDS) {
-    return {
-      ok: false,
-      error: `At most ${MAX_UPSERT_CARDS} practice cards per sync.`,
-    };
-  }
-  const cards: PracticeCard[] = [];
-  for (const item of input) {
-    const validated = validatePracticeCardInput(item);
-    if (!validated.ok) return validated;
-    cards.push(validated.card);
-  }
-  return { ok: true, cards };
-}
-
-export async function savePracticeSessionAction(input: {
-  id: string;
-  scopeType: PracticeScopeType;
-  scopeLabel: string;
-  pathSlug: string | null;
-  correct: number;
-  total: number;
-  missIds: string[];
-  questionIds: string[];
-  at?: string;
-}): Promise<PracticeActionResult> {
+/**
+ * The signed-in learner's store. A browser says whose data it's sending (`ownerId`): a tab left open since
+ * someone else signed in must not write into their account.
+ */
+async function learner(ownerId?: string): Promise<{ ok: true; userId: string; store: Store } | { ok: false; error: string }> {
   const user = await getCurrentUser();
-  if (!user) return { ok: false, error: "Sign in to sync Practice history." };
+  if (!user || (ownerId !== undefined && ownerId !== user.id)) {
+    return { ok: false, error: "Sign in to sync Practice." };
+  }
   if (!db) return { ok: false, error: "Database unavailable." };
-  const session = cleanSession(input, PRACTICE_BANK_IDS);
-  if (!session) return { ok: false, error: "That Practice session couldn't be saved." };
+  return { ok: true, userId: user.id, store: { db, schema } };
+}
+
+function isBatch(value: unknown): value is unknown[] {
+  return Array.isArray(value) && value.length <= MAX_SYNC_ITEMS;
+}
+
+export async function savePracticeSessionAction(
+  input: {
+    id: string;
+    scopeType: PracticeScopeType;
+    scopeLabel: string;
+    pathSlug: string | null;
+    correct: number;
+    total: number;
+    missIds: string[];
+    questionIds: string[];
+    at?: string;
+  },
+  ownerId?: string,
+): Promise<PracticeActionResult> {
+  const me = await learner(ownerId);
+  if (!me.ok) return me;
+  if (!cleanSession(input, PRACTICE_BANK_IDS)) return { ok: false, error: "That Practice session couldn't be saved." };
 
   try {
-    await db
-      .insert(schema.practiceSessions)
-      .values({
-        ...session,
-        userId: user.id,
-        missIds: JSON.stringify(session.missIds),
-        questionIds: JSON.stringify(session.questionIds),
-      })
-      .onConflictDoNothing(); // the same session synced twice
+    await applySessions(me.store, me.userId, [input], PRACTICE_BANK_IDS);
     revalidatePath("/practice");
     return { ok: true };
-  } catch {
+  } catch (err) {
+    console.error("[practice] session save failed:", err);
     return { ok: false, error: "Could not sync Practice history." };
   }
 }
 
 export async function upsertPracticeCardsAction(
   cards: PracticeCard[],
+  ownerId?: string,
 ): Promise<PracticeActionResult> {
-  const user = await getCurrentUser();
-  if (!user) return { ok: false, error: "Sign in to sync Practice cards." };
-  if (!db) return { ok: false, error: "Database unavailable." };
-
-  const validated = validateUpsertCardsInput(cards);
-  if (!validated.ok) return validated;
+  const me = await learner(ownerId);
+  if (!me.ok) return me;
+  if (!isBatch(cards)) return { ok: false, error: "Too many Practice cards in one sync." };
 
   try {
-    for (const card of validated.cards) {
-      const fields = cardFields(card);
-      await db
-        .insert(schema.practiceCards)
-        .values({
-          id: `${user.id}:${card.questionId}`,
-          userId: user.id,
-          ...fields,
-        })
-        .onConflictDoUpdate({
-          target: schema.practiceCards.id,
-          set: fields,
-        });
-    }
+    await applyCards(me.store, me.userId, cards, PRACTICE_BANK_IDS);
     revalidatePath("/practice");
     return { ok: true };
-  } catch {
-    return {
-      ok: false,
-      error: "Could not sync Practice cards.",
-    };
+  } catch (err) {
+    console.error("[practice] card sync failed:", err);
+    return { ok: false, error: "Could not sync Practice cards." };
+  }
+}
+
+/** The account's Practice data, or null if it couldn't be read (never an empty stand-in). */
+export async function getPracticeSyncStateAction(ownerId: string): Promise<SyncState | null> {
+  const me = await learner(ownerId);
+  if (!me.ok) return null;
+  try {
+    return await readSyncState(me.store, me.userId);
+  } catch (err) {
+    console.error("[practice] sync state read failed:", err);
+    return null;
+  }
+}
+
+/** Save cards and sessions in one request: a finished session, or data this browser held back. */
+export async function reconcilePracticeAction(
+  input: { cards: PracticeCard[]; sessions: PracticeSessionRecord[] },
+  ownerId: string,
+): Promise<PracticeActionResult> {
+  const me = await learner(ownerId);
+  if (!me.ok) return me;
+  const cards: unknown = input?.cards;
+  const sessions: unknown = input?.sessions;
+  if (!isBatch(cards) || !isBatch(sessions)) return { ok: false, error: "Too much Practice data in one sync." };
+
+  try {
+    await applyCards(me.store, me.userId, cards, PRACTICE_BANK_IDS);
+    await applySessions(me.store, me.userId, sessions, PRACTICE_BANK_IDS);
+    revalidatePath("/practice");
+    return { ok: true };
+  } catch (err) {
+    console.error("[practice] sync failed:", err);
+    return { ok: false, error: "Could not sync Practice." };
   }
 }
 

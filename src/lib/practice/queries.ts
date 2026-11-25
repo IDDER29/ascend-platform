@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { db, schema } from "@/lib/db/client";
 import { isDailyGoal, type DailyGoal } from "@/lib/practice/daily-goal";
 import {
@@ -14,6 +14,7 @@ import type {
   PracticeSessionRecord,
 } from "@/lib/practice/history";
 import type { PracticeCard } from "@/lib/practice/sm2";
+import { RESET_MARKER } from "@/lib/practice/store";
 
 function parseJsonArray(raw: string): string[] {
   try {
@@ -141,7 +142,7 @@ export async function listPracticeCardsForUser(
     const rows = await db
       .select()
       .from(schema.practiceCards)
-      .where(eq(schema.practiceCards.userId, userId));
+      .where(and(eq(schema.practiceCards.userId, userId), ne(schema.practiceCards.questionId, RESET_MARKER)));
     return rows.map(rowToCard);
   } catch {
     // Table may not exist yet on Postgres until migrated.

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { BookOpen, Hammer, ListChecks, RotateCcw } from "lucide-react";
 import { durationLabel } from "@/lib/paths/paths-v2-model";
 import { FIRST_LESSON_HREF } from "@/lib/routes";
-import { climbSteps, publicPaths, sampleCard, siteStats } from "@/lib/site/site-data";
+import { climbStages } from "@/lib/site/climb-model";
+import { publicPaths, sampleCard, siteStats } from "@/lib/site/site-data";
 import { CATALOG_HREF, HOW_IT_WORKS_HREF, OPEN_SOURCE_HREF, ABOUT_HREF } from "@/lib/site/site-nav";
 import { Climb } from "./climb";
 import { DeletedNotice } from "./deleted-notice";
@@ -37,8 +38,8 @@ const LOOP = [
 
 export function HomePage() {
   const stats = siteStats();
-  const steps = climbSteps();
   const { views } = publicPaths();
+  const stages = climbStages(views, FIRST_LESSON_HREF);
   const live = views.filter((v) => !v.soon);
   const soon = views.length - live.length;
   const card = sampleCard("memmachine-01");
@@ -73,7 +74,7 @@ export function HomePage() {
               Free. No account needed to start. {stats.lessons} lessons, {durationLabel(stats.minutes)} of reading.
             </p>
           </div>
-          <Climb steps={steps} />
+          <Climb stages={stages} />
         </div>
       </section>
 

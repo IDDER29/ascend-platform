@@ -295,25 +295,28 @@ export function CardMemoryChart({ memory }: { memory: CardMemory }) {
         )}
       </div>
 
-      <table className="sr-only">
-        <caption>Reviews of this card</caption>
-        <thead>
-          <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Result</th>
-            <th scope="col">Holds for</th>
-          </tr>
-        </thead>
-        <tbody>
-          {memory.reviews.map((r) => (
-            <tr key={r.at}>
-              <th scope="row">{dateOf(r.day)}</th>
-              <td>{r.correct ? "Right" : "Missed"}</td>
-              <td>{r.stability < 1 ? "under a day" : `${r.stability} days`}</td>
+      {/* A table ignores sr-only's 1px width, so the wrapper is what gets hidden. */}
+      <div className="sr-only">
+        <table>
+          <caption>Reviews of this card</caption>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Result</th>
+              <th scope="col">Holds for</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {memory.reviews.map((r) => (
+              <tr key={r.at}>
+                <th scope="row">{dateOf(r.day)}</th>
+                <td>{r.correct ? "Right" : "Missed"}</td>
+                <td>{r.stability < 1 ? "under a day" : `${r.stability} days`}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

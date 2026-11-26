@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 /** Standard content width for AppShell learner hubs (Today / Practice / Paths / …). */
-export const HUB_CONTENT_CLASS = "mx-auto w-full max-w-[960px]";
+export const HUB_CONTENT_CLASS = "mx-auto w-full max-w-[1200px]";
 
 /**
  * The title block every learner hub and its sub-pages open with: one size, one lead, an optional aside

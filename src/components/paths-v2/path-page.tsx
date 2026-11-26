@@ -31,7 +31,7 @@ function Hero({ path }: { path: PathView }) {
   return (
     <section
       aria-labelledby="path-title"
-      className="flex flex-col gap-5 rounded-[20px] bg-[var(--coach-hero-bg)] p-6 text-[var(--coach-hero-ink)] sm:p-8"
+      className="flex flex-col gap-5 rounded-[20px] bg-[var(--coach-hero-bg)] p-6 text-[var(--coach-hero-ink)] sm:p-8 min-[90rem]:grid min-[90rem]:grid-cols-2 min-[90rem]:content-center min-[90rem]:gap-x-10"
     >
       <div className="flex items-start gap-4">
         <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-[var(--coach-lime)] text-[var(--coach-lime-ink)]">
@@ -72,7 +72,7 @@ function Hero({ path }: { path: PathView }) {
           )}
         </div>
       </div>
-      <p className="m-0 max-w-[68ch] text-[15px] leading-relaxed text-[var(--coach-hero-muted)] [text-wrap:pretty]">
+      <p className="m-0 max-w-[68ch] text-[15px] leading-relaxed text-[var(--coach-hero-muted)] [text-wrap:pretty] min-[90rem]:col-start-2 min-[90rem]:row-span-2 min-[90rem]:row-start-1 min-[90rem]:self-center">
         {path.body}
       </p>
       {!path.soon && (

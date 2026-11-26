@@ -195,25 +195,28 @@ export function ForgettingChart() {
         Dots are reviews, each about half a minute. A model, not a measurement: the curve is FSRS&apos;s forgetting
         curve, and real memories vary.
       </p>
-      <table className="sr-only">
-        <caption>Estimated recall of one lesson over a month</caption>
-        <thead>
-          <tr>
-            <th scope="col">Day</th>
-            <th scope="col">With Practice</th>
-            <th scope="col">Read once</th>
-          </tr>
-        </thead>
-        <tbody>
-          {POINTS.filter((p) => p.day % 7 === 0).map((p) => (
-            <tr key={p.day}>
-              <td>{p.day}</td>
-              <td>{pct(p.practiced)}</td>
-              <td>{pct(p.once)}</td>
+      {/* A table ignores sr-only's 1px width, so the wrapper is what gets hidden. */}
+      <div className="sr-only">
+        <table>
+          <caption>Estimated recall of one lesson over a month</caption>
+          <thead>
+            <tr>
+              <th scope="col">Day</th>
+              <th scope="col">With Practice</th>
+              <th scope="col">Read once</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {POINTS.filter((p) => p.day % 7 === 0).map((p) => (
+              <tr key={p.day}>
+                <td>{p.day}</td>
+                <td>{pct(p.practiced)}</td>
+                <td>{pct(p.once)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

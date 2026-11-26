@@ -3,7 +3,7 @@ import { FIRST_LESSON_HREF } from "@/lib/routes";
 import { CATALOG_HREF } from "@/lib/site/site-nav";
 
 /** Page width and side gutters, shared by every public section. */
-export const WRAP = "mx-auto w-full max-w-[1160px] px-4 sm:px-8";
+export const WRAP = "mx-auto w-full max-w-[1280px] px-4 sm:px-8";
 
 export const CARD = "rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)]";
 

@@ -83,7 +83,7 @@ Do **not** add a fourth family. Do **not** put display or mono on long paragraph
 |---------|------|
 | Sidebar | `bg-bg` (chrome) |
 | Hub main | `bg-paper` via `HUB_MAIN_CLASS` (reading stage) |
-| Hub content column | AppShell learner hubs: **960px** max via `HUB_CONTENT_CLASS` (`page-header.tsx`); marketing/landing width stays `--layout-max` |
+| Hub content column | AppShell learner hubs: **1200px** max via `HUB_CONTENT_CLASS` (`page-header.tsx`); public pages **1280px** via `WRAP` (`site-ui.tsx`); lessons keep a 760px column with running text capped at 660px |
 | Cards / outline lists | `bg-elevated` or bordered paper on the stage |
 
 ---

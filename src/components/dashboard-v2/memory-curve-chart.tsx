@@ -294,27 +294,30 @@ export function MemoryCurveChart({ memory }: { memory: DeckMemory }) {
         )}
       </div>
 
-      <table className="sr-only">
-        <caption>Your memory of your Practice cards</caption>
-        <tbody>
-          <tr>
-            <th scope="row">Now</th>
-            <td>{pct(memory.now)}</td>
-          </tr>
-          <tr>
-            <th scope="row">Right after reviewing today</th>
-            <td>{pct(memory.afterReview)}</td>
-          </tr>
-          <tr>
-            <th scope="row">In three weeks if you review when due</th>
-            <td>{pct(endReview.recall)}</td>
-          </tr>
-          <tr>
-            <th scope="row">In three weeks if you skip</th>
-            <td>{pct(endSkip.recall)}</td>
-          </tr>
-        </tbody>
-      </table>
+      {/* A table ignores sr-only's 1px width, so the wrapper is what gets hidden. */}
+      <div className="sr-only">
+        <table>
+          <caption>Your memory of your Practice cards</caption>
+          <tbody>
+            <tr>
+              <th scope="row">Now</th>
+              <td>{pct(memory.now)}</td>
+            </tr>
+            <tr>
+              <th scope="row">Right after reviewing today</th>
+              <td>{pct(memory.afterReview)}</td>
+            </tr>
+            <tr>
+              <th scope="row">In three weeks if you review when due</th>
+              <td>{pct(endReview.recall)}</td>
+            </tr>
+            <tr>
+              <th scope="row">In three weeks if you skip</th>
+              <td>{pct(endSkip.recall)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

@@ -49,7 +49,7 @@ export default async function OnboardingPage() {
           Skip for now
         </Link>
       </header>
-      <main className={`${WRAP} max-w-[880px] flex-1 pb-20 pt-8 sm:pt-14`}>
+      <main className="mx-auto w-full max-w-[880px] flex-1 px-4 pb-20 pt-8 sm:px-8 sm:pt-14">
         <h1 className="m-0 font-display text-[38px] font-extrabold leading-[1.04] tracking-[-0.04em] [text-wrap:balance] sm:text-[52px]">
           {firstName ? `Welcome, ${firstName}.` : "Welcome to Ascend."}
         </h1>

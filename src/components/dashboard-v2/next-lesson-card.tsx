@@ -36,7 +36,7 @@ export function NextLessonCard({ next }: { next: NextStep }) {
           {next.title}
         </h2>
         {next.blurb && (
-          <p className="m-0 max-w-[58ch] text-[15px] leading-relaxed text-[var(--coach-hero-muted)] [text-wrap:pretty]">
+          <p className="m-0 max-w-[68ch] text-[15px] leading-relaxed text-[var(--coach-hero-muted)] [text-wrap:pretty]">
             {next.blurb}
           </p>
         )}

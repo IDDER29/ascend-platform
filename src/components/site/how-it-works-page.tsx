@@ -4,7 +4,7 @@ import { FIRST_LESSON_HREF } from "@/lib/routes";
 import { siteStats } from "@/lib/site/site-data";
 import { ForgettingChart } from "./forgetting-chart";
 import { SiteShell } from "./site-shell";
-import { CARD, LEAD, PageIntro, Section, StartBand } from "./site-ui";
+import { CARD, LEAD, PageIntro, Section, StartBand, WRAP } from "./site-ui";
 
 const STEPS = [
   {
@@ -51,7 +51,7 @@ export function HowItWorksPage() {
         lead="Read a short lesson, check what stuck, let Practice bring it back before you forget, and build things that prove it. That's the whole method, and every topic follows it."
       />
 
-      <section aria-labelledby="steps-title" className="mx-auto w-full max-w-[1160px] px-4 pb-12 sm:px-8 sm:pb-16">
+      <section aria-labelledby="steps-title" className={`${WRAP} pb-12 sm:pb-16`}>
         <h2 id="steps-title" className="sr-only">
           The four steps
         </h2>

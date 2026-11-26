@@ -96,7 +96,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
   return (
     <LessonBookmarksProvider lesson={bookmarkLesson}>
       <PracticeHistoryProvider userId={practice.userId} initialHistory={practice.initialHistory}>
-        <div className="grid grid-cols-1 items-start gap-10 xl:grid-cols-[minmax(0,720px)_280px] xl:justify-center">
+        <div className="grid grid-cols-[minmax(0,760px)] items-start justify-center gap-10 xl:grid-cols-[minmax(0,720px)_280px] min-[90rem]:grid-cols-[minmax(0,760px)_280px] min-[90rem]:gap-14">
           <article className="flex min-w-0 flex-col gap-8">
             <header className="flex flex-col gap-3">
               <nav aria-label="Breadcrumb" className="text-[13px] text-[var(--coach-ink-muted)]">
@@ -271,7 +271,9 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
               <h2 id="why-title" className={H2}>
                 Why this matters
               </h2>
-              <p className="m-0 text-[16px] leading-[1.75] text-[var(--coach-ink-secondary)]">{meta.whyThisMatters}</p>
+              <p className="m-0 max-w-[660px] text-[16px] leading-[1.75] text-[var(--coach-ink-secondary)] md:text-[18px]">
+                {meta.whyThisMatters}
+              </p>
             </section>
 
             {deeper.length > 0 && (

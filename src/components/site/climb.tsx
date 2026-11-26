@@ -50,15 +50,6 @@ export function Climb({ stages }: { stages: ClimbStage[] }) {
                   <span className="mt-0.5 block text-[13px] tabular-nums text-[var(--coach-hero-card-muted)]">
                     {s.size}
                   </span>
-                  {s.slug === "systems-programmer" && (
-                    <span
-                      aria-hidden
-                      className="mt-2.5 block rounded-lg bg-[var(--coach-hero-bg)] px-3 py-2 font-mono text-[13px] text-[var(--coach-hero-ink)]"
-                    >
-                      <span className="text-[var(--coach-lime)]">$</span> ./shellforge
-                      <span className="site-caret ml-1 inline-block h-[1.05em] w-[0.55em] translate-y-[3px] bg-[var(--coach-lime)]" />
-                    </span>
-                  )}
                 </span>
               </Link>
             </li>

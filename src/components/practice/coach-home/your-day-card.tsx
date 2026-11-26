@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GOAL_PLANS, type DailyGoal } from "@/lib/practice/daily-goal";
 import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
 const RING_CIRCUMFERENCE = 264;
 
@@ -116,7 +117,7 @@ export function YourDayCard({ day }: { day: CoachHomeModel["day"] }) {
   return (
     <section
       aria-labelledby="status-title"
-      className="flex flex-col gap-4 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5"
+      className={`flex flex-col gap-4 ${COACH_CARD} p-5`}
     >
       <h2
         id="status-title"

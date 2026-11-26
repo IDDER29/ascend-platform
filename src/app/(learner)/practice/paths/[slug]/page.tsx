@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PracticeCoachV2PathLive } from "@/components/practice/practice-coach-v2-path-live";
-import { HUB_CONTENT_CLASS } from "@/components/ui/page-header";
 import { getAllLessons } from "@/lib/content/lessons";
 import { lessonHref } from "@/lib/paths/lesson-urls";
 import { practicePathSlugs } from "@/lib/practice/coach-path-model";
@@ -9,6 +8,7 @@ import { PRACTICE_PATH_TITLES } from "@/lib/practice/path-map";
 import { completionKey } from "@/lib/practice/session";
 import { loadPracticePageData } from "@/lib/practice/server-page-data";
 import { practiceTreeForPath } from "@/lib/practice/tree";
+import { PageShell } from "@/components/ui/page-shell";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -34,19 +34,17 @@ export default async function PracticePathPage({ params }: Props) {
   );
 
   return (
-    <main className="practice-coach-v2 flex-1 overflow-x-clip bg-[var(--coach-bg)] px-5 py-8 font-sans text-[var(--coach-ink)] antialiased sm:px-10">
-      <div className={HUB_CONTENT_CLASS}>
-        <PracticeCoachV2PathLive
-          slug={slug}
-          title={PRACTICE_PATH_TITLES[slug] ?? tree.title}
-          userId={data.userId}
-          completedKeys={data.completedKeys}
-          initialCards={data.initialCards}
-          initialHistory={data.initialHistory}
-          lessonHrefs={lessonHrefs}
-          lessonTitles={lessonTitles}
-        />
-      </div>
-    </main>
+    <PageShell>
+      <PracticeCoachV2PathLive
+        slug={slug}
+        title={PRACTICE_PATH_TITLES[slug] ?? tree.title}
+        userId={data.userId}
+        completedKeys={data.completedKeys}
+        initialCards={data.initialCards}
+        initialHistory={data.initialHistory}
+        lessonHrefs={lessonHrefs}
+        lessonTitles={lessonTitles}
+      />
+    </PageShell>
   );
 }

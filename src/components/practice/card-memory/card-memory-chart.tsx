@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { recallAt, type CardMemory } from "@/lib/practice/card-memory";
 import { recall } from "@/lib/practice/memory-curve";
+import { SrOnlyTable } from "@/components/ui/sr-only-table";
 
 const H = 220;
 const PAD = { top: 26, right: 16, bottom: 26, left: 46 };
@@ -295,28 +296,25 @@ export function CardMemoryChart({ memory }: { memory: CardMemory }) {
         )}
       </div>
 
-      {/* A table ignores sr-only's 1px width, so the wrapper is what gets hidden. */}
-      <div className="sr-only">
-        <table>
-          <caption>Reviews of this card</caption>
-          <thead>
-            <tr>
-              <th scope="col">Date</th>
-              <th scope="col">Result</th>
-              <th scope="col">Holds for</th>
+      <SrOnlyTable>
+        <caption>Reviews of this card</caption>
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Result</th>
+            <th scope="col">Holds for</th>
+          </tr>
+        </thead>
+        <tbody>
+          {memory.reviews.map((r) => (
+            <tr key={r.at}>
+              <th scope="row">{dateOf(r.day)}</th>
+              <td>{r.correct ? "Right" : "Missed"}</td>
+              <td>{r.stability < 1 ? "under a day" : `${r.stability} days`}</td>
             </tr>
-          </thead>
-          <tbody>
-            {memory.reviews.map((r) => (
-              <tr key={r.at}>
-                <th scope="row">{dateOf(r.day)}</th>
-                <td>{r.correct ? "Right" : "Missed"}</td>
-                <td>{r.stability < 1 ? "under a day" : `${r.stability} days`}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </SrOnlyTable>
     </figure>
   );
 }

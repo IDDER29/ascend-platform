@@ -68,7 +68,6 @@
   --crystal-shadow: 0 6px 18px rgba(13, 159, 110, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.85),
     inset 0 -2px 0 rgba(0, 0, 0, 0.16);
   --crystal-rim: inset 0 0 0 1.5px rgba(255, 255, 255, 0.55);
-  --layout-max: 1200px;
   --radius-icon: 12px;
   --radius-icon-lg: 14px;
   --radius-glass: 16px;
@@ -126,6 +125,15 @@
   --focus-ring: #3aa87a;
 
   color-scheme: dark;
+}
+
+/* Page widths, set here only. Use them as max-w-wide, max-w-public and so on. */
+@theme {
+  --container-wide: 1200px; /* app pages */
+  --container-public: 1280px; /* the public site, side padding included */
+  --container-reading: 760px; /* a lesson column or a single card */
+  --container-focus: 680px; /* a Practice session */
+  --container-lesson-text: 660px; /* running text inside a lesson */
 }
 
 @theme inline {
@@ -672,7 +680,7 @@ html.sidebar-collapsed .app-sidebar-section {
   .lesson-v2-body > p,
   .lesson-v2-body > ul,
   .lesson-v2-body > ol {
-    max-width: 660px;
+    max-width: var(--container-lesson-text);
     font-size: 18px;
   }
 }

@@ -9,8 +9,9 @@ import { deckSessionHref } from "@/lib/practice/coach-custom-model";
 import { mergeSessionHistory, readLocalHistory, type PracticeSessionRecord } from "@/lib/practice/history";
 import type { PracticeItem } from "@/lib/practice/types";
 import { CardMemoryChart } from "./card-memory-chart";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
-const CARD = "rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5 sm:p-6";
+const CARD = `${COACH_CARD} p-5 sm:p-6`;
 
 function holds(stability: number): string {
   if (stability < 1) return "less than a day";

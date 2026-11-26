@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LessonMemory } from "@/components/paths-v2/lesson-memory";
 import { practiceCardHref } from "@/lib/practice/routes";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
 /** This lesson's Practice cards: reviewing them over the next days is what makes it stick. */
 export function LockItIn({
@@ -20,7 +21,7 @@ export function LockItIn({
   return (
     <section
       aria-labelledby="lock-title"
-      className="flex flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5 sm:p-6"
+      className={`flex flex-col gap-3 ${COACH_CARD} p-5 sm:p-6`}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="lock-title" className="m-0 text-[18px] font-bold">

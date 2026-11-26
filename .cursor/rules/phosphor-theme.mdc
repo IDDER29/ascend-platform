@@ -27,8 +27,8 @@ Full doctrine: `docs/design/PHOSPHOR-THEME.md`
 | Type scale (hub / lessons) | `docs/design/PHOSPHOR-THEME.md` §2 — Bricolage / Hanken / IBM Plex Mono + size ladder |
 | Logo mark | `brandMarkClass` / `brandMarkSmClass` |
 | Final CTA | `ctaPanelClass` |
-| Page width | `max-w-[var(--layout-max)]` or `SectionBand` |
-| Hub main stage | `HUB_MAIN_CLASS` (`bg-paper` vs sidebar `bg-bg`) |
+| Page width | `PageShell` or `WRAP`; sizes are `--container-*` in `globals.css` |
+| App page frame | `PageShell` (`components/ui/page-shell.tsx`) |
 
 ## Break signature
 

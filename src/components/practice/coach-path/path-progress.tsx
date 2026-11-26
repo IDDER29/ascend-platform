@@ -1,13 +1,14 @@
 import Link from "next/link";
 import type { CoachPathModel } from "@/lib/practice/coach-path-model";
 import { StrengthBar, STRENGTH_LEVELS } from "./strength-bar";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
 export function PathProgress({ model }: { model: CoachPathModel }) {
   const hit = model.hitRate;
   return (
     <section
       aria-labelledby="path-progress-title"
-      className="flex flex-col gap-[18px] rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-6"
+      className={`flex flex-col gap-[18px] ${COACH_CARD} p-6`}
     >
       <h2 id="path-progress-title" className="m-0 text-lg font-semibold">
         Your progress

@@ -16,6 +16,7 @@ import {
 } from "@/lib/practice/history";
 import { unlockedQuestions } from "@/lib/practice/session";
 import type { PracticeCard } from "@/lib/practice/sm2";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
 export type PracticeCoachV2PathLiveProps = {
   slug: string;
@@ -34,7 +35,7 @@ function PathSkeleton() {
       <div className="h-[88px] rounded-3xl bg-[var(--coach-divider)]" />
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="h-[460px] rounded-2xl border-2 border-[var(--coach-border)] bg-[var(--coach-surface)]" />
-        <div className="h-[360px] rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)]" />
+        <div className={`h-[360px] ${COACH_CARD}`} />
       </div>
     </div>
   );

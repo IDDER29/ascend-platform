@@ -82,8 +82,8 @@ Do **not** add a fourth family. Do **not** put display or mono on long paragraph
 | Surface | Role |
 |---------|------|
 | Sidebar | `bg-bg` (chrome) |
-| Hub main | `bg-paper` via `HUB_MAIN_CLASS` (reading stage) |
-| Hub content column | AppShell learner hubs: **1200px** max via `HUB_CONTENT_CLASS` (`page-header.tsx`); public pages **1280px** via `WRAP` (`site-ui.tsx`); lessons keep a 760px column with running text capped at 660px |
+| App page frame | `PageShell` (`components/ui/page-shell.tsx`): background, padding and content width |
+| Page widths | `--container-*` in `globals.css`: `max-w-wide` 1200px, `max-w-public` 1280px (`WRAP`), `max-w-reading` 760px, `max-w-focus` 680px, lesson text 660px |
 | Cards / outline lists | `bg-elevated` or bordered paper on the stage |
 
 ---
@@ -132,7 +132,7 @@ components             →  compose layout with Tailwind; never hardcode brand h
 | Glass look | `--glass-*`, `--glass-wash-*` |
 | Crystal icon look | `--crystal-shadow`, `--crystal-rim` (+ `.icon-crystal` layers) |
 | Brand mark sheen | `--brand-glow`, `--brand-sheen` |
-| Page max width | `--layout-max` |
+| Page max width | `--container-wide` / `--container-public` |
 | Icon / glass radii | `--radius-icon`, `--radius-glass`, `--radius-cta` |
 | Focus / selection | `--focus-ring` |
 
@@ -206,7 +206,7 @@ Prefer importing:
 - [ ] Type from §2 ladder (faces + sizes); no one-off px
 - [ ] Icons: `landingIconTileClass` (or crystal only if intentionally special)
 - [ ] Section titles: `landingEyebrowClass` + `landingH2Class` + `landingLeadClass` (marketing) or §2 page/section steps (hub)
-- [ ] Width: `max-w-[var(--layout-max)]` (or `SectionBand`)
+- [ ] Width: `PageShell` for app pages, `WRAP` for public pages
 - [ ] Body measure ~60–72ch on learning surfaces
 - [ ] `min-w-0` on flex/grid children
 - [ ] Works in light **and** dark

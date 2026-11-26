@@ -9,6 +9,7 @@ import { loadPracticePageData } from "@/lib/practice/server-page-data";
 import { unlockedQuestions } from "@/lib/practice/session";
 import type { PracticeItem } from "@/lib/practice/types";
 import { answerText } from "@/lib/practice/session-view";
+import { PageShell } from "@/components/ui/page-shell";
 
 const KIND: Record<PracticeItem["kind"], string> = {
   mcq: "Choices",
@@ -43,23 +44,21 @@ export default async function PracticeCardPage({ params }: { params: Promise<{ i
   const lesson = getLesson(question.lessonLevel, question.lessonSlug);
 
   return (
-    <main className="practice-coach-v2 flex-1 overflow-x-clip bg-[var(--coach-bg)] px-5 py-8 font-sans text-[var(--coach-ink)] antialiased sm:px-10">
-      <div className="mx-auto flex w-full max-w-[760px] flex-col gap-5">
-        <CoachBreadcrumb current="Card" />
-        <CardMemoryLive
-          question={question}
-          prompt={prompt(question)}
-          answer={answer(question)}
-          kindLabel={KIND[question.kind]}
-          lesson={{
-            title: lesson?.meta.title ?? question.reviewLabel,
-            href: lessonHref(question.lessonLevel, question.lessonSlug),
-          }}
-          unlocked={unlockedQuestions(new Set(data.completedKeys)).some((q) => q.id === question.id)}
-          userId={data.userId}
-          initialHistory={data.initialHistory}
-        />
-      </div>
-    </main>
+    <PageShell width="reading" className="flex flex-col gap-5">
+      <CoachBreadcrumb current="Card" />
+      <CardMemoryLive
+        question={question}
+        prompt={prompt(question)}
+        answer={answer(question)}
+        kindLabel={KIND[question.kind]}
+        lesson={{
+          title: lesson?.meta.title ?? question.reviewLabel,
+          href: lessonHref(question.lessonLevel, question.lessonSlug),
+        }}
+        unlocked={unlockedQuestions(new Set(data.completedKeys)).some((q) => q.id === question.id)}
+        userId={data.userId}
+        initialHistory={data.initialHistory}
+      />
+    </PageShell>
   );
 }

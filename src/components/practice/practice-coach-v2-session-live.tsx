@@ -314,7 +314,7 @@ function AnswerInput({
 function PromptFooter({ children }: { children: ReactNode }) {
   return (
     <footer className={`${BOTTOM_BAR} border-[var(--coach-border)] bg-[var(--coach-surface)] py-3 sm:py-4`}>
-      <div className="flex w-full max-w-[680px] flex-wrap items-center justify-between gap-3 sm:gap-5">{children}</div>
+      <div className="flex w-full max-w-focus flex-wrap items-center justify-between gap-3 sm:gap-5">{children}</div>
     </footer>
   );
 }
@@ -414,7 +414,7 @@ function FeedbackBar({
           : "border-[var(--coach-wrong-border)] bg-[var(--coach-wrong-bg)]"
       }`}
     >
-      <div className="flex w-full max-w-[680px] flex-wrap items-end justify-between gap-4 sm:gap-6">
+      <div className="flex w-full max-w-focus flex-wrap items-end justify-between gap-4 sm:gap-6">
         <div className="flex min-w-[240px] flex-1 basis-0 items-start gap-3">
           <span
             className={`flex size-10 shrink-0 items-center justify-center rounded-full ${
@@ -1004,7 +1004,7 @@ export function PracticeCoachV2SessionLive({
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-6">
-      <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4">
+      <div className="mx-auto flex w-full max-w-focus flex-col gap-4">
         <SessionTopBar
           segments={progress.segments}
           done={progress.done}

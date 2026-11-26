@@ -22,6 +22,7 @@ import type { PracticeCard } from "@/lib/practice/sm2";
 import { MemoryCurveChart } from "./memory-curve-chart";
 import { ReviewOptionsCard } from "./review-options-card";
 import { TodayCard } from "./today-card";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
 export type PracticeTodayProps = {
   userId: string | null;
@@ -36,7 +37,7 @@ export type PracticeTodayProps = {
 
 const QUESTION_BY_ID = new Map(PRACTICE_BANK.map((q) => [q.id, q]));
 
-const CARD = "rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5";
+const CARD = `${COACH_CARD} p-5`;
 
 /** Today's Practice, worked out in the browser like the Practice page (guests keep their reviews here). */
 function usePracticeToday({

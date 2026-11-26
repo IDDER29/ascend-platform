@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { FIRST_LESSON_HREF } from "@/lib/routes";
 import { CATALOG_HREF } from "@/lib/site/site-nav";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
 /** Page width and side gutters, shared by every public section. */
-export const WRAP = "mx-auto w-full max-w-[1280px] px-4 sm:px-8";
+export const WRAP = "mx-auto w-full max-w-public px-4 sm:px-8";
 
-export const CARD = "rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)]";
+export const CARD = COACH_CARD;
 
 const BTN =
   "inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-bold no-underline";

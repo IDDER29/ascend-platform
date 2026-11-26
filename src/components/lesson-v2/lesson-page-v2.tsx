@@ -26,6 +26,7 @@ import { CheckYourself } from "./check-yourself";
 import { FinishCard } from "./finish-card";
 import { ResourceList } from "./resource-list";
 import { LockItIn } from "./lock-it-in";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
 
 function headings(body: string): RailItem[] {
@@ -96,7 +97,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
   return (
     <LessonBookmarksProvider lesson={bookmarkLesson}>
       <PracticeHistoryProvider userId={practice.userId} initialHistory={practice.initialHistory}>
-        <div className="grid grid-cols-[minmax(0,760px)] items-start justify-center gap-10 xl:grid-cols-[minmax(0,720px)_280px] min-[90rem]:grid-cols-[minmax(0,760px)_280px] min-[90rem]:gap-14">
+        <div className="grid grid-cols-[minmax(0,var(--container-reading))] items-start justify-center gap-10 xl:grid-cols-[minmax(0,720px)_280px] min-[90rem]:grid-cols-[minmax(0,var(--container-reading))_280px] min-[90rem]:gap-14">
           <article className="flex min-w-0 flex-col gap-8">
             <header className="flex flex-col gap-3">
               <nav aria-label="Breadcrumb" className="text-[13px] text-[var(--coach-ink-muted)]">
@@ -136,7 +137,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
 
             <section
               aria-labelledby="outcomes"
-              className="flex flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5 sm:p-6"
+              className={`flex flex-col gap-3 ${COACH_CARD} p-5 sm:p-6`}
             >
               <h2 id="outcomes" className="m-0 text-[17px] font-bold">
                 By the end, you&apos;ll be able to
@@ -246,7 +247,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
               <h2 id="assignment-title" className={H2}>
                 Assignment
               </h2>
-              <div className="flex flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5 sm:p-6">
+              <div className={`flex flex-col gap-3 ${COACH_CARD} p-5 sm:p-6`}>
                 <p className="m-0 text-[13px] font-semibold text-[var(--coach-ink-muted)]">Before the next lesson</p>
                 <p className="m-0 text-[15px] leading-relaxed text-[var(--coach-ink-secondary)]">
                   {meta.assignment.instruction}
@@ -271,7 +272,7 @@ export async function LessonPageV2({ level, slug }: { level: string; slug: strin
               <h2 id="why-title" className={H2}>
                 Why this matters
               </h2>
-              <p className="m-0 max-w-[660px] text-[16px] leading-[1.75] text-[var(--coach-ink-secondary)] md:text-[18px]">
+              <p className="m-0 max-w-lesson-text text-[16px] leading-[1.75] text-[var(--coach-ink-secondary)] md:text-[18px]">
                 {meta.whyThisMatters}
               </p>
             </section>

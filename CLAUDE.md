@@ -64,6 +64,8 @@ Two layers, both in `src/app/globals.css`:
 - **Phosphor** (base theme; rules in AGENTS.md and `.cursor/rules/`): no purple (`--brand-violet` is a legacy name for green), tokens instead of hex, light and dark both correct.
 - **Coach** — the look of every rebuilt page: wrap the page in `practice-coach-v2` and use `--coach-*` tokens (`--coach-hero-bg` dark cards with `--coach-lime` buttons, `--coach-surface` cards with 2px `--coach-border`). Chart series colours are `--coach-chart-kept` / `--coach-chart-stopped` (validated for colour-blind contrast in both modes).
 
+Layout: an app page is wrapped in `PageShell` (`src/components/ui/page-shell.tsx`), a public one uses `WRAP`; page widths are the `--container-*` values in `globals.css` and a card's look is `COACH_CARD` (`ui/coach-card.ts`). Don't copy those class strings. A hidden data table goes in `SrOnlyTable`.
+
 Writing: no em dash ("—") in interface or card text (use a comma, colon, full stop or brackets); page titles give only their own name and the root template adds " · Ascend". Lesson bodies under `content/` still have them.
 
 Learner chrome (`.cursor/rules/app-shell-chrome.mdc`): no top bar, no fake search, theme toggle in the sidebar, `PlaceholderAvatar` for faces. The sidebar (desktop) and the bottom tab bar + "More" sheet (phones, `mobile-tab-bar.tsx`) share one nav model, `src/lib/nav/app-nav.ts`; Practice shows a due-card badge read from this browser's deck.

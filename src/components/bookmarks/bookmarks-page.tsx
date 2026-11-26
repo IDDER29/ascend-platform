@@ -15,6 +15,7 @@ import {
 import { updateBookmark, useBookmarks } from "@/lib/bookmarks/use-bookmarks";
 import { deckSessionHref } from "@/lib/practice/coach-custom-model";
 import { SaveButton } from "./save-button";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
 const KIND_ICON: Record<BookmarkKind, typeof BookOpen> = {
   lesson: BookOpen,
@@ -185,7 +186,7 @@ function Revisit({ items }: { items: Bookmark[] }) {
   );
 }
 
-const SIDE_CARD = "rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5";
+const SIDE_CARD = `${COACH_CARD} p-5`;
 
 function PracticeThem({ ids }: { ids: string[] }) {
   return (
@@ -375,7 +376,7 @@ export function BookmarksPage() {
             <section
               key={g.id}
               aria-labelledby={`shelf-${g.id}`}
-              className="rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] px-5 pb-2 pt-4"
+              className={`${COACH_CARD} px-5 pb-2 pt-4`}
             >
               <h2 id={`shelf-${g.id}`} className="m-0 flex items-baseline gap-2 text-[16px] font-bold">
                 {g.id === "resources" ? (

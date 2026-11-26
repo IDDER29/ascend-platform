@@ -5,9 +5,10 @@ import { ProgressBar } from "@/components/achievements/progress-bar";
 import type { BadgeView, Criterion } from "@/lib/achievements/achievements-model";
 import type { Standing } from "@/lib/dashboard/today-model";
 import { SIGNIN_HREF } from "@/lib/routes";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
 const CARD =
-  "flex min-w-0 flex-col gap-2.5 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5 no-underline text-[var(--coach-ink)] transition-colors hover:border-[var(--coach-border-strong)]";
+  `flex min-w-0 flex-col gap-2.5 ${COACH_CARD} p-5 no-underline text-[var(--coach-ink)] transition-colors hover:border-[var(--coach-border-strong)]`;
 
 function Step({ step }: { step: Criterion | null }) {
   if (!step) return null;

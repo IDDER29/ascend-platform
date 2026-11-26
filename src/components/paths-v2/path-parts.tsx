@@ -5,8 +5,9 @@ import { CrestPatch } from "@/components/achievements/emblems";
 import { PATH_ICONS } from "@/components/paths/path-catalog";
 import { joinPathV2Action } from "@/lib/paths/actions";
 import { durationLabel, type PathCourse, type PathView } from "@/lib/paths/paths-v2-model";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
-export const CARD = "rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)]";
+export const CARD = COACH_CARD;
 export const PRIMARY =
   "inline-flex h-10 items-center rounded-xl bg-[var(--coach-solid-btn-bg)] px-4 text-[14px] font-bold text-[var(--coach-solid-btn-ink)] no-underline";
 export const SECONDARY =

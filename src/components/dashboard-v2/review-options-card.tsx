@@ -6,8 +6,9 @@ import { PATH_ICONS } from "@/components/paths/path-catalog";
 import type { ReviewIcon, ReviewOption } from "@/lib/dashboard/review-options";
 import { setMemory, type DeckMemory } from "@/lib/practice/deck-memory";
 import type { PracticeSessionRecord } from "@/lib/practice/history";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
-const CARD = "flex flex-col gap-3 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5";
+const CARD = `flex flex-col gap-3 ${COACH_CARD} p-5`;
 const ICONS: Record<Exclude<ReviewIcon, "path">, LucideIcon> = {
   misses: RotateCcw,
   shaky: Activity,

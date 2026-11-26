@@ -7,8 +7,9 @@ import { buildDayPlan } from "@/lib/dashboard/day-plan";
 import type { CoachHomeModel } from "@/lib/practice/coach-home-model";
 import { localDayKey } from "@/lib/practice/sm2";
 import { endedStreak, lessonStreak, lessonWeek, type WeekDay } from "@/lib/progress/streak";
+import { COACH_CARD } from "@/components/ui/coach-card";
 
-const CARD = "flex flex-col gap-4 rounded-[20px] border-2 border-[var(--coach-border)] bg-[var(--coach-surface)] p-5";
+const CARD = `flex flex-col gap-4 ${COACH_CARD} p-5`;
 
 /**
  * Today's checklist, sized by the daily goal (set once, in onboarding or Settings),
